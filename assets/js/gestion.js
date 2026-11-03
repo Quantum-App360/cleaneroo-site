@@ -49,20 +49,53 @@ function ecranConnexion(message = "") {
   });
 }
 
+const TYPES_INSCRIPTION = { client: "Client", cleaneur: "Cleaneur", conciergerie: "Conciergerie" };
+let onglet = "demandes";
+
+const ongletsHtml = () => `<div class="segments" style="margin:6px 0 4px">
+  <button type="button" data-onglet="demandes" class="${onglet === "demandes" ? "choisi" : ""}">Demandes</button>
+  <button type="button" data-onglet="inscriptions" class="${onglet === "inscriptions" ? "choisi" : ""}">Inscriptions au lancement</button></div>`;
+const brancherOnglets = () => vue.querySelectorAll("[data-onglet]").forEach(bt => bt.onclick = () => { onglet = bt.dataset.onglet; liste(); });
+
+async function listeInscriptions() {
+  const { data, error } = await supabase.from("inscriptions").select("*").order("cree_le", { ascending: false }).limit(1000);
+  if (error) { vue.innerHTML = `<p class="erreur">${esc(error.message)}</p>`; return; }
+  const n = t => data.filter(i => i.type === t).length;
+  const csv = () => {
+    const lignes = [["type", "prenom", "nom", "email", "telephone", "code_postal", "ville", "message", "inscrit_le"],
+      ...data.map(i => [i.type, i.prenom, i.nom, i.email, i.telephone, i.code_postal, i.ville, i.message, i.cree_le])];
+    const texte = lignes.map(l => l.map(v => `"${String(v ?? "").replace(/"/g, '""')}"`).join(";")).join("\r\n");
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob(["﻿" + texte], { type: "text/csv;charset=utf-8" }));
+    a.download = "inscriptions-cleaneroo.csv"; a.click();
+  };
+  vue.innerHTML = `<h1>Gestion</h1><div class="trait-corail"></div>${ongletsHtml()}
+    <p class="muet">${data.length} inscrits · ${n("client")} clients · ${n("cleaneur")} Cleaneurs · ${n("conciergerie")} conciergeries</p>
+    <button class="bouton secondaire" id="export">Télécharger la liste (Excel)</button>
+    <div style="margin-top:14px">${data.map(i => `<div class="carte" style="margin-bottom:10px">
+      <b>${esc(i.prenom)} ${esc(i.nom)}</b> <span class="tampon">${TYPES_INSCRIPTION[i.type]}</span>
+      <div class="petit"><a href="mailto:${esc(i.email)}">${esc(i.email)}</a>${i.telephone ? ` · <a href="tel:${esc(i.telephone)}">${esc(i.telephone)}</a>` : ""} · ${esc(i.code_postal)} ${esc(i.ville)} · ${dateLongue(new Date(i.cree_le))}</div>
+      ${i.message ? `<p class="muet" style="margin:6px 0 0">${esc(i.message)}</p>` : ""}</div>`).join("") || `<p class="muet">Aucune inscription pour l'instant.</p>`}</div>`;
+  brancherOnglets();
+  document.getElementById("export").onclick = csv;
+}
+
 async function liste() {
+  if (onglet === "inscriptions") return listeInscriptions();
   const { data, error } = await supabase.from("demandes").select("*").order("cree_le", { ascending: false }).limit(300);
   if (error) { vue.innerHTML = `<p class="erreur">${esc(error.message)}</p>`; return; }
   const compte = s => data.filter(d => d.statut === s).length;
   const affichees = filtre === "TOUTES" ? data : data.filter(d => d.statut === filtre);
-  vue.innerHTML = `<h1>Demandes</h1><div class="trait-corail"></div>
+  vue.innerHTML = `<h1>Gestion</h1><div class="trait-corail"></div>${ongletsHtml()}
     <div class="filtres">${["VERIFICATION", "PUBLIEE", "CONFIRMEE", "EN_COURS", "A_VALIDER", "TERMINEE", "ANNULEE", "TOUTES"].map(s =>
       `<button type="button" data-filtre="${s}" class="${filtre === s ? "choisi" : ""}">${s === "TOUTES" ? `Toutes (${data.length})` : `${STATUTS[s]} (${compte(s)})`}</button>`).join("")}</div>
     ${affichees.length ? affichees.map(d => {
       const r = rubrique(d.rubrique_id);
       return `<div class="carte ligne-demande" data-id="${d.id}">
-        <div><b>${r.emoji} ${r.nom}</b> · ${esc(d.ville)}<div class="petit">${esc(d.reference)} · ${esc(d.prenom)} ${esc(d.nom)} · ${d.creneau ? `${dateLongue(new Date(d.creneau))} ${heure(new Date(d.creneau).getHours())}` : "flexible"}</div></div>
+        <div><b>${r.emoji} ${r.nom}</b> · ${esc(d.ville)}${d.prelancement ? ` <span class="tampon">Pré-réservation</span>` : ""}<div class="petit">${esc(d.reference)} · ${esc(d.prenom)} ${esc(d.nom)} · ${d.creneau ? `${dateLongue(new Date(d.creneau))} ${heure(new Date(d.creneau).getHours())}` : "flexible"}</div></div>
         <div style="text-align:right"><span class="tampon">${STATUTS[d.statut]}</span><div class="petit">${d.sur_devis ? "Sur devis" : euros(d.estimation_c)}</div></div></div>`;
     }).join("") : `<p class="muet">Aucune demande dans cette liste.</p>`}`;
+  brancherOnglets();
   vue.querySelectorAll("[data-filtre]").forEach(bt => bt.onclick = () => { filtre = bt.dataset.filtre; liste(); });
   vue.querySelectorAll("[data-id]").forEach(c => c.onclick = () => detail(data.find(d => d.id === c.dataset.id)));
 }

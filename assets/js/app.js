@@ -1,8 +1,8 @@
 // Navigation du site et pages simples. Le parcours de réservation est dans reserver.js.
 import { RUBRIQUES, RACCOURCIS_VITRINE, rubrique } from "./catalogue.js";
-import { euros, duree, dateLongue, heure } from "./regles.js";
+import { euros, duree, dateLongue, heure, estPrelancement, joursAvantLancement, MESSAGE_LANCEMENT } from "./regles.js";
 import { ouvrirReservation } from "./reserver.js";
-import { mesDemandes, suivre, annuler, memoriser } from "./donnees.js";
+import { mesDemandes, suivre, annuler, memoriser, inscrire } from "./donnees.js";
 
 const vue = document.getElementById("vue");
 export const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -15,6 +15,68 @@ export function decor(bulles = [[88, 18, 120], [6, 62, 90], [72, 78, 40], [16, 8
   return bulles.map(([x, y, t]) => `<span class="bulle" style="left:${x}%;top:${y}%;width:${t}px;height:${t}px"></span>`).join("")
     + etincelles.map(([x, y, t, c]) => `<span class="etincelle" style="left:${x}%;top:${y}%;font-size:${t}px;${c ? `color:${c}` : ""}">✦</span>`).join("")
     + VAGUES;
+}
+
+/* ------------------------------------------------------------------ Pré-lancement (ouverture le 31 décembre 2026) */
+export function bandeauLancement() {
+  if (!estPrelancement()) return "";
+  const j = joursAvantLancement();
+  return `<div class="lancement"><div class="conteneur">
+    <span class="compte">J-${j}</span>
+    <span><b>Lancement le 31 décembre 2026</b> · ${MESSAGE_LANCEMENT}</span>
+    <a href="#/inscription">Je m'inscris ›</a></div></div>`;
+}
+
+const TYPES_INSCRIPTION = [["client", "Je cherche un nettoyage"], ["cleaneur", "Je veux devenir Cleaneur"], ["conciergerie", "Je gère des locations / une conciergerie"]];
+
+function formulaireInscription(typeDefaut = "client") {
+  return `<form class="carte" id="form-inscription" novalidate>
+    <h3>Inscrivez-vous pour le lancement</h3>
+    <p class="muet" style="margin:4px 0 14px">Ouverture le <b>31 décembre 2026</b>. ${MESSAGE_LANCEMENT} Les premiers inscrits sont prévenus en priorité.</p>
+    <div class="choix" style="margin-bottom:14px">${TYPES_INSCRIPTION.map(([id, lib]) =>
+      `<button type="button" data-type-inscription="${id}" class="${id === typeDefaut ? "choisi" : ""}">${lib}</button>`).join("")}</div>
+    <input type="hidden" name="type" value="${typeDefaut}">
+    <div class="grille-2"><label class="champ">Prénom<input name="prenom" required maxlength="80" autocomplete="given-name"></label>
+      <label class="champ">Nom<input name="nom" maxlength="80" autocomplete="family-name"></label></div>
+    <div class="grille-2"><label class="champ">E-mail<input name="email" type="email" required maxlength="200" autocomplete="email"></label>
+      <label class="champ">Téléphone (facultatif)<input name="telephone" type="tel" maxlength="20" autocomplete="tel"></label></div>
+    <div class="grille-2"><label class="champ">Code postal<input name="code_postal" required inputmode="numeric" maxlength="5" pattern="[0-9]{5}" autocomplete="postal-code"></label>
+      <label class="champ">Ville<input name="ville" maxlength="100" autocomplete="address-level2"></label></div>
+    <label class="champ">Un message ? (facultatif)<textarea name="message" rows="2" maxlength="1000" placeholder="Ex. : 3 appartements Airbnb à Fréjus"></textarea></label>
+    <label class="case"><input type="checkbox" name="consentement"> <span>J'accepte d'être contacté par Cleaneroo pour le lancement. <a href="#/confidentialite">Confidentialité</a></span></label>
+    <p class="erreur" id="erreur-inscription" style="margin:8px 0 0"></p>
+    <button class="bouton plein" type="submit" style="margin-top:10px">Je m'inscris</button>
+  </form>`;
+}
+
+export function brancherInscription(racine) {
+  const f = racine.querySelector("#form-inscription");
+  if (!f) return;
+  f.querySelectorAll("[data-type-inscription]").forEach(b => b.onclick = () => {
+    f.querySelectorAll("[data-type-inscription]").forEach(x => x.classList.toggle("choisi", x === b));
+    f.type.value = b.dataset.typeInscription;
+  });
+  f.onsubmit = async e => {
+    e.preventDefault();
+    const err = f.querySelector("#erreur-inscription");
+    const v = Object.fromEntries(new FormData(f));
+    if (!v.prenom.trim()) return err.textContent = "Indiquez votre prénom.";
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v.email)) return err.textContent = "Adresse e-mail invalide.";
+    if (!/^[0-9]{5}$/.test(v.code_postal)) return err.textContent = "Code postal à 5 chiffres.";
+    if (!f.consentement.checked) return err.textContent = "Cochez la case pour que nous puissions vous prévenir.";
+    err.textContent = "";
+    const bouton = f.querySelector("button[type=submit]");
+    bouton.disabled = true; bouton.textContent = "Inscription…";
+    try {
+      const r = await inscrire({ type: v.type, prenom: v.prenom.trim(), nom: v.nom.trim(), email: v.email.trim(), telephone: v.telephone.trim(),
+        code_postal: v.code_postal, ville: v.ville.trim(), message: v.message.trim(), consentement: true });
+      f.innerHTML = `<h3>${r === "deja" ? "Vous êtes déjà inscrit ✓" : "Merci, vous êtes inscrit ✓"}</h3>
+        <p class="muet" style="margin:6px 0 0">Nous vous préviendrons avant l'ouverture du <b>31 décembre 2026</b>. ${MESSAGE_LANCEMENT}</p>`;
+    } catch (ex) {
+      bouton.disabled = false; bouton.textContent = "Je m'inscris";
+      err.textContent = "L'inscription n'a pas abouti. Vérifiez votre connexion et réessayez.";
+    }
+  };
 }
 
 const titreSection = (titre, sous = "") => `<div class="titre-section"><h2>${titre}</h2><div class="trait-corail"></div>${sous ? `<p class="muet">${sous}</p>` : ""}</div>`;
@@ -39,10 +101,11 @@ function pageAccueil() {
       <div>
         <img class="nom-blanc" src="assets/img/logo_nom_blanc.webp" alt="Cleaneroo">
         <div class="trait-corail"></div>
-        <p class="slogan">Vos interventions de ménage, 100 % digitalisées</p>
+        ${estPrelancement() ? `<span class="etiquette" style="background:var(--corail)">Lancement le 31 décembre 2026</span>` : ""}
+        <p class="slogan" style="margin-top:12px">Vos interventions de ménage, 100 % digitalisées</p>
         <p class="sous">Ménage, vitres, canapés, bureaux… un Cleaneur vérifié près de chez vous.</p>
         <div class="etiquettes"><span class="etiquette">Réservation</span><span class="etiquette">Suivi en direct</span><span class="etiquette">Compte rendu photo</span></div>
-        <div class="boutons"><a class="bouton clair" href="#/reserver">Réserver un nettoyage</a><a class="bouton secondaire" style="color:#fff;border-color:rgba(255,255,255,.5);background:rgba(255,255,255,.12)" href="#/devenir-cleaneur">Devenir Cleaneur</a></div>
+        <div class="boutons">${estPrelancement() ? `<a class="bouton clair" href="#/inscription">Je m'inscris pour le lancement</a><a class="bouton secondaire" style="color:#fff;border-color:rgba(255,255,255,.5);background:rgba(255,255,255,.12)" href="#/reserver">Estimer mon prix</a>` : `<a class="bouton clair" href="#/reserver">Réserver un nettoyage</a>`}<a class="bouton secondaire" style="color:#fff;border-color:rgba(255,255,255,.5);background:rgba(255,255,255,.12)" href="#/devenir-cleaneur">Devenir Cleaneur</a></div>
       </div>
     </div>
   </section>
@@ -59,8 +122,17 @@ function pageAccueil() {
   <section class="bloc" style="padding-top:0"><div class="conteneur">
     ${titreSection("Comment ça marche ?", "Du clic à la validation, tout se passe en ligne.")}
     ${blocEtapes()}
-    <p style="text-align:center;margin-top:28px"><a class="bouton" href="#/reserver">Réserver maintenant</a></p>
-  </div></section>`;
+    <p style="text-align:center;margin-top:28px"><a class="bouton" href="#/reserver">${estPrelancement() ? "Estimer mon prix" : "Réserver maintenant"}</a></p>
+  </div></section>
+  ${estPrelancement() ? `<section class="bloc" id="inscription" style="padding-top:0"><div class="etroit">${formulaireInscription()}</div></section>` : ""}`;
+}
+
+function pageInscription(type = "client") {
+  return `<section class="fond-cleaneroo" style="padding:40px 0 90px">${decor([[90, 20, 90], [4, 60, 60]], [])}
+    <div class="conteneur"><span class="etiquette" style="background:var(--corail)">J-${joursAvantLancement()}</span>
+      <h1 style="margin-top:10px">Lancement le 31 décembre 2026</h1><div class="trait-corail"></div>
+      <p class="slogan" style="font-size:20px;font-weight:600;margin:0">${MESSAGE_LANCEMENT}</p></div></section>
+  <section class="bloc"><div class="etroit">${formulaireInscription(type)}</div></section>`;
 }
 
 function pagePrestations() {
@@ -94,7 +166,7 @@ function pageDevenir() {
     <div class="conteneur"><h1>Devenir Cleaneur</h1><div class="trait-corail"></div><p>Travaillez à votre rythme, près de chez vous.</p>
       <div class="etiquettes"><span class="etiquette">Missions proches</span><span class="etiquette">Compte rendu guidé</span><span class="etiquette">Paiement sécurisé</span></div></div></section>
   <section class="bloc"><div class="etroit">${etapes.map((t, i) => `<div class="carte" style="margin-bottom:10px"><b style="color:var(--corail)">${i + 1}.</b> ${t}</div>`).join("")}
-    <div class="note" style="margin-top:18px">L'inscription des Cleaneurs en ligne arrive bientôt. En attendant, écrivez-nous à <a href="mailto:contact@cleaneroo.fr?subject=Devenir%20Cleaneur">contact@cleaneroo.fr</a> avec votre zone et vos prestations.</div>
+    <div style="margin-top:18px">${formulaireInscription("cleaneur")}</div>
   </div></section>`;
 }
 
@@ -154,7 +226,7 @@ async function pageDemande(ref, jeton) {
   const lien = `${location.origin}${location.pathname}#/demande/${ref}/${jeton}`;
   const annulable = ["VERIFICATION", "PUBLIEE"].includes(d.statut);
   const etat = {
-    VERIFICATION: "Nous vérifions votre demande. Ensuite, les Cleaneurs compatibles sont prévenus.",
+    VERIFICATION: estPrelancement() ? "Pré-réservation enregistrée. Les réservations ouvrent le 31 décembre 2026 : nous vous recontacterons pour fixer le créneau, en priorité." : "Nous vérifions votre demande. Ensuite, les Cleaneurs compatibles sont prévenus.",
     PUBLIEE: "Votre demande est en ligne : les Cleaneurs compatibles peuvent se proposer. Vous choisirez parmi leurs propositions.",
     CONFIRMEE: "Votre nettoyage est réservé. Vous serez prévenu quand le Cleaneur sera en route.",
     A_VALIDER: "La prestation est terminée : consultez le compte rendu et validez-le.",
@@ -186,7 +258,7 @@ async function pageDemande(ref, jeton) {
 /* ------------------------------------------------------------------ Navigation */
 const ROUTES = {
   "": pageAccueil, "prestations": pagePrestations, "comment-ca-marche": pageComment, "devenir-cleaneur": pageDevenir,
-  "confidentialite": pageConfidentialite, "conditions": pageConditions, "mentions-legales": pageMentions, "mes-demandes": pageMesDemandes,
+  "inscription": () => pageInscription(), "confidentialite": pageConfidentialite, "conditions": pageConditions, "mentions-legales": pageMentions, "mes-demandes": pageMesDemandes,
 };
 
 async function afficher() {
@@ -196,6 +268,7 @@ async function afficher() {
   document.querySelector(".nav")?.classList.remove("ouvert");
   document.querySelectorAll(".nav a").forEach(a => a.classList.toggle("actif", a.getAttribute("href") === `#/${route}`));
   if (route === "reserver") { ouvrirReservation(vue, param || null); window.scrollTo(0, 0); return; }
+  if (route === "inscription" && param) { vue.innerHTML = pageInscription(param); brancherInscription(vue); window.scrollTo(0, 0); return; }
   if (route === "demande") {
     const [, ref, jeton] = chemin.split("/");
     vue.innerHTML = await pageDemande(decodeURIComponent(ref || ""), decodeURIComponent(jeton || ""));
@@ -210,6 +283,7 @@ async function afficher() {
   }
   const page = ROUTES[route] || pageAccueil;
   vue.innerHTML = await page();
+  brancherInscription(vue);
   window.scrollTo(0, 0);
 }
 
@@ -218,5 +292,6 @@ document.querySelector(".burger").addEventListener("click", e => {
   nav.classList.toggle("ouvert");
   e.currentTarget.setAttribute("aria-expanded", nav.classList.contains("ouvert"));
 });
+document.getElementById("lancement").innerHTML = bandeauLancement();
 window.addEventListener("hashchange", afficher);
 afficher();

@@ -2,7 +2,7 @@
 // 1 prestation · 2 questionnaire · 3 photos · 4 adresse, accès et créneau · 5 estimation, coordonnées et envoi.
 import { RUBRIQUES, rubrique, formulesPour, TYPES_LIEU, TYPES_LOGEMENT, BESOINS_SPECIAUX, ACCUEIL, accueilAutonomeInterdit, photosObligatoires } from "./catalogue.js";
 import { calculer, entreeEstimation, SALISSURE, disponibilite } from "./estimation.js";
-import { REGLES, euros, duree, heure, dateCourte } from "./regles.js";
+import { REGLES, euros, duree, heure, dateCourte, estPrelancement, MESSAGE_LANCEMENT } from "./regles.js";
 import { envoyerDemande } from "./donnees.js";
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -154,7 +154,7 @@ function joursProposes() {
 }
 const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 function debutChoisi() {
-  if (!b.jour || b.heure < 0 || b.flexible) return null;
+  if (estPrelancement() || !b.jour || b.heure < 0 || b.flexible) return null;
   const [a, m, j] = b.jour.split("-").map(Number);
   return new Date(a, m - 1, j, b.heure, 0, 0);
 }
@@ -177,7 +177,7 @@ function etape4() {
   }).join("") : "";
   const accesOk = b.accueil && ({ TIERS: b.tiersNom.trim() && b.tiersTel.trim().length >= 6, BOITE: b.boiteEmplacement.trim() && b.code.trim(), AUTONOME: b.code.trim(), PRESENT: true }[b.accueil]);
   const adresseOk = b.rue.trim().length >= 3 && /^[0-9]{5}$/.test(b.codePostal) && b.ville.trim();
-  const creneauOk = b.flexible || (b.jour && b.heure >= 0);
+  const creneauOk = estPrelancement() || b.flexible || (b.jour && b.heure >= 0);
   const manque = !adresseOk ? "Indiquez l'adresse complète." : !accesOk ? "Indiquez comment le Cleaneur accède au lieu." : !creneauOk ? "Choisissez un créneau." : "";
   return `<h2>Adresse et créneau</h2>
     ${titre("Adresse de l'intervention")}
@@ -189,9 +189,10 @@ function etape4() {
     ${acces ? `<div class="carte" style="margin-top:10px">${acces}<p class="petit">Le code n'est communiqué qu'au Cleaneur retenu, le jour de l'intervention.</p></div>` : ""}
     ${interdit ? `<p class="petit">Chez les professionnels, une personne doit être présente pour accueillir le Cleaneur.</p>` : ""}
     ${titre("Créneau")}
+    ${estPrelancement() ? `<div class="note">Les réservations ouvrent le <b>31 décembre 2026</b>. Envoyez votre pré-réservation dès maintenant : nous vous recontacterons en priorité pour fixer le créneau.</div>` : `
     <div class="carte">${caseCocher("Je suis flexible", "flexible", b.flexible, "Vous recevez des candidatures sur 7 jours")}</div>
     ${b.flexible ? "" : `<div class="jours" style="margin-top:12px">${joursProposes().map(d => `<button type="button" data-jour="${iso(d)}" class="${b.jour === iso(d) ? "choisi" : ""}">${dateCourte(d)}</button>`).join("")}</div>
-      ${jourDate ? `<div class="creneaux" style="margin-top:12px">${creneaux}</div><p class="petit">Bordure verte : créneau malin, −10 %. Dimanche : +25 %.</p>` : `<p class="petit">Choisissez un jour.</p>`}`}
+      ${jourDate ? `<div class="creneaux" style="margin-top:12px">${creneaux}</div><p class="petit">Bordure verte : créneau malin, −10 %. Dimanche : +25 %.</p>` : `<p class="petit">Choisissez un jour.</p>`}`}`}
     ${actions(!manque, manque)}`;
 }
 
@@ -202,7 +203,8 @@ function etape5() {
   const contactOk = b.prenom.trim() && b.nom.trim() && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(b.email) && b.telephone.replace(/\D/g, "").length >= 10;
   const manque = !contactOk ? "Complétez vos coordonnées." : !b.cgv ? "Acceptez les conditions pour envoyer la demande." : "";
   return `<h2>Votre estimation</h2>
-    <p class="muet">${r.emoji} ${r.nom} · ${duree(est.dureeMin)}${est.nombreCleaneurs === 2 ? " · 2 Cleaneurs" : ""}${debut ? ` · ${dateCourte(debut)} à ${heure(debut.getHours())}` : " · flexible"}</p>
+    <p class="muet">${r.emoji} ${r.nom} · ${duree(est.dureeMin)}${est.nombreCleaneurs === 2 ? " · 2 Cleaneurs" : ""}${debut ? ` · ${dateCourte(debut)} à ${heure(debut.getHours())}` : estPrelancement() ? " · créneau fixé à l'ouverture" : " · flexible"}</p>
+    ${estPrelancement() ? `<div class="note" style="margin-top:10px"><span><b>Lancement le 31 décembre 2026.</b> ${MESSAGE_LANCEMENT} Votre pré-réservation est gratuite et sans engagement.</span></div>` : ""}
     <div class="carte" style="margin-top:12px">
       ${est.devisObligatoire ? `<h3 style="color:var(--turquoise)">Sur devis</h3><p class="muet" style="margin:4px 0 0">Un professionnel qualifié évalue votre besoin et vous propose un devis. Aucun engagement.</p>`
         : est.lignes.map(l => `<div class="ligne-montant"><span>${esc(l.libelle)}${l.note ? `<span class="note-ligne">${l.note}</span>` : ""}</span><span>${euros(l.montantC)}</span></div>`).join("")
@@ -215,7 +217,7 @@ function etape5() {
     ${titre("Comment choisir votre Cleaneur ?")}
     <button type="button" class="option ${b.choixCleaneur === "candidatures" ? "choisi" : ""}" data-champ="choixCleaneur" data-valeur="candidatures">Je choisis parmi les candidatures
       <span class="detail">Les Cleaneurs vous proposent un horaire et un prix. Vous êtes prévenu à chaque candidature et vous choisissez.</span></button>
-    ${b.flexible ? "" : `<button type="button" class="option ${b.choixCleaneur === "directe" ? "choisi" : ""}" data-champ="choixCleaneur" data-valeur="directe">Réservation directe
+    ${b.flexible || estPrelancement() ? "" : `<button type="button" class="option ${b.choixCleaneur === "directe" ? "choisi" : ""}" data-champ="choixCleaneur" data-valeur="directe">Réservation directe
       <span class="detail">Le premier Cleaneur qui se positionne au prix estimé, sans frais supplémentaire, obtient la mission.</span></button>`}
     <p class="petit">Aucun Cleaneur n'est accepté automatiquement sans votre choix.</p>
     ${titre("Vos coordonnées")}
@@ -223,7 +225,7 @@ function etape5() {
       <div class="grille-2">${champTexte("E-mail", "email", b.email, "email", 'autocomplete="email" maxlength="200"')}${champTexte("Téléphone", "telephone", b.telephone, "tel", 'autocomplete="tel" maxlength="20"')}</div></div>
     <div class="note" style="margin-top:14px">Aucun paiement maintenant : vous ne serez débité qu'après avoir validé la prestation. Annulation gratuite jusqu'à 48 h avant ; ensuite 25 % du prix accepté.</div>
     <div class="carte" style="margin-top:12px">${caseCocher(`J'accepte les <a href="#/conditions" target="_blank">conditions d'utilisation</a> et la <a href="#/confidentialite" target="_blank">politique de confidentialité</a>`, "cgv", b.cgv)}</div>
-    ${actions(!manque && !envoi, manque, envoi ? "Envoi en cours…" : "Envoyer ma demande", "envoyer")}`;
+    ${actions(!manque && !envoi, manque, envoi ? "Envoi en cours…" : estPrelancement() ? "Envoyer ma pré-réservation" : "Envoyer ma demande", "envoyer")}`;
 }
 
 function actions(ok, message = "", libelle = "Continuer", id = "suivant") {
@@ -312,8 +314,8 @@ async function envoyer() {
     details.lignes = est.lignes;
     const { reference, jeton } = await envoyerDemande({
       rubrique_id: b.rubriqueId, details, estimation_c: est.totalC, credit_impot_c: est.creditImpotC, duree_min: est.dureeMin,
-      nombre_cleaneurs: est.nombreCleaneurs, sur_devis: est.devisObligatoire, creneau: debut ? debut.toISOString() : null, flexible: b.flexible,
-      choix_cleaneur: b.choixCleaneur, espace: b.espace, prenom: b.prenom.trim(), nom: b.nom.trim(), email: b.email.trim(), telephone: b.telephone.trim(),
+      nombre_cleaneurs: est.nombreCleaneurs, sur_devis: est.devisObligatoire, creneau: debut ? debut.toISOString() : null, flexible: b.flexible || estPrelancement(), prelancement: estPrelancement(),
+      choix_cleaneur: estPrelancement() ? "candidatures" : b.choixCleaneur, espace: b.espace, prenom: b.prenom.trim(), nom: b.nom.trim(), email: b.email.trim(), telephone: b.telephone.trim(),
       rue: b.rue.trim(), code_postal: b.codePostal.trim(), ville: b.ville.trim(), accueil: b.accueil || "PRESENT", acces, remarque: b.remarque.trim(),
     }, photos);
     try { localStorage.removeItem(CLE_BROUILLON); } catch { /* rien */ }

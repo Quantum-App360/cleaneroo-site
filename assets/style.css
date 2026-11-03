@@ -81,6 +81,12 @@ h3 { font-size: 19px; font-weight: 600; }
   .nav.ouvert { display: flex; }
 }
 
+/* ---------------------------------------------------------------- Bandeau de lancement (31 décembre 2026) */
+.lancement { background: var(--corail); color: #fff; font-size: 14px; }
+.lancement .conteneur { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 14px; padding: 9px 0; text-align: center; }
+.lancement .compte { background: rgba(255,255,255,.25); border-radius: 999px; padding: 2px 10px; font-weight: 800; }
+.lancement a { color: #fff; font-weight: 700; }
+
 /* ---------------------------------------------------------------- Héros */
 .heros { padding: 56px 0 120px; }
 .heros .grille { display: grid; grid-template-columns: 1fr 1.2fr; gap: 32px; align-items: center; }

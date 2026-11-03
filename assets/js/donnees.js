@@ -71,6 +71,14 @@ export async function annuler(reference, jeton) {
   return data === true;
 }
 
+/** Pré-inscription avant le lancement. Renvoie "ok" ou "deja" (déjà inscrit avec cet e-mail). */
+export async function inscrire(inscription) {
+  const { error } = await supabase.from("inscriptions").insert({ ...inscription, source: "site" });
+  if (!error) return "ok";
+  if (error.code === "23505") return "deja";
+  throw new Error(error.message);
+}
+
 /** Ajoute à « Mes demandes » une demande ouverte par son lien de suivi (autre appareil). */
 export function memoriser(reference, jeton, rubriqueId) {
   const l = lireLocal();
