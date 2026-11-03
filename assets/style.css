@@ -74,6 +74,14 @@ h3 { font-size: 19px; font-weight: 600; }
 .nav { margin-left: auto; display: flex; align-items: center; gap: 4px; }
 .nav a { color: #fff; text-decoration: none; padding: 10px 12px; border-radius: 10px; font-weight: 600; font-size: 15px; }
 .nav a:hover, .nav a.actif { background: rgba(255,255,255,.14); }
+/* Choix de la langue : drapeaux */
+.langues { display: flex; gap: 2px; }
+#choix-langue { margin-left: auto; }
+.drapeau { width: 40px; height: 40px; display: grid; place-items: center; border: 0; background: none; border-radius: 10px; cursor: pointer; opacity: .55; padding: 0; }
+.drapeau svg { width: 24px; height: 16px; border-radius: 3px; box-shadow: 0 0 0 1px rgba(255,255,255,.35); }
+.drapeau.choisi, .drapeau:hover { opacity: 1; background: rgba(255,255,255,.14); }
+@media (min-width: 861px) { #choix-langue { margin-left: 8px; order: 3; } }
+@media (max-width: 860px) { .entete .burger { margin-left: 2px; } }
 .burger { display: none; margin-left: auto; background: none; border: 0; color: #fff; font-size: 26px; min-width: 48px; min-height: 48px; cursor: pointer; }
 @media (max-width: 860px) {
   .burger { display: block; }

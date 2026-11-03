@@ -1,6 +1,10 @@
 // Navigation du site et pages simples. Le parcours de réservation est dans reserver.js.
-import { RUBRIQUES, RACCOURCIS_VITRINE, rubrique } from "./catalogue.js";
-import { euros, duree, dateLongue, heure, estPrelancement, joursAvantLancement, MESSAGE_LANCEMENT } from "./regles.js";
+import { RUBRIQUES, RACCOURCIS_VITRINE, rubrique, TYPES_LIEU } from "./catalogue.js";
+import { traduire, traduireCatalogue, selecteurLangue, tr } from "./langue.js";
+import { euros, duree, dateLongue, dateHeure, heure, estPrelancement, joursAvantLancement, MESSAGE_LANCEMENT } from "./regles.js";
+
+// Langue : catalogue traduit avant tout affichage.
+traduireCatalogue(RUBRIQUES, TYPES_LIEU);
 import { ouvrirReservation } from "./reserver.js";
 import { mesDemandes, suivre, annuler, memoriser, inscrire } from "./donnees.js";
 
@@ -60,21 +64,22 @@ export function brancherInscription(racine) {
     e.preventDefault();
     const err = f.querySelector("#erreur-inscription");
     const v = Object.fromEntries(new FormData(f));
-    if (!v.prenom.trim()) return err.textContent = "Indiquez votre prénom.";
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v.email)) return err.textContent = "Adresse e-mail invalide.";
-    if (!/^[0-9]{5}$/.test(v.code_postal)) return err.textContent = "Code postal à 5 chiffres.";
-    if (!f.consentement.checked) return err.textContent = "Cochez la case pour que nous puissions vous prévenir.";
+    if (!v.prenom.trim()) return err.textContent = tr("Indiquez votre prénom.");
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v.email)) return err.textContent = tr("Adresse e-mail invalide.");
+    if (!/^[0-9]{5}$/.test(v.code_postal)) return err.textContent = tr("Code postal à 5 chiffres.");
+    if (!f.consentement.checked) return err.textContent = tr("Cochez la case pour que nous puissions vous prévenir.");
     err.textContent = "";
     const bouton = f.querySelector("button[type=submit]");
-    bouton.disabled = true; bouton.textContent = "Inscription…";
+    bouton.disabled = true; bouton.textContent = tr("Inscription…");
     try {
       const r = await inscrire({ type: v.type, prenom: v.prenom.trim(), nom: v.nom.trim(), email: v.email.trim(), telephone: v.telephone.trim(),
         code_postal: v.code_postal, ville: v.ville.trim(), message: v.message.trim(), consentement: true });
       f.innerHTML = `<h3>${r === "deja" ? "Vous êtes déjà inscrit ✓" : "Merci, vous êtes inscrit ✓"}</h3>
         <p class="muet" style="margin:6px 0 0">Nous vous préviendrons avant l'ouverture du <b>31 décembre 2026</b>. ${MESSAGE_LANCEMENT}</p>`;
+      traduire(f);
     } catch (ex) {
-      bouton.disabled = false; bouton.textContent = "Je m'inscris";
-      err.textContent = "L'inscription n'a pas abouti. Vérifiez votre connexion et réessayez.";
+      bouton.disabled = false; bouton.textContent = tr("Je m'inscris");
+      err.textContent = tr("L'inscription n'a pas abouti. Vérifiez votre connexion et réessayez.");
     }
   };
 }
@@ -240,7 +245,7 @@ async function pageDemande(ref, jeton) {
     <div class="progression">${ETAPES_SUIVI.map((_, i) => `<span class="${d.statut !== "ANNULEE" && i <= idx ? "fait" : ""}"></span>`).join("")}</div>
     <div class="note" style="margin-bottom:14px">${etat}</div>
     <div class="carte" style="margin-bottom:12px">
-      <p style="margin:0"><b>Quand :</b> ${d.creneau ? `${dateLongue(new Date(d.creneau))} à ${heure(new Date(d.creneau).getHours())}` : "Flexible, candidatures sur 7 jours"}</p>
+      <p style="margin:0"><b>Quand :</b> ${d.creneau ? dateHeure(new Date(d.creneau)) : "Flexible, candidatures sur 7 jours"}</p>
       <p style="margin:6px 0 0"><b>Où :</b> ${esc(d.rue)}, ${esc(d.code_postal)} ${esc(d.ville)}</p>
       <p style="margin:6px 0 0"><b>Durée estimée :</b> ${duree(d.duree_min)}${d.nombre_cleaneurs === 2 ? " · 2 Cleaneurs" : ""}</p>
       <p style="margin:6px 0 0"><b>Prix :</b> ${d.sur_devis ? "sur devis" : euros(d.estimation_c)}${d.credit_impot_c ? ` · après crédit d'impôt ${euros(d.estimation_c - d.credit_impot_c)}` : ""}</p>
@@ -268,13 +273,14 @@ async function afficher() {
   document.querySelector(".nav")?.classList.remove("ouvert");
   document.querySelectorAll(".nav a").forEach(a => a.classList.toggle("actif", a.getAttribute("href") === `#/${route}`));
   if (route === "reserver") { ouvrirReservation(vue, param || null); window.scrollTo(0, 0); return; }
-  if (route === "inscription" && param) { vue.innerHTML = pageInscription(param); brancherInscription(vue); window.scrollTo(0, 0); return; }
+  if (route === "inscription" && param) { vue.innerHTML = pageInscription(param); brancherInscription(vue); traduire(vue); window.scrollTo(0, 0); return; }
   if (route === "demande") {
     const [, ref, jeton] = chemin.split("/");
     vue.innerHTML = await pageDemande(decodeURIComponent(ref || ""), decodeURIComponent(jeton || ""));
+    traduire(vue);
     window.scrollTo(0, 0);
     document.getElementById("annuler-demande")?.addEventListener("click", async e => {
-      if (!confirm("Annuler cette demande ? Aucun frais ne sera appliqué.")) return;
+      if (!confirm(tr("Annuler cette demande ? Aucun frais ne sera appliqué."))) return;
       e.target.disabled = true;
       try { await annuler(ref, jeton); } catch { /* rien */ }
       afficher();
@@ -284,6 +290,7 @@ async function afficher() {
   const page = ROUTES[route] || pageAccueil;
   vue.innerHTML = await page();
   brancherInscription(vue);
+  traduire(vue);
   window.scrollTo(0, 0);
 }
 
@@ -293,5 +300,10 @@ document.querySelector(".burger").addEventListener("click", e => {
   e.currentTarget.setAttribute("aria-expanded", nav.classList.contains("ouvert"));
 });
 document.getElementById("lancement").innerHTML = bandeauLancement();
+document.getElementById("choix-langue").innerHTML = selecteurLangue();
+traduire(document.querySelector(".entete"));
+traduire(document.getElementById("lancement"));
+traduire(document.querySelector("footer"));
+document.title = tr(document.title);
 window.addEventListener("hashchange", afficher);
 afficher();

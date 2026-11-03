@@ -1,3 +1,5 @@
+import { langue, LOCALE } from "./langue.js";
+
 // Valeurs métier : copie EXACTE de app/.../Regles.kt (application Android). Toute modification se fait des deux côtés.
 // Montants en centimes, durées en minutes.
 export const REGLES = {
@@ -51,8 +53,22 @@ export function duree(min) {
   if (m === 0) return `${h} h`;
   return `${h} h ${String(m).padStart(2, "0")}`;
 }
-export function heure(h, m = 0) { return m === 0 ? `${h} h` : `${h} h ${String(m).padStart(2, "0")}`; }
+export function heure(h, m = 0) {
+  if (langue !== "fr") return `${h}:${String(m).padStart(2, "0")}`;
+  return m === 0 ? `${h} h` : `${h} h ${String(m).padStart(2, "0")}`;
+}
 const JOURS = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
 const MOIS = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
-export function dateLongue(d) { return `${JOURS[d.getDay()]} ${d.getDate()} ${MOIS[d.getMonth()]}`; }
-export function dateCourte(d) { return `${JOURS[d.getDay()].slice(0, 3)}. ${d.getDate()} ${MOIS[d.getMonth()].slice(0, 4)}.`; }
+export function dateLongue(d) {
+  if (langue !== "fr") return d.toLocaleDateString(LOCALE, { weekday: "long", day: "numeric", month: "long" });
+  return `${JOURS[d.getDay()]} ${d.getDate()} ${MOIS[d.getMonth()]}`;
+}
+export function dateCourte(d) {
+  if (langue !== "fr") return d.toLocaleDateString(LOCALE, { weekday: "short", day: "numeric", month: "short" });
+  return `${JOURS[d.getDay()].slice(0, 3)}. ${d.getDate()} ${MOIS[d.getMonth()].slice(0, 4)}.`;
+}
+/** « mardi 10 novembre à 14 h » dans la langue choisie. */
+export function dateHeure(d) {
+  const a = { fr: "à", en: "at", it: "alle", es: "a las" }[langue];
+  return `${dateLongue(d)} ${a} ${heure(d.getHours(), d.getMinutes())}`;
+}
