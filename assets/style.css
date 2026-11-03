@@ -89,7 +89,14 @@ h3 { font-size: 19px; font-weight: 600; }
 .trait-corail { width: 64px; height: 6px; border-radius: 3px; background: var(--corail); margin: 14px 0 18px; }
 .heros p.slogan { font-size: clamp(20px, 2.6vw, 28px); font-weight: 600; margin: 0 0 8px; }
 .heros p.sous { opacity: .9; margin: 0 0 20px; }
-@media (max-width: 860px) { .heros .grille { grid-template-columns: 1fr; text-align: center; } .heros .trait-corail { margin-inline: auto; } .etiquettes { justify-content: center; } .heros .boutons { justify-content: center; } }
+@media (max-width: 860px) {
+  .heros { padding-top: 28px; }
+  .heros .grille { grid-template-columns: 1fr; text-align: center; gap: 12px; }
+  .heros .eponge-grande { width: min(240px, 70%); }
+  .heros .nom-blanc { margin-inline: auto; }
+  .heros .trait-corail { margin-inline: auto; }
+  .heros .etiquettes, .heros .boutons { justify-content: center; }
+}
 
 .etiquettes { display: flex; flex-wrap: wrap; gap: 8px; }
 .etiquette { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 999px; background: rgba(255,255,255,.18); font-weight: 600; font-size: 14px; }
