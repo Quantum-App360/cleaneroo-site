@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="fr">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Tests des prix</title>
+<meta name="robots" content="noindex">
+<style>body{font:15px system-ui;margin:24px}li.ok{color:#2E9E72}li.ko{color:#D0485A;font-weight:700}</style></head>
+<body>
+<h1>Tests : mêmes prix que l'application</h1>
+<p id="bilan">…</p>
+<ul id="liste"></ul>
+<script type="module">
+// Reprend app/src/test/.../ReglesTest.kt : le site doit donner exactement les mêmes résultats que l'application.
+import { calculer, meilleurPack, disponibilite } from "./assets/js/estimation.js";
+import { rubrique } from "./assets/js/catalogue.js";
+import { euros, REGLES } from "./assets/js/regles.js";
+const res = [];
+const egal = (nom, obtenu, attendu) => res.push([nom, obtenu === attendu, `obtenu ${obtenu}, attendu ${attendu}`]);
+const t = id => rubrique("home").taches.find(x => x.id === id);
+const menage = (o = {}) => calculer({ rubriqueId: "home", surfaceM2: o.surface ?? 62, m2ParHeure: 25, minimumMin: 120,
+  taches: o.taches ?? [], remisePackPct: o.remise ?? 0, dimanche: !!o.dimanche, creneauMalin: !!o.malin,
+  engagementMois: o.engagement ?? 0, espacePersonnel: o.personnel ?? true });
+
+egal("euros 7200", euros(7200), "72,00 €");
+egal("euros 123456", euros(123456), "1 234,56 €");
+egal("euros 5", euros(5), "0,05 €");
+let e = menage();
+egal("ménage : durée", e.dureeMin, 150); egal("ménage : total", e.totalC, 7000);
+egal("ménage : crédit d'impôt", e.creditImpotC, 3500); egal("ménage : 1 Cleaneur", e.nombreCleaneurs, 1); egal("ménage : pas de devis", e.devisObligatoire, false);
+egal("dimanche", menage({ dimanche: true }).totalC, 8750);
+egal("créneau malin", menage({ malin: true }).totalC, 6300);
+egal("engagement 6 mois", menage({ engagement: 6 }).totalC, 6300);
+e = menage({ taches: ["draps", "poubelles", "hauteurs", "plinthes"].map(t), remise: 5 });
+egal("pack Essentiel : total", e.totalC, 7000 + 4300 - 215); egal("pack Essentiel : durée", e.dureeMin, 150 + 10 + 5 + 20 + 20);
+const packs = rubrique("home").packs, confort = packs.find(p => p.id === "confort").tacheIds;
+egal("meilleur pack", meilleurPack(packs, confort)?.id, "confort");
+egal("pack incomplet", meilleurPack(packs, confort.filter(x => x !== "draps")), null);
+egal("véhicule minimum", calculer({ rubriqueId: "car", taches: [rubrique("car").taches.find(x => x.id === "aspiration")] }).totalC, REGLES.MINIMUM_COMMANDE_VEHICULE_C);
+e = menage({ surface: 200 });
+egal("2 Cleaneurs au-delà de 6 h", e.nombreCleaneurs, 2); egal("durée partagée", e.dureeMin, 240);
+egal("devis au-delà de 300 m²", menage({ surface: 301 }).devisObligatoire, true);
+e = calculer({ rubriqueId: "office", minimumMin: 120, salissure: "MARQUE", espacePersonnel: false });
+egal("bureaux salissure marquée", e.totalC, 5900 + 885); egal("bureaux sans crédit d'impôt", e.creditImpotC, 0);
+const mardi15h = new Date(); mardi15h.setDate(mardi15h.getDate() + ((2 - mardi15h.getDay() + 7) % 7 || 7) + 7); mardi15h.setHours(14, 0, 0, 0);
+egal("créneau malin mardi 14 h", disponibilite(new Date(), mardi15h), "MALIN");
+
+const ok = res.filter(r => r[1]).length;
+document.getElementById("bilan").textContent = `${ok} tests sur ${res.length} réussis`;
+document.getElementById("liste").innerHTML = res.map(([n, b, d]) => `<li class="${b ? "ok" : "ko"}">${b ? "✓" : "✗"} ${n}${b ? "" : " — " + d}</li>`).join("");
+</script>
+</body>
+</html>

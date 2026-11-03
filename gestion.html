@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gestion · Cleaneroo</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" href="favicon.png">
+  <link rel="stylesheet" href="assets/style.css">
+  <style>
+    .filtres { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+    .filtres button { min-height: 44px; padding: 0 14px; border-radius: 999px; border: 1.5px solid var(--separateur); background: var(--surface); cursor: pointer; font-weight: 600; }
+    .filtres button.choisi { background: var(--turquoise); color: #fff; border-color: var(--turquoise); }
+    .ligne-demande { display: grid; grid-template-columns: 1fr auto; gap: 6px 14px; cursor: pointer; margin-bottom: 10px; }
+    .detail-demande dt { font-weight: 700; margin-top: 10px; }
+    .detail-demande dd { margin: 2px 0 0; color: var(--texte2); }
+    .photos-admin { display: flex; flex-wrap: wrap; gap: 8px; }
+    .photos-admin img { width: 120px; height: 120px; object-fit: cover; border-radius: 12px; }
+  </style>
+</head>
+<body>
+  <header class="entete"><div class="conteneur">
+    <a class="marque" href="./"><img class="eponge" src="assets/img/logo_eponge.webp" alt=""><img class="nom" src="assets/img/logo_nom_blanc.webp" alt="Cleaneroo"></a>
+    <nav class="nav" style="display:flex;position:static;background:none;flex-direction:row;padding:0"><a href="#" id="deconnexion" class="masque">Se déconnecter</a></nav>
+  </div></header>
+  <main id="vue" class="etroit" style="padding:28px 0 60px"></main>
+  <script type="module" src="assets/js/gestion.js"></script>
+</body>
+</html>
