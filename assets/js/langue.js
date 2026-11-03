@@ -40,7 +40,7 @@ const T = [
   ["Confidentialité", "Privacy", "Privacy", "Privacidad"],
   ["Conditions d'utilisation", "Terms of use", "Condizioni d'uso", "Condiciones de uso"],
   ["Mentions légales", "Legal notice", "Note legali", "Aviso legal"],
-  ["© Cleaneroo · Application Android bientôt sur Google Play", "© Cleaneroo · Android app coming soon on Google Play", "© Cleaneroo · App Android presto su Google Play", "© Cleaneroo · App Android muy pronto en Google Play"],
+  ["Bientôt disponible sur", "Coming soon on", "Presto disponibile su", "Muy pronto en"],
   ["Vos interventions de ménage, 100 % digitalisées", "Your cleaning services, 100% digital", "I tuoi interventi di pulizia, 100% digitali", "Tus servicios de limpieza, 100 % digitales"],
   ["Vos interventions de ménage, 100 % digitalisées.", "Your cleaning services, 100% digital.", "I tuoi interventi di pulizia, 100% digitali.", "Tus servicios de limpieza, 100 % digitales."],
   ["Cleaneroo · Vos interventions de ménage, 100 % digitalisées", "Cleaneroo · Your cleaning services, 100% digital", "Cleaneroo · I tuoi interventi di pulizia, 100% digitali", "Cleaneroo · Tus servicios de limpieza, 100 % digitales"],
