@@ -1,7 +1,7 @@
 // Parcours de réservation en 5 étapes : copie de Reservation.kt (application Android).
 // 1 prestation · 2 questionnaire · 3 photos · 4 adresse, accès et créneau · 5 estimation, coordonnées et envoi.
 import { RUBRIQUES, rubrique, formulesPour, TYPES_LIEU, TYPES_LOGEMENT, BESOINS_SPECIAUX, ACCUEIL, accueilAutonomeInterdit, photosObligatoires } from "./catalogue.js";
-import { calculer, entreeEstimation, SALISSURE, disponibilite } from "./estimation.js";
+import { calculer, entreeEstimation, SALISSURE, disponibilite, meilleurPack } from "./estimation.js";
 import { REGLES, euros, duree, heure, dateCourte, estPrelancement, MESSAGE_LANCEMENT } from "./regles.js";
 import { envoyerDemande } from "./donnees.js";
 import { traduire } from "./langue.js";
@@ -111,7 +111,7 @@ function etape2() {
       h += `<p class="petit"><b>Nos formules</b></p>` + r.packs.map(p => {
         const tp = r.taches.filter(t => p.tacheIds.includes(t.id));
         const brut = tp.reduce((s, t) => s + t.prixC, 0), net = brut - Math.round(brut * p.remisePct / 100);
-        const actif = p.tacheIds.every(id => b.taches.includes(id));
+        const actif = meilleurPack(r.packs, b.taches)?.id === p.id; // une seule formule en vert : celle dont la remise s'applique
         return `<button type="button" class="option ${actif ? "choisi" : ""}" data-pack="${p.id}" style="display:flex;gap:12px;align-items:center">
           <span style="flex:1">${p.nom} <span class="tampon">−${p.remisePct} %</span><span class="detail">${tp.map(t => t.nom.toLowerCase()).join(", ")}</span></span>
           <span style="text-align:right">${euros(net)}<span class="detail" style="text-decoration:line-through">${euros(brut)}</span></span></button>`;
@@ -269,8 +269,11 @@ document.addEventListener("click", async e => {
   if (ds.plus) return maj({ [ds.plus]: Math.min(+ds.max, b[ds.plus] + +ds.pas) });
   if (ds.pack) {
     const p = rubrique(b.rubriqueId).packs.find(x => x.id === ds.pack);
-    const actif = p.tacheIds.every(id => b.taches.includes(id));
-    return maj({ taches: actif ? b.taches.filter(id => !p.tacheIds.includes(id)) : [...new Set([...b.taches, ...p.tacheIds])] });
+    const enCours = meilleurPack(rubrique(b.rubriqueId).packs, b.taches);
+    // Formule en vert : on la retire. Sinon on remplace la formule en cours par celle-ci.
+    if (enCours?.id === p.id) return maj({ taches: b.taches.filter(id => !p.tacheIds.includes(id)) });
+    const base = enCours ? b.taches.filter(id => !enCours.tacheIds.includes(id)) : b.taches;
+    return maj({ taches: [...new Set([...base, ...p.tacheIds])] });
   }
   if (ds.retirer !== undefined) return maj({ tachesPerso: b.tachesPerso.filter((_, i) => i !== +ds.retirer) });
   if (ds.jour) return maj({ jour: ds.jour, heure: -1 });
