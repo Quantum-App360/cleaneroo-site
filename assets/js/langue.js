@@ -331,6 +331,61 @@ const T = [
   ["Appartement", "Flat", "Appartamento", "Piso"],
   ["Maison", "House", "Casa", "Casa"],
   ["Duplex / loft", "Duplex / loft", "Duplex / loft", "Dúplex / loft"],
+  // Accueil nouvelle génération (4 novembre 2026)
+  ["Location saisonnière", "Holiday rental", "Affitto breve", "Alquiler vacacional"],
+  ["Le ménage passe", "Cleaning goes", "Le pulizie passano", "La limpieza pasa"],
+  ["au digital.", "digital.", "al digitale.", "a lo digital."],
+  ["Réservez en 2 minutes, suivez votre Cleaneur en direct, recevez le compte rendu photo. Vous ne payez qu'après validation.", "Book in 2 minutes, follow your Cleaneur live, get the photo report. You only pay once you approve.", "Prenota in 2 minuti, segui il tuo Cleaneur in diretta, ricevi il report fotografico. Paghi solo dopo la convalida.", "Reserva en 2 minutos, sigue a tu Cleaneur en directo, recibe el informe con fotos. Solo pagas tras validar."],
+  ["Quelle prestation ?", "Which service?", "Quale servizio?", "¿Qué servicio?"],
+  ["Voir mon prix", "See my price", "Vedi il mio prezzo", "Ver mi precio"],
+  ["Comme la dernière fois", "Same as last time", "Come l'ultima volta", "Como la última vez"],
+  ["Recommander ›", "Book again ›", "Riordina ›", "Volver a pedir ›"],
+  ["Recommander en 3 clics ›", "Book again in 3 clicks ›", "Riordina in 3 clic ›", "Vuelve a pedir en 3 clics ›"],
+  ["Aperçu de l'application", "App preview", "Anteprima dell'app", "Vista previa de la app"],
+  ["Sofia est en route", "Sofia is on her way", "Sofia è in arrivo", "Sofia está en camino"],
+  ["Arrivée dans 8 min", "Arriving in 8 min", "Arrivo tra 8 min", "Llega en 8 min"],
+  ["Compte rendu reçu", "Report received", "Report ricevuto", "Informe recibido"],
+  ["12 photos avant / après", "12 before / after photos", "12 foto prima / dopo", "12 fotos antes / después"],
+  ["Payé après validation", "Paid after approval", "Pagato dopo la convalida", "Pagado tras validar"],
+  ["Crédit d'impôt déduit : −50 %", "Tax credit deducted: −50%", "Credito d'imposta detratto: −50%", "Crédito fiscal deducido: −50 %"],
+  ["pour réserver", "to book", "per prenotare", "para reservar"],
+  ["prestations", "services", "servizi", "servicios"],
+  ["de crédit d'impôt", "tax credit", "di credito d'imposta", "de crédito fiscal"],
+  ["avant validation", "before approval", "prima della convalida", "antes de validar"],
+  ["2 min", "2 min", "2 min", "2 min"],
+  ["Le ménage nouvelle génération", "Next-generation cleaning", "Le pulizie di nuova generazione", "La limpieza de nueva generación"],
+  ["Ce qui change quand tout est digitalisé.", "What changes when everything goes digital.", "Cosa cambia quando tutto è digitale.", "Lo que cambia cuando todo es digital."],
+  ["À l'ancienne", "The old way", "Alla vecchia maniera", "A la antigua"],
+  ["Avec Cleaneroo", "With Cleaneroo", "Con Cleaneroo", "Con Cleaneroo"],
+  ["Prix", "Price", "Prezzo", "Precio"],
+  ["Devis, attente, négociation", "Quotes, waiting, haggling", "Preventivi, attese, trattative", "Presupuestos, esperas, regateo"],
+  ["Prix affiché tout de suite, crédit d'impôt compris", "Price shown instantly, tax credit included", "Prezzo mostrato subito, credito d'imposta incluso", "Precio al instante, crédito fiscal incluido"],
+  ["Réservation", "Booking", "Prenotazione", "Reserva"],
+  ["Appels, messages, relances", "Calls, messages, reminders", "Chiamate, messaggi, solleciti", "Llamadas, mensajes, recordatorios"],
+  ["2 minutes en ligne, 3 clics la fois suivante", "2 minutes online, 3 clicks the next time", "2 minuti online, 3 clic la volta successiva", "2 minutos en línea, 3 clics la próxima vez"],
+  ["Qui vient chez vous", "Who comes to your home", "Chi viene a casa tua", "Quién va a tu casa"],
+  ["On ne sait pas vraiment", "You don't really know", "Non si sa davvero", "No se sabe realmente"],
+  ["Cleaneur vérifié : identité, SIRET, assurance, selfie du jour", "Verified Cleaneur: ID, business number, insurance, selfie of the day", "Cleaneur verificato: identità, partita IVA, assicurazione, selfie del giorno", "Cleaneur verificado: identidad, registro mercantil, seguro, selfie del día"],
+  ["Arrivée", "Arrival", "Arrivo", "Llegada"],
+  ["On attend sans nouvelles", "You wait with no news", "Si aspetta senza notizie", "Esperas sin noticias"],
+  ["Suivi en direct, arrivée confirmée par géolocalisation", "Live tracking, arrival confirmed by geolocation", "Tracciamento in diretta, arrivo confermato dalla geolocalizzazione", "Seguimiento en directo, llegada confirmada por geolocalización"],
+  ["Travail réalisé", "Work done", "Lavoro svolto", "Trabajo realizado"],
+  ["Aucune preuve", "No proof", "Nessuna prova", "Ninguna prueba"],
+  ["Compte rendu photo avant / après, horodaté et signé", "Before / after photo report, time-stamped and signed", "Report fotografico prima / dopo, con data, ora e firma", "Informe con fotos antes / después, con fecha, hora y firma"],
+  ["Paiement", "Payment", "Pagamento", "Pago"],
+  ["À l'avance ou en espèces", "Upfront or in cash", "In anticipo o in contanti", "Por adelantado o en efectivo"],
+  ["Seulement après votre validation", "Only after you approve", "Solo dopo la tua convalida", "Solo después de tu validación"],
+  ["En cas de souci", "If something goes wrong", "In caso di problemi", "Si hay algún problema"],
+  ["Votre parole contre la sienne", "Your word against theirs", "La tua parola contro la sua", "Tu palabra contra la suya"],
+  ["Litige en 48 h et Garantie Cleaneroo", "Dispute within 48 h and Cleaneroo Guarantee", "Contestazione entro 48 h e Garanzia Cleaneroo", "Reclamación en 48 h y Garantía Cleaneroo"],
+  ["Vos adresses enregistrées", "Your saved addresses", "I tuoi indirizzi salvati", "Tus direcciones guardadas"],
+  ["+ Nouvelle adresse", "+ New address", "+ Nuovo indirizzo", "+ Nueva dirección"],
+  ["Adresse", "Address", "Indirizzo", "Dirección"],
+  ["Vos informations enregistrées", "Your saved information", "Le tue informazioni salvate", "Tu información guardada"],
+  ["adresse(s) et vos coordonnées sont gardées sur cet appareil pour commander plus vite.", "address(es) and your contact details are kept on this device so you can order faster.", "indirizzo/i e i tuoi recapiti sono conservati su questo dispositivo per ordinare più in fretta.", "dirección(es) y tus datos de contacto se guardan en este dispositivo para pedir más rápido."],
+  ["Oublier mes informations", "Forget my information", "Dimentica le mie informazioni", "Olvidar mi información"],
+  ["Vos informations ont été effacées de cet appareil.", "Your information has been erased from this device.", "Le tue informazioni sono state cancellate da questo dispositivo.", "Tu información se ha borrado de este dispositivo."],
+  ["Pour aller plus vite à la commande suivante, votre navigateur garde sur cet appareil vos coordonnées, vos adresses enregistrées et votre dernière commande (jamais le code d'accès). Vous pouvez tout effacer depuis « Mes demandes ».", "To make your next order faster, your browser keeps your contact details, saved addresses and last order on this device (never the access code). You can erase everything from \"My requests\".", "Per velocizzare l'ordine successivo, il browser conserva su questo dispositivo i tuoi recapiti, gli indirizzi salvati e l'ultimo ordine (mai il codice di accesso). Puoi cancellare tutto da «Le mie richieste».", "Para agilizar el siguiente pedido, tu navegador guarda en este dispositivo tus datos de contacto, direcciones y último pedido (nunca el código de acceso). Puedes borrarlo todo desde «Mis solicitudes»."],
 ];
 
 const DICO = new Map();
@@ -474,9 +529,11 @@ export function traduireCatalogue(RUBRIQUES, TYPES_LIEU, formulesPour) {
 }
 
 /* ------------------------------------------------------------------ Sélecteur de langue à drapeaux */
+/** Menu des langues : le drapeau de la langue choisie, les 4 drapeaux au clic (prend peu de place dans l'en-tête). */
 export function selecteurLangue() {
-  return `<div class="langues" role="group" aria-label="Langue / Language">${Object.entries(LANGUES).map(([code, l]) =>
-    `<button type="button" class="drapeau ${code === langue ? "choisi" : ""}" data-langue="${code}" title="${l.nom}" aria-label="${l.nom}" aria-pressed="${code === langue}">${l.drapeau}</button>`).join("")}</div>`;
+  return `<details class="langues"><summary aria-label="Langue / Language" title="Langue / Language"><span class="drapeau choisi">${LANGUES[langue].drapeau}</span><span class="code">${langue.toUpperCase()}</span></summary>
+    <div class="menu-langues" role="group" aria-label="Langue / Language">${Object.entries(LANGUES).map(([code, l]) =>
+    `<button type="button" class="${code === langue ? "choisi" : ""}" data-langue="${code}" aria-pressed="${code === langue}"><span class="drapeau">${l.drapeau}</span>${l.nom}</button>`).join("")}</div></details>`;
 }
 document.addEventListener("click", e => {
   const b = e.target.closest("[data-langue]");

@@ -9,16 +9,61 @@ import { traduire } from "./langue.js";
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const CLE_BROUILLON = "cleaneroo-brouillon";
 
-function nouveauBrouillon(rubriqueId, espace = "personnel") {
+/* ------------------------------------------------------------------ Mémoire : la 2e commande en quelques secondes (comme l'app : AppData.modeles et logements)
+   Gardé sur l'appareil du client uniquement : coordonnées, adresses enregistrées, dernière commande par prestation.
+   Jamais le code d'accès ni le créneau. « Oublier mes informations » dans Mes demandes efface tout. */
+const CLE_PROFIL = "cleaneroo-profil", CLE_LOGEMENTS = "cleaneroo-logements", CLE_MODELES = "cleaneroo-modeles";
+const lire = (cle, defaut) => { try { return JSON.parse(localStorage.getItem(cle) || "null") ?? defaut; } catch { return defaut; } };
+const ecrire = (cle, v) => { try { localStorage.setItem(cle, JSON.stringify(v)); } catch { /* rien */ } };
+export const profil = () => lire(CLE_PROFIL, null);
+export const logements = () => lire(CLE_LOGEMENTS, []);
+/** Dernières commandes, la plus récente d'abord : [{ rubriqueId, quand, logementId, ... }]. */
+export const modeles = () => Object.values(lire(CLE_MODELES, {})).sort((a, b) => b.quand - a.quand);
+export function oublierMesInformations() { [CLE_PROFIL, CLE_LOGEMENTS, CLE_MODELES, CLE_BROUILLON].forEach(k => { try { localStorage.removeItem(k); } catch { /* rien */ } }); }
+const CHAMPS_LOGEMENT = ["rue", "codePostal", "ville", "accueil", "tiersNom", "tiersTel", "boiteEmplacement"];
+const PRIVES = ["prenom", "nom", "email", "telephone", "code", "jour", "heure", "cgv", "etape", ...CHAMPS_LOGEMENT];
+/** Libellé court d'une adresse enregistrée : « Appartement · Fréjus ». */
+export const nomLogement = l => `${(TYPES_LOGEMENT.find(t => t.id === l.typeLogementId) || {}).nom || "Adresse"} · ${l.ville}`;
+
+function memoriserCommande(b) {
+  ecrire(CLE_PROFIL, { prenom: b.prenom.trim(), nom: b.nom.trim(), email: b.email.trim(), telephone: b.telephone.trim() });
+  const liste = logements();
+  const meme = l => l.rue.trim().toLowerCase() === b.rue.trim().toLowerCase() && l.codePostal === b.codePostal;
+  const ancien = liste.find(meme);
+  const log = { id: ancien?.id || "l" + Date.now(), typeLogementId: b.typeLogementId, surface: b.surface, chambres: b.chambres, sdb: b.sdb, niveaux: b.niveaux,
+    ...Object.fromEntries(CHAMPS_LOGEMENT.map(k => [k, String(b[k] ?? "").trim()])) };
+  ecrire(CLE_LOGEMENTS, [log, ...liste.filter(l => !meme(l))].slice(0, 10));
+  const modele = Object.fromEntries(Object.entries(b).filter(([k]) => !PRIVES.includes(k)));
+  ecrire(CLE_MODELES, { ...lire(CLE_MODELES, {}), [b.rubriqueId]: { ...modele, logementId: log.id, quand: Date.now() } });
+}
+
+/** Applique une adresse enregistrée au brouillon (adresse et accès ; le code est redemandé). */
+function avecLogement(br, l) {
+  if (!l) return br;
+  const dims = ["home", "rental"].includes(br.rubriqueId) ? { typeLogementId: l.typeLogementId, surface: l.surface, chambres: l.chambres, sdb: l.sdb, niveaux: l.niveaux } : {};
+  return { ...br, ...dims, ...Object.fromEntries(CHAMPS_LOGEMENT.map(k => [k, l[k] || ""])), logementId: l.id, code: "" };
+}
+
+function nouveauBrouillon(rubriqueId, espace = "personnel", rapide = false) {
   const r = rubrique(rubriqueId);
   const lieux = TYPES_LIEU[rubriqueId];
+  const p = profil() || {};
+  const m = lire(CLE_MODELES, {})[rubriqueId];
+  const log = logements().find(l => l.id === m?.logementId) || logements()[0];
+  // Déjà commandé : tout est repris ; « rapide » ouvre directement l'adresse et le créneau.
+  if (m) return avecLogement({ ...vierge(rubriqueId, espace, r, lieux), ...m, prenom: p.prenom || "", nom: p.nom || "", email: p.email || "", telephone: p.telephone || "",
+    etape: rapide && log ? 4 : 2, jour: "", heure: -1, cgv: false }, log);
+  return avecLogement({ ...vierge(rubriqueId, espace, r, lieux), prenom: p.prenom || "", nom: p.nom || "", email: p.email || "", telephone: p.telephone || "" }, log);
+}
+
+function vierge(rubriqueId, espace, r, lieux) {
   return {
     rubriqueId, espace, etape: 2, typeLogementId: "appartement", surface: 62, chambres: 2, sdb: 1, niveaux: 1, fenetres: 8,
     formuleId: r.toujoursSurDevis ? "" : formulesPour(r)[0].id, typeLieuId: lieux ? lieux[0].id : "", salissure: "NORMAL",
     taches: [], tachesPerso: [], animaux: false, etapesLocation: 8, consommables: true, remarque: "",
     accueil: "", tiersNom: "", tiersTel: "", boiteEmplacement: "", code: "",
     rue: "", codePostal: "", ville: "", jour: "", heure: -1, flexible: false, engagementMois: 0,
-    choixCleaneur: "candidatures", prenom: "", nom: "", email: "", telephone: "", cgv: false,
+    choixCleaneur: "candidatures", prenom: "", nom: "", email: "", telephone: "", cgv: false, logementId: "",
   };
 }
 
@@ -30,11 +75,15 @@ let envoi = false;
 function sauver() { try { localStorage.setItem(CLE_BROUILLON, JSON.stringify(b)); } catch { /* rien */ } }
 function charger() { try { return JSON.parse(localStorage.getItem(CLE_BROUILLON) || "null"); } catch { return null; } }
 
-export function ouvrirReservation(conteneur, rubriqueId) {
+export function ouvrirReservation(conteneur, rubriqueId, option = "") {
   racine = conteneur;
   const ancien = charger();
-  if (rubriqueId && rubrique(rubriqueId)) b = ancien && ancien.rubriqueId === rubriqueId ? ancien : nouveauBrouillon(rubriqueId, ancien?.espace);
+  const rapide = option === "rapide";
+  if (rubriqueId && rubrique(rubriqueId)) b = !rapide && ancien && ancien.rubriqueId === rubriqueId ? ancien : nouveauBrouillon(rubriqueId, ancien?.espace, rapide);
   else b = ancien && ancien.etape > 1 ? ancien : null;
+  // Code postal saisi sur l'accueil (« Voir mon prix »).
+  const cp = option.match(/^cp-(\d{5})$/)?.[1];
+  if (b && cp && !b.rue) b = { ...b, codePostal: cp };
   photos = [];
   rendre();
 }
@@ -64,6 +113,10 @@ function etape1() {
     ${titre("Pour qui ?")}
     <div class="segments"><button type="button" data-espace="personnel" class="${(b?.espace || "personnel") === "personnel" ? "choisi" : ""}">Personnel</button>
       <button type="button" data-espace="professionnel" class="${b?.espace === "professionnel" ? "choisi" : ""}">Professionnel</button></div>
+    ${modeles().length ? titre("Comme la dernière fois") + `<div class="grille-2">${modeles().slice(0, 4).map(m => {
+      const r = rubrique(m.rubriqueId), l = logements().find(x => x.id === m.logementId);
+      return `<a class="carte prestation rapide" href="#/reserver/${m.rubriqueId}/rapide"><div class="emoji">${r.emoji}</div><h3>${r.nom}</h3>
+        <p class="muet" style="margin:4px 0 0">${l ? esc(nomLogement(l)) : ""}</p><span class="tampon vert">Recommander en 3 clics ›</span></a>`; }).join("")}</div>` : ""}
     ${titre("Votre prestation")}
     <div class="grille-3">${RUBRIQUES.map(r => `<button type="button" class="carte prestation" data-rubrique="${r.id}" style="text-align:left">
       <div class="emoji">${r.emoji}</div><h3>${r.nom}</h3><p class="muet" style="margin:4px 0 0">${r.sousTitre}</p></button>`).join("")}</div>`;
@@ -182,7 +235,9 @@ function etape4() {
   const manque = !adresseOk ? "Indiquez l'adresse complète." : !accesOk ? "Indiquez comment le Cleaneur accède au lieu." : !creneauOk ? "Choisissez un créneau." : "";
   return `<h2>Adresse et créneau</h2>
     ${titre("Adresse de l'intervention")}
-    <div class="carte">${champTexte("Adresse", "rue", b.rue, "text", 'autocomplete="street-address" maxlength="200"')}
+    ${logements().length ? `<p class="petit"><b>Vos adresses enregistrées</b></p>${logements().map(l => `<button type="button" class="option ${b.logementId === l.id ? "choisi" : ""}" data-logement="${l.id}">${esc(nomLogement(l))}<span class="detail">${esc(l.rue)}, ${esc(l.codePostal)} ${esc(l.ville)}</span></button>`).join("")}
+      <button type="button" class="option ${b.logementId ? "" : "choisi"}" data-logement="">+ Nouvelle adresse</button>` : ""}
+    <div class="carte ${b.logementId ? "masque" : ""}">${champTexte("Adresse", "rue", b.rue, "text", 'autocomplete="street-address" maxlength="200"')}
       <div class="grille-2">${champTexte("Code postal", "codePostal", b.codePostal, "text", 'inputmode="numeric" maxlength="5" autocomplete="postal-code"')}${champTexte("Ville", "ville", b.ville, "text", 'autocomplete="address-level2" maxlength="100"')}</div>
       <p class="petit">Elle sert au calcul du déplacement et à l'arrivée du Cleaneur.</p></div>
     ${titre("Accès au lieu")}
@@ -275,6 +330,10 @@ document.addEventListener("click", async e => {
     const base = enCours ? b.taches.filter(id => !enCours.tacheIds.includes(id)) : b.taches;
     return maj({ taches: [...new Set([...base, ...p.tacheIds])] });
   }
+  if (ds.logement !== undefined) {
+    const l = logements().find(x => x.id === ds.logement);
+    return maj(l ? avecLogement(b, l) : { logementId: "", rue: "", codePostal: "", ville: "", accueil: "", tiersNom: "", tiersTel: "", boiteEmplacement: "", code: "" });
+  }
   if (ds.retirer !== undefined) return maj({ tachesPerso: b.tachesPerso.filter((_, i) => i !== +ds.retirer) });
   if (ds.jour) return maj({ jour: ds.jour, heure: -1 });
   if (ds.heure) return maj({ heure: +ds.heure });
@@ -292,7 +351,7 @@ document.addEventListener("click", async e => {
 document.addEventListener("change", e => {
   if (!racine || !racine.contains(e.target)) return;
   const ds = e.target.dataset;
-  if (ds.texte) { b = { ...b, [ds.texte]: e.target.value }; sauver(); return rendre(); }
+  if (ds.texte) { b = { ...b, [ds.texte]: e.target.value }; sauver(); return rendre(); }  // (logementId gardé : seule la saisie d'une nouvelle adresse le vide)
   if (ds.case) return maj({ [ds.case]: e.target.checked });
   if (ds.tache) return maj({ taches: e.target.checked ? [...b.taches, ds.tache] : b.taches.filter(x => x !== ds.tache) });
   if (e.target.id === "photos") { photos = [...photos, ...e.target.files].filter(f => f.type.startsWith("image/")).slice(0, 12); rendre(); }
@@ -315,7 +374,7 @@ async function envoyer() {
   envoi = true; rendre();
   try {
     const acces = { TIERS: { nom: b.tiersNom, telephone: b.tiersTel }, BOITE: { emplacement: b.boiteEmplacement, code: b.code }, AUTONOME: { code: b.code } }[b.accueil] || {};
-    const details = { ...b }; ["prenom", "nom", "email", "telephone", "rue", "codePostal", "ville", "code", "tiersNom", "tiersTel", "boiteEmplacement", "cgv", "etape"].forEach(k => delete details[k]);
+    const details = { ...b }; ["prenom", "nom", "email", "telephone", "rue", "codePostal", "ville", "code", "tiersNom", "tiersTel", "boiteEmplacement", "cgv", "etape", "logementId"].forEach(k => delete details[k]);
     details.lignes = est.lignes;
     const { reference, jeton } = await envoyerDemande({
       rubrique_id: b.rubriqueId, details, estimation_c: est.totalC, credit_impot_c: est.creditImpotC, duree_min: est.dureeMin,
@@ -323,6 +382,7 @@ async function envoyer() {
       choix_cleaneur: estPrelancement() ? "candidatures" : b.choixCleaneur, espace: b.espace, prenom: b.prenom.trim(), nom: b.nom.trim(), email: b.email.trim(), telephone: b.telephone.trim(),
       rue: b.rue.trim(), code_postal: b.codePostal.trim(), ville: b.ville.trim(), accueil: b.accueil || "PRESENT", acces, remarque: b.remarque.trim(),
     }, photos);
+    memoriserCommande(b);
     try { localStorage.removeItem(CLE_BROUILLON); } catch { /* rien */ }
     envoi = false; b = null; photos = [];
     location.hash = `#/demande/${reference}/${jeton}`;
