@@ -1,6 +1,7 @@
 // Calcul de l'estimation : copie EXACTE de Estimation.kt (§ 8 du cahier des charges), dans le même ordre.
 import { REGLES, duree } from "./regles.js";
-import { rubrique, formulesPour, TYPES_LIEU, RUBRIQUES_CREDIT_IMPOT, TYPES_VITRES_ELIGIBLES, prixLigne, minutesLigne, libelleLigne } from "./catalogue.js";
+import { rubrique, formulesPour, TYPES_LIEU, RUBRIQUES_CREDIT_IMPOT, TYPES_VITRES_ELIGIBLES, prixLigne, minutesLigne, libelleLigne,
+  arrondiEuro, tachesPour, tacheChiffree, packsPour, remisePack } from "./catalogue.js";
 
 export const SALISSURE = {
   LEGER: { libelle: "Léger", tempsPct: -10, prixPct: 0 },
@@ -16,7 +17,7 @@ const pct = (base, p) => Math.round(base * p / 100);
 const ENTREE_DEFAUT = {
   surfaceM2: 0, m2ParHeure: 0, minimumMin: 0, coefTemps: 1.0, coefPrix: 1.0, dureeBaseImposeeMin: 0,
   niveauxSupplementaires: 0, minutesEtapesLocation: 0, consommablesAControler: false, salissure: "NORMAL",
-  taches: [], remisePackPct: 0, tachesPersonnalisees: 0, dimanche: false, creneauMalin: false,
+  taches: [], remisePackPct: 0, remisePackC: null, tachesPersonnalisees: 0, dimanche: false, creneauMalin: false,
   engagementMois: 0, espacePersonnel: true, typeLieuId: "", panier: [],
 };
 
@@ -62,14 +63,16 @@ export function calculer(entree) {
 
   // 4. Tâches / options
   const taches = e.taches || [];
-  const tachesC = taches.reduce((s, t) => s + Math.round(t.prixC * e.coefPrix), 0);
+  // Prix d'une tâche arrondi à l'euro (le prorata de surface est déjà appliqué par entreeEstimation).
+  const prixTache = t => (e.coefPrix === 1 ? t.prixC : arrondiEuro(t.prixC * e.coefPrix));
+  const tachesC = taches.reduce((s, t) => s + prixTache(t), 0);
   const tachesMin = taches.reduce((s, t) => s + t.minutes, 0);
-  taches.forEach(t => lignes.push({ libelle: t.nom, montantC: Math.round(t.prixC * e.coefPrix) }));
+  taches.forEach(t => lignes.push({ libelle: t.nom, montantC: prixTache(t) }));
   sousTotal += tachesC;
 
-  // 5. Remise de pack (sur les tâches)
+  // 5. Remise de pack (sur le prix des tâches du pack, arrondie à l'euro)
   if (e.remisePackPct > 0) {
-    const rem = pct(tachesC, e.remisePackPct);
+    const rem = e.remisePackC ?? arrondiEuro(tachesC * e.remisePackPct / 100);
     lignes.push({ libelle: `Remise pack (−${e.remisePackPct} %)`, montantC: -rem });
     sousTotal -= rem;
   }
@@ -131,9 +134,36 @@ export function eligibleCreditImpot(rubriqueId, espacePersonnel, typeLieuId = ""
   return true;
 }
 
-/** La remise la plus avantageuse parmi les packs dont toutes les tâches sont cochées. */
-export function meilleurPack(packs, cochees) {
-  return packs.filter(p => p.tacheIds.every(id => cochees.includes(id))).sort((a, b) => b.remisePct - a.remisePct)[0] || null;
+/** Une seule remise par demande : parmi les packs dont toutes les tâches sont cochées, la plus élevée en euros (sans prix : le plus fort %). */
+export function meilleurPack(packs, cochees, chiffrees = []) {
+  const complets = packs.filter(p => p.tacheIds.every(id => cochees.includes(id)));
+  const valeur = p => (chiffrees.length ? remisePack(p, chiffrees) : 0);
+  return complets.sort((a, b) => valeur(b) - valeur(a) || b.remisePct - a.remisePct)[0] || null;
+}
+
+/** Tâches proposées pour le type de lieu du brouillon, au prix du client. */
+export function tachesChiffrees(b) {
+  const r = rubrique(b.rubriqueId);
+  const coefPrix = b.rubriqueId === "car" ? ((TYPES_LIEU.car || []).find(l => l.id === b.typeLieuId)?.coef ?? 1) : 1;
+  return tachesPour(r, b.typeLieuId).map(t => tacheChiffree(t, r, b.surface, coefPrix));
+}
+/** Formule choisie (la première par défaut). */
+export function formuleDe(b) { const f = formulesPour(rubrique(b.rubriqueId)); return f.find(x => x.id === b.formuleId) || f[0]; }
+/** Entretien régulier : chaque passage est une demande séparée, au même prix. */
+export const passagesPlanifies = b => (formuleDe(b)?.genre === "REGULIER" ? Math.min(REGLES.PASSAGES_MAX, Math.max(REGLES.PASSAGES_MIN, b.passages || REGLES.PASSAGES_DEFAUT)) : 1);
+/** Dates des passages : selon la fréquence, ou les jours choisis (plusieurs fois par semaine). jour : 1 = lundi … 7 = dimanche. */
+export function datesPassages(premier, frequence, jours, nombre) {
+  const res = [];
+  if (frequence === "plusieurs" && jours?.length) {
+    for (let d = new Date(premier); res.length < nombre; d = new Date(d.getTime() + 864e5)) {
+      const j = d.getDay() === 0 ? 7 : d.getDay();
+      if (!res.length || jours.includes(j)) res.push(new Date(d));
+    }
+    return res;
+  }
+  const pas = { deux_semaines: 14, quatre_semaines: 28 }[frequence] || 7;
+  for (let i = 0; i < nombre; i++) { const d = new Date(premier); d.setDate(d.getDate() + i * pas); res.push(d); }
+  return res;
 }
 
 /** Minimum facturé par rubrique (centimes), null s'il n'y en a pas. */
@@ -163,8 +193,10 @@ export function entreeEstimation(b, espacePersonnel, debut) {
   const f = formules.find(x => x.id === b.formuleId) || formules[0];
   const lieu = (TYPES_LIEU[b.rubriqueId] || []).find(x => x.id === b.typeLieuId);
   const coefLieu = lieu ? lieu.coef : 1.0;
-  const tachesChoisies = r.taches.filter(t => b.taches.includes(t.id));
-  const pack = meilleurPack(r.packs, b.taches);
+  // Tâches proposées pour ce type de lieu, au prix du client (prorata de surface, gabarit, arrondi à l'euro).
+  const chiffrees = tachesChiffrees(b);
+  const tachesChoisies = chiffrees.filter(t => b.taches.includes(t.id));
+  const pack = meilleurPack(packsPour(r, b.typeLieuId), b.taches, chiffrees);
   let dureeImposee = 0, m2h = f.m2ParHeure, surface = b.surface;
   if (b.rubriqueId === "rental") { dureeImposee = Math.round(tempsRotationLocation(b.chambres, b.sdb, b.surface, 1.0)); m2h = 0; }
   if (b.rubriqueId === "windows") { dureeImposee = Math.max(f.minimumMin, b.fenetres * 15); m2h = 0; surface = 0; }
@@ -173,12 +205,12 @@ export function entreeEstimation(b, espacePersonnel, debut) {
   return {
     rubriqueId: b.rubriqueId, surfaceM2: surface, m2ParHeure: m2h, minimumMin: f.minimumMin,
     coefTemps: b.rubriqueId === "car" ? 1.0 : b.rubriqueId === "rental" ? f.coef : f.coef * coefLieu,
-    coefPrix: b.rubriqueId === "car" ? coefLieu : 1.0,
+    coefPrix: 1.0, // déjà appliqué aux tâches chiffrées
     dureeBaseImposeeMin: dureeImposee,
     niveauxSupplementaires: b.rubriqueId === "home" ? Math.max(0, b.niveaux - 1) : 0,
     minutesEtapesLocation: 0,
     consommablesAControler: b.rubriqueId === "rental" && b.consommables,
-    salissure: b.salissure, taches: tachesChoisies, remisePackPct: pack ? pack.remisePct : 0,
+    salissure: b.salissure, taches: tachesChoisies, remisePackPct: pack ? pack.remisePct : 0, remisePackC: pack ? remisePack(pack, chiffrees) : null,
     tachesPersonnalisees: b.tachesPerso.length,
     dimanche: debut ? debut.getDay() === 0 : false,
     creneauMalin: dispo === "MALIN" && !b.flexible,

@@ -1,8 +1,9 @@
 // Parcours de réservation en 5 étapes : copie de Reservation.kt (application Android).
 // 1 prestation · 2 questionnaire · 3 photos · 4 adresse, accès et créneau · 5 estimation, coordonnées et envoi.
 import { RUBRIQUES, rubrique, formulesPour, TYPES_LIEU, TYPES_LOGEMENT, BESOINS_SPECIAUX, ACCUEIL, accueilAutonomeInterdit, photosObligatoires,
-  ELEMENTS_TEXTILES, TAILLES_CANAPE, prixLigne, minutesLigne, libelleLigne, pastille } from "./catalogue.js";
-import { calculer, entreeEstimation, SALISSURE, disponibilite, meilleurPack } from "./estimation.js";
+  ELEMENTS_TEXTILES, TAILLES_CANAPE, prixLigne, minutesLigne, libelleLigne, pastille,
+  FREQUENCES, JOURS_SEMAINE, DERNIERS_NETTOYAGES, packsPour, remisePack } from "./catalogue.js";
+import { calculer, entreeEstimation, SALISSURE, disponibilite, meilleurPack, tachesChiffrees, formuleDe, passagesPlanifies, datesPassages } from "./estimation.js";
 import { REGLES, euros, duree, heure, dateCourte, estPrelancement, MESSAGE_LANCEMENT } from "./regles.js";
 import { envoyerDemande } from "./donnees.js";
 import { traduire } from "./langue.js";
@@ -66,6 +67,8 @@ function vierge(rubriqueId, espace, r, lieux) {
     rue: "", codePostal: "", ville: "", jour: "", heure: -1, flexible: false, engagementMois: 0,
     choixCleaneur: "candidatures", prenom: "", nom: "", email: "", telephone: "", cgv: false, logementId: "",
     panier: [], elementTextile: "", tailleCanape: "t15", quantitePanier: 1, surfaceMoquette: 10,
+    frequence: "semaine", moment: "", memeCleaneur: true, passages: REGLES.PASSAGES_DEFAUT, jours: [],
+    occasion: "", dernierNettoyage: "", natures: [],
   };
 }
 
@@ -139,8 +142,10 @@ function etape2() {
   if (!r.toujoursSurDevis && b.rubriqueId !== "car") {
     h += titre("Choisissez votre formule") + formules.map(f => `<button type="button" class="option ${f.id === b.formuleId ? "choisi" : ""}" data-champ="formuleId" data-valeur="${f.id}">
       ${esc(f.nom)}${f.description ? `<span class="detail">${esc(f.description)}</span>` : ""}</button>`).join("");
+    h += questionsFormule(r);
     if (b.rubriqueId === "textiles") h += panierTextiles();
-    if (r.inclus) h += `<div class="carte teintee" style="margin-top:6px"><b style="color:var(--turquoise)">Inclus dans votre forfait</b><p class="muet" style="margin:4px 0 0;font-size:14px">${esc(r.inclus)}</p></div>`;
+    const inclus = (lieux || []).find(l => l.id === b.typeLieuId)?.inclus || r.inclus;
+    if (inclus) h += `<div class="carte teintee" style="margin-top:6px"><b style="color:var(--turquoise)">Inclus dans votre forfait</b><p class="muet" style="margin:4px 0 0;font-size:14px">${esc(inclus)}</p></div>`;
     if (b.rubriqueId !== "textiles") h += titre("Dimensions") + `<div class="carte">`
       + (b.rubriqueId === "windows" ? compteur("Nombre de fenêtres", "fenetres", b.fenetres, { min: 1, max: 200 })
         : compteur("Surface", "surface", b.surface, { min: 5, max: 5000, unite: " m²" }))
@@ -160,20 +165,25 @@ function etape2() {
       `<button type="button" data-champ="salissure" data-valeur="${k}" class="${b.salissure === k ? "choisi" : ""}">${s.libelle}</button>`).join("")}</div>`;
   }
   if (b.rubriqueId === "construction") h += `<div class="note" style="margin-top:16px">Fin de chantier : jamais « standard ». Le niveau de salissure sera estimé dès que toutes les photos seront exploitables.</div>`;
-  if (r.taches.length) {
+  const chiffrees = tachesChiffrees(b), packs = packsPour(r, b.typeLieuId);
+  if (chiffrees.length) {
     h += titre("Tâches complémentaires");
-    if (r.packs.length) {
-      h += `<p class="petit"><b>Nos formules</b></p>` + r.packs.map(p => {
-        const tp = r.taches.filter(t => p.tacheIds.includes(t.id));
-        const brut = tp.reduce((s, t) => s + t.prixC, 0), net = brut - Math.round(brut * p.remisePct / 100);
-        const actif = meilleurPack(r.packs, b.taches)?.id === p.id; // une seule formule en vert : celle dont la remise s'applique
+    if (packs.length) {
+      h += `<p class="petit"><b>Nos formules</b></p>` + packs.map(p => {
+        const tp = chiffrees.filter(t => p.tacheIds.includes(t.id));
+        const brut = tp.reduce((s, t) => s + t.prixC, 0), net = brut - remisePack(p, chiffrees);
+        const actif = meilleurPack(packs, b.taches, chiffrees)?.id === p.id; // une seule formule en vert : celle dont la remise s'applique
         return `<button type="button" class="option ${actif ? "choisi" : ""}" data-pack="${p.id}" style="display:flex;gap:12px;align-items:center">
           <span style="flex:1">${p.nom} <span class="tampon">−${p.remisePct} %</span><span class="detail">${tp.map(t => t.nom.toLowerCase()).join(", ")}</span></span>
           <span style="text-align:right">${euros(net)}<span class="detail" style="text-decoration:line-through">${euros(brut)}</span></span></button>`;
       }).join("") + `<p class="petit">La remise s'applique tant que toutes les tâches de la formule restent cochées. Une seule formule remisée par demande.</p>`;
     }
-    h += `<div class="carte">${r.taches.map(t => `<label class="case"><input type="checkbox" data-tache="${t.id}" ${b.taches.includes(t.id) ? "checked" : ""}>
-      <span>${t.nom}</span><span class="info">${euros(t.prixC)} · ${duree(t.minutes)}</span></label>`).join("")}</div>`;
+    // Une carte par groupe, avec son intertitre
+    const groupes = [...new Set(chiffrees.map(t => t.groupe))];
+    h += groupes.map(g => (g ? `<p class="petit" style="margin:12px 0 4px"><b>${esc(g)}</b></p>` : "")
+      + `<div class="carte">${chiffrees.filter(t => t.groupe === g).map(t => `<label class="case"><input type="checkbox" data-tache="${t.id}" ${b.taches.includes(t.id) ? "checked" : ""}>
+      <span>${t.nom}</span><span class="info">${euros(t.prixC)} · ${duree(t.minutes)}</span></label>`).join("")}</div>`).join("");
+    if (r.surfaceReferenceM2 > 0 && chiffrees.some(t => t.parSurface)) h += `<p class="petit">Tâches marquées à la surface : prix pour ${r.surfaceReferenceM2} m², au prorata au-delà.</p>`;
   }
   if (!r.toujoursSurDevis) {
     h += titre("Une autre demande ?") + `<div class="carte">${b.tachesPerso.map((t, i) => `<div style="display:flex;align-items:center"><span style="flex:1">• ${esc(t)}</span>
@@ -183,13 +193,36 @@ function etape2() {
       <p class="petit">Chaque tâche particulière compte 15 min dans l'estimation ; le Cleaneur la confirme.</p></div>`;
   }
   if (b.rubriqueId === "home") h += `<div class="carte" style="margin-top:14px">${caseCocher("Des animaux vivent dans le logement", "animaux", b.animaux)}</div>`;
-  if (b.formuleId === "regulier" || b.formuleId === "saisonnier") {
-    h += titre("Durée d'engagement") + choix([["0", "Sans engagement"], ["3", "3 mois −5 %"], ["6", "6 mois −10 %"], ["12", "12 mois −15 %"]], b.engagementMois, "engagementMois")
-      + `<p class="petit">Plus vous vous engagez, moins chaque passage vous coûte. Le même Cleaneur à chaque passage, si possible.</p>`;
-  }
   const besoinOk = !r.toujoursSurDevis || b.formuleId;
   const panierOk = b.rubriqueId !== "textiles" || (b.panier || []).length > 0;
-  return h + actions(besoinOk && panierOk, !besoinOk ? "Choisissez votre besoin." : !panierOk ? "Ajoutez chaque élément au panier." : "");
+  const joursOk = !(formuleDe(b)?.genre === "REGULIER" && b.frequence === "plusieurs") || (b.jours || []).length >= REGLES.JOURS_MIN_PLUSIEURS_PAR_SEMAINE;
+  return h + actions(besoinOk && panierOk && joursOk, !besoinOk ? "Choisissez votre besoin." : !panierOk ? "Ajoutez chaque élément au panier."
+    : !joursOk ? "Choisissez au moins deux jours de passage." : "");
+}
+
+/** Questions affichées sous les formules, selon leur genre (QuestionsFormule dans l'appli). */
+function questionsFormule(r) {
+  const f = formuleDe(b);
+  if (f.genre === "REGULIER") {
+    const jours = b.jours || [];
+    return titre("Fréquence de passage") + choix(FREQUENCES, b.frequence || "semaine", "frequence")
+      + (b.frequence === "plusieurs" ? titre("Jours de passage") + `<div class="choix">${JOURS_SEMAINE.map(([n, nom]) =>
+        `<button type="button" data-jour-passage="${n}" class="${jours.includes(n) ? "choisi" : ""}">${nom}</button>`).join("")}</div><p class="petit">Au moins deux jours.</p>` : "")
+      + titre("Moment de passage") + choix(r.moments, b.moment, "moment")
+      + titre("Durée d'engagement") + choix([["0", "Sans engagement"], ["3", "3 mois −5 %"], ["6", "6 mois −10 %"], ["12", "12 mois −15 %"]], b.engagementMois, "engagementMois")
+      + `<p class="petit">Plus vous vous engagez, moins chaque passage vous coûte.</p>`
+      + `<div class="carte" style="margin-top:10px">${caseCocher("Le même Cleaneur à chaque passage, si possible", "memeCleaneur", b.memeCleaneur !== false)}
+        ${compteur("Passages à planifier", "passages", b.passages || REGLES.PASSAGES_DEFAUT, { min: REGLES.PASSAGES_MIN, max: REGLES.PASSAGES_MAX })}
+        <p class="petit">Chaque passage est une demande séparée, au même prix.</p></div>`;
+  }
+  if (f.genre === "PONCTUEL" && r.occasions.length) return titre("À quelle occasion ?") + choix(r.occasions.map(o => [o.id, o.nom]), b.occasion, "occasion");
+  if (f.genre === "REMISE_EN_ETAT") {
+    const natures = b.natures || [];
+    return titre("Dernier nettoyage en profondeur") + choix(DERNIERS_NETTOYAGES.map(d => [d.id, d.libelle]), b.dernierNettoyage, "dernierNettoyage")
+      + (r.naturesSalissure.length ? titre("Nature des salissures") + `<div class="carte">${r.naturesSalissure.map(n =>
+        `<label class="case"><input type="checkbox" data-nature="${esc(n)}" ${natures.includes(n) ? "checked" : ""}><span>${esc(n)}</span></label>`).join("")}</div>` : "");
+  }
+  return "";
 }
 
 /** Canapés et textiles : choix d'un élément de la formule, taille, quantité, puis ajout au panier (PanierTextiles dans l'appli). */
@@ -293,7 +326,8 @@ function etape5() {
           + `<div class="ligne-montant total"><span>Total estimé</span><span>${euros(est.totalC)}</span></div>
              ${est.creditImpotC ? `<div class="ligne-montant" style="color:var(--succes);font-weight:700"><span>Après crédit d'impôt (50 %)</span><span>${euros(est.apresCreditImpotC)}</span></div>` : ""}
              <p class="petit">Prix approximatif : le montant final ne peut pas le dépasser sans votre accord.</p>
-             ${est.nombreCleaneurs === 2 ? `<p class="petit">Au-delà de 6 h de travail, la mission est confiée à 2 Cleaneurs.</p>` : ""}`}
+             ${est.nombreCleaneurs === 2 ? `<p class="petit">Au-delà de 6 h de travail, la mission est confiée à 2 Cleaneurs.</p>` : ""}
+             ${passagesPlanifies(b) > 1 ? `<p class="petit">${passagesPlanifies(b)} passages planifiés : chaque passage est une demande séparée, au même prix.</p>` : ""}`}
     </div>
     ${est.creditImpotC ? `<p class="petit">50 % des dépenses pour les prestations éligibles réalisées à votre domicile (résidence principale ou secondaire), dans la limite des plafonds légaux (12 000 € par an, majorés dans certains cas).</p>` : ""}
     ${titre("Comment choisir votre Cleaneur ?")}
@@ -344,13 +378,22 @@ document.addEventListener("click", async e => {
     if (ds.champ === "engagementMois") v = +v;
     if (ds.champ === "typeLogementId") { const tl = TYPES_LOGEMENT.find(x => x.id === v); return maj({ typeLogementId: v, surface: tl.surface, chambres: tl.chambres, sdb: tl.sdb, niveaux: tl.niveaux }); }
     if (ds.champ === "accueil" && v === b.accueil) return;
+    // L'occasion coche le pack indiqué (le client peut ensuite décocher) ; « Autre » ne coche rien.
+    if (ds.champ === "occasion") {
+      const o = rubrique(b.rubriqueId).occasions.find(x => x.id === v);
+      const p = packsPour(rubrique(b.rubriqueId), b.typeLieuId).find(x => x.id === o?.packId);
+      return maj({ occasion: v, taches: [...new Set([...b.taches, ...(p ? p.tacheIds : [])])] });
+    }
+    // Le dernier nettoyage présélectionne l'état de saleté.
+    if (ds.champ === "dernierNettoyage") return maj({ dernierNettoyage: v, salissure: DERNIERS_NETTOYAGES.find(d => d.id === v).salissure });
     return maj({ [ds.champ]: v });
   }
   if (ds.moins) return maj({ [ds.moins]: Math.max(+ds.min, (b[ds.moins] ?? 1) - +ds.pas) });
   if (ds.plus) return maj({ [ds.plus]: Math.min(+ds.max, (b[ds.plus] ?? 1) + +ds.pas) });
   if (ds.pack) {
-    const p = rubrique(b.rubriqueId).packs.find(x => x.id === ds.pack);
-    const enCours = meilleurPack(rubrique(b.rubriqueId).packs, b.taches);
+    const packs = packsPour(rubrique(b.rubriqueId), b.typeLieuId);
+    const p = packs.find(x => x.id === ds.pack);
+    const enCours = meilleurPack(packs, b.taches, tachesChiffrees(b));
     // Formule en vert : on la retire. Sinon on remplace la formule en cours par celle-ci.
     if (enCours?.id === p.id) return maj({ taches: b.taches.filter(id => !p.tacheIds.includes(id)) });
     const base = enCours ? b.taches.filter(id => !enCours.tacheIds.includes(id)) : b.taches;
@@ -363,6 +406,7 @@ document.addEventListener("click", async e => {
   if (ds.retirer !== undefined) return maj({ tachesPerso: b.tachesPerso.filter((_, i) => i !== +ds.retirer) });
   if (ds.retirerPanier !== undefined) return maj({ panier: (b.panier || []).filter((_, i) => i !== +ds.retirerPanier) });
   if (t.id === "ajouter-panier") return maj({ panier: [...(b.panier || []), ligneEnCours().ligne], quantitePanier: 1 });
+  if (ds.jourPassage) { const n = +ds.jourPassage, j = b.jours || []; return maj({ jours: j.includes(n) ? j.filter(x => x !== n) : [...j, n].sort() }); }
   if (ds.jour) return maj({ jour: ds.jour, heure: -1 });
   if (ds.heure) return maj({ heure: +ds.heure });
   if (t.id === "ajouter-perso") {
@@ -382,6 +426,7 @@ document.addEventListener("change", e => {
   if (ds.texte) { b = { ...b, [ds.texte]: e.target.value }; sauver(); return rendre(); }  // (logementId gardé : seule la saisie d'une nouvelle adresse le vide)
   if (ds.case) return maj({ [ds.case]: e.target.checked });
   if (ds.tache) return maj({ taches: e.target.checked ? [...b.taches, ds.tache] : b.taches.filter(x => x !== ds.tache) });
+  if (ds.nature) { const n = b.natures || []; return maj({ natures: e.target.checked ? [...n, ds.nature] : n.filter(x => x !== ds.nature) }); }
   if (e.target.id === "photos") { photos = [...photos, ...e.target.files].filter(f => f.type.startsWith("image/")).slice(0, 12); rendre(); }
 });
 // Les champs texte enregistrent aussi pendant la frappe (sans redessiner, pour garder le curseur).
@@ -404,12 +449,21 @@ async function envoyer() {
     const acces = { TIERS: { nom: b.tiersNom, telephone: b.tiersTel }, BOITE: { emplacement: b.boiteEmplacement, code: b.code }, AUTONOME: { code: b.code } }[b.accueil] || {};
     const details = { ...b }; ["prenom", "nom", "email", "telephone", "rue", "codePostal", "ville", "code", "tiersNom", "tiersTel", "boiteEmplacement", "cgv", "etape", "logementId"].forEach(k => delete details[k]);
     details.lignes = est.lignes;
-    const { reference, jeton } = await envoyerDemande({
+    const nombre = passagesPlanifies(b);
+    details.passages = nombre;
+    const dates = debut && nombre > 1 && !estPrelancement() ? datesPassages(debut, b.frequence, b.jours || [], nombre) : [debut];
+    let premiere = null;
+    for (const [n, d] of dates.entries()) {
+    const envoi1 = await envoyerDemande({
       rubrique_id: b.rubriqueId, details, estimation_c: est.totalC, credit_impot_c: est.creditImpotC, duree_min: est.dureeMin,
-      nombre_cleaneurs: est.nombreCleaneurs, sur_devis: est.devisObligatoire, creneau: debut ? debut.toISOString() : null, flexible: b.flexible || estPrelancement(), prelancement: estPrelancement(),
+      nombre_cleaneurs: est.nombreCleaneurs, sur_devis: est.devisObligatoire, creneau: d ? d.toISOString() : null, flexible: b.flexible || estPrelancement(), prelancement: estPrelancement(),
       choix_cleaneur: estPrelancement() ? "candidatures" : b.choixCleaneur, espace: b.espace, prenom: b.prenom.trim(), nom: b.nom.trim(), email: b.email.trim(), telephone: b.telephone.trim(),
-      rue: b.rue.trim(), code_postal: b.codePostal.trim(), ville: b.ville.trim(), accueil: b.accueil || "PRESENT", acces, remarque: b.remarque.trim(),
-    }, photos);
+      rue: b.rue.trim(), code_postal: b.codePostal.trim(), ville: b.ville.trim(), accueil: b.accueil || "PRESENT", acces,
+      remarque: (dates.length > 1 ? `Passage ${n + 1}/${dates.length}. ` : "") + b.remarque.trim(),
+    }, n === 0 ? photos : []);
+    premiere = premiere || envoi1;
+    }
+    const { reference, jeton } = premiere;
     memoriserCommande(b);
     try { localStorage.removeItem(CLE_BROUILLON); } catch { /* rien */ }
     envoi = false; b = null; photos = [];

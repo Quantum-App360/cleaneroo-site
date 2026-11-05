@@ -1,7 +1,20 @@
 // Catalogue des prestations : copie EXACTE de Catalogue.kt et de Reservation.kt (application Android).
 import { REGLES, euros } from "./regles.js";
-const T = (id, nom, prixC, minutes) => ({ id, nom, prixC, minutes });
-const F = (id, nom, description = "", m2ParHeure = 0, minimumMin = 0, coef = 1.0) => ({ id, nom, description, m2ParHeure, minimumMin, coef });
+/** Tâche : groupe = intertitre ; parSurface = chiffrée pour la surface de référence, au prorata au-delà ; types = types de lieu (vide = tous). */
+const T = (id, nom, prixC, minutes, o = {}) => ({ id, nom, prixC, minutes, groupe: "", parSurface: false, types: [], ...o });
+/** Genre de formule : décide des questions affichées sous les formules (GenreFormule dans l'appli). */
+export const genreParDefaut = id => ({ regulier: "REGULIER", saisonnier: "REGULIER", ponctuel: "PONCTUEL", remise: "REMISE_EN_ETAT", demoussage: "REMISE_EN_ETAT" })[id] || "AUTRE";
+const F = (id, nom, description = "", m2ParHeure = 0, minimumMin = 0, coef = 1.0, genre = genreParDefaut(id)) => ({ id, nom, description, m2ParHeure, minimumMin, coef, genre });
+
+/* Questions communes des formules (mêmes listes que l'appli : Catalogue.kt). */
+export const FREQUENCES = [["semaine", "Chaque semaine"], ["deux_semaines", "Toutes les 2 semaines"], ["quatre_semaines", "Toutes les 4 semaines"], ["plusieurs", "Plusieurs fois par semaine"]];
+export const MOMENTS_PAR_DEFAUT = [["matin", "Le matin"], ["apres_midi", "L'après-midi"], ["soiree", "En soirée"], ["indifferent", "Indifférent"]];
+export const JOURS_SEMAINE = [[1, "Lun"], [2, "Mar"], [3, "Mer"], [4, "Jeu"], [5, "Ven"], [6, "Sam"], [7, "Dim"]];
+/** « Dernier nettoyage en profondeur » (remise en état) : présélectionne l'état de saleté. */
+export const DERNIERS_NETTOYAGES = [
+  { id: "moins_1_mois", libelle: "Moins d'un mois", salissure: "NORMAL" }, { id: "1_6_mois", libelle: "1 à 6 mois", salissure: "MARQUE" },
+  { id: "6_12_mois", libelle: "6 à 12 mois", salissure: "MARQUE" }, { id: "plus_1_an", libelle: "Plus d'un an", salissure: "INTENSE" },
+];
 
 const tachesLogement = [
   T("four", "Intérieur du four", 2500, 30), T("frigo", "Intérieur du réfrigérateur", 1500, 20),
@@ -28,7 +41,10 @@ export const RUBRIQUES = [
     formules: [F("ponctuel", "Ménage ponctuel", "Un ménage complet, une seule fois.", 25, 120),
       F("regulier", "Entretien régulier", "Chaque semaine ou tous les 15 jours, idéalement avec le même Cleaneur.", 30, 90),
       F("grand", "Grand ménage", "Un nettoyage en profondeur, du sol au plafond.", 15, 120)],
-    taches: tachesLogement, packs: packsLogement },
+    taches: tachesLogement, packs: packsLogement,
+    occasions: [{ id: "printemps", nom: "Ménage de printemps", packId: "prestige" }, { id: "recevoir", nom: "Avant de recevoir", packId: "confort" },
+      { id: "vacances", nom: "Retour de vacances", packId: "essentiel" }, { id: "vente", nom: "Avant une vente ou une location", packId: "prestige" },
+      { id: "autre", nom: "Autre", packId: "" }] },
   { id: "rental", nom: "Location saisonnière", sousTitre: "Prêt pour vos prochains voyageurs", emoji: "🧳", tauxHoraireC: 3000, salissureSurTemps: true, affichagePrix: "PAR_MENAGE",
     inclus: "Ménage complet entre deux voyageurs, lits faits avec le linge fourni sur place, cuisine et sanitaires désinfectés, contrôle de l'inventaire et des consommables, photos de chaque pièce pour l'hôte.",
     formules: [F("court", "Après un court séjour (1–4 nuits)", "Rotation standard.", 0, 0, 1.0),
@@ -72,9 +88,34 @@ export const RUBRIQUES = [
   { id: "outdoor", nom: "Espaces extérieurs", sousTitre: "Terrasses, balcons et garages", emoji: "🌿", tauxHoraireC: 3200, salissureSurTemps: false },
   { id: "event", nom: "Avant et après événement", sousTitre: "Profitez pleinement de votre événement", emoji: "🎉", tauxHoraireC: 3200, salissureSurTemps: false },
   { id: "special", nom: "Prestations spécialisées", sousTitre: "Une évaluation par un professionnel qualifié", emoji: "🧪", tauxHoraireC: null, salissureSurTemps: false, toujoursSurDevis: true },
-].map(r => ({ inclus: "", formules: [], taches: [], packs: [], toujoursSurDevis: false, affichagePrix: "HORAIRE", ...r }));
+].map(r => ({ inclus: "", formules: [], taches: [], packs: [], toujoursSurDevis: false, affichagePrix: "HORAIRE",
+  surfaceReferenceM2: 0, occasions: [], naturesSalissure: [], moments: MOMENTS_PAR_DEFAUT, ...r }));
 
 export const rubrique = id => RUBRIQUES.find(r => r.id === id);
+
+/** Arrondi à l'euro (prix des tâches et remises de pack, comme l'appli). */
+export const arrondiEuro = c => Math.round(c / 100) * 100;
+/** Tâches proposées pour le type de lieu choisi (sans liste de types : toujours proposée). */
+export const tachesPour = (r, typeLieuId) => r.taches.filter(t => !t.types.length || t.types.includes(typeLieuId));
+/** Coefficient des tâches à la surface : max(100 %, surface / surface de référence). */
+export const coefSurface = (r, surface) => (r.surfaceReferenceM2 > 0 ? Math.max(1, surface / r.surfaceReferenceM2) : 1);
+/** Tâche au prix du client : prorata de surface et coefficient de prix (gabarit), prix arrondi à l'euro. */
+export function tacheChiffree(t, r, surface, coefPrix = 1) {
+  const k = t.parSurface ? coefSurface(r, surface) : 1;
+  return { ...t, prixC: arrondiEuro(t.prixC * k * coefPrix), minutes: Math.round(t.minutes * k) };
+}
+/** Packs limités aux tâches proposées pour le type : vide → masqué ; deux packs identiques → on garde le plus remisé. */
+export function packsPour(r, typeLieuId) {
+  const ids = tachesPour(r, typeLieuId).map(t => t.id);
+  const garde = new Map();
+  for (const p of r.packs.map(p => ({ ...p, tacheIds: p.tacheIds.filter(id => ids.includes(id)) })).filter(p => p.tacheIds.length)) {
+    const cle = [...p.tacheIds].sort().join(",");
+    if (!garde.has(cle) || garde.get(cle).remisePct < p.remisePct) garde.set(cle, p);
+  }
+  return [...garde.values()];
+}
+/** Remise d'un pack : un pourcentage du prix de SES tâches, arrondi à l'euro. */
+export const remisePack = (p, chiffrees) => arrondiEuro(chiffrees.filter(t => p.tacheIds.includes(t.id)).reduce((s, t) => s + t.prixC, 0) * p.remisePct / 100);
 
 /* Canapés et textiles : éléments du panier, prix forfaitaires TTC (la durée sert au planning, pas au prix). */
 const E = (id, nom, formuleId, prixC, minutes, o = {}) => ({ id, nom, formuleId, prixC, minutes, avecTaille: false, parM2: false, ...o });
@@ -142,7 +183,8 @@ export const TYPES_LOGEMENT = [
   { id: "duplex", nom: "Duplex / loft", surface: 90, chambres: 2, sdb: 1, niveaux: 2 },
 ];
 
-const L = (id, nom, coef) => ({ id, nom, coef });
+/** Type de lieu : coefficient de temps (prix pour les véhicules) et texte « Inclus » propre au type (vide = celui de la rubrique). */
+const L = (id, nom, coef, inclus = "") => ({ id, nom, coef, inclus });
 export const TYPES_LIEU = {
   office: [L("bureaux", "Bureaux", 1.0), L("boutique", "Local commercial / boutique", 1.1), L("magasin", "Magasin / supérette", 1.15),
     L("medical", "Cabinet médical", 1.2), L("agence", "Agence / accueil du public", 1.05), L("showroom", "Showroom / galerie", 1.1),
