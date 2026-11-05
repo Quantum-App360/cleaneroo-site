@@ -162,14 +162,29 @@ export const RUBRIQUES = [
     naturesSalissure: ["Poussière de travaux", "Calcaire", "Graisse", "Traces et marques", "Moisissures", "Odeurs"] },
   { id: "car", nom: "Véhicules", sousTitre: "Nettoyage intérieur et extérieur", emoji: "🚗", tauxHoraireC: 4000, salissureSurTemps: false, affichagePrix: "MINIMUM_COMMANDE",
     inclus: "100 % à la carte : choisissez les tâches.",
-    taches: [T("aspiration", "Aspiration complète", 2500, 30), T("tableau", "Plastiques et tableau de bord", 1000, 15),
-      T("vitres_int", "Vitres intérieures", 800, 10), T("plastiques_protection", "Plastiques nettoyage + protection", 1500, 20),
-      T("shampoing_sieges", "Shampoing sièges tissu", 3500, 45), T("cuir", "Cuir nettoyé et nourri", 4000, 45),
-      T("moquettes", "Moquettes et tapis", 2500, 30), T("coffre", "Coffre", 1000, 15), T("ciel", "Ciel de toit", 2000, 20),
-      T("poils", "Poils d'animaux", 2000, 20), T("anti_odeurs", "Anti-odeurs", 2000, 15), T("lavage_main", "Lavage à la main", 2500, 40),
-      T("vitres_ext", "Vitres extérieures", 700, 10), T("jantes", "Jantes et pneus", 2000, 25), T("decontamination", "Décontamination des jantes", 3000, 30),
-      T("bas_caisse", "Bas de caisse", 1500, 20), T("cire", "Cire", 3500, 30), T("optiques", "Optiques de phares", 4500, 40),
-      T("polissage", "Polissage 1 étape", 15000, 180), T("moteur", "Compartiment moteur", 3000, 30)],
+    // Prix « citadine » ; le gabarit (100 / 115 / 130 / 145 %) s'applique au prix ET à la durée de chaque tâche.
+    taches: [
+      T("aspiration", "Aspiration complète (sièges, tapis, coffre)", 2500, 30, { groupe: "Intérieur" }),
+      T("tableau", "Dépoussiérage plastiques et tableau de bord", 1000, 15, { groupe: "Intérieur" }),
+      T("vitres_int", "Vitres intérieures", 800, 10, { groupe: "Intérieur" }),
+      T("plastiques_protection", "Plastiques intérieurs : nettoyage + protection", 1500, 20, { groupe: "Intérieur" }),
+      T("shampoing_sieges", "Shampoing des sièges tissu", 3500, 45, { groupe: "Intérieur" }),
+      T("cuir", "Nettoyage et nourrissage du cuir", 4000, 45, { groupe: "Intérieur" }),
+      T("moquettes", "Shampoing moquettes et tapis", 2500, 30, { groupe: "Intérieur" }),
+      T("coffre", "Nettoyage du coffre", 1000, 15, { groupe: "Intérieur" }),
+      T("ciel", "Ciel de toit", 2000, 20, { groupe: "Intérieur" }),
+      T("poils", "Poils d'animaux", 2000, 20, { groupe: "Intérieur" }),
+      T("anti_odeurs", "Traitement anti-odeurs", 2000, 15, { groupe: "Intérieur" }),
+      T("lavage_main", "Lavage extérieur à la main", 2500, 40, { groupe: "Extérieur" }),
+      T("vitres_ext", "Vitres extérieures", 700, 10, { groupe: "Extérieur" }),
+      T("jantes", "Jantes et pneus (nettoyage + brillant pneus)", 2000, 25, { groupe: "Extérieur" }),
+      T("decontamination", "Décontamination des jantes (dépôts de freins)", 3000, 30, { groupe: "Extérieur" }),
+      T("bas_caisse", "Bas de caisse et passages de roues", 1500, 20, { groupe: "Extérieur" }),
+      T("cire", "Cire de protection carrosserie", 3500, 30, { groupe: "Rénovation et protection" }),
+      T("optiques", "Rénovation des optiques de phares", 4500, 40, { groupe: "Rénovation et protection" }),
+      T("polissage", "Polissage carrosserie (lustrage 1 étape)", 15000, 180, { groupe: "Rénovation et protection" }),
+      T("moteur", "Compartiment moteur (nettoyage à sec)", 3000, 30, { groupe: "Rénovation et protection" }),
+    ],
     packs: [
       { id: "essentiel", nom: "Essentiel", remisePct: 5, tacheIds: ["aspiration", "tableau", "vitres_int", "coffre"] },
       { id: "confort", nom: "Confort", remisePct: 10, tacheIds: ["aspiration", "tableau", "vitres_int", "coffre", "lavage_main", "vitres_ext", "jantes"] },
@@ -204,10 +219,14 @@ export const tachesPour = (r, typeLieuId) => r.taches.filter(t => !t.types.lengt
 /** Coefficient des tâches à la surface : max(100 %, surface / surface de référence). */
 export const coefSurface = (r, surface) => (r.surfaceReferenceM2 > 0 ? Math.max(1, surface / r.surfaceReferenceM2) : 1);
 /** Tâche au prix du client : prorata de surface et coefficient de prix (gabarit), prix arrondi à l'euro. */
-export function tacheChiffree(t, r, surface, coefPrix = 1) {
+export function tacheChiffree(t, r, surface, coefPrix = 1, coefMinutes = 1) {
   const k = t.parSurface ? coefSurface(r, surface) : 1;
-  return { ...t, prixC: arrondiEuro(t.prixC * k * coefPrix), minutes: Math.round(t.minutes * k) };
+  return { ...t, prixC: arrondiEuro(t.prixC * k * coefPrix), minutes: Math.round(t.minutes * k * coefMinutes) };
 }
+/** Véhicules : « Sélection conseillée », lieu d'intervention et fréquence. */
+export const SELECTION_CONSEILLEE_VEHICULE = ["aspiration", "tableau", "vitres_int", "lavage_main", "vitres_ext"];
+export const LIEUX_VEHICULE = [["domicile", "À domicile"], ["travail", "Sur le lieu de travail"], ["parking", "Parking de résidence ou public"]];
+export const FREQUENCES_VEHICULE = [["unique", "Une seule fois"], ["mois", "Chaque mois"], ["trimestre", "Chaque trimestre"]];
 /** Packs limités aux tâches proposées pour le type : vide → masqué ; deux packs identiques → on garde le plus remisé. */
 export function packsPour(r, typeLieuId) {
   const ids = tachesPour(r, typeLieuId).map(t => t.id);

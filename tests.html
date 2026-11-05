@@ -73,6 +73,18 @@ egal("7. tapis de 2 à 3 m : 65,00 €", e.totalC, 6500); egal("7. sans complém
 e = calculer({ rubriqueId: "textiles", salissure: "MARQUE", panier: [{ elementId: "tapis_3", quantite: 1 }] });
 egal("textiles : salissure en prix (+15 %)", e.totalC, 6500 + 975);
 
+// Véhicules (prompt 4)
+const confortV = ["aspiration", "tableau", "vitres_int", "coffre", "lavage_main", "vitres_ext", "jantes"];
+e = parcours({ rubriqueId: "car", typeLieuId: "citadine", taches: confortV });
+egal("citadine + Confort : 94,00 €", e.totalC, 9400);
+e = parcours({ rubriqueId: "car", typeLieuId: "suv", nombreVehicules: 2, taches: ["aspiration", "tableau", "vitres_int", "coffre"] });
+egal("SUV + Essentiel × 2 : 132,00 €", e.totalC, 13200); egal("SUV : gabarit aussi sur la durée", e.dureeMin, 184);
+e = parcours({ rubriqueId: "car", typeLieuId: "citadine", taches: ["vitres_ext"] });
+egal("vitres extérieures seules : 40,00 €", e.totalC, 4000); egal("véhicule : au moins 30 min", e.dureeMin, 30);
+egal("véhicules chaque trimestre", passagesPlanifies({ rubriqueId: "car", frequenceVehicule: "trimestre", passages: 3 }), 3);
+egal("passages chaque trimestre", datesPassages(new Date(2027, 0, 4), "trimestre", [], 2).map(d => `${d.getDate()}/${d.getMonth() + 1}`).join(" "), "4/1 4/4");
+egal("véhicules : 3 groupes", [...new Set(rubrique("car").taches.map(t => t.groupe))].join(), "Intérieur,Extérieur,Rénovation et protection");
+
 // Déménagement (prompt 3)
 e = parcours({ rubriqueId: "moving", formuleId: "depart" });
 egal("déménagement 62 m² : 3 h 30 chacun", e.dureeMin, 210);

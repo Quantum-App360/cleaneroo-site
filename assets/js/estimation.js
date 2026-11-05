@@ -116,7 +116,8 @@ export function calculer(entree) {
     if (c > 0) { lignes.push({ libelle: e.rubriqueId === "rental" ? "Complément minimum par ménage" : "Complément minimum de commande", montantC: c }); total += c; }
   }
 
-  const dureeTotale = dureeBase + tachesMin + persoMin;
+  // Véhicules : durée affichée d'au moins 30 min.
+  const dureeTotale = vehicule ? Math.max(REGLES.DUREE_MIN_VEHICULE_MIN, dureeBase + tachesMin + persoMin) : dureeBase + tachesMin + persoMin;
   const deux = dureeTotale > REGLES.SEUIL_DEUX_CLEANEURS_MIN;
   const devis = r.toujoursSurDevis || e.surfaceM2 > REGLES.SEUIL_DEVIS_SURFACE_M2;
   const credit = eligibleCreditImpot(e.rubriqueId, e.espacePersonnel, e.typeLieuId)
@@ -145,13 +146,18 @@ export function meilleurPack(packs, cochees, chiffrees = []) {
 /** Tâches proposées pour le type de lieu du brouillon, au prix du client. */
 export function tachesChiffrees(b) {
   const r = rubrique(b.rubriqueId);
-  const coefPrix = b.rubriqueId === "car" ? ((TYPES_LIEU.car || []).find(l => l.id === b.typeLieuId)?.coef ?? 1) : 1;
-  return tachesPour(r, b.typeLieuId).map(t => tacheChiffree(t, r, b.surface, coefPrix));
+  // Véhicules : le gabarit joue sur le prix ET la durée de chaque tâche.
+  const gabarit = b.rubriqueId === "car" ? ((TYPES_LIEU.car || []).find(l => l.id === b.typeLieuId)?.coef ?? 1) : 1;
+  return tachesPour(r, b.typeLieuId).map(t => tacheChiffree(t, r, b.surface, gabarit, gabarit));
 }
 /** Formule choisie (la première par défaut). */
 export function formuleDe(b) { const f = formulesPour(rubrique(b.rubriqueId)); return f.find(x => x.id === b.formuleId) || f[0]; }
 /** Entretien régulier : chaque passage est une demande séparée, au même prix. */
-export const passagesPlanifies = b => (formuleDe(b)?.genre === "REGULIER" ? Math.min(REGLES.PASSAGES_MAX, Math.max(REGLES.PASSAGES_MIN, b.passages || REGLES.PASSAGES_DEFAUT)) : 1);
+const bornerPassages = b => Math.min(REGLES.PASSAGES_MAX, Math.max(REGLES.PASSAGES_MIN, b.passages || REGLES.PASSAGES_DEFAUT));
+export const passagesPlanifies = b => (b.rubriqueId === "car" ? ((b.frequenceVehicule || "unique") !== "unique" ? bornerPassages(b) : 1)
+  : formuleDe(b)?.genre === "REGULIER" ? bornerPassages(b) : 1);
+/** Fréquence qui espace les passages (véhicules : chaque mois / chaque trimestre). */
+export const frequenceDe = b => (b.rubriqueId === "car" ? b.frequenceVehicule || "unique" : b.frequence);
 /** Dates des passages : selon la fréquence, ou les jours choisis (plusieurs fois par semaine). jour : 1 = lundi … 7 = dimanche. */
 export function datesPassages(premier, frequence, jours, nombre) {
   const res = [];
@@ -162,8 +168,9 @@ export function datesPassages(premier, frequence, jours, nombre) {
     }
     return res;
   }
-  if (frequence === "mois") {
-    for (let i = 0; i < nombre; i++) { const d = new Date(premier); d.setMonth(d.getMonth() + i); res.push(d); }
+  if (frequence === "mois" || frequence === "trimestre") {
+    const pas = frequence === "mois" ? 1 : 3;
+    for (let i = 0; i < nombre; i++) { const d = new Date(premier); d.setMonth(d.getMonth() + i * pas); res.push(d); }
     return res;
   }
   const pas = { deux_semaines: 14, quatre_semaines: 28 }[frequence] || 7;
@@ -206,7 +213,9 @@ export function entreeEstimation(b, espacePersonnel, debut) {
   const coefLieu = lieu ? lieu.coef : 1.0;
   // Tâches proposées pour ce type de lieu, au prix du client (prorata de surface, gabarit, arrondi à l'euro).
   const chiffrees = tachesChiffrees(b);
-  const tachesChoisies = chiffrees.filter(t => b.taches.includes(t.id));
+  // Véhicules : tâches et remise multipliées par le nombre de véhicules.
+  const n = b.rubriqueId === "car" ? Math.min(REGLES.VEHICULES_MAX, Math.max(REGLES.VEHICULES_MIN, b.nombreVehicules || 1)) : 1;
+  const tachesChoisies = chiffrees.filter(t => b.taches.includes(t.id)).map(t => (n === 1 ? t : { ...t, nom: `${t.nom} × ${n}`, prixC: t.prixC * n, minutes: t.minutes * n }));
   const pack = meilleurPack(packsPour(r, b.typeLieuId), b.taches, chiffrees);
   let dureeImposee = 0, m2h = f.m2ParHeure, surface = b.surface;
   // Temps de rotation exact (sans arrondi intermédiaire) : × formule, × salissure, + étapes, + consommables, puis quart d'heure.
@@ -222,7 +231,7 @@ export function entreeEstimation(b, espacePersonnel, debut) {
     niveauxSupplementaires: ["home", "moving"].includes(b.rubriqueId) ? Math.max(0, b.niveaux - 1) : 0,
     minutesEtapesLocation: b.rubriqueId === "rental" ? minutesEtapesLocation(etapesDe(b), (b.etapesPerso || []).length, b.chambres, b.sdb) : 0,
     consommablesAControler: b.rubriqueId === "rental" && consommablesDe(b).length > 0,
-    salissure: b.salissure, taches: tachesChoisies, remisePackPct: pack ? pack.remisePct : 0, remisePackC: pack ? remisePack(pack, chiffrees) : null,
+    salissure: b.salissure, taches: tachesChoisies, remisePackPct: pack ? pack.remisePct : 0, remisePackC: pack ? remisePack(pack, chiffrees) * n : null,
     tachesPersonnalisees: b.tachesPerso.length,
     dimanche: debut ? debut.getDay() === 0 : false,
     creneauMalin: dispo === "MALIN" && !b.flexible,
