@@ -78,9 +78,11 @@ const bo = { rubriqueId: "office", formuleId: "ponctuel", typeLieuId: "bureaux",
 egal("bureaux 100 m² : 59,00 €", parcours(bo).totalC, 5900);
 egal("bureaux + Essentiel : 103,00 €", parcours({ ...bo, taches: ["contact", "conteneurs", "paillasson", "reassort"] }).totalC, 10300);
 const bi = { rubriqueId: "communal", formuleId: "regulier", typeLieuId: "copro", surfacePalier: 20, paliers: 10 };
-egal("immeuble 20 m² × 10 paliers : 2 h 30", parcours(bi).dureeMin, 150); egal("immeuble : 70,00 €", parcours(bi).totalC, 7000);
-egal("immeuble + Essentiel : 125,00 €", parcours({ ...bi, taches: ["boites", "paillasson", "conteneurs", "rampes", "araignees"] }).totalC, 12500);
-egal("immeuble 20 paliers : 140,00 €", parcours({ ...bi, paliers: 20 }).totalC, 14000);
+egal("immeuble 20 m² × 10 paliers : 3 h (hall 30 min + 10 × 15 min)", parcours(bi).dureeMin, 180); egal("immeuble : 84,00 €", parcours(bi).totalC, 8400);
+egal("immeuble + Essentiel : 139,00 €", parcours({ ...bi, taches: ["boites", "paillasson", "conteneurs", "rampes", "araignees"] }).totalC, 13900);
+egal("immeuble 20 paliers : 154,00 €", parcours({ ...bi, paliers: 20 }).totalC, 15400);
+{ let monte = true; for (const sp of [5, 10, 20, 45]) for (let n = 2; n <= 40; n++) if (parcours({ ...bi, surfacePalier: sp, paliers: n }).totalC <= parcours({ ...bi, surfacePalier: sp, paliers: n - 1 }).totalC) monte = false;
+  egal("immeuble : chaque palier en plus augmente le prix", monte, true); }
 const bw = { rubriqueId: "windows", formuleId: "ponctuel", typeLieuId: "fenetres_logement", fenetres: 8 };
 egal("vitres 8 fenêtres : 60,00 €", parcours(bw).totalC, 6000); egal("vitres : 30,00 € après crédit d'impôt", parcours(bw).apresCreditImpotC, 3000);
 egal("vitres + Essentiel : 74,00 €", parcours({ ...bw, taches: ["encadrements"] }).totalC, 7400);
@@ -231,7 +233,7 @@ import("./assets/js/catalogue.js").then(() => {});
   egal("immeuble : étages", tc.filter(t => t.groupe === "Étages").map(t => t.id).sort().join(","), "araignees,ascenseur,escaliers,portes,rampes");
   egal("annexe : même prix à 30 étages", tachesChiffrees({ ...im, paliers: 30 }).find(t => t.id === "parking_immeuble").prixC, 4500);
   egal("escaliers : suivent les étages", tachesChiffrees({ ...im, paliers: 30 }).find(t => t.id === "escaliers").prixC, 9000);
-  egal("immeuble + cour + local poubelles : 120,00 €", parcours({ ...im, taches: ["cour", "local_poubelles"] }).totalC, 12000);
+  egal("immeuble + cour + local poubelles : 134,00 €", parcours({ ...im, taches: ["cour", "local_poubelles"] }).totalC, 13400);
   egal("balayage à la surface : parking seul", tc.some(t => t.id === "balayage"), false);
 }
 

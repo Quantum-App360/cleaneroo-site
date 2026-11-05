@@ -1,6 +1,6 @@
 // Calcul de l'estimation : copie EXACTE de Estimation.kt (§ 8 du cahier des charges), dans le même ordre.
 import { REGLES, duree } from "./regles.js";
-import { equipementsPour, surfaceEffective, tranchesConvives, minutesEtapesLocation, PACK_ETAPES_CONSEILLE, PACK_CONSOMMABLES_CONSEILLE } from "./catalogue.js";
+import { equipementsPour, surfaceEffective, TYPES_IMMEUBLE, tranchesConvives, minutesEtapesLocation, PACK_ETAPES_CONSEILLE, PACK_CONSOMMABLES_CONSEILLE } from "./catalogue.js";
 import { rubrique, formulesPour, TYPES_LIEU, RUBRIQUES_CREDIT_IMPOT, TYPES_VITRES_ELIGIBLES, prixLigne, minutesLigne, libelleLigne,
   arrondiEuro, tachesPour, tacheChiffree, packsPour, remisePack } from "./catalogue.js";
 
@@ -146,6 +146,10 @@ export function meilleurPack(packs, cochees, chiffrees = []) {
 }
 
 /** Tâches proposées pour le type de lieu du brouillon, au prix du client. */
+/** Immeubles : temps de base = hall et entrée + par palier max(15 min, surface du palier à la cadence). */
+export const dureeImmeubleMin = (surfacePalier, paliers, m2ParHeure) =>
+  REGLES.IMMEUBLE_HALL_MIN + paliers * Math.max(REGLES.IMMEUBLE_MIN_PAR_PALIER, surfacePalier * 60 / m2ParHeure);
+
 export function tachesChiffrees(b) {
   const r = rubrique(b.rubriqueId);
   // Véhicules : le gabarit joue sur le prix ET la durée de chaque tâche.
@@ -245,6 +249,8 @@ export function entreeEstimation(b, espacePersonnel, debut) {
   if (b.rubriqueId === "rental") { dureeImposee = tempsRotationLocation(b.chambres, b.sdb, b.surface, 1.0); m2h = 0; }
   if (b.rubriqueId === "windows") { dureeImposee = Math.max(f.minimumMin, b.fenetres * 15); m2h = 0; surface = 0; }
   if (b.rubriqueId === "textiles" || b.rubriqueId === "special") { m2h = 0; surface = 0; }
+  // Immeubles : hall et entrée + chaque palier (au moins un quart d'heure), puis formule et type
+  if (b.rubriqueId === "communal" && TYPES_IMMEUBLE.includes(b.typeLieuId)) { dureeImposee = dureeImmeubleMin(b.surfacePalier ?? REGLES.SURFACE_PALIER_DEFAUT_M2, b.paliers ?? REGLES.PALIERS_DEFAUT, f.m2ParHeure); m2h = 0; }
   if (b.rubriqueId === "construction") { dureeImposee = b.surface * 60 / f.m2ParHeure * coefLieu; m2h = 0; }
   // Cuisines : max(1 h, (surface / 25 m²/h + équipements) × établissement × intensité), puis salissure
   if (b.rubriqueId === "kitchen") { dureeImposee = Math.max(f.minimumMin, (b.surface * 60 / f.m2ParHeure + minutesEquipements(b)) * coefLieu * f.coef); m2h = 0; }

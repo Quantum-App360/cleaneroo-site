@@ -36,6 +36,9 @@ export const REGLES = {
   CONVIVES_PAR_TRANCHE: 50,
   PALIERS_MAX: 40,
   SURFACE_PALIER_DEFAUT_M2: 20,
+  // Immeubles : hall et entrée + chaque palier compte au moins un quart d'heure (le prix suit toujours le nombre d'étages)
+  IMMEUBLE_HALL_MIN: 30,
+  IMMEUBLE_MIN_PAR_PALIER: 15,
   PALIERS_DEFAUT: 5,
   CHANTIER_MINIMUM_MIN: 120,
   CHANTIER_PIECES_MAX: 8,
