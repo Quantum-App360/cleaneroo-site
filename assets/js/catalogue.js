@@ -41,6 +41,79 @@ const packsLogement = [
   { id: "prestige", nom: "Prestige", remisePct: 15, tacheIds: prestige },
 ];
 
+/* ---- Location saisonnière : étapes et consommables (généré) ---- */
+/* Bibliothèque d'étapes par pièce et consommables à contrôler : même contenu que Location.kt (appli). */
+export const PIECES_LOCATION = [["chambre", "Chambre"], ["sdb", "Salle de bain"], ["cuisine", "Cuisine"], ["sejour", "Séjour"], ["exterieur", "Extérieur"], ["entree", "Entrée et général"]];
+/** minutes = temps ajouté (0 = incluse). « Chambre » : une fois par chambre ; « Salle de bain » : une fois par salle de bain. */
+export const ETAPES_LOCATION = [
+  { id: "lit_draps", nom: "Faire le lit avec des draps propres", piece: "chambre", minutes: 0 },
+  { id: "changer_draps", nom: "Changer les draps et taies", piece: "chambre", minutes: 0 },
+  { id: "serviettes_lit", nom: "Disposer les serviettes sur le lit", piece: "chambre", minutes: 0 },
+  { id: "plaids", nom: "Plier plaids et couvertures", piece: "chambre", minutes: 0 },
+  { id: "sous_lit", nom: "Vérifier sous le lit et les meubles", piece: "chambre", minutes: 5 },
+  { id: "placards", nom: "Vider et ranger les placards / dressing", piece: "chambre", minutes: 10 },
+  { id: "cintres", nom: "Remettre les cintres", piece: "chambre", minutes: 0 },
+  { id: "douche", nom: "Nettoyer douche / baignoire et joints", piece: "sdb", minutes: 0 },
+  { id: "lavabo", nom: "Nettoyer lavabo, robinetterie et miroir", piece: "sdb", minutes: 0 },
+  { id: "wc", nom: "Nettoyer et désinfecter les WC", piece: "sdb", minutes: 0 },
+  { id: "serviettes_sdb", nom: "Disposer les serviettes propres", piece: "sdb", minutes: 0 },
+  { id: "savon", nom: "Remettre savon, gel douche, shampoing", piece: "sdb", minutes: 0 },
+  { id: "seche_cheveux", nom: "Vérifier sèche-cheveux et rangements", piece: "sdb", minutes: 0 },
+  { id: "plan_travail", nom: "Nettoyer plan de travail et évier", piece: "cuisine", minutes: 0 },
+  { id: "plaques", nom: "Nettoyer plaques, four et micro-ondes", piece: "cuisine", minutes: 20 },
+  { id: "frigo", nom: "Vider et nettoyer le réfrigérateur", piece: "cuisine", minutes: 15 },
+  { id: "lave_vaisselle", nom: "Vider le lave-vaisselle et ranger la vaisselle", piece: "cuisine", minutes: 10 },
+  { id: "controle_vaisselle", nom: "Contrôler la vaisselle (casse, manque)", piece: "cuisine", minutes: 10 },
+  { id: "cafe", nom: "Détartrer / nettoyer la machine à café", piece: "cuisine", minutes: 10 },
+  { id: "poubelles", nom: "Vider les poubelles et remettre des sacs", piece: "cuisine", minutes: 0 },
+  { id: "ranger_sejour", nom: "Ranger le séjour et disposer les coussins", piece: "sejour", minutes: 0 },
+  { id: "canape", nom: "Aspirer le canapé", piece: "sejour", minutes: 10 },
+  { id: "tv", nom: "Vérifier TV, box et télécommandes", piece: "sejour", minutes: 0 },
+  { id: "livret", nom: "Disposer le livret d'accueil", piece: "sejour", minutes: 0 },
+  { id: "sols", nom: "Aspirer et laver les sols", piece: "sejour", minutes: 0 },
+  { id: "terrasse", nom: "Nettoyer la terrasse / le balcon", piece: "exterieur", minutes: 20 },
+  { id: "mobilier", nom: "Ranger et essuyer le mobilier extérieur", piece: "exterieur", minutes: 10 },
+  { id: "barbecue", nom: "Nettoyer le barbecue / la plancha", piece: "exterieur", minutes: 20 },
+  { id: "piscine", nom: "Vérifier la piscine et les transats", piece: "exterieur", minutes: 15 },
+  { id: "plantes", nom: "Arroser les plantes", piece: "exterieur", minutes: 5 },
+  { id: "linge", nom: "Lancer et étendre le linge", piece: "entree", minutes: 15 },
+  { id: "oublis", nom: "Vérifier les objets oubliés", piece: "entree", minutes: 0 },
+  { id: "fenetres", nom: "Fermer fenêtres et volets", piece: "entree", minutes: 0 },
+  { id: "chauffage", nom: "Régler chauffage / climatisation", piece: "entree", minutes: 0 },
+  { id: "photo_entree", nom: "Photo d'ensemble de l'entrée", piece: "entree", minutes: 0 },
+  { id: "cles", nom: "Déposer les clés / refermer la boîte à clés", piece: "entree", minutes: 0 },
+];
+export const PACK_ETAPES_CONSEILLE = ["lit_draps", "serviettes_sdb", "wc", "plan_travail", "poubelles", "ranger_sejour", "photo_entree"];
+export const CONSOMMABLES_LOCATION = [
+  ["cafe_capsules", "Capsules / dosettes de café"],
+  ["cafe_moulu", "Café moulu et filtres"],
+  ["the", "Thé et infusions"],
+  ["sucre", "Sucre"],
+  ["sel", "Sel, poivre et huile"],
+  ["eau", "Bouteille d'eau d'accueil"],
+  ["papier", "Papier toilette"],
+  ["essuie_tout", "Essuie-tout"],
+  ["savon_mains", "Savon pour les mains"],
+  ["gel_douche", "Gel douche et shampoing"],
+  ["liquide_vaisselle", "Liquide vaisselle"],
+  ["pastilles", "Pastilles lave-vaisselle"],
+  ["eponges", "Éponges"],
+  ["sacs", "Sacs poubelle"],
+  ["lessive", "Lessive"],
+  ["produits", "Produits ménagers"],
+];
+export const PACK_CONSOMMABLES_CONSEILLE = ["cafe_capsules", "papier", "savon_mains", "liquide_vaisselle", "sacs"];
+export const NATURES_SALISSURE_LOCATION = ["Calcaire", "Graisse", "Traces et marques", "Odeurs", "Moisissures"];
+/** Nombre de fois qu'une étape est faite : par chambre (un studio compte 1), par salle de bain, sinon une fois. */
+export const repetitionsEtape = (e, chambres, sdb) => (e.piece === "chambre" ? Math.max(1, chambres) : e.piece === "sdb" ? Math.max(1, sdb) : 1);
+/** Temps ajouté par les étapes choisies et les étapes personnalisées (minutes). */
+export const minutesEtapesLocation = (choisies, perso, chambres, sdb) =>
+  ETAPES_LOCATION.filter(e => choisies.includes(e.id)).reduce((s, e) => s + e.minutes * repetitionsEtape(e, chambres, sdb), 0) + perso * REGLES.ETAPE_PERSO_LOCATION_MIN;
+/** Nombre d'étapes à valider en photo (répétitions comprises). */
+export const nombreEtapesLocation = (choisies, perso, chambres, sdb) =>
+  ETAPES_LOCATION.filter(e => choisies.includes(e.id)).reduce((s, e) => s + repetitionsEtape(e, chambres, sdb), 0) + perso;
+/* ---- fin location ---- */
+
 export const RUBRIQUES = [
   { id: "home", nom: "Logement", sousTitre: "Ménage ponctuel ou régulier", emoji: "🏠", tauxHoraireC: 2690, salissureSurTemps: true,
     inclus: "Dépoussiérage des surfaces accessibles, aspiration et lavage des sols, cuisine, salle de bain et WC, poubelles, lits faits.",
@@ -58,7 +131,8 @@ export const RUBRIQUES = [
     formules: [F("court", "Après un court séjour (1–4 nuits)", "Rotation standard.", 0, 0, 1.0),
       F("semaine", "Après un séjour d'une semaine (5–9 nuits)", "Rotation approfondie.", 0, 0, 1.2),
       F("long", "Après un long séjour (10 nuits et +)", "Rotation complète.", 0, 0, 1.45),
-      F("grand", "Grand ménage périodique", "Remise à niveau complète du logement.", 0, 0, 1.8)] },
+      F("grand", "Grand ménage périodique", "Remise à niveau complète du logement.", 0, 0, 1.8, "AUTRE", true)],
+    naturesSalissure: NATURES_SALISSURE_LOCATION },
   { id: "moving", nom: "Déménagement et remise en état", sousTitre: "Un nouveau départ, du sol au plafond", emoji: "📦", tauxHoraireC: 3200, salissureSurTemps: true,
     inclus: "Nettoyage complet du logement vide. Nettoyage uniquement : Cleaneroo ne réalise ni peinture, ni rebouchage, ni réparation.",
     formules: [F("emmenagement", "Nettoyage d'emménagement", "", 10, 180, 1.0), F("depart", "Nettoyage de départ / état des lieux", "", 10, 180, 1.1),

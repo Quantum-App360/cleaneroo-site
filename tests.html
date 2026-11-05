@@ -10,7 +10,9 @@
 <script type="module">
 // Reprend app/src/test/.../ReglesTest.kt : le site doit donner exactement les mêmes résultats que l'application.
 import { calculer, meilleurPack, disponibilite, entreeEstimation, complementMinimum, datesPassages, passagesPlanifies, formuleDe } from "./assets/js/estimation.js";
-import { rubrique, pastille, tacheChiffree, tachesPour, packsPour, remisePack, DERNIERS_NETTOYAGES } from "./assets/js/catalogue.js";
+import { rubrique, pastille, tacheChiffree, tachesPour, packsPour, remisePack, DERNIERS_NETTOYAGES,
+  PACK_ETAPES_CONSEILLE, PACK_CONSOMMABLES_CONSEILLE, minutesEtapesLocation, nombreEtapesLocation } from "./assets/js/catalogue.js";
+import { menageTientEntreVoyageurs } from "./assets/js/estimation.js";
 import { euros, REGLES } from "./assets/js/regles.js";
 const res = [];
 const egal = (nom, obtenu, attendu) => res.push([nom, obtenu === attendu, `obtenu ${obtenu}, attendu ${attendu}`]);
@@ -44,7 +46,7 @@ egal("créneau malin mardi 14 h", disponibilite(new Date(), mardi15h), "MALIN");
 
 // Grille tarifaire du 5 novembre 2026 (espace Personnel, semaine hors créneau malin, salissure normale) : mêmes cas que ReglesTest.kt
 const BR = { surface: 62, chambres: 2, sdb: 1, niveaux: 1, fenetres: 8, typeLieuId: "", salissure: "NORMAL", taches: [], tachesPerso: [],
-  consommables: false, engagementMois: 0, flexible: false, panier: [] };
+  consommablesChoisis: [], engagementMois: 0, flexible: false, panier: [] };
 const parcours = o => calculer(entreeEstimation({ ...BR, ...o }, true, null));
 const espaces = s => s.replace(/\s/g, " ");
 e = parcours({ rubriqueId: "home", formuleId: "ponctuel" });
@@ -70,6 +72,19 @@ e = parcours({ rubriqueId: "textiles", formuleId: "tapis", panier: [{ elementId:
 egal("7. tapis de 2 à 3 m : 65,00 €", e.totalC, 6500); egal("7. sans complément", e.lignes.some(l => l.libelle.startsWith("Complément")), false);
 e = calculer({ rubriqueId: "textiles", salissure: "MARQUE", panier: [{ elementId: "tapis_3", quantite: 1 }] });
 egal("textiles : salissure en prix (+15 %)", e.totalC, 6500 + 975);
+
+// Location saisonnière (prompt 2)
+e = parcours({ rubriqueId: "rental", formuleId: "court", etapesChoisies: [...PACK_ETAPES_CONSEILLE], consommablesChoisis: [...PACK_CONSOMMABLES_CONSEILLE] });
+egal("location T2 + packs conseillés : 2 h", e.dureeMin, 120); egal("location T2 + packs conseillés : 60,00 €", e.totalC, 6000);
+e = parcours({ rubriqueId: "rental", formuleId: "court", etapesChoisies: [...PACK_ETAPES_CONSEILLE, "plaques"] });
+egal("location T2 + plaques, four, micro-ondes : 2 h 15", e.dureeMin, 135); egal("location T2 + plaques : 67,50 €", e.totalC, 6750);
+egal("étape par chambre : 5 min × 2", minutesEtapesLocation(["sous_lit"], 0, 2, 1), 10);
+egal("studio = 1 chambre", minutesEtapesLocation(["sous_lit"], 0, 0, 1), 5);
+egal("2 étapes personnalisées : 20 min", minutesEtapesLocation([], 2, 2, 1), 20);
+egal("photos du pack conseillé (lit × 2 chambres)", nombreEtapesLocation(PACK_ETAPES_CONSEILLE, 0, 2, 1), 8);
+egal("10 h + 2 h avant 16 h", menageTientEntreVoyageurs({}, 120), true);
+egal("ne tient pas avant 12 h", menageTientEntreVoyageurs({ arriveeSuivanteH: 12 }, 135), false);
+egal("grand ménage périodique : dernier nettoyage", rubrique("rental").formules.find(f => f.id === "grand").avecDernierNettoyage, true);
 
 // Logement (prompt 1) : espace Personnel, semaine, salissure normale
 e = parcours({ rubriqueId: "home", formuleId: "ponctuel", surface: 60, taches: ["draps", "poubelles", "hauteurs", "plinthes"] });

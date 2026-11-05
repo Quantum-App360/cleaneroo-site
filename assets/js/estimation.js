@@ -1,5 +1,6 @@
 // Calcul de l'estimation : copie EXACTE de Estimation.kt (§ 8 du cahier des charges), dans le même ordre.
 import { REGLES, duree } from "./regles.js";
+import { minutesEtapesLocation, PACK_ETAPES_CONSEILLE, PACK_CONSOMMABLES_CONSEILLE } from "./catalogue.js";
 import { rubrique, formulesPour, TYPES_LIEU, RUBRIQUES_CREDIT_IMPOT, TYPES_VITRES_ELIGIBLES, prixLigne, minutesLigne, libelleLigne,
   arrondiEuro, tachesPour, tacheChiffree, packsPour, remisePack } from "./catalogue.js";
 
@@ -190,6 +191,12 @@ export function disponibilite(maintenant, creneau) {
   return "DISPONIBLE";
 }
 
+/** Location saisonnière : étapes et consommables du brouillon (pack conseillé si rien n'est encore choisi). */
+export const etapesDe = b => b.etapesChoisies ?? PACK_ETAPES_CONSEILLE;
+export const consommablesDe = b => b.consommablesChoisis ?? PACK_CONSOMMABLES_CONSEILLE;
+/** Le ménage tient-il entre le départ des voyageurs et l'arrivée suivante ? */
+export const menageTientEntreVoyageurs = (b, dureeMin) => (b.departVoyageursH ?? 10) * 60 + dureeMin <= (b.arriveeSuivanteH ?? 16) * 60;
+
 /** Construit l'entrée de l'estimateur à partir d'un brouillon (entreeEstimation de Reservation.kt). */
 export function entreeEstimation(b, espacePersonnel, debut) {
   const r = rubrique(b.rubriqueId);
@@ -202,7 +209,8 @@ export function entreeEstimation(b, espacePersonnel, debut) {
   const tachesChoisies = chiffrees.filter(t => b.taches.includes(t.id));
   const pack = meilleurPack(packsPour(r, b.typeLieuId), b.taches, chiffrees);
   let dureeImposee = 0, m2h = f.m2ParHeure, surface = b.surface;
-  if (b.rubriqueId === "rental") { dureeImposee = Math.round(tempsRotationLocation(b.chambres, b.sdb, b.surface, 1.0)); m2h = 0; }
+  // Temps de rotation exact (sans arrondi intermédiaire) : × formule, × salissure, + étapes, + consommables, puis quart d'heure.
+  if (b.rubriqueId === "rental") { dureeImposee = tempsRotationLocation(b.chambres, b.sdb, b.surface, 1.0); m2h = 0; }
   if (b.rubriqueId === "windows") { dureeImposee = Math.max(f.minimumMin, b.fenetres * 15); m2h = 0; surface = 0; }
   if (b.rubriqueId === "textiles") { m2h = 0; surface = 0; }
   const dispo = debut ? disponibilite(new Date(), debut) : null;
@@ -212,8 +220,8 @@ export function entreeEstimation(b, espacePersonnel, debut) {
     coefPrix: 1.0, // déjà appliqué aux tâches chiffrées
     dureeBaseImposeeMin: dureeImposee,
     niveauxSupplementaires: b.rubriqueId === "home" ? Math.max(0, b.niveaux - 1) : 0,
-    minutesEtapesLocation: 0,
-    consommablesAControler: b.rubriqueId === "rental" && b.consommables,
+    minutesEtapesLocation: b.rubriqueId === "rental" ? minutesEtapesLocation(etapesDe(b), (b.etapesPerso || []).length, b.chambres, b.sdb) : 0,
+    consommablesAControler: b.rubriqueId === "rental" && consommablesDe(b).length > 0,
     salissure: b.salissure, taches: tachesChoisies, remisePackPct: pack ? pack.remisePct : 0, remisePackC: pack ? remisePack(pack, chiffrees) : null,
     tachesPersonnalisees: b.tachesPerso.length,
     dimanche: debut ? debut.getDay() === 0 : false,

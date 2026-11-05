@@ -2,8 +2,10 @@
 // 1 prestation · 2 questionnaire · 3 photos · 4 adresse, accès et créneau · 5 estimation, coordonnées et envoi.
 import { RUBRIQUES, rubrique, formulesPour, TYPES_LIEU, TYPES_LOGEMENT, BESOINS_SPECIAUX, ACCUEIL, accueilAutonomeInterdit, photosObligatoires,
   ELEMENTS_TEXTILES, TAILLES_CANAPE, prixLigne, minutesLigne, libelleLigne, pastille,
-  FREQUENCES, JOURS_SEMAINE, DERNIERS_NETTOYAGES, packsPour, remisePack } from "./catalogue.js";
-import { calculer, entreeEstimation, SALISSURE, disponibilite, meilleurPack, tachesChiffrees, formuleDe, passagesPlanifies, datesPassages } from "./estimation.js";
+  FREQUENCES, JOURS_SEMAINE, DERNIERS_NETTOYAGES, packsPour, remisePack,
+  PIECES_LOCATION, ETAPES_LOCATION, PACK_ETAPES_CONSEILLE, CONSOMMABLES_LOCATION, PACK_CONSOMMABLES_CONSEILLE } from "./catalogue.js";
+import { calculer, entreeEstimation, SALISSURE, disponibilite, meilleurPack, tachesChiffrees, formuleDe, passagesPlanifies, datesPassages,
+  etapesDe, consommablesDe, menageTientEntreVoyageurs } from "./estimation.js";
 import { REGLES, euros, duree, heure, dateCourte, estPrelancement, MESSAGE_LANCEMENT } from "./regles.js";
 import { envoyerDemande } from "./donnees.js";
 import { traduire } from "./langue.js";
@@ -36,6 +38,8 @@ function memoriserCommande(b) {
     ...Object.fromEntries(CHAMPS_LOGEMENT.map(k => [k, String(b[k] ?? "").trim()])) };
   ecrire(CLE_LOGEMENTS, [log, ...liste.filter(l => !meme(l))].slice(0, 10));
   const modele = Object.fromEntries(Object.entries(b).filter(([k]) => !PRIVES.includes(k)));
+  // « Mémoriser ces étapes pour ce logement » décoché : les étapes ne sont pas reprises la prochaine fois.
+  if (b.rubriqueId === "rental" && b.memoriserEtapes === false) { delete modele.etapesChoisies; delete modele.etapesPerso; delete modele.consommablesChoisis; }
   ecrire(CLE_MODELES, { ...lire(CLE_MODELES, {}), [b.rubriqueId]: { ...modele, logementId: log.id, quand: Date.now() } });
 }
 
@@ -69,6 +73,8 @@ function vierge(rubriqueId, espace, r, lieux) {
     panier: [], elementTextile: "", tailleCanape: "t15", quantitePanier: 1, surfaceMoquette: 10,
     frequence: "semaine", moment: "", memeCleaneur: true, passages: REGLES.PASSAGES_DEFAUT, jours: [],
     occasion: "", dernierNettoyage: "", natures: [],
+    etapesChoisies: [...PACK_ETAPES_CONSEILLE], etapesPerso: [], consommablesChoisis: [...PACK_CONSOMMABLES_CONSEILLE],
+    departVoyageursH: REGLES.DEPART_VOYAGEURS_DEFAUT_H, arriveeSuivanteH: REGLES.ARRIVEE_SUIVANTE_DEFAUT_H, aChaqueDepart: false, memoriserEtapes: true,
   };
 }
 
@@ -154,12 +160,7 @@ function etape2() {
       + (b.surface > REGLES.SEUIL_DEVIS_SURFACE_M2 ? `<p style="color:var(--alerte);font-size:14px">Au-delà de 300 m² : devis obligatoire.</p>` : "")
       + `</div>`;
   }
-  if (b.rubriqueId === "rental") {
-    h += titre("Étapes à valider en photo") + `<div class="carte">${compteur("Étapes (pack conseillé : 8)", "etapesLocation", b.etapesLocation, { max: 40 })}
-      <p class="petit">Une étape « Chambre » est répétée par chambre, « Salle de bain » par salle de bain.</p>
-      ${caseCocher("Consommables à contrôler", "consommables", b.consommables, "Café, papier toilette, savon, liquide vaisselle, sacs poubelle (+10 min)")}
-      <div class="note alerte" style="margin-top:10px">Le Cleaneur n'apporte jamais de consommables : ils doivent être sur place.</div></div>`;
-  }
+  if (b.rubriqueId === "rental") h += etapesLocation();
   if (!r.toujoursSurDevis && b.rubriqueId !== "car" && b.rubriqueId !== "construction") {
     h += titre("État de saleté") + `<div class="segments">${Object.entries(SALISSURE).map(([k, s]) =>
       `<button type="button" data-champ="salissure" data-valeur="${k}" class="${b.salissure === k ? "choisi" : ""}">${s.libelle}</button>`).join("")}</div>`;
@@ -198,6 +199,35 @@ function etape2() {
   const joursOk = !(formuleDe(b)?.genre === "REGULIER" && b.frequence === "plusieurs") || (b.jours || []).length >= REGLES.JOURS_MIN_PLUSIEURS_PAR_SEMAINE;
   return h + actions(besoinOk && panierOk && joursOk, !besoinOk ? "Choisissez votre besoin." : !panierOk ? "Ajoutez chaque élément au panier."
     : !joursOk ? "Choisissez au moins deux jours de passage." : "");
+}
+
+/** Location saisonnière : étapes par pièce, étapes personnalisées, consommables, horaires, mémoire (EtapesLocation dans l'appli). */
+const titreAction = (t, id, action) => `<div style="display:flex;align-items:baseline;gap:10px;margin:26px 0 10px"><h3 style="margin:0;flex:1">${t}</h3>`
+  + `<button type="button" class="lien-bouton" id="${id}">${action}</button></div>`;
+function etapesLocation() {
+  const etapes = etapesDe(b), perso = b.etapesPerso || [], conso = consommablesDe(b);
+  return titreAction("Étapes à valider en photo", "pack-etapes", "Pack conseillé")
+    + `<p class="petit">Une étape « Chambre » compte une fois par chambre, « Salle de bain » une fois par salle de bain.</p>`
+    + PIECES_LOCATION.map(([piece, nom]) => `<p class="petit" style="margin:12px 0 4px"><b>${nom}</b></p><div class="carte">`
+      + ETAPES_LOCATION.filter(e => e.piece === piece).map(e => `<label class="case"><input type="checkbox" data-etape="${e.id}" ${etapes.includes(e.id) ? "checked" : ""}>
+        <span>${e.nom}</span><span class="info">${e.minutes ? `+${e.minutes} min` : "Incluse"}</span></label>`).join("")
+      + perso.map((p, i) => p.piece === piece ? `<div style="display:flex;align-items:center;gap:8px"><span style="flex:1">• ${esc(p.texte)}</span>
+        <span class="info">+${REGLES.ETAPE_PERSO_LOCATION_MIN} min</span><button type="button" class="lien-bouton" style="color:var(--erreur)" data-retirer-etape="${i}">Retirer</button></div>` : "").join("")
+      + `</div>`).join("")
+    + `<div class="carte" style="margin-top:10px"><b>Ajouter une étape</b>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap"><select id="piece-perso" class="texte" style="margin:0;flex:0 1 190px">${PIECES_LOCATION.map(([id, nom]) => `<option value="${id}">${nom}</option>`).join("")}</select>
+      <input class="texte" id="saisie-etape" maxlength="120" placeholder="Ex. : arroser l'olivier" style="margin:0;flex:1 1 180px">
+      <button type="button" class="lien-bouton" id="ajouter-etape">Ajouter</button></div><p class="petit">Étape personnalisée : +10 min.</p></div>`
+    + titreAction("Consommables à contrôler", "pack-conso", "Pack conseillé")
+    + `<div class="carte">${CONSOMMABLES_LOCATION.map(([id, nom]) => `<label class="case"><input type="checkbox" data-conso="${id}" ${conso.includes(id) ? "checked" : ""}><span>${nom}</span></label>`).join("")}
+      <p class="petit">+10 min si la liste n'est pas vide.</p></div>`
+    + `<div class="note alerte" style="margin-top:10px">Le Cleaneur n'apporte jamais de consommables : ils doivent être sur place.</div>`
+    + titre("Horaires des voyageurs") + `<div class="carte">`
+    + compteur("Départ des voyageurs", "departVoyageursH", b.departVoyageursH ?? REGLES.DEPART_VOYAGEURS_DEFAUT_H, { min: REGLES.DEPART_VOYAGEURS_MIN_H, max: REGLES.DEPART_VOYAGEURS_MAX_H, unite: " h" })
+    + compteur("Arrivée suivante", "arriveeSuivanteH", b.arriveeSuivanteH ?? REGLES.ARRIVEE_SUIVANTE_DEFAUT_H, { min: REGLES.ARRIVEE_SUIVANTE_MIN_H, max: REGLES.ARRIVEE_SUIVANTE_MAX_H, unite: " h" })
+    + `<p class="petit">Le ménage commence au départ des voyageurs et doit finir avant l'arrivée suivante.</p></div>`
+    + `<div class="carte" style="margin-top:10px">${caseCocher("Je souhaite cette prestation à chaque départ de voyageurs", "aChaqueDepart", !!b.aChaqueDepart)}
+      ${caseCocher("Mémoriser ces étapes pour ce logement", "memoriserEtapes", b.memoriserEtapes !== false)}</div>`;
 }
 
 /** Questions affichées sous les formules, selon leur genre (QuestionsFormule dans l'appli). */
@@ -281,7 +311,9 @@ function etape4() {
   if (b.accueil === "BOITE") acces = champTexte("Emplacement de la boîte à clés", "boiteEmplacement", b.boiteEmplacement, "text", 'maxlength="120"') + champTexte("Code de la boîte", "code", b.code, "text", 'maxlength="30" autocomplete="off"');
   if (b.accueil === "AUTONOME") acces = champTexte("Code ou instructions d'accès", "code", b.code, "text", 'maxlength="120" autocomplete="off"');
   const maintenant = new Date();
-  const heures = []; for (let h = 7; h <= 20; h++) heures.push(h);
+  const location = b.rubriqueId === "rental";
+  const heures = []; if (location) heures.push(b.departVoyageursH ?? REGLES.DEPART_VOYAGEURS_DEFAUT_H); else for (let h = 7; h <= 20; h++) heures.push(h);
+  const tient = !location || menageTientEntreVoyageurs(b, calculer(entreeEstimation(b, b.espace === "personnel", null)).dureeMin);
   const jourDate = b.jour ? new Date(b.jour + "T00:00") : null;
   const creneaux = jourDate ? heures.map(h => {
     const c = new Date(jourDate); c.setHours(h);
@@ -291,8 +323,9 @@ function etape4() {
   }).join("") : "";
   const accesOk = b.accueil && ({ TIERS: b.tiersNom.trim() && b.tiersTel.trim().length >= 6, BOITE: b.boiteEmplacement.trim() && b.code.trim(), AUTONOME: b.code.trim(), PRESENT: true }[b.accueil]);
   const adresseOk = b.rue.trim().length >= 3 && /^[0-9]{5}$/.test(b.codePostal) && b.ville.trim();
-  const creneauOk = estPrelancement() || b.flexible || (b.jour && b.heure >= 0);
-  const manque = !adresseOk ? "Indiquez l'adresse complète." : !accesOk ? "Indiquez comment le Cleaneur accède au lieu." : !creneauOk ? "Choisissez un créneau." : "";
+  const creneauOk = estPrelancement() || b.flexible || (b.jour && b.heure >= 0 && (!location || b.heure === (b.departVoyageursH ?? REGLES.DEPART_VOYAGEURS_DEFAUT_H)));
+  const manque = !adresseOk ? "Indiquez l'adresse complète." : !accesOk ? "Indiquez comment le Cleaneur accède au lieu."
+    : !tient ? "Le ménage ne tient pas entre le départ et l'arrivée suivante : avancez le départ ou retardez l'arrivée." : !creneauOk ? "Choisissez un créneau." : "";
   return `<h2>Adresse et créneau</h2>
     ${titre("Adresse de l'intervention")}
     ${logements().length ? `<p class="petit"><b>Vos adresses enregistrées</b></p>${logements().map(l => `<button type="button" class="option ${b.logementId === l.id ? "choisi" : ""}" data-logement="${l.id}">${esc(nomLogement(l))}<span class="detail">${esc(l.rue)}, ${esc(l.codePostal)} ${esc(l.ville)}</span></button>`).join("")}
@@ -305,6 +338,7 @@ function etape4() {
     ${acces ? `<div class="carte" style="margin-top:10px">${acces}<p class="petit">Le code n'est communiqué qu'au Cleaneur retenu, le jour de l'intervention.</p></div>` : ""}
     ${interdit ? `<p class="petit">Chez les professionnels, une personne doit être présente pour accueillir le Cleaneur.</p>` : ""}
     ${titre("Créneau")}
+    ${location ? `<div class="note ${tient ? "" : "alerte"}" style="margin-bottom:10px">Départ des voyageurs à ${b.departVoyageursH ?? 10} h · fin avant ${b.arriveeSuivanteH ?? 16} h</div>` : ""}
     ${estPrelancement() ? `<div class="note">Les réservations ouvrent le <b>31 décembre 2026</b>. Envoyez votre pré-réservation dès maintenant : nous vous recontacterons en priorité pour fixer le créneau.</div>` : `
     <div class="carte">${caseCocher("Je suis flexible", "flexible", b.flexible, "Vous recevez des candidatures sur 7 jours")}</div>
     ${b.flexible ? "" : `<div class="jours" style="margin-top:12px">${joursProposes().map(d => `<button type="button" data-jour="${iso(d)}" class="${b.jour === iso(d) ? "choisi" : ""}">${dateCourte(d)}</button>`).join("")}</div>
@@ -408,6 +442,14 @@ document.addEventListener("click", async e => {
   }
   if (ds.retirer !== undefined) return maj({ tachesPerso: b.tachesPerso.filter((_, i) => i !== +ds.retirer) });
   if (ds.retirerPanier !== undefined) return maj({ panier: (b.panier || []).filter((_, i) => i !== +ds.retirerPanier) });
+  if (t.id === "pack-etapes") return maj({ etapesChoisies: [...new Set([...etapesDe(b), ...PACK_ETAPES_CONSEILLE])] });
+  if (t.id === "pack-conso") return maj({ consommablesChoisis: [...new Set([...consommablesDe(b), ...PACK_CONSOMMABLES_CONSEILLE])] });
+  if (ds.retirerEtape !== undefined) return maj({ etapesPerso: (b.etapesPerso || []).filter((_, i) => i !== +ds.retirerEtape) });
+  if (t.id === "ajouter-etape") {
+    const texte = document.getElementById("saisie-etape").value.trim(), piece = document.getElementById("piece-perso").value;
+    if (texte) maj({ etapesPerso: [...(b.etapesPerso || []), { piece, texte }].slice(0, 20) });
+    return;
+  }
   if (t.id === "ajouter-panier") return maj({ panier: [...(b.panier || []), ligneEnCours().ligne], quantitePanier: 1 });
   if (ds.jourPassage) { const n = +ds.jourPassage, j = b.jours || []; return maj({ jours: j.includes(n) ? j.filter(x => x !== n) : [...j, n].sort() }); }
   if (ds.jour) return maj({ jour: ds.jour, heure: -1 });
@@ -429,6 +471,8 @@ document.addEventListener("change", e => {
   if (ds.texte) { b = { ...b, [ds.texte]: e.target.value }; sauver(); return rendre(); }  // (logementId gardé : seule la saisie d'une nouvelle adresse le vide)
   if (ds.case) return maj({ [ds.case]: e.target.checked });
   if (ds.tache) return maj({ taches: e.target.checked ? [...b.taches, ds.tache] : b.taches.filter(x => x !== ds.tache) });
+  if (ds.etape) { const l = etapesDe(b); return maj({ etapesChoisies: e.target.checked ? [...l, ds.etape] : l.filter(x => x !== ds.etape) }); }
+  if (ds.conso) { const l = consommablesDe(b); return maj({ consommablesChoisis: e.target.checked ? [...l, ds.conso] : l.filter(x => x !== ds.conso) }); }
   if (ds.nature) { const n = b.natures || []; return maj({ natures: e.target.checked ? [...n, ds.nature] : n.filter(x => x !== ds.nature) }); }
   if (e.target.id === "photos") { photos = [...photos, ...e.target.files].filter(f => f.type.startsWith("image/")).slice(0, 12); rendre(); }
 });
