@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /gestion.html
+Disallow: /tests.html
+
+Sitemap: https://cleaneroo.fr/sitemap.xml
