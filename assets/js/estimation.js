@@ -161,6 +161,10 @@ export function datesPassages(premier, frequence, jours, nombre) {
     }
     return res;
   }
+  if (frequence === "mois") {
+    for (let i = 0; i < nombre; i++) { const d = new Date(premier); d.setMonth(d.getMonth() + i); res.push(d); }
+    return res;
+  }
   const pas = { deux_semaines: 14, quatre_semaines: 28 }[frequence] || 7;
   for (let i = 0; i < nombre; i++) { const d = new Date(premier); d.setDate(d.getDate() + i * pas); res.push(d); }
   return res;

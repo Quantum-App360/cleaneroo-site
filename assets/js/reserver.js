@@ -205,7 +205,7 @@ function questionsFormule(r) {
   const f = formuleDe(b);
   if (f.genre === "REGULIER") {
     const jours = b.jours || [];
-    return titre("Fréquence de passage") + choix(FREQUENCES, b.frequence || "semaine", "frequence")
+    return titre("Fréquence de passage") + choix(r.frequences, b.frequence || "semaine", "frequence")
       + (b.frequence === "plusieurs" ? titre("Jours de passage") + `<div class="choix">${JOURS_SEMAINE.map(([n, nom]) =>
         `<button type="button" data-jour-passage="${n}" class="${jours.includes(n) ? "choisi" : ""}">${nom}</button>`).join("")}</div><p class="petit">Au moins deux jours.</p>` : "")
       + titre("Moment de passage") + choix(r.moments, b.moment, "moment")
@@ -215,14 +215,15 @@ function questionsFormule(r) {
         ${compteur("Passages à planifier", "passages", b.passages || REGLES.PASSAGES_DEFAUT, { min: REGLES.PASSAGES_MIN, max: REGLES.PASSAGES_MAX })}
         <p class="petit">Chaque passage est une demande séparée, au même prix.</p></div>`;
   }
-  if (f.genre === "PONCTUEL" && r.occasions.length) return titre("À quelle occasion ?") + choix(r.occasions.map(o => [o.id, o.nom]), b.occasion, "occasion");
-  if (f.genre === "REMISE_EN_ETAT") {
+  let h = f.genre === "PONCTUEL" && r.occasions.length ? titre("À quelle occasion ?") + choix(r.occasions.map(o => [o.id, o.nom]), b.occasion, "occasion") : "";
+  // Remise en état (et Grand ménage) : dernier nettoyage en profondeur, puis nature des salissures
+  if (f.avecDernierNettoyage) {
     const natures = b.natures || [];
-    return titre("Dernier nettoyage en profondeur") + choix(DERNIERS_NETTOYAGES.map(d => [d.id, d.libelle]), b.dernierNettoyage, "dernierNettoyage")
+    h += titre("Dernier nettoyage en profondeur") + choix(DERNIERS_NETTOYAGES.map(d => [d.id, d.libelle]), b.dernierNettoyage, "dernierNettoyage")
       + (r.naturesSalissure.length ? titre("Nature des salissures") + `<div class="carte">${r.naturesSalissure.map(n =>
         `<label class="case"><input type="checkbox" data-nature="${esc(n)}" ${natures.includes(n) ? "checked" : ""}><span>${esc(n)}</span></label>`).join("")}</div>` : "");
   }
-  return "";
+  return h;
 }
 
 /** Canapés et textiles : choix d'un élément de la formule, taille, quantité, puis ajout au panier (PanierTextiles dans l'appli). */
@@ -382,7 +383,9 @@ document.addEventListener("click", async e => {
     if (ds.champ === "occasion") {
       const o = rubrique(b.rubriqueId).occasions.find(x => x.id === v);
       const p = packsPour(rubrique(b.rubriqueId), b.typeLieuId).find(x => x.id === o?.packId);
-      return maj({ occasion: v, taches: [...new Set([...b.taches, ...(p ? p.tacheIds : [])])] });
+      const proposees = tachesChiffrees(b).map(t => t.id);
+      const enPlus = (o?.tachesEnPlus || []).filter(id => proposees.includes(id));
+      return maj({ occasion: v, taches: [...new Set([...b.taches, ...(p ? p.tacheIds : []), ...enPlus])] });
     }
     // Le dernier nettoyage présélectionne l'état de saleté.
     if (ds.champ === "dernierNettoyage") return maj({ dernierNettoyage: v, salissure: DERNIERS_NETTOYAGES.find(d => d.id === v).salissure });

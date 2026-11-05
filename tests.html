@@ -71,6 +71,21 @@ egal("7. tapis de 2 à 3 m : 65,00 €", e.totalC, 6500); egal("7. sans complém
 e = calculer({ rubriqueId: "textiles", salissure: "MARQUE", panier: [{ elementId: "tapis_3", quantite: 1 }] });
 egal("textiles : salissure en prix (+15 %)", e.totalC, 6500 + 975);
 
+// Logement (prompt 1) : espace Personnel, semaine, salissure normale
+e = parcours({ rubriqueId: "home", formuleId: "ponctuel", surface: 60, taches: ["draps", "poubelles", "hauteurs", "plinthes"] });
+egal("logement 60 m² + Essentiel : 108,25 €", e.totalC, 10825);
+egal("logement 60 m² : remise 2 €", e.lignes.find(l => l.libelle.startsWith("Remise pack"))?.montantC, -200);
+egal("logement 60 m² : 54,12 € après crédit d'impôt", e.apresCreditImpotC, 5412);
+e = parcours({ rubriqueId: "home", formuleId: "regulier", typeLogementId: "maison", surface: 110, chambres: 3, sdb: 2, niveaux: 2 });
+egal("maison 110 m², 2 niveaux, régulier : 4 h", e.dureeMin, 240); egal("maison 110 m² : 107,60 €", e.totalC, 10760);
+const rh = rubrique("home");
+egal("logement : 4 groupes", [...new Set(rh.taches.map(t => t.groupe))].join(), "Cuisine,Pièces de vie,Linge,Extérieurs");
+egal("Prestige contient les placards et armoires", rh.packs.find(p => p.id === "prestige").tacheIds.includes("placards_armoires"), true);
+egal("vitres à 120 m² : 50 €", tacheChiffree(rh.taches.find(t => t.id === "vitres"), rh, 120).prixC, 5000);
+egal("retour de vacances : + réfrigérateur", rh.occasions.find(o => o.id === "vacances").tachesEnPlus.join(), "frigo");
+egal("grand ménage : dernier nettoyage", rh.formules.find(f => f.id === "grand").avecDernierNettoyage, true);
+egal("passages chaque mois", datesPassages(new Date(2027, 0, 4), "mois", [], 2).map(d => `${d.getDate()}/${d.getMonth() + 1}`).join(" "), "4/1 4/2");
+
 // Règles communes de l'étape « Décrire le besoin » : mêmes cas que ReglesTest.kt
 const T0 = (id, nom, prixC, minutes, o = {}) => ({ id, nom, prixC, minutes, groupe: "", parSurface: false, types: [], ...o });
 const essai = { id: "essai", surfaceReferenceM2: 30, taches: [

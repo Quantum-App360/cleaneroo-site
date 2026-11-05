@@ -454,6 +454,13 @@ const T = [
   ["6 à 12 mois", "6 to 12 months", "Da 6 a 12 mesi", "De 6 a 12 meses"],
   ["Plus d'un an", "More than a year", "Più di un anno", "Más de un año"],
   ["Nature des salissures", "Type of dirt", "Tipo di sporco", "Tipo de suciedad"],
+  // Logement : groupes de tâches, fréquences et moments
+  ["Pièces de vie", "Living areas", "Zona giorno", "Zonas de estar"],
+  ["Linge", "Laundry", "Biancheria", "Ropa"],
+  ["Extérieurs", "Outdoors", "Esterni", "Exteriores"],
+  ["Cuisine", "Kitchen", "Cucina", "Cocina"],
+  ["Chaque mois", "Every month", "Ogni mese", "Cada mes"],
+  ["Peu importe", "No preference", "Indifferente", "Me da igual"],
 ];
 
 const DICO = new Map();
@@ -543,6 +550,15 @@ const C = {
   },
   // Noms simples (formules, tâches, lieux, packs) : français → [anglais, italien, espagnol]
   noms: {
+    "Micro-ondes (intérieur)": ["Microwave (inside)", "Microonde (interno)", "Microondas (interior)"],
+    "Intérieur des placards de cuisine": ["Inside the kitchen cupboards", "Interno dei pensili della cucina", "Interior de los armarios de cocina"],
+    "Vitres intérieures et extérieures": ["Windows inside and out", "Vetri interni ed esterni", "Cristales interiores y exteriores"],
+    "Dépoussiérage des hauteurs et luminaires": ["Dusting high surfaces and lights", "Spolveratura delle parti alte e dei lampadari", "Quitar el polvo de zonas altas y lámparas"],
+    "Plinthes, portes et interrupteurs": ["Skirting boards, doors and switches", "Battiscopa, porte e interruttori", "Rodapiés, puertas e interruptores"],
+    "Intérieur des placards et armoires": ["Inside cupboards and wardrobes", "Interno di armadi e guardaroba", "Interior de armarios y roperos"],
+    "Repassage (1 heure)": ["Ironing (1 hour)", "Stiratura (1 ora)", "Planchado (1 hora)"],
+    "Lessive et pliage du linge": ["Laundry and folding", "Bucato e piegatura", "Colada y doblado de la ropa"],
+    "Terrasse (balayage et lavage)": ["Terrace (sweeping and washing)", "Terrazza (spazzatura e lavaggio)", "Terraza (barrido y fregado)"],
     "Détachage ciblé": ["Targeted stain removal", "Smacchiatura mirata", "Desmanchado localizado"],
     "Anti-acariens": ["Anti-dust mite", "Antiacaro", "Antiácaros"],
     "Désodorisation": ["Deodorising", "Deodorazione", "Desodorización"],

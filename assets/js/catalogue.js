@@ -4,7 +4,9 @@ import { REGLES, euros } from "./regles.js";
 const T = (id, nom, prixC, minutes, o = {}) => ({ id, nom, prixC, minutes, groupe: "", parSurface: false, types: [], ...o });
 /** Genre de formule : décide des questions affichées sous les formules (GenreFormule dans l'appli). */
 export const genreParDefaut = id => ({ regulier: "REGULIER", saisonnier: "REGULIER", ponctuel: "PONCTUEL", remise: "REMISE_EN_ETAT", demoussage: "REMISE_EN_ETAT" })[id] || "AUTRE";
-const F = (id, nom, description = "", m2ParHeure = 0, minimumMin = 0, coef = 1.0, genre = genreParDefaut(id)) => ({ id, nom, description, m2ParHeure, minimumMin, coef, genre });
+/** avecDernierNettoyage : pose aussi « Dernier nettoyage en profondeur » (ex. Grand ménage, qui garde les occasions). */
+const F = (id, nom, description = "", m2ParHeure = 0, minimumMin = 0, coef = 1.0, genre = genreParDefaut(id), avecDernierNettoyage = genre === "REMISE_EN_ETAT") =>
+  ({ id, nom, description, m2ParHeure, minimumMin, coef, genre, avecDernierNettoyage });
 
 /* Questions communes des formules (mêmes listes que l'appli : Catalogue.kt). */
 export const FREQUENCES = [["semaine", "Chaque semaine"], ["deux_semaines", "Toutes les 2 semaines"], ["quatre_semaines", "Toutes les 4 semaines"], ["plusieurs", "Plusieurs fois par semaine"]];
@@ -16,19 +18,23 @@ export const DERNIERS_NETTOYAGES = [
   { id: "6_12_mois", libelle: "6 à 12 mois", salissure: "MARQUE" }, { id: "plus_1_an", libelle: "Plus d'un an", salissure: "INTENSE" },
 ];
 
+/** Logement : 4 groupes ; « à la surface » = chiffré pour 60 m² (surfaceReferenceM2), au prorata au-delà. */
+const cuisine = { groupe: "Cuisine" }, vie = { groupe: "Pièces de vie" }, linge = { groupe: "Linge" }, ext = { groupe: "Extérieurs" };
 const tachesLogement = [
-  T("four", "Intérieur du four", 2500, 30), T("frigo", "Intérieur du réfrigérateur", 1500, 20),
-  T("hotte", "Hotte et filtres", 1500, 20), T("microondes", "Micro-ondes", 800, 10),
-  T("placards_cuisine", "Placards de cuisine", 2000, 30), T("vaisselle", "Vaisselle", 1500, 20),
-  T("vitres", "Vitres int. et ext.", 2500, 40), T("hauteurs", "Hauteurs et luminaires", 1500, 20),
-  T("plinthes", "Plinthes", 1500, 20), T("placards_armoires", "Placards et armoires", 2500, 35),
-  T("draps", "Changement des draps", 800, 10), T("repassage", "Repassage (1 h)", 2800, 60),
-  T("lessive", "Lessive et pliage", 1500, 20), T("balcon", "Balcon", 1500, 20),
-  T("terrasse", "Terrasse", 2500, 30), T("poubelles", "Sortie des poubelles", 500, 5),
+  T("four", "Intérieur du four", 2500, 30, cuisine), T("frigo", "Intérieur du réfrigérateur", 1500, 20, cuisine),
+  T("hotte", "Hotte et filtres", 1500, 20, cuisine), T("microondes", "Micro-ondes (intérieur)", 800, 10, cuisine),
+  T("placards_cuisine", "Intérieur des placards de cuisine", 2000, 30, cuisine), T("vaisselle", "Vaisselle", 1500, 20, cuisine),
+  T("vitres", "Vitres intérieures et extérieures", 2500, 40, { ...vie, parSurface: true }),
+  T("hauteurs", "Dépoussiérage des hauteurs et luminaires", 1500, 20, { ...vie, parSurface: true }),
+  T("plinthes", "Plinthes, portes et interrupteurs", 1500, 20, { ...vie, parSurface: true }),
+  T("placards_armoires", "Intérieur des placards et armoires", 2500, 35, vie),
+  T("draps", "Changement des draps", 800, 10, linge), T("repassage", "Repassage (1 heure)", 2800, 60, linge),
+  T("lessive", "Lessive et pliage du linge", 1500, 20, linge),
+  T("balcon", "Balcon", 1500, 20, ext), T("terrasse", "Terrasse (balayage et lavage)", 2500, 30, ext), T("poubelles", "Sortie des poubelles", 500, 5, ext),
 ];
 const essentiel = ["draps", "poubelles", "hauteurs", "plinthes"];
 const confort = [...essentiel, "vitres", "frigo", "microondes", "lessive"];
-const prestige = [...confort, "four", "hotte", "placards_cuisine", "repassage", "balcon"];
+const prestige = [...confort, "four", "hotte", "placards_cuisine", "placards_armoires", "repassage", "balcon"];
 const packsLogement = [
   { id: "essentiel", nom: "Essentiel", remisePct: 5, tacheIds: essentiel },
   { id: "confort", nom: "Confort", remisePct: 10, tacheIds: confort },
@@ -40,11 +46,13 @@ export const RUBRIQUES = [
     inclus: "Dépoussiérage des surfaces accessibles, aspiration et lavage des sols, cuisine, salle de bain et WC, poubelles, lits faits.",
     formules: [F("ponctuel", "Ménage ponctuel", "Un ménage complet, une seule fois.", 25, 120),
       F("regulier", "Entretien régulier", "Chaque semaine ou tous les 15 jours, idéalement avec le même Cleaneur.", 30, 90),
-      F("grand", "Grand ménage", "Un nettoyage en profondeur, du sol au plafond.", 15, 120)],
-    taches: tachesLogement, packs: packsLogement,
+      F("grand", "Grand ménage", "Un nettoyage en profondeur, du sol au plafond.", 15, 120, 1.0, "PONCTUEL", true)],
+    taches: tachesLogement, packs: packsLogement, surfaceReferenceM2: 60,
     occasions: [{ id: "printemps", nom: "Ménage de printemps", packId: "prestige" }, { id: "recevoir", nom: "Avant de recevoir", packId: "confort" },
-      { id: "vacances", nom: "Retour de vacances", packId: "essentiel" }, { id: "vente", nom: "Avant une vente ou une location", packId: "prestige" },
-      { id: "autre", nom: "Autre", packId: "" }] },
+      { id: "vacances", nom: "Retour de vacances", packId: "essentiel", tachesEnPlus: ["frigo"] }, { id: "vente", nom: "Avant une vente ou une location", packId: "prestige" },
+      { id: "autre", nom: "Autre", packId: "" }],
+    frequences: [["semaine", "Chaque semaine"], ["deux_semaines", "Toutes les 2 semaines"], ["mois", "Chaque mois"]],
+    moments: [["matin", "Le matin"], ["apres_midi", "L'après-midi"], ["peu_importe", "Peu importe"]] },
   { id: "rental", nom: "Location saisonnière", sousTitre: "Prêt pour vos prochains voyageurs", emoji: "🧳", tauxHoraireC: 3000, salissureSurTemps: true, affichagePrix: "PAR_MENAGE",
     inclus: "Ménage complet entre deux voyageurs, lits faits avec le linge fourni sur place, cuisine et sanitaires désinfectés, contrôle de l'inventaire et des consommables, photos de chaque pièce pour l'hôte.",
     formules: [F("court", "Après un court séjour (1–4 nuits)", "Rotation standard.", 0, 0, 1.0),
@@ -89,7 +97,7 @@ export const RUBRIQUES = [
   { id: "event", nom: "Avant et après événement", sousTitre: "Profitez pleinement de votre événement", emoji: "🎉", tauxHoraireC: 3200, salissureSurTemps: false },
   { id: "special", nom: "Prestations spécialisées", sousTitre: "Une évaluation par un professionnel qualifié", emoji: "🧪", tauxHoraireC: null, salissureSurTemps: false, toujoursSurDevis: true },
 ].map(r => ({ inclus: "", formules: [], taches: [], packs: [], toujoursSurDevis: false, affichagePrix: "HORAIRE",
-  surfaceReferenceM2: 0, occasions: [], naturesSalissure: [], moments: MOMENTS_PAR_DEFAUT, ...r }));
+  surfaceReferenceM2: 0, occasions: [], naturesSalissure: [], moments: MOMENTS_PAR_DEFAUT, frequences: FREQUENCES, ...r }));
 
 export const rubrique = id => RUBRIQUES.find(r => r.id === id);
 
