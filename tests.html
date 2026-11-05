@@ -64,7 +64,7 @@ e = parcours({ rubriqueId: "moving", formuleId: "depart" });
 egal("4. déménagement : 224,00 €", e.totalC, 22400); egal("4. confié à 2 Cleaneurs", e.nombreCleaneurs, 2); egal("4. durée sur place divisée par 2", e.dureeMin, 210);
 e = parcours({ rubriqueId: "textiles", formuleId: "canape", panier: [{ elementId: "canape_droit", tailleId: "t20", quantite: 1 }, { elementId: "fauteuil", quantite: 1 }] });
 egal("5. canapé droit 1,5–2 m + fauteuil : 124,00 €", e.totalC, 12400); egal("5. durée 105 min", e.dureeMin, 105);
-egal("5. libellé de ligne", e.lignes[0].libelle, "Canapé droit 1,5 – 2 m × 1");
+egal("5. libellé de ligne", e.lignes[0].libelle, "Canapé droit 1,5 à 2 m × 1");
 e = parcours({ rubriqueId: "textiles", formuleId: "canape", panier: [{ elementId: "fauteuil", quantite: 1 }] });
 egal("6. fauteuil seul → 59,00 €", e.totalC, 5900);
 egal("6. complément de 14 €", e.lignes.find(l => l.libelle === "Complément minimum de commande")?.montantC, 1400);
@@ -72,6 +72,11 @@ e = parcours({ rubriqueId: "textiles", formuleId: "tapis", panier: [{ elementId:
 egal("7. tapis de 2 à 3 m : 65,00 €", e.totalC, 6500); egal("7. sans complément", e.lignes.some(l => l.libelle.startsWith("Complément")), false);
 e = calculer({ rubriqueId: "textiles", salissure: "MARQUE", panier: [{ elementId: "tapis_3", quantite: 1 }] });
 egal("textiles : salissure en prix (+15 %)", e.totalC, 6500 + 975);
+
+// Canapés et textiles (prompt 5)
+e = parcours({ rubriqueId: "textiles", formuleId: "canape", panier: [{ elementId: "canape_angle", tailleId: "t25", quantite: 1 }], taches: ["detachage", "desodorisation", "acariens"] });
+egal("canapé d'angle 2 à 2,5 m + Confort : 169,00 €", e.totalC, 16900); egal("84,50 € après crédit d'impôt", e.apresCreditImpotC, 8450);
+egal("Essentiel textiles = détachage", rubrique("textiles").packs.find(p => p.id === "essentiel").tacheIds.join(), "detachage");
 
 // Véhicules (prompt 4)
 const confortV = ["aspiration", "tableau", "vitres_int", "coffre", "lavage_main", "vitres_ext", "jantes"];

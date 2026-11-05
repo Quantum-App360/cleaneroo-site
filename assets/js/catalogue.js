@@ -191,11 +191,13 @@ export const RUBRIQUES = [
       { id: "prestige", nom: "Prestige", remisePct: 15, tacheIds: ["aspiration", "tableau", "vitres_int", "coffre", "lavage_main", "vitres_ext", "jantes", "plastiques_protection", "moquettes", "anti_odeurs", "bas_caisse", "cire"] },
     ] },
   { id: "textiles", nom: "Canapés et textiles", sousTitre: "Canapés, matelas et tapis", emoji: "🛋️", tauxHoraireC: 3000, salissureSurTemps: false, affichagePrix: "PAR_ELEMENT",
+    inclus: "Aspiration en profondeur · Shampoing par injection-extraction · Traitement des taches courantes",
     formules: [F("canape", "Canapé"), F("matelas", "Matelas"), F("tapis", "Tapis et moquettes")],
-    taches: [T("detachage", "Détachage ciblé", 1500, 15), T("acariens", "Anti-acariens", 2000, 15), T("desodorisation", "Désodorisation", 1000, 10),
-      T("protection", "Protection anti-taches", 2500, 15), T("sechage", "Séchage accéléré", 1000, 10)],
+    taches: [T("detachage", "Détachage ciblé (taches tenaces)", 1500, 15, { groupe: "Traitements" }), T("acariens", "Traitement anti-acariens", 2000, 15, { groupe: "Traitements" }),
+      T("desodorisation", "Désodorisation", 1000, 10, { groupe: "Traitements" }), T("protection", "Protection anti-taches", 2500, 15, { groupe: "Traitements" }),
+      T("sechage", "Séchage accéléré (ventilation)", 1000, 10, { groupe: "Traitements" })],
     packs: [
-      { id: "essentiel", nom: "Essentiel", remisePct: 5, tacheIds: ["detachage", "desodorisation"] },
+      { id: "essentiel", nom: "Essentiel", remisePct: 5, tacheIds: ["detachage"] },
       { id: "confort", nom: "Confort", remisePct: 10, tacheIds: ["detachage", "desodorisation", "acariens"] },
       { id: "prestige", nom: "Prestige", remisePct: 15, tacheIds: ["detachage", "desodorisation", "acariens", "protection", "sechage"] },
     ] },
@@ -244,8 +246,8 @@ export const remisePack = (p, chiffrees) => arrondiEuro(chiffrees.filter(t => p.
 const E = (id, nom, formuleId, prixC, minutes, o = {}) => ({ id, nom, formuleId, prixC, minutes, avecTaille: false, parM2: false, ...o });
 export const ELEMENTS_TEXTILES = [
   E("canape_droit", "Canapé droit", "canape", 6900, 60, { avecTaille: true }), E("canape_angle", "Canapé d'angle", "canape", 10900, 105, { avecTaille: true }),
-  E("convertible", "Convertible", "canape", 8900, 75, { avecTaille: true }), E("meridienne", "Méridienne", "canape", 8900, 75, { avecTaille: true }),
-  E("modulable", "Modulable / panoramique", "canape", 13900, 120, { avecTaille: true }), E("fauteuil", "Fauteuil", "canape", 4500, 30),
+  E("convertible", "Convertible (BZ, clic-clac)", "canape", 8900, 75, { avecTaille: true }), E("meridienne", "Méridienne / chaise longue", "canape", 8900, 75, { avecTaille: true }),
+  E("modulable", "Canapé modulable / panoramique", "canape", 13900, 120, { avecTaille: true }), E("fauteuil", "Fauteuil", "canape", 4500, 30),
   E("matelas_bebe", "Matelas bébé", "matelas", 3900, 30), E("matelas_1", "Matelas 1 personne", "matelas", 5500, 45),
   E("matelas_2", "Matelas 2 personnes", "matelas", 7500, 60), E("matelas_grand", "Matelas grand lit (160 cm et +)", "matelas", 8900, 75),
   E("tapis_2", "Tapis jusqu'à 2 m", "tapis", 4500, 30), E("tapis_3", "Tapis de 2 à 3 m", "tapis", 6500, 45),
@@ -253,10 +255,12 @@ export const ELEMENTS_TEXTILES = [
 ];
 /** Supplément de taille des canapés (prix et durée). */
 export const TAILLES_CANAPE = [
-  { id: "t15", libelle: "< 1,5 m", prixC: 0, minutes: 0 }, { id: "t20", libelle: "1,5 – 2 m", prixC: 1000, minutes: 15 },
-  { id: "t25", libelle: "2 – 2,5 m", prixC: 2000, minutes: 30 }, { id: "t30", libelle: "2,5 – 3 m", prixC: 3000, minutes: 45 },
-  { id: "t3p", libelle: "> 3 m", prixC: 4000, minutes: 60 },
+  { id: "t15", libelle: "moins de 1,5 m", prixC: 0, minutes: 0 }, { id: "t20", libelle: "1,5 à 2 m", prixC: 1000, minutes: 15 },
+  { id: "t25", libelle: "2 à 2,5 m", prixC: 2000, minutes: 30 }, { id: "t30", libelle: "2,5 à 3 m", prixC: 3000, minutes: 45 },
+  { id: "t3p", libelle: "plus de 3 m", prixC: 4000, minutes: 60 },
 ];
+/** « Taches à traiter » (choix multiple, indicatif pour le Cleaneur). */
+export const TACHES_A_TRAITER = ["Vin", "Café ou thé", "Gras", "Urine", "Sang", "Encre", "Inconnues"];
 export const elementTextile = id => ELEMENTS_TEXTILES.find(e => e.id === id);
 const tailleCanape = id => TAILLES_CANAPE.find(t => t.id === id);
 /** Une ligne du panier : { elementId, tailleId, quantite, surfaceM2 } (LignePanier dans l'appli). */

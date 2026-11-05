@@ -607,6 +607,27 @@ const T = [
   ["Des animaux voyagent dans le véhicule", "Pets travel in the vehicle", "Nel veicolo viaggiano animali", "Viajan animales en el vehículo"],
   ["Ajouter « Poils d'animaux »", "Add “Pet hair”", "Aggiungi «Peli di animali»", "Añadir «Pelo de animales»"],
   ["Sélection conseillée ›", "Recommended selection ›", "Selezione consigliata ›", "Selección recomendada ›"],
+  ["Détachage ciblé (taches tenaces)", "Targeted stain removal (stubborn stains)", "Smacchiatura mirata (macchie ostinate)", "Desmanchado localizado (manchas difíciles)"],
+  ["Traitement anti-acariens", "Anti-dust mite treatment", "Trattamento antiacaro", "Tratamiento antiácaros"],
+  ["Séchage accéléré (ventilation)", "Fast drying (ventilation)", "Asciugatura rapida (ventilazione)", "Secado rápido (ventilación)"],
+  ["Aspiration en profondeur · Shampoing par injection-extraction · Traitement des taches courantes", "Deep vacuuming · Injection-extraction shampoo · Treatment of common stains", "Aspirazione profonda · Shampoo a iniezione-estrazione · Trattamento delle macchie comuni", "Aspirado en profundidad · Champú por inyección-extracción · Tratamiento de manchas comunes"],
+  ["Traitements", "Treatments", "Trattamenti", "Tratamientos"],
+  ["Taches à traiter", "Stains to treat", "Macchie da trattare", "Manchas a tratar"],
+  ["Vin", "Wine", "Vino", "Vino"],
+  ["Café ou thé", "Coffee or tea", "Caffè o tè", "Café o té"],
+  ["Gras", "Grease", "Grasso", "Grasa"],
+  ["Urine", "Urine", "Urina", "Orina"],
+  ["Sang", "Blood", "Sangue", "Sangre"],
+  ["Encre", "Ink", "Inchiostro", "Tinta"],
+  ["Inconnues", "Unknown", "Sconosciute", "Desconocidas"],
+  ["Convertible (BZ, clic-clac)", "Sofa bed (futon, click-clack)", "Divano letto (BZ, clic-clac)", "Sofá cama (BZ, clic-clac)"],
+  ["Méridienne / chaise longue", "Chaise longue / daybed", "Méridienne / chaise longue", "Chaise longue / diván"],
+  ["Canapé modulable / panoramique", "Modular / panoramic sofa", "Divano modulare / panoramico", "Sofá modular / panorámico"],
+  ["moins de 1,5 m", "under 1.5 m", "meno di 1,5 m", "menos de 1,5 m"],
+  ["1,5 à 2 m", "1.5 to 2 m", "da 1,5 a 2 m", "de 1,5 a 2 m"],
+  ["2 à 2,5 m", "2 to 2.5 m", "da 2 a 2,5 m", "de 2 a 2,5 m"],
+  ["2,5 à 3 m", "2.5 to 3 m", "da 2,5 a 3 m", "de 2,5 a 3 m"],
+  ["plus de 3 m", "over 3 m", "oltre 3 m", "más de 3 m"],
   // </rubriques-textes>
 ];
 
@@ -785,6 +806,10 @@ const C = {
     "Rénovation des optiques de phares": ["Headlight restoration", "Rinnovo dei fari", "Renovación de faros"],
     "Polissage carrosserie (lustrage 1 étape)": ["Body polishing (one-step)", "Lucidatura carrozzeria (1 fase)", "Pulido de carrocería (1 paso)"],
     "Compartiment moteur (nettoyage à sec)": ["Engine bay (dry cleaning)", "Vano motore (pulizia a secco)", "Compartimento del motor (limpieza en seco)"],
+    "Détachage ciblé (taches tenaces)": ["Targeted stain removal (stubborn stains)", "Smacchiatura mirata (macchie ostinate)", "Desmanchado localizado (manchas difíciles)"],
+    "Traitement anti-acariens": ["Anti-dust mite treatment", "Trattamento antiacaro", "Tratamiento antiácaros"],
+    "Séchage accéléré (ventilation)": ["Fast drying (ventilation)", "Asciugatura rapida (ventilazione)", "Secado rápido (ventilación)"],
+    "Aspiration en profondeur · Shampoing par injection-extraction · Traitement des taches courantes": ["Deep vacuuming · Injection-extraction shampoo · Treatment of common stains", "Aspirazione profonda · Shampoo a iniezione-estrazione · Trattamento delle macchie comuni", "Aspirado en profundidad · Champú por inyección-extracción · Tratamiento de manchas comunes"],
   // </rubriques-noms>
   },
 };
