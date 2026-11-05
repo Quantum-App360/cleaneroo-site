@@ -1,6 +1,6 @@
 // Calcul de l'estimation : copie EXACTE de Estimation.kt (§ 8 du cahier des charges), dans le même ordre.
 import { REGLES, duree } from "./regles.js";
-import { rubrique, formulesPour, TYPES_LIEU, RUBRIQUES_CREDIT_IMPOT, TYPES_VITRES_ELIGIBLES } from "./catalogue.js";
+import { rubrique, formulesPour, TYPES_LIEU, RUBRIQUES_CREDIT_IMPOT, TYPES_VITRES_ELIGIBLES, prixLigne, minutesLigne, libelleLigne } from "./catalogue.js";
 
 export const SALISSURE = {
   LEGER: { libelle: "Léger", tempsPct: -10, prixPct: 0 },
@@ -17,7 +17,7 @@ const ENTREE_DEFAUT = {
   surfaceM2: 0, m2ParHeure: 0, minimumMin: 0, coefTemps: 1.0, coefPrix: 1.0, dureeBaseImposeeMin: 0,
   niveauxSupplementaires: 0, minutesEtapesLocation: 0, consommablesAControler: false, salissure: "NORMAL",
   taches: [], remisePackPct: 0, tachesPersonnalisees: 0, dimanche: false, creneauMalin: false,
-  engagementMois: 0, espacePersonnel: true, typeLieuId: "",
+  engagementMois: 0, espacePersonnel: true, typeLieuId: "", panier: [],
 };
 
 export function calculer(entree) {
@@ -25,12 +25,16 @@ export function calculer(entree) {
   const r = rubrique(e.rubriqueId);
   const taux = r.tauxHoraireC ?? 0;
   const vehicule = e.rubriqueId === "car";
+  const forfait = e.rubriqueId === "textiles";
+  const panier = e.panier || [];
   const lignes = [];
   const sal = SALISSURE[e.salissure || "NORMAL"];
 
-  // 1. Temps de base
+  // 1. Temps de base (textiles : somme des éléments du panier, pour le planning seulement)
   let dureeBase = 0;
-  if (!vehicule) {
+  if (forfait) {
+    dureeBase = arrondiQuartSup(Math.max(REGLES.DUREE_MIN_TEXTILES_MIN, panier.reduce((s, l) => s + minutesLigne(l), 0)));
+  } else if (!vehicule) {
     let t = e.dureeBaseImposeeMin > 0 ? e.dureeBaseImposeeMin
       : e.m2ParHeure > 0 ? Math.max(e.minimumMin, e.surfaceM2 * 60 / e.m2ParHeure) : e.minimumMin;
     t *= e.coefTemps;
@@ -43,9 +47,10 @@ export function calculer(entree) {
     dureeBase = arrondiQuartSup(t);
   }
 
-  // 2. Prix de base
-  const prixBase = vehicule ? 0 : Math.round(taux * dureeBase / 60);
-  if (!vehicule) lignes.push({ libelle: `${r.nom} · ${duree(dureeBase)}`, montantC: prixBase });
+  // 2. Prix de base (textiles : une ligne par élément du panier, au prix forfaitaire)
+  const prixBase = vehicule ? 0 : forfait ? panier.reduce((s, l) => s + prixLigne(l), 0) : Math.round(taux * dureeBase / 60);
+  if (forfait) panier.forEach(l => lignes.push({ libelle: libelleLigne(l), montantC: prixLigne(l) }));
+  else if (!vehicule) lignes.push({ libelle: `${r.nom} · ${duree(dureeBase)}`, montantC: prixBase });
 
   // 3. Salissure en prix
   let sousTotal = prixBase;
@@ -100,11 +105,11 @@ export function calculer(entree) {
     lignes.push({ libelle: `Engagement ${e.engagementMois} mois (−${engPct} %)`, montantC: -g });
     total -= g;
   }
-  // 11. Véhicule : minimum de commande
-  if (vehicule && total < REGLES.MINIMUM_COMMANDE_VEHICULE_C) {
-    const c = REGLES.MINIMUM_COMMANDE_VEHICULE_C - total;
-    lignes.push({ libelle: "Complément minimum de commande", montantC: c });
-    total += c;
+  // 11. Minimum de commande (véhicules, textiles) ou par ménage (location saisonnière)
+  const min = minimumC(e.rubriqueId);
+  if (min != null) {
+    const c = complementMinimum(total, min);
+    if (c > 0) { lignes.push({ libelle: e.rubriqueId === "rental" ? "Complément minimum par ménage" : "Complément minimum de commande", montantC: c }); total += c; }
   }
 
   const dureeTotale = dureeBase + tachesMin + persoMin;
@@ -131,7 +136,14 @@ export function meilleurPack(packs, cochees) {
   return packs.filter(p => p.tacheIds.every(id => cochees.includes(id))).sort((a, b) => b.remisePct - a.remisePct)[0] || null;
 }
 
-export const tempsRotationLocation = (chambres, sdb, surface, coef) => (30 + 25 * chambres + 25 * sdb + 0.4 * surface) * coef;
+/** Minimum facturé par rubrique (centimes), null s'il n'y en a pas. */
+export const minimumC = id => ({ car: REGLES.MINIMUM_COMMANDE_VEHICULE_C, textiles: REGLES.MINIMUM_COMMANDE_TEXTILES_C, rental: REGLES.MINIMUM_MENAGE_LOCATION_C })[id] ?? null;
+/** Ligne « Complément minimum » : ce qu'il manque pour atteindre le minimum (0 si atteint). */
+export const complementMinimum = (totalC, minC) => Math.max(0, minC - totalC);
+
+/** Location saisonnière : temps de rotation. Un studio (0 chambre) compte comme 1 chambre. */
+export const tempsRotationLocation = (chambres, sdb, surface, coef) =>
+  (REGLES.ROTATION_BASE_MIN + REGLES.ROTATION_PAR_CHAMBRE_MIN * Math.max(1, chambres) + REGLES.ROTATION_PAR_SDB_MIN * Math.max(1, sdb) + REGLES.ROTATION_PAR_M2_MIN * surface) * coef;
 
 /** Disponibilité d'un créneau (ReglesMetier.disponibilite). jour : 1 = lundi … 7 = dimanche. */
 export function disponibilite(maintenant, creneau) {
@@ -156,7 +168,7 @@ export function entreeEstimation(b, espacePersonnel, debut) {
   let dureeImposee = 0, m2h = f.m2ParHeure, surface = b.surface;
   if (b.rubriqueId === "rental") { dureeImposee = Math.round(tempsRotationLocation(b.chambres, b.sdb, b.surface, 1.0)); m2h = 0; }
   if (b.rubriqueId === "windows") { dureeImposee = Math.max(f.minimumMin, b.fenetres * 15); m2h = 0; surface = 0; }
-  if (b.rubriqueId === "textiles") { m2h = f.id === "tapis" ? 25 : 0; }
+  if (b.rubriqueId === "textiles") { m2h = 0; surface = 0; }
   const dispo = debut ? disponibilite(new Date(), debut) : null;
   return {
     rubriqueId: b.rubriqueId, surfaceM2: surface, m2ParHeure: m2h, minimumMin: f.minimumMin,
@@ -171,5 +183,6 @@ export function entreeEstimation(b, espacePersonnel, debut) {
     dimanche: debut ? debut.getDay() === 0 : false,
     creneauMalin: dispo === "MALIN" && !b.flexible,
     engagementMois: b.engagementMois, espacePersonnel, typeLieuId: b.typeLieuId,
+    panier: b.rubriqueId === "textiles" ? b.panier || [] : [],
   };
 }

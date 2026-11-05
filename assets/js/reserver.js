@@ -1,6 +1,7 @@
 // Parcours de réservation en 5 étapes : copie de Reservation.kt (application Android).
 // 1 prestation · 2 questionnaire · 3 photos · 4 adresse, accès et créneau · 5 estimation, coordonnées et envoi.
-import { RUBRIQUES, rubrique, formulesPour, TYPES_LIEU, TYPES_LOGEMENT, BESOINS_SPECIAUX, ACCUEIL, accueilAutonomeInterdit, photosObligatoires } from "./catalogue.js";
+import { RUBRIQUES, rubrique, formulesPour, TYPES_LIEU, TYPES_LOGEMENT, BESOINS_SPECIAUX, ACCUEIL, accueilAutonomeInterdit, photosObligatoires,
+  ELEMENTS_TEXTILES, TAILLES_CANAPE, prixLigne, minutesLigne, libelleLigne, pastille } from "./catalogue.js";
 import { calculer, entreeEstimation, SALISSURE, disponibilite, meilleurPack } from "./estimation.js";
 import { REGLES, euros, duree, heure, dateCourte, estPrelancement, MESSAGE_LANCEMENT } from "./regles.js";
 import { envoyerDemande } from "./donnees.js";
@@ -64,6 +65,7 @@ function vierge(rubriqueId, espace, r, lieux) {
     accueil: "", tiersNom: "", tiersTel: "", boiteEmplacement: "", code: "",
     rue: "", codePostal: "", ville: "", jour: "", heure: -1, flexible: false, engagementMois: 0,
     choixCleaneur: "candidatures", prenom: "", nom: "", email: "", telephone: "", cgv: false, logementId: "",
+    panier: [], elementTextile: "", tailleCanape: "t15", quantitePanier: 1, surfaceMoquette: 10,
   };
 }
 
@@ -119,7 +121,7 @@ function etape1() {
         <p class="muet" style="margin:4px 0 0">${l ? esc(nomLogement(l)) : ""}</p><span class="tampon vert">Recommander en 3 clics ›</span></a>`; }).join("")}</div>` : ""}
     ${titre("Votre prestation")}
     <div class="grille-3">${RUBRIQUES.map(r => `<button type="button" class="carte prestation" data-rubrique="${r.id}" style="text-align:left">
-      <div class="emoji">${r.emoji}</div><h3>${r.nom}</h3><p class="muet" style="margin:4px 0 0">${r.sousTitre}</p></button>`).join("")}</div>`;
+      <div class="emoji">${r.emoji}</div><h3>${r.nom}</h3><p class="muet" style="margin:4px 0 0">${r.sousTitre}</p><span class="tampon">${pastille(r)}</span></button>`).join("")}</div>`;
 }
 
 function etape2() {
@@ -137,10 +139,10 @@ function etape2() {
   if (!r.toujoursSurDevis && b.rubriqueId !== "car") {
     h += titre("Choisissez votre formule") + formules.map(f => `<button type="button" class="option ${f.id === b.formuleId ? "choisi" : ""}" data-champ="formuleId" data-valeur="${f.id}">
       ${esc(f.nom)}${f.description ? `<span class="detail">${esc(f.description)}</span>` : ""}</button>`).join("");
+    if (b.rubriqueId === "textiles") h += panierTextiles();
     if (r.inclus) h += `<div class="carte teintee" style="margin-top:6px"><b style="color:var(--turquoise)">Inclus dans votre forfait</b><p class="muet" style="margin:4px 0 0;font-size:14px">${esc(r.inclus)}</p></div>`;
-    h += titre("Dimensions") + `<div class="carte">`
+    if (b.rubriqueId !== "textiles") h += titre("Dimensions") + `<div class="carte">`
       + (b.rubriqueId === "windows" ? compteur("Nombre de fenêtres", "fenetres", b.fenetres, { min: 1, max: 200 })
-        : b.rubriqueId === "textiles" ? compteur("Surface des tapis", "surface", b.surface, { min: 0, max: 500, unite: " m²" })
         : compteur("Surface", "surface", b.surface, { min: 5, max: 5000, unite: " m²" }))
       + (["home", "rental"].includes(b.rubriqueId) ? compteur("Chambres", "chambres", b.chambres, { max: 12 }) + compteur("Salles de bain", "sdb", b.sdb, { min: 1, max: 8 }) : "")
       + (b.rubriqueId === "home" ? compteur("Niveaux", "niveaux", b.niveaux, { min: 1, max: 5 }) + (b.niveaux > 1 ? `<p class="petit">+15 min par niveau supplémentaire</p>` : "") : "")
@@ -185,8 +187,32 @@ function etape2() {
     h += titre("Durée d'engagement") + choix([["0", "Sans engagement"], ["3", "3 mois −5 %"], ["6", "6 mois −10 %"], ["12", "12 mois −15 %"]], b.engagementMois, "engagementMois")
       + `<p class="petit">Plus vous vous engagez, moins chaque passage vous coûte. Le même Cleaneur à chaque passage, si possible.</p>`;
   }
-  const ok = !r.toujoursSurDevis || b.formuleId;
-  return h + actions(ok, ok ? "" : "Choisissez votre besoin.");
+  const besoinOk = !r.toujoursSurDevis || b.formuleId;
+  const panierOk = b.rubriqueId !== "textiles" || (b.panier || []).length > 0;
+  return h + actions(besoinOk && panierOk, !besoinOk ? "Choisissez votre besoin." : !panierOk ? "Ajoutez chaque élément au panier." : "");
+}
+
+/** Canapés et textiles : choix d'un élément de la formule, taille, quantité, puis ajout au panier (PanierTextiles dans l'appli). */
+function ligneEnCours() {
+  const elements = ELEMENTS_TEXTILES.filter(e => e.formuleId === (b.formuleId || "canape"));
+  const e = elements.find(x => x.id === b.elementTextile) || elements[0];
+  return { elements, e, ligne: { elementId: e.id, tailleId: e.avecTaille ? b.tailleCanape || "t15" : "", quantite: b.quantitePanier || 1, surfaceM2: e.parM2 ? b.surfaceMoquette || 1 : 0 } };
+}
+function panierTextiles() {
+  const { elements, e, ligne } = ligneEnCours();
+  const panier = b.panier || [];
+  return titre("Votre panier")
+    + `<div class="note">Choisir un élément ne suffit pas : ajoutez chaque canapé, fauteuil, matelas ou tapis au panier.</div>`
+    + `<div class="carte" style="margin-top:10px">${choix(elements.map(x => [x.id, x.nom]), e.id, "elementTextile")}`
+    + (e.avecTaille ? `<p class="petit"><b>Taille</b></p>${choix(TAILLES_CANAPE.map(t => [t.id, t.libelle]), b.tailleCanape || "t15", "tailleCanape")}` : "")
+    + (e.parM2 ? compteur("Surface de moquette", "surfaceMoquette", b.surfaceMoquette || 10, { min: 1, max: 300, unite: " m²" }) : "")
+    + compteur("Quantité", "quantitePanier", b.quantitePanier || 1, { min: 1, max: 20 })
+    + `<div style="display:flex;align-items:center;margin-top:8px"><b style="flex:1">${euros(prixLigne(ligne))}</b>
+      <button type="button" class="lien-bouton" id="ajouter-panier">Ajouter au panier</button></div></div>`
+    + `<div class="carte ${panier.length ? "teintee" : ""}" style="margin-top:10px">${panier.length ? "" : `<p class="muet" style="margin:0">Votre panier est vide.</p>`}`
+    + panier.map((l, i) => `<div style="display:flex;align-items:center;gap:8px"><span style="flex:1">${esc(libelleLigne(l))}<span class="petit" style="display:block">${duree(minutesLigne(l))}</span></span>
+      <span>${euros(prixLigne(l))}</span><button type="button" class="lien-bouton" style="color:var(--erreur)" data-retirer-panier="${i}">Retirer</button></div>`).join("")
+    + `<p class="petit">Minimum de commande : ${euros(REGLES.MINIMUM_COMMANDE_TEXTILES_C).replace(",00", "")}. Prix forfaitaire par élément, la durée sert au planning.</p></div>`;
 }
 
 function etape3() {
@@ -320,8 +346,8 @@ document.addEventListener("click", async e => {
     if (ds.champ === "accueil" && v === b.accueil) return;
     return maj({ [ds.champ]: v });
   }
-  if (ds.moins) return maj({ [ds.moins]: Math.max(+ds.min, b[ds.moins] - +ds.pas) });
-  if (ds.plus) return maj({ [ds.plus]: Math.min(+ds.max, b[ds.plus] + +ds.pas) });
+  if (ds.moins) return maj({ [ds.moins]: Math.max(+ds.min, (b[ds.moins] ?? 1) - +ds.pas) });
+  if (ds.plus) return maj({ [ds.plus]: Math.min(+ds.max, (b[ds.plus] ?? 1) + +ds.pas) });
   if (ds.pack) {
     const p = rubrique(b.rubriqueId).packs.find(x => x.id === ds.pack);
     const enCours = meilleurPack(rubrique(b.rubriqueId).packs, b.taches);
@@ -335,6 +361,8 @@ document.addEventListener("click", async e => {
     return maj(l ? avecLogement(b, l) : { logementId: "", rue: "", codePostal: "", ville: "", accueil: "", tiersNom: "", tiersTel: "", boiteEmplacement: "", code: "" });
   }
   if (ds.retirer !== undefined) return maj({ tachesPerso: b.tachesPerso.filter((_, i) => i !== +ds.retirer) });
+  if (ds.retirerPanier !== undefined) return maj({ panier: (b.panier || []).filter((_, i) => i !== +ds.retirerPanier) });
+  if (t.id === "ajouter-panier") return maj({ panier: [...(b.panier || []), ligneEnCours().ligne], quantitePanier: 1 });
   if (ds.jour) return maj({ jour: ds.jour, heure: -1 });
   if (ds.heure) return maj({ heure: +ds.heure });
   if (t.id === "ajouter-perso") {

@@ -1,5 +1,5 @@
 // Navigation du site et pages simples. Le parcours de réservation est dans reserver.js.
-import { RUBRIQUES, RACCOURCIS_VITRINE, rubrique, TYPES_LIEU } from "./catalogue.js";
+import { RUBRIQUES, RACCOURCIS_VITRINE, rubrique, TYPES_LIEU, pastille } from "./catalogue.js";
 import { traduire, traduireCatalogue, selecteurLangue, tr } from "./langue.js";
 import { euros, duree, dateLongue, dateHeure, heure, estPrelancement, joursAvantLancement, MESSAGE_LANCEMENT } from "./regles.js";
 
@@ -209,7 +209,7 @@ function pagePrestations() {
   <section class="bloc"><div class="conteneur"><div class="grille-3">${RUBRIQUES.map(r => `
     <a class="carte prestation" href="#/reserver/${r.id}"><div class="emoji">${r.emoji}</div><h3>${r.nom}</h3>
       <p class="muet" style="margin:4px 0 8px">${r.sousTitre}</p>
-      <span class="tampon">${r.toujoursSurDevis ? "Sur devis" : `dès ${euros(r.tauxHoraireC)} / h`}</span></a>`).join("")}</div></div></section>`;
+      <span class="tampon">${pastille(r)}</span></a>`).join("")}</div></div></section>`;
 }
 
 function pageComment() {
