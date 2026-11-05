@@ -212,6 +212,29 @@ import("./assets/js/catalogue.js").then(() => {});
   egal("catalogue cohérent (doublons, packs, types, occasions)", pb.join(" ; "), "");
 }
 
+// Onglets séparés : Bureaux et cabinets / Commerces et entrepôts ; Immeubles : étages et annexes (même contrôle que l'appli)
+{
+  const { TYPES_LIEU, accueilAutonomeInterdit } = await import("./assets/js/catalogue.js");
+  const { tachesChiffrees } = await import("./assets/js/estimation.js");
+  const bureaux = TYPES_LIEU.office.map(x => x.id), commerces = TYPES_LIEU.commerce.map(x => x.id);
+  egal("bureaux : 3 types", bureaux.join(","), "bureaux,medical,agence");
+  egal("commerces et entrepôts : 6 types", commerces.join(","), "boutique,magasin,showroom,sport,entrepot,atelier");
+  egal("bureaux sans tâches de commerce", rubrique("office").taches.some(t => ["autolaveuse", "quais", "cabines", "rayonnages"].includes(t.id)), false);
+  egal("commerces sans tâches de bureau", rubrique("commerce").taches.some(t => ["claviers", "reunion", "cabinets", "attente"].includes(t.id)), false);
+  egal("commerces : pas d'accès autonome", accueilAutonomeInterdit("commerce", "entrepot"), true);
+  const bc = { rubriqueId: "commerce", formuleId: "ponctuel", typeLieuId: "boutique", surface: 100 };
+  egal("boutique 100 m² : 66,38 €", parcours(bc).totalC, 6638);
+  egal("entrepôt 300 m² : 125,38 €", parcours({ ...bc, typeLieuId: "entrepot", surface: 300 }).totalC, 12538);
+  const im = { ...BR, rubriqueId: "communal", formuleId: "regulier", typeLieuId: "copro", surfacePalier: 20, paliers: 10 };
+  const tc = tachesChiffrees(im);
+  egal("immeuble : annexes", tc.filter(t => t.groupe === "Annexes de l'immeuble").map(t => t.id).sort().join(","), "caves,conteneurs,cour,espaces_verts,local_poubelles,parking_immeuble,velos");
+  egal("immeuble : étages", tc.filter(t => t.groupe === "Étages").map(t => t.id).sort().join(","), "araignees,ascenseur,escaliers,portes,rampes");
+  egal("annexe : même prix à 30 étages", tachesChiffrees({ ...im, paliers: 30 }).find(t => t.id === "parking_immeuble").prixC, 4500);
+  egal("escaliers : suivent les étages", tachesChiffrees({ ...im, paliers: 30 }).find(t => t.id === "escaliers").prixC, 9000);
+  egal("immeuble + cour + local poubelles : 120,00 €", parcours({ ...im, taches: ["cour", "local_poubelles"] }).totalC, 12000);
+  egal("balayage à la surface : parking seul", tc.some(t => t.id === "balayage"), false);
+}
+
 const ok = res.filter(r => r[1]).length;
 document.getElementById("bilan").textContent = `${ok} tests sur ${res.length} réussis`;
 document.getElementById("liste").innerHTML = res.map(([n, b, d]) => `<li class="${b ? "ok" : "ko"}">${b ? "✓" : "✗"} ${n}${b ? "" : " — " + d}</li>`).join("");
