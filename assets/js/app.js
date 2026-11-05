@@ -7,6 +7,7 @@ import { euros, duree, dateLongue, dateHeure, heure, estPrelancement, joursAvant
 traduireCatalogue(RUBRIQUES, TYPES_LIEU);
 import { ouvrirReservation, modeles, logements, nomLogement, oublierMesInformations } from "./reserver.js";
 import { mesDemandes, suivre, annuler, memoriser, inscrire } from "./donnees.js";
+import { compterPage } from "./compteur.js";
 
 const vue = document.getElementById("vue");
 export const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -246,7 +247,7 @@ function pageConfidentialite() {
     <p>Le code d'accès à votre logement n'est communiqué qu'au Cleaneur retenu, le jour de l'intervention.</p>
     <p>Vous pouvez à tout moment demander l'accès, la correction ou la suppression de vos données en écrivant à <a href="mailto:contact@cleaneroo.fr">contact@cleaneroo.fr</a>. Les factures sont conservées le temps imposé par la loi.</p>
     <p>Pour aller plus vite à la commande suivante, votre navigateur garde sur cet appareil vos coordonnées, vos adresses enregistrées et votre dernière commande (jamais le code d'accès). Vous pouvez tout effacer depuis « Mes demandes ».</p>
-    <p>Le site n'utilise ni traceur publicitaire ni cookie de mesure d'audience.</p>`);
+    <p>Le site n'utilise ni traceur publicitaire ni cookie. Pour connaître sa fréquentation, il compte les pages vues avec GoatCounter, un outil sans cookie qui ne garde aucune donnée personnelle (ni adresse IP, ni identifiant) : seuls le nom de la page, le pays, le type d'appareil et le site d'origine sont comptés.</p>`);
 }
 function pageConditions() {
   return pageTexte("Conditions d'utilisation", `
@@ -336,6 +337,7 @@ async function afficher() {
   const chemin = location.hash.replace(/^#\/?/, "");
   const [route, param] = chemin.split("/");
   if (route === "gestion") { location.href = "gestion.html"; return; }
+  compterPage(route, param);
   document.querySelector(".nav")?.classList.remove("ouvert");
   document.querySelectorAll(".nav a").forEach(a => a.classList.toggle("actif", a.getAttribute("href") === `#/${route}`));
   if (route === "reserver") { ouvrirReservation(vue, param || null, chemin.split("/")[2] || ""); window.scrollTo(0, 0); return; }
