@@ -117,7 +117,7 @@ export const nombreEtapesLocation = (choisies, perso, chambres, sdb) =>
 /* ---- fin location ---- */
 
 export const RUBRIQUES = [
-  { id: "home", nom: "Logement", sousTitre: "Ménage ponctuel ou régulier", emoji: "🏠", tauxHoraireC: 2690, salissureSurTemps: true,
+  { id: "home", nom: "Logement", sousTitre: "Ménage ponctuel ou régulier", icone: "logement", tauxHoraireC: 2690, salissureSurTemps: true,
     inclus: "Dépoussiérage des surfaces accessibles, aspiration et lavage des sols, cuisine, salle de bain et WC, poubelles, lits faits.",
     formules: [F("ponctuel", "Ménage ponctuel", "Un ménage complet, une seule fois.", 25, 120),
       F("regulier", "Entretien régulier", "Chaque semaine ou tous les 15 jours, idéalement avec le même Cleaneur.", 30, 90),
@@ -128,14 +128,14 @@ export const RUBRIQUES = [
       { id: "autre", nom: "Autre", packId: "" }],
     frequences: [["semaine", "Chaque semaine"], ["deux_semaines", "Toutes les 2 semaines"], ["mois", "Chaque mois"]],
     moments: [["matin", "Le matin"], ["apres_midi", "L'après-midi"], ["peu_importe", "Peu importe"]] },
-  { id: "rental", nom: "Location saisonnière", sousTitre: "Prêt pour vos prochains voyageurs", emoji: "🧳", tauxHoraireC: 3000, salissureSurTemps: true, affichagePrix: "PAR_MENAGE",
+  { id: "rental", nom: "Location saisonnière", sousTitre: "Prêt pour vos prochains voyageurs", icone: "location", tauxHoraireC: 3000, salissureSurTemps: true, affichagePrix: "PAR_MENAGE",
     inclus: "Ménage complet entre deux voyageurs, lits faits avec le linge fourni sur place, cuisine et sanitaires désinfectés, contrôle de l'inventaire et des consommables, photos de chaque pièce pour l'hôte.",
     formules: [F("court", "Après un court séjour (1–4 nuits)", "Rotation standard.", 0, 0, 1.0),
       F("semaine", "Après un séjour d'une semaine (5–9 nuits)", "Rotation approfondie.", 0, 0, 1.2),
       F("long", "Après un long séjour (10 nuits et +)", "Rotation complète.", 0, 0, 1.45),
       F("grand", "Grand ménage périodique", "Remise à niveau complète du logement.", 0, 0, 1.8, "AUTRE", true)],
     naturesSalissure: NATURES_SALISSURE_LOCATION },
-  { id: "moving", nom: "Déménagement et remise en état", sousTitre: "Un nouveau départ, du sol au plafond", emoji: "📦", tauxHoraireC: 3200, salissureSurTemps: true,
+  { id: "moving", nom: "Déménagement et remise en état", sousTitre: "Un nouveau départ, du sol au plafond", icone: "demenagement", tauxHoraireC: 3200, salissureSurTemps: true,
     inclus: "Nettoyage complet du logement vide. Nettoyage uniquement : Cleaneroo ne réalise ni peinture, ni rebouchage, ni réparation.",
     formules: [F("emmenagement", "Nettoyage d'emménagement", "Logement vide, nettoyé avant votre arrivée", 10, 180, 1.0),
       F("depart", "Nettoyage de départ / état des lieux", "Logement vidé, remis au propre pour l'état des lieux de sortie", 10, 180, 1.1),
@@ -162,7 +162,7 @@ export const RUBRIQUES = [
     ],
     surfaceReferenceM2: 60,
     naturesSalissure: ["Poussière de travaux", "Calcaire", "Graisse", "Traces et marques", "Moisissures", "Odeurs"] },
-  { id: "car", nom: "Véhicules", sousTitre: "Nettoyage intérieur et extérieur", emoji: "🚗", tauxHoraireC: 4000, salissureSurTemps: false, affichagePrix: "MINIMUM_COMMANDE",
+  { id: "car", nom: "Véhicules", sousTitre: "Nettoyage intérieur et extérieur", icone: "vehicule", tauxHoraireC: 4000, salissureSurTemps: false, affichagePrix: "MINIMUM_COMMANDE",
     inclus: "100 % à la carte : choisissez les tâches.",
     // Prix « citadine » ; le gabarit (100 / 115 / 130 / 145 %) s'applique au prix ET à la durée de chaque tâche.
     taches: [
@@ -192,7 +192,7 @@ export const RUBRIQUES = [
       { id: "confort", nom: "Confort", remisePct: 10, tacheIds: ["aspiration", "tableau", "vitres_int", "coffre", "lavage_main", "vitres_ext", "jantes"] },
       { id: "prestige", nom: "Prestige", remisePct: 15, tacheIds: ["aspiration", "tableau", "vitres_int", "coffre", "lavage_main", "vitres_ext", "jantes", "plastiques_protection", "moquettes", "anti_odeurs", "bas_caisse", "cire"] },
     ] },
-  { id: "textiles", nom: "Canapés et textiles", sousTitre: "Canapés, matelas et tapis", emoji: "🛋️", tauxHoraireC: 3000, salissureSurTemps: false, affichagePrix: "PAR_ELEMENT",
+  { id: "textiles", nom: "Canapés et textiles", sousTitre: "Canapés, matelas et tapis", icone: "canape", tauxHoraireC: 3000, salissureSurTemps: false, affichagePrix: "PAR_ELEMENT",
     inclus: "Aspiration en profondeur · Shampoing par injection-extraction · Traitement des taches courantes",
     formules: [F("canape", "Canapé"), F("matelas", "Matelas"), F("tapis", "Tapis et moquettes")],
     taches: [T("detachage", "Détachage ciblé (taches tenaces)", 1500, 15, { groupe: "Traitements" }), T("acariens", "Traitement anti-acariens", 2000, 15, { groupe: "Traitements" }),
@@ -203,10 +203,10 @@ export const RUBRIQUES = [
       { id: "confort", nom: "Confort", remisePct: 10, tacheIds: ["detachage", "desodorisation", "acariens"] },
       { id: "prestige", nom: "Prestige", remisePct: 15, tacheIds: ["detachage", "desodorisation", "acariens", "protection", "sechage"] },
     ] },
-  { id: "construction", nom: "Fin de chantier", sousTitre: "Éliminer la poussière après les travaux", emoji: "🏗️", tauxHoraireC: 3800, salissureSurTemps: true,
+  { id: "construction", nom: "Fin de chantier", sousTitre: "Éliminer la poussière après les travaux", icone: "chantier", tauxHoraireC: 3800, salissureSurTemps: true,
     inclus: "Aspiration des poussières de chantier (filtre HEPA) · Sols lavés selon leur nature · Vitres et menuiseries intérieures · Sanitaires et cuisine · Retrait des traces et étiquettes courantes",
     taches: [T("etiquettes", "Retrait des étiquettes et films de protection", REGLES.OPTION_GENERIQUE_C, REGLES.OPTION_GENERIQUE_MIN, { groupe: "Options" }), T("residus", "Résidus de plâtre ou de peinture au sol", REGLES.OPTION_GENERIQUE_C, REGLES.OPTION_GENERIQUE_MIN, { groupe: "Options" }), T("dechets", "Évacuation de déchets légers (sacs)", REGLES.OPTION_GENERIQUE_C, REGLES.OPTION_GENERIQUE_MIN, { groupe: "Options" })] },
-  { id: "kitchen", nom: "Cuisines", sousTitre: "Nettoyage approfondi et dégraissage", emoji: "🍳", tauxHoraireC: 3600, salissureSurTemps: true,
+  { id: "kitchen", nom: "Cuisines", sousTitre: "Nettoyage approfondi et dégraissage", icone: "cuisine", tauxHoraireC: 3600, salissureSurTemps: true,
     formules: [F("apres_service", "Après service", "", 25, 60, 1.0, "REGULIER"), F("degraissage", "Dégraissage approfondi", "", 25, 60, 1.5, "AUTRE", false, true),
       F("controle", "Grand nettoyage avant contrôle sanitaire", "", 25, 60, 1.8, "AUTRE", false, true)],
     taches: [
@@ -237,7 +237,7 @@ export const RUBRIQUES = [
     ],
     surfaceReferenceM2: 30, frequences: [["jour", "Chaque jour (après le service)"], ["plusieurs", "Plusieurs fois par semaine"], ["semaine", "Chaque semaine"], ["deux_semaines", "Toutes les 2 semaines"]], moments: [["midi", "Après le service du midi"], ["soir", "Après le service du soir"], ["avant", "Avant l'ouverture"], ["fermeture", "Jour de fermeture"]],
     naturesSalissure: ["Graisse incrustée", "Carbone et calamine", "Calcaire", "Odeurs", "Moisissures"] },
-  { id: "office", nom: "Bureaux et cabinets", sousTitre: "Bureaux, cabinets médicaux et agences", emoji: "🏢", tauxHoraireC: 2950, salissureSurTemps: false,
+  { id: "office", nom: "Bureaux et cabinets", sousTitre: "Bureaux, cabinets médicaux et agences", icone: "bureaux", tauxHoraireC: 2950, salissureSurTemps: false,
     titreTypes: "Type de lieu",
     formules: [F("regulier", "Entretien régulier", "", 60, 60, 1.0, "REGULIER", false, false), F("ponctuel", "Nettoyage ponctuel", "", 60, 60, 1.15, "PONCTUEL", false, false), F("remise", "Remise en état des locaux", "", 60, 60, 1.6, "REMISE_EN_ETAT", true, false)],
     taches: [
@@ -267,7 +267,7 @@ export const RUBRIQUES = [
     frequences: [["plusieurs", "Plusieurs fois par semaine"], ["semaine", "Chaque semaine"], ["deux_semaines", "Toutes les 2 semaines"], ["mois", "Chaque mois"]],
     moments: [["avant", "Avant l'ouverture"], ["pendant", "Pendant les horaires d'ouverture"], ["apres", "Après la fermeture"], ["weekend", "Le week-end"]],
     occasions: [{ id: "visite", nom: "Visite client ou audit", packId: "confort" }, { id: "inauguration", nom: "Inauguration / réouverture", packId: "prestige" }, { id: "avant_evt", nom: "Avant un événement", packId: "confort" }, { id: "apres_evt", nom: "Après un événement", packId: "essentiel" }, { id: "autre", nom: "Autre", packId: "" }] },
-  { id: "commerce", nom: "Commerces et entrepôts", sousTitre: "Boutiques, magasins, ateliers et entrepôts", emoji: "🏬", tauxHoraireC: 2950, salissureSurTemps: false,
+  { id: "commerce", nom: "Commerces et entrepôts", sousTitre: "Boutiques, magasins, ateliers et entrepôts", icone: "commerce", tauxHoraireC: 2950, salissureSurTemps: false,
     titreTypes: "Type de lieu",
     formules: [F("regulier", "Entretien régulier", "", 60, 60, 1.0, "REGULIER", false, false), F("ponctuel", "Nettoyage ponctuel", "", 60, 60, 1.15, "PONCTUEL", false, false), F("remise", "Remise en état des locaux", "", 60, 60, 1.6, "REMISE_EN_ETAT", true, false)],
     taches: [
@@ -304,7 +304,7 @@ export const RUBRIQUES = [
     frequences: [["plusieurs", "Plusieurs fois par semaine"], ["semaine", "Chaque semaine"], ["deux_semaines", "Toutes les 2 semaines"], ["mois", "Chaque mois"]],
     moments: [["avant", "Avant l'ouverture"], ["pendant", "Pendant les horaires d'ouverture"], ["apres", "Après la fermeture"], ["weekend", "Le week-end"]],
     occasions: [{ id: "visite", nom: "Visite client ou audit", packId: "confort" }, { id: "inauguration", nom: "Inauguration / réouverture", packId: "prestige" }, { id: "avant_evt", nom: "Avant un événement", packId: "confort" }, { id: "apres_evt", nom: "Après un événement", packId: "essentiel" }, { id: "inventaire", nom: "Inventaire ou changement de collection", packId: "confort" }, { id: "autre", nom: "Autre", packId: "" }] },
-  { id: "communal", nom: "Immeubles et parties communes", sousTitre: "Étages, hall et annexes : prix selon le nombre d'étages", emoji: "🏘️", tauxHoraireC: 2800, salissureSurTemps: false,
+  { id: "communal", nom: "Immeubles et parties communes", sousTitre: "Étages, hall et annexes : prix selon le nombre d'étages", icone: "parties-communes", tauxHoraireC: 2800, salissureSurTemps: false,
     titreTypes: "Type d'immeuble",
     formules: [F("regulier", "Entretien régulier", "", 80, 60, 1.0, "REGULIER", false, false), F("ponctuel", "Ponctuel", "", 80, 60, 1.15, "PONCTUEL", false, false), F("remise", "Remise en état", "", 80, 60, 1.6, "REMISE_EN_ETAT", true, false)],
     taches: [
@@ -334,7 +334,7 @@ export const RUBRIQUES = [
     ],
     surfaceReferenceM2: 200, noteTaches: "Le hall et chaque annexe (local poubelles, caves, parking, cour…) ont leur propre prix, ajouté au total.",
     occasions: [{ id: "ag", nom: "Assemblée générale", packId: "confort" }, { id: "vente_lot", nom: "Visite ou vente d'un lot", packId: "confort" }, { id: "demenagement", nom: "Après un déménagement dans l'immeuble", packId: "confort" }, { id: "autre", nom: "Autre", packId: "" }] },
-  { id: "windows", nom: "Vitres et vitrines", sousTitre: "Fenêtres, vitrines et vérandas", emoji: "🪟", tauxHoraireC: 3000, salissureSurTemps: false,
+  { id: "windows", nom: "Vitres et vitrines", sousTitre: "Fenêtres, vitrines et vérandas", icone: "vitres", tauxHoraireC: 3000, salissureSurTemps: false,
     titreTypes: "Type de vitrage",
     formules: [F("ponctuel", "Ponctuel", "15 min par fenêtre, minimum 1 h 30.", 0, 90, 1.0, "PONCTUEL", false, false), F("regulier", "Entretien régulier", "", 0, 90, 0.9, "REGULIER", false, false), F("travaux", "Après travaux", "", 0, 90, 1.5, "AUTRE", false, true)],
     taches: [
@@ -359,7 +359,7 @@ export const RUBRIQUES = [
     occasions: [{ id: "beaux_jours", nom: "Retour des beaux jours", packId: "confort" }, { id: "vente", nom: "Avant une vente ou une location", packId: "prestige" }, { id: "evenement", nom: "Avant un événement", packId: "confort" }, { id: "autre", nom: "Autre", packId: "" }],
     naturesSalissure: ["Peinture", "Plâtre", "Ciment", "Étiquettes et films", "Silicone"],
     noteTaches: "Au-delà de 6 m ou sans accès sécurisé (nacelle, cordiste) : intervention sur devis." },
-  { id: "outdoor", nom: "Espaces extérieurs", sousTitre: "Terrasses, balcons et garages", emoji: "🌿", tauxHoraireC: 3200, salissureSurTemps: false,
+  { id: "outdoor", nom: "Espaces extérieurs", sousTitre: "Terrasses, balcons et garages", icone: "exterieurs", tauxHoraireC: 3200, salissureSurTemps: false,
     titreTypes: "Espace à nettoyer",
     formules: [F("ponctuel", "Ponctuel", "", 40, 60, 1.0, "PONCTUEL", false, false), F("demoussage", "Remise en état et démoussage", "", 40, 60, 1.5, "AUTRE", false, true), F("saisonnier", "Entretien saisonnier", "", 40, 60, 0.9, "REGULIER", false, false)],
     taches: [
@@ -387,7 +387,7 @@ export const RUBRIQUES = [
     occasions: [{ id: "ete", nom: "Avant l'été", packId: "confort" }, { id: "evenement", nom: "Avant un événement", packId: "confort" }, { id: "vente", nom: "Avant une vente ou une location", packId: "prestige" }, { id: "autre", nom: "Autre", packId: "" }],
     naturesSalissure: ["Mousses et lichens", "Traces noires", "Taches d'huile", "Feuilles et débris"],
     noteTaches: "Hors prestation : tonte, taille, élagage et nettoyage de toitures." },
-  { id: "event", nom: "Avant et après événement", sousTitre: "Profitez pleinement de votre événement", emoji: "🎉", tauxHoraireC: 3200, salissureSurTemps: false,
+  { id: "event", nom: "Avant et après événement", sousTitre: "Profitez pleinement de votre événement", icone: "evenement", tauxHoraireC: 3200, salissureSurTemps: false,
     titreTypes: "Type d'événement",
     formules: [F("avant", "Avant l'événement", "Passage terminé avant le début", 50, 60, 0.9, "AUTRE", false, false), F("apres", "Après", "Passage à partir de la fin", 50, 60, 1.2, "AUTRE", false, false), F("avant_apres", "Avant et après (2 passages)", "Un passage avant le début, un autre à partir de la fin", 50, 60, 2.0, "AUTRE", false, false)],
     taches: [
@@ -408,7 +408,7 @@ export const RUBRIQUES = [
       { id: "prestige", nom: "Prestige", remisePct: 15, tacheIds: ["tri", "evacuation", "tables", "sols", "traiteur", "cuisine_maison", "desodorisation", "vaisselle", "exterieurs", "sanitaires"] },
     ],
     surfaceReferenceM2: 100 },
-  { id: "special", nom: "Prestations spécialisées", sousTitre: "Une évaluation par un professionnel qualifié", emoji: "🧪", tauxHoraireC: null, salissureSurTemps: false,
+  { id: "special", nom: "Prestations spécialisées", sousTitre: "Une évaluation par un professionnel qualifié", icone: "specialise", tauxHoraireC: null, salissureSurTemps: false,
     toujoursSurDevis: true,
     titreTypes: "Type d'intervention",
     formules: [F("planifiee", "Intervention planifiée", "Visite d'évaluation, puis devis détaillé", 0, 0, 1.0, "AUTRE", false, false), F("urgente", "Intervention urgente", "Prise de contact prioritaire, évaluation sous 48 h", 0, 0, 1.0, "AUTRE", false, false)] },
@@ -517,8 +517,8 @@ export function libelleLigne(l) {
 }
 
 /** Montant rond sans centimes : 3500 → « 35 € ». */
-const eurosRond = c => (c % 100 === 0 ? euros(c).replace(",00", "") : euros(c));
-/** Pastille du catalogue : « dès 26,90 € / h », « dès 35 € le ménage », « dès 40 € », « dès 45 € l'élément ». */
+export const eurosRond = c => (c % 100 === 0 ? euros(c).replace(",00", "") : euros(c));
+/** Pastille du catalogue : « dès 26,90 € / h », « dès 29 € le ménage », « dès 40 € », « dès 45 € l'élément ». */
 export function pastille(r) {
   if (r.toujoursSurDevis || r.tauxHoraireC == null) return "Sur devis";
   switch (r.affichagePrix) {

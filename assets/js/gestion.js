@@ -2,6 +2,7 @@
 // Équivalent de « Administration (démo) » de l'application : vérifier, publier, confirmer, faire avancer ou refuser une demande.
 import { supabase } from "./donnees.js";
 import { rubrique } from "./catalogue.js";
+import { icone } from "./icones.js";
 import { euros, duree, heure, dateLongue } from "./regles.js";
 
 const vue = document.getElementById("vue");
@@ -49,7 +50,8 @@ function ecranConnexion(message = "") {
   });
 }
 
-const TYPES_INSCRIPTION = { client: "Client", cleaneur: "Cleaneur", conciergerie: "Conciergerie" };
+const TYPES_INSCRIPTION = { client: "Client", cleaneur: "Cleaneur", conciergerie: "Conciergerie", rappel: "À rappeler" };
+const CRENEAUX_RAPPEL = { matin: "le matin", midi: "à midi", apres_midi: "l'après-midi", soir: "en soirée" };
 let onglet = "demandes";
 
 const ongletsHtml = () => `<div class="segments" style="margin:6px 0 4px">
@@ -62,19 +64,19 @@ async function listeInscriptions() {
   if (error) { vue.innerHTML = `<p class="erreur">${esc(error.message)}</p>`; return; }
   const n = t => data.filter(i => i.type === t).length;
   const csv = () => {
-    const lignes = [["type", "prenom", "nom", "email", "telephone", "code_postal", "ville", "message", "inscrit_le"],
-      ...data.map(i => [i.type, i.prenom, i.nom, i.email, i.telephone, i.code_postal, i.ville, i.message, i.cree_le])];
+    const lignes = [["type", "prenom", "nom", "email", "telephone", "code_postal", "ville", "profil", "creneau", "message", "inscrit_le"],
+      ...data.map(i => [i.type, i.prenom, i.nom, i.email, i.telephone, i.code_postal, i.ville, i.profil, i.creneau, i.message, i.cree_le])];
     const texte = lignes.map(l => l.map(v => `"${String(v ?? "").replace(/"/g, '""')}"`).join(";")).join("\r\n");
     const a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob(["﻿" + texte], { type: "text/csv;charset=utf-8" }));
     a.download = "inscriptions-cleaneroo.csv"; a.click();
   };
   vue.innerHTML = `<h1>Gestion</h1><div class="trait-corail"></div>${ongletsHtml()}
-    <p class="muet">${data.length} inscrits · ${n("client")} clients · ${n("cleaneur")} Cleaneurs · ${n("conciergerie")} conciergeries</p>
+    <p class="muet">${data.length} inscrits · ${n("client")} clients · ${n("cleaneur")} Cleaneurs · ${n("conciergerie")} conciergeries · ${n("rappel")} à rappeler</p>
     <button class="bouton secondaire" id="export">Télécharger la liste (Excel)</button>
     <div style="margin-top:14px">${data.map(i => `<div class="carte" style="margin-bottom:10px">
       <b>${esc(i.prenom)} ${esc(i.nom)}</b> <span class="tampon">${TYPES_INSCRIPTION[i.type]}</span>
-      <div class="petit"><a href="mailto:${esc(i.email)}">${esc(i.email)}</a>${i.telephone ? ` · <a href="tel:${esc(i.telephone)}">${esc(i.telephone)}</a>` : ""} · ${esc(i.code_postal)} ${esc(i.ville)} · ${dateLongue(new Date(i.cree_le))}</div>
+      <div class="petit">${i.type === "rappel" ? `${esc(i.profil)} · à rappeler ${CRENEAUX_RAPPEL[i.creneau] || ""}` : `<a href="mailto:${esc(i.email)}">${esc(i.email)}</a>`}${i.telephone ? ` · <a href="tel:${esc(i.telephone)}">${esc(i.telephone)}</a>` : ""} · ${esc(i.code_postal)} ${esc(i.ville)} · ${dateLongue(new Date(i.cree_le))}</div>
       ${i.message ? `<p class="muet" style="margin:6px 0 0">${esc(i.message)}</p>` : ""}</div>`).join("") || `<p class="muet">Aucune inscription pour l'instant.</p>`}</div>`;
   brancherOnglets();
   document.getElementById("export").onclick = csv;
@@ -92,7 +94,7 @@ async function liste() {
     ${affichees.length ? affichees.map(d => {
       const r = rubrique(d.rubrique_id);
       return `<div class="carte ligne-demande" data-id="${d.id}">
-        <div><b>${r.emoji} ${r.nom}</b> · ${esc(d.ville)}${d.prelancement ? ` <span class="tampon">Pré-réservation</span>` : ""}<div class="petit">${esc(d.reference)} · ${esc(d.prenom)} ${esc(d.nom)} · ${d.creneau ? `${dateLongue(new Date(d.creneau))} ${heure(new Date(d.creneau).getHours())}` : "flexible"}</div></div>
+        <div><b>${icone(r.icone)} ${r.nom}</b> · ${esc(d.ville)}${d.prelancement ? ` <span class="tampon">Pré-réservation</span>` : ""}<div class="petit">${esc(d.reference)} · ${esc(d.prenom)} ${esc(d.nom)} · ${d.creneau ? `${dateLongue(new Date(d.creneau))} ${heure(new Date(d.creneau).getHours())}` : "flexible"}</div></div>
         <div style="text-align:right"><span class="tampon">${STATUTS[d.statut]}</span><div class="petit">${d.sur_devis ? "Sur devis" : euros(d.estimation_c)}</div></div></div>`;
     }).join("") : `<p class="muet">Aucune demande dans cette liste.</p>`}`;
   brancherOnglets();
@@ -107,7 +109,7 @@ async function detail(d) {
   const urls = await Promise.all((d.photos || []).map(async p => (await supabase.storage.from("photos-demandes").createSignedUrl(p, 3600)).data?.signedUrl));
   const taches = (r.taches || []).filter(t => (det.taches || []).includes(t.id)).map(t => t.nom);
   vue.innerHTML = `<button class="lien-bouton" id="retour">‹ Toutes les demandes</button>
-    <h1>${r.emoji} ${r.nom}</h1><div class="trait-corail"></div>
+    <h1>${icone(r.icone)} ${r.nom}</h1><div class="trait-corail"></div>
     <p class="muet">${esc(d.reference)} · reçue le ${dateLongue(new Date(d.cree_le))} · <span class="tampon">${STATUTS[d.statut]}</span></p>
     <div class="carte"><dl class="detail-demande" style="margin:0">
       <dt>Client</dt><dd>${esc(d.prenom)} ${esc(d.nom)} · <a href="tel:${esc(d.telephone)}">${esc(d.telephone)}</a> · <a href="mailto:${esc(d.email)}">${esc(d.email)}</a> · espace ${esc(d.espace)}</dd>

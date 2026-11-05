@@ -6,13 +6,19 @@ const ROUTES_CONNUES = ["", "prestations", "comment-ca-marche", "devenir-cleaneu
 
 let enAttente = [];
 
-function envoyer(chemin) {
-  if (window.goatcounter?.count) window.goatcounter.count({ path: chemin, title: chemin });
-  else enAttente.push(chemin);
+function envoyer(chemin, evenement = false) {
+  if (window.goatcounter?.count) window.goatcounter.count({ path: chemin, title: chemin, event: evenement });
+  else enAttente.push([chemin, evenement]);
 }
+const surLeSite = () => ["cleaneroo.fr", "www.cleaneroo.fr"].includes(location.hostname);
+
+/** Pages statiques (villes, calculateur, comparatifs) : leur adresse, sans paramètre. */
+export function compterStatique() { if (surLeSite()) envoyer(location.pathname); }
+/** Événement d'analytique (ex. calculator_used), sans donnée personnelle. */
+export function evenement(nom) { if (surLeSite()) envoyer(nom, true); }
 
 export function compterPage(route, param) {
-  if (!["cleaneroo.fr", "www.cleaneroo.fr"].includes(location.hostname)) return;
+  if (!surLeSite()) return;
   let chemin = "/" + (ROUTES_CONNUES.includes(route) ? route : "");
   if ((route === "reserver" || route === "inscription") && /^[a-z-]+$/.test(param || "")) chemin += "/" + param;
   envoyer(chemin);
@@ -23,5 +29,5 @@ const script = document.createElement("script");
 script.async = true;
 script.src = "https://gc.zgo.at/count.js";
 script.dataset.goatcounter = ADRESSE;
-script.onload = () => { const liste = enAttente; enAttente = []; liste.forEach(envoyer); };
+script.onload = () => { const liste = enAttente; enAttente = []; liste.forEach(([c, e]) => envoyer(c, e)); };
 document.head.appendChild(script);

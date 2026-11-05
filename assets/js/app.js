@@ -8,6 +8,9 @@ traduireCatalogue(RUBRIQUES, TYPES_LIEU);
 import { ouvrirReservation, modeles, logements, nomLogement, oublierMesInformations } from "./reserver.js";
 import { mesDemandes, suivre, annuler, memoriser, inscrire } from "./donnees.js";
 import { compterPage } from "./compteur.js";
+import { icone, ICONES_RUBRIQUES, ICONES_INTERFACE } from "./icones.js";
+import { blocEtapes, blocReassurance, installerRappel, bandeauLancement } from "./commun.js";
+export { bandeauLancement };
 
 const vue = document.getElementById("vue");
 export const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -23,13 +26,6 @@ export function decor(bulles = [[88, 18, 120], [6, 62, 90], [72, 78, 40], [16, 8
 }
 
 /* ------------------------------------------------------------------ Pré-lancement (ouverture le 31 décembre 2026) */
-export function bandeauLancement() {
-  if (!estPrelancement()) return "";
-  const j = joursAvantLancement();
-  return `<div class="lancement"><div class="conteneur">
-    <span class="compte">J-${j}</span>
-    <span><b>Lancement le 31 décembre 2026</b> · ${MESSAGE_LANCEMENT}</span></div></div>`;
-}
 
 const TYPES_INSCRIPTION = [["client", "Je cherche un nettoyage"], ["cleaneur", "Je veux devenir Cleaneur"], ["conciergerie", "Je gère des locations / une conciergerie"]];
 
@@ -87,16 +83,6 @@ export function brancherInscription(racine) {
 const titreSection = (titre, sous = "", surtitre = "") => `<div class="titre-section">${surtitre ? `<span class="surtitre">${surtitre}</span>` : ""}<h2>${titre}</h2>${sous ? `<p class="muet">${sous}</p>` : ""}</div>`;
 
 /* ------------------------------------------------------------------ Pages */
-const ETAPES = [
-  ["📅", "Réservez en 2 minutes", "Choisissez la prestation, répondez à quelques questions, ajoutez des photos et choisissez votre créneau. Le prix s'affiche tout de suite."],
-  ["👥", "Choisissez votre Cleaneur", "Des Cleaneurs vérifiés (identité, SIRET, assurance) se proposent. Comparez prix, note et distance : c'est vous qui choisissez."],
-  ["📍", "Suivez l'intervention en direct", "« En route », arrivée confirmée par géolocalisation, selfie du jour : vous savez qui vient, et quand."],
-  ["📸", "Recevez le compte rendu", "Tâches cochées et horodatées, photos avant / après, signature du Cleaneur : tout est dans votre espace."],
-  ["✅", "Validez, puis payez", "Vous n'êtes débité qu'après avoir validé. Crédit d'impôt de 50 % déduit tout de suite ; pourboire et avis si vous le souhaitez."],
-];
-const blocEtapes = () => `<div class="etapes etroit">${ETAPES.map(([e, t, d], i) => `
-  <div class="etape"><div class="pastille">${e}<b>${i + 1}</b></div>
-    <div class="carte"><div class="surtitre">ÉTAPE ${i + 1}</div><h3>${t}</h3><p class="muet" style="margin:6px 0 0">${d}</p></div></div>`).join("")}</div>`;
 
 /* Bulles qui montent dans le héros (positions fixes : même rendu à chaque visite). */
 const MONTANTES = [[6, 14, 13, 0], [14, 8, 17, 4], [27, 20, 15, 9], [38, 10, 19, 2], [52, 16, 14, 7], [63, 9, 18, 11], [74, 22, 16, 5], [86, 12, 20, 1], [94, 18, 15, 8]];
@@ -123,35 +109,35 @@ const VILLES = ["Fréjus", "Saint-Raphaël", "Cannes", "Toulon", "Nice", "Hyère
 /* Trois notifications, chacune avec trois messages : [icône, titre, détail] ; {p} prénom, {n} nombre, {v} ville. */
 const NOTIFS = {
   fr: [
-    [["📍", "{p} est en route", "Arrivée dans {n} min"], ["🏠", "{p} est sur place", "Arrivée confirmée par géolocalisation"], ["✨", "{p} a terminé", "Toutes les tâches sont cochées"]],
-    [["📸", "Compte rendu reçu", "{n} photos avant / après"], ["⭐", "Nouvel avis ★★★★★", "« Impeccable, merci {p} ! »"], ["✅", "Tâches validées", "{n} tâches cochées et horodatées"]],
-    [["💳", "Payé après validation", "Crédit d'impôt déduit : −50 %"], ["⚡", "Prix affiché tout de suite", "Sans devis ni attente"], ["📅", "Réservé en 2 minutes", "{v} · créneau confirmé"]],
+    [["position", "{p} est en route", "Arrivée dans {n} min"], ["sur-place", "{p} est sur place", "Arrivée confirmée par géolocalisation"], ["termine", "{p} a terminé", "Toutes les tâches sont cochées"]],
+    [["photo", "Compte rendu reçu", "{n} photos avant / après"], ["avis", "Nouvel avis {e}", "« Impeccable, merci {p} ! »"], ["valide", "Tâches validées", "{n} tâches cochées et horodatées"]],
+    [["paiement", "Payé après validation", "Crédit d'impôt déduit : −50 %"], ["instantane", "Prix affiché tout de suite", "Sans devis ni attente"], ["calendrier", "Réservé en 2 minutes", "{v} · créneau confirmé"]],
   ],
   en: [
-    [["📍", "{p} is on the way", "Arriving in {n} min"], ["🏠", "{p} is on site", "Arrival confirmed by geolocation"], ["✨", "{p} has finished", "Every task is ticked"]],
-    [["📸", "Report received", "{n} before / after photos"], ["⭐", "New review ★★★★★", "“Spotless, thank you {p}!”"], ["✅", "Tasks approved", "{n} tasks ticked and time-stamped"]],
-    [["💳", "Paid after approval", "Tax credit deducted: −50%"], ["⚡", "Price shown instantly", "No quote, no waiting"], ["📅", "Booked in 2 minutes", "{v} · slot confirmed"]],
+    [["position", "{p} is on the way", "Arriving in {n} min"], ["sur-place", "{p} is on site", "Arrival confirmed by geolocation"], ["termine", "{p} has finished", "Every task is ticked"]],
+    [["photo", "Report received", "{n} before / after photos"], ["avis", "New review {e}", "“Spotless, thank you {p}!”"], ["valide", "Tasks approved", "{n} tasks ticked and time-stamped"]],
+    [["paiement", "Paid after approval", "Tax credit deducted: −50%"], ["instantane", "Price shown instantly", "No quote, no waiting"], ["calendrier", "Booked in 2 minutes", "{v} · slot confirmed"]],
   ],
   it: [
-    [["📍", "{p} è in arrivo", "Arrivo tra {n} min"], ["🏠", "{p} è sul posto", "Arrivo confermato dalla geolocalizzazione"], ["✨", "{p} ha finito", "Tutti i compiti sono spuntati"]],
-    [["📸", "Report ricevuto", "{n} foto prima / dopo"], ["⭐", "Nuova recensione ★★★★★", "«Impeccabile, grazie {p}!»"], ["✅", "Compiti convalidati", "{n} compiti spuntati e con orario"]],
-    [["💳", "Pagato dopo la convalida", "Credito d'imposta detratto: −50%"], ["⚡", "Prezzo subito visibile", "Senza preventivo né attesa"], ["📅", "Prenotato in 2 minuti", "{v} · fascia confermata"]],
+    [["position", "{p} è in arrivo", "Arrivo tra {n} min"], ["sur-place", "{p} è sul posto", "Arrivo confermato dalla geolocalizzazione"], ["termine", "{p} ha finito", "Tutti i compiti sono spuntati"]],
+    [["photo", "Report ricevuto", "{n} foto prima / dopo"], ["avis", "Nuova recensione {e}", "«Impeccabile, grazie {p}!»"], ["valide", "Compiti convalidati", "{n} compiti spuntati e con orario"]],
+    [["paiement", "Pagato dopo la convalida", "Credito d'imposta detratto: −50%"], ["instantane", "Prezzo subito visibile", "Senza preventivo né attesa"], ["calendrier", "Prenotato in 2 minuti", "{v} · fascia confermata"]],
   ],
   es: [
-    [["📍", "{p} está en camino", "Llega en {n} min"], ["🏠", "{p} está en el lugar", "Llegada confirmada por geolocalización"], ["✨", "{p} ha terminado", "Todas las tareas marcadas"]],
-    [["📸", "Informe recibido", "{n} fotos antes / después"], ["⭐", "Nueva reseña ★★★★★", "«Impecable, ¡gracias {p}!»"], ["✅", "Tareas validadas", "{n} tareas marcadas con hora"]],
-    [["💳", "Pagado tras validar", "Crédito fiscal deducido: −50 %"], ["⚡", "Precio al instante", "Sin presupuesto ni esperas"], ["📅", "Reservado en 2 minutos", "{v} · franja confirmada"]],
+    [["position", "{p} está en camino", "Llega en {n} min"], ["sur-place", "{p} está en el lugar", "Llegada confirmada por geolocalización"], ["termine", "{p} ha terminado", "Todas las tareas marcadas"]],
+    [["photo", "Informe recibido", "{n} fotos antes / después"], ["avis", "Nueva reseña {e}", "«Impecable, ¡gracias {p}!»"], ["valide", "Tareas validadas", "{n} tareas marcadas con hora"]],
+    [["paiement", "Pagado tras validar", "Crédito fiscal deducido: −50 %"], ["instantane", "Precio al instante", "Sin presupuesto ni esperas"], ["calendrier", "Reservado en 2 minutos", "{v} · franja confirmada"]],
   ],
 };
 const hasard = l => l[Math.floor(Math.random() * l.length)];
 function remplir(modele) {
   const n = { "photos": 8 + Math.floor(Math.random() * 10) };
-  return modele.replace("{p}", hasard(PRENOMS)).replace("{v}", hasard(VILLES))
+  return modele.replace("{e}", `<span class="cinq-etoiles">${icone("avis").repeat(5)}</span>`).replace("{p}", hasard(PRENOMS)).replace("{v}", hasard(VILLES))
     .replace("{n}", /photo|foto/.test(modele) ? n.photos : /tâche|task|compit|tarea/.test(modele) ? 12 + Math.floor(Math.random() * 14) : 4 + Math.floor(Math.random() * 12));
 }
 const messagesNotif = () => NOTIFS[langue] || NOTIFS.fr;
-const contenuNotif = ([icone, titre, detail]) =>
-  `<span class="pastille-notif">${icone}</span><span><b>${remplir(titre)}</b><small>${remplir(detail)}</small></span>`;
+const contenuNotif = ([nomIcone, titre, detail]) =>
+  `<span class="pastille-notif">${icone(nomIcone)}</span><span><b>${remplir(titre)}</b><small>${remplir(detail)}</small></span>`;
 
 /* Étoile à quatre branches (dégradé or → blanc). */
 const ETOILE = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 0C12.9 6.6 17.4 11.1 24 12C17.4 12.9 12.9 17.4 12 24C11.1 17.4 6.6 12.9 0 12C6.6 11.1 11.1 6.6 12 0Z"/></svg>`;
@@ -179,7 +165,7 @@ function blocRecommander() {
   const m = modeles()[0];
   if (!m) return "";
   const r = rubrique(m.rubriqueId), l = logements().find(x => x.id === m.logementId);
-  return `<a class="recommander" href="#/reserver/${m.rubriqueId}/rapide"><span class="emoji">${r.emoji}</span>
+  return `<a class="recommander" href="#/reserver/${m.rubriqueId}/rapide">${icone(r.icone, { tuile: true })}
     <span style="flex:1"><small>Comme la dernière fois</small><b>${r.nom}</b>${l ? `<span class="lieu">${esc(nomLogement(l))}</span>` : ""}</span>
     <span class="fleche">Recommander ›</span></a>`;
 }
@@ -195,12 +181,12 @@ function pageAccueil() {
         <h1 class="titre-heros"><span>Le ménage passe</span> <span class="brille">au digital.</span></h1>
         <p class="sous">Réservez en deux minutes, suivez votre Cleaneur en temps réel et recevez un compte rendu photo. Vous ne payez qu'une fois le travail validé.</p>
         <form class="express" id="express">
-          <label><span>Quelle prestation ?</span><select name="rubrique">${RUBRIQUES.map(r => `<option value="${r.id}">${r.emoji} ${r.nom}</option>`).join("")}</select></label>
+          <label><span>Quelle prestation ?</span><select name="rubrique">${RUBRIQUES.map(r => `<option value="${r.id}">${r.nom}</option>`).join("")}</select></label>
           <label><span>Code postal</span><input name="cp" inputmode="numeric" maxlength="5" pattern="[0-9]{5}" placeholder="83600" autocomplete="postal-code"></label>
           <button class="bouton" type="submit">Voir mon prix</button>
         </form>
         ${blocRecommander()}
-        <ul class="confiance"><li><span>🛡️</span>Cleaneurs vérifiés</li><li><span>💳</span>Payé après validation</li><li><span>🧾</span>−50 % de crédit d'impôt</li></ul>
+        <ul class="confiance"><li>${icone("garantie")}Cleaneurs vérifiés</li><li>${icone("paiement")}Payé après validation</li><li>${icone("credit-impot")}−50 % de crédit d'impôt</li></ul>
       </div>
       <div class="scene revele" aria-label="Aperçu de l'application">
         <span class="halo"></span><span class="orbite"></span><span class="orbite o2"></span>
@@ -215,8 +201,9 @@ function pageAccueil() {
   <section class="bloc"><div class="conteneur">
     ${titreSection("Nos prestations", "Le prix s'affiche dès que vous décrivez votre besoin.", "Prestations")}
     <div class="grille-3">${RACCOURCIS_VITRINE.map(([id, nom, sous]) => `
-      <a class="carte prestation revele" href="#/reserver/${id}"><span class="icone">${rubrique(id).emoji}</span><h3>${nom}</h3><p class="muet">${sous}</p><span class="aller">Estimer ›</span></a>`).join("")}</div>
+      <a class="carte prestation revele" href="#/reserver/${id}">${icone(rubrique(id).icone, { tuile: true })}<h3>${nom}</h3><p class="muet">${sous}</p><span class="aller">Estimer ›</span></a>`).join("")}</div>
     <p class="centre" style="margin-top:26px"><a class="bouton secondaire" href="#/prestations">Voir toutes les prestations ›</a></p>
+    <div class="revele" style="margin-top:34px">${blocReassurance()}</div>
     <div class="credit revele">
       <div class="pastille-credit">−50 %</div>
       <div><h3>Le propre, à moitié prix.</h3><p>50 % de crédit d'impôt sur le ménage à domicile, déduit tout de suite avec l'avance immédiate.</p></div>
@@ -272,9 +259,10 @@ function pageInscription(type = "client") {
 
 function pagePrestations() {
   return `<section class="fond-cleaneroo" style="padding:40px 0 90px">${decor([[90, 20, 90], [4, 60, 60]], [])}
-    <div class="conteneur"><h1>Nos prestations</h1><div class="trait-corail"></div><p>${RUBRIQUES.length} univers de nettoyage, un seul parcours de réservation.</p></div></section>
+    <div class="conteneur"><h1>Nos prestations</h1><div class="trait-corail"></div><p>${RUBRIQUES.length} univers de nettoyage, un seul parcours de réservation.</p>
+      <a class="bouton clair" href="/calculateur/">Combien coûte votre ménage ? Calculer mon prix ›</a></div></section>
   <section class="bloc"><div class="conteneur"><div class="grille-3">${RUBRIQUES.map(r => `
-    <a class="carte prestation" href="#/reserver/${r.id}"><span class="icone">${r.emoji}</span><h3>${r.nom}</h3>
+    <a class="carte prestation" href="#/reserver/${r.id}">${icone(r.icone, { tuile: true })}<h3>${r.nom}</h3>
       <p class="muet" style="margin:4px 0 8px">${r.sousTitre}</p>
       <span class="tampon">${pastille(r)}</span></a>`).join("")}</div></div></section>`;
 }
@@ -358,7 +346,7 @@ async function pageMesDemandes() {
     const r = rubrique(d.rubrique_id);
     const quand = d.creneau ? `${dateLongue(new Date(d.creneau))} · ${heure(new Date(d.creneau).getHours())}` : "Flexible (7 jours)";
     return `<a class="carte prestation" href="#/demande/${esc(d.reference)}/${esc(d.jeton)}" style="margin-bottom:12px">
-      <div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><h3>${r.emoji} ${r.nom}</h3><span class="tampon">${libelleStatut(d.statut)}</span></div>
+      <div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><h3>${icone(r.icone)} ${r.nom}</h3><span class="tampon">${libelleStatut(d.statut)}</span></div>
       <p class="muet" style="margin:6px 0 0">${quand} · ${esc(d.ville)}</p>
       <p class="petit" style="margin:4px 0 0">Réf. ${esc(d.reference)} · ${d.sur_devis ? "Sur devis" : `estimé ${euros(d.estimation_c)}`}</p></a>`;
   };
@@ -390,7 +378,7 @@ async function pageDemande(ref, jeton) {
     ANNULEE: "Cette demande est annulée. Aucun débit n'a été effectué.",
   }[d.statut] || "Intervention en cours, suivez-la ici en direct.";
   return `<section class="fond-cleaneroo" style="padding:34px 0 86px">${decor([[90, 18, 90], [5, 55, 60]], [])}
-    <div class="etroit"><p style="margin:0;opacity:.85">Réf. ${esc(d.reference)}</p><h1>${r.emoji} ${r.nom}</h1><div class="trait-corail"></div>
+    <div class="etroit"><p style="margin:0;opacity:.85">Réf. ${esc(d.reference)}</p><h1>${icone(r.icone)} ${r.nom}</h1><div class="trait-corail"></div>
       <span class="etiquette" style="background:rgba(255,255,255,.22)">${libelleStatut(d.statut)}</span></div></section>
   <section class="bloc" style="padding-top:28px"><div class="etroit">
     <div class="progression">${ETAPES_SUIVI.map((_, i) => `<span class="${d.statut !== "ANNULEE" && i <= idx ? "fait" : ""}"></span>`).join("")}</div>
@@ -412,9 +400,21 @@ async function pageDemande(ref, jeton) {
 }
 
 /* ------------------------------------------------------------------ Navigation */
+/* Page de contrôle des icônes (#/icones, pas de lien dans le menu) : tuile et en ligne, 3 tailles, fond clair puis sombre. */
+function pageIcones() {
+  const noms = [...ICONES_RUBRIQUES, ...ICONES_INTERFACE];
+  const planche = theme => `<div class="planche-ico ${theme}"><h2>${theme === "ico-clair" ? "Fond clair" : "Fond sombre"}</h2><div class="grille-ico">${noms.map(n => `
+    <figure><div class="tailles">${[20, 28, 48].map(t => `<span style="--t:${t}px">${icone(n, { tuile: true })}</span>`).join("")}</div>
+      <div class="tailles en-ligne">${[20, 28, 48].map(t => `<span style="font-size:${t / 1.15}px">${icone(n)}</span>`).join("")}</div>
+      <figcaption>${n}</figcaption></figure>`).join("")}</div></div>`;
+  return `<section class="bloc"><div class="conteneur"><h1>Icônes Cleaneroo</h1><p class="muet">${noms.length} icônes : en tuile et en ligne, à 20, 28 et 48 px.</p>
+    ${planche("ico-clair")}${planche("ico-sombre")}</div></section>`;
+}
+
 const ROUTES = {
   "": pageAccueil, "prestations": pagePrestations, "comment-ca-marche": pageComment, "devenir-cleaneur": pageDevenir,
   "inscription": () => pageInscription(), "confidentialite": pageConfidentialite, "conditions": pageConditions, "mentions-legales": pageMentions, "mes-demandes": pageMesDemandes,
+  "icones": pageIcones,
 };
 
 async function afficher() {
@@ -424,6 +424,7 @@ async function afficher() {
   if (route === "gestion") { location.href = "gestion.html"; return; }
   compterPage(route, param);
   document.querySelector(".nav")?.classList.remove("ouvert");
+  document.body.classList.toggle("sans-rappel", route === "reserver");
   document.querySelectorAll(".nav a").forEach(a => a.classList.toggle("actif", a.getAttribute("href") === `#/${route}`));
   if (route === "reserver") { ouvrirReservation(vue, param || null, chemin.split("/")[2] || ""); window.scrollTo(0, 0); return; }
   if (route === "inscription" && param) { vue.innerHTML = pageInscription(param); brancherInscription(vue); traduire(vue); window.scrollTo(0, 0); return; }
@@ -465,5 +466,6 @@ traduire(document.querySelector(".entete"));
 traduire(document.getElementById("lancement"));
 traduire(document.querySelector("footer"));
 document.title = tr(document.title);
+installerRappel();
 window.addEventListener("hashchange", afficher);
 afficher();

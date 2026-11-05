@@ -2,7 +2,11 @@
 <html lang="fr">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Tests des prix</title>
 <meta name="robots" content="noindex">
-<style>body{font:15px system-ui;margin:24px}li.ok{color:#2E9E72}li.ko{color:#D0485A;font-weight:700}</style></head>
+<style>body{font:15px system-ui;margin:24px}li.ok{color:#2E9E72}li.ko{color:#D0485A;font-weight:700}</style>  <!-- chargement : généré par outils/generer_pages.py, ne pas modifier à la main -->
+  <script type="importmap">{"imports":{"/assets/js/app.js":"/assets/js/app.js?v=2026110501","/assets/js/catalogue.js":"/assets/js/catalogue.js?v=2026110501","/assets/js/commun.js":"/assets/js/commun.js?v=2026110501","/assets/js/compteur.js":"/assets/js/compteur.js?v=2026110501","/assets/js/donnees.js":"/assets/js/donnees.js?v=2026110501","/assets/js/estimation.js":"/assets/js/estimation.js?v=2026110501","/assets/js/gestion.js":"/assets/js/gestion.js?v=2026110501","/assets/js/icones.js":"/assets/js/icones.js?v=2026110501","/assets/js/langue.js":"/assets/js/langue.js?v=2026110501","/assets/js/page.js":"/assets/js/page.js?v=2026110501","/assets/js/regles.js":"/assets/js/regles.js?v=2026110501","/assets/js/reserver.js":"/assets/js/reserver.js?v=2026110501","/assets/js/villes.js":"/assets/js/villes.js?v=2026110501"}}</script>
+  <link rel="stylesheet" href="/assets/style.css?v=2026110501">
+  <!-- /chargement -->
+</head>
 <body>
 <h1>Tests : mêmes prix que l'application</h1>
 <p id="bilan">…</p>
@@ -52,14 +56,15 @@ const espaces = s => s.replace(/\s/g, " ");
 e = parcours({ rubriqueId: "home", formuleId: "ponctuel" });
 egal("1. logement 62 m² : 150 min", e.dureeMin, 150); egal("1. logement 62 m² : 67,25 €", e.totalC, 6725);
 egal("pastille logement", espaces(pastille(rubrique("home"))), "dès 26,90 € / h");
-egal("pastille location", espaces(pastille(rubrique("rental"))), "dès 35 € le ménage");
+egal("pastille location", espaces(pastille(rubrique("rental"))), "dès 29 € le ménage");
 egal("pastille véhicules", espaces(pastille(rubrique("car"))), "dès 40 €");
 egal("pastille textiles", espaces(pastille(rubrique("textiles"))), "dès 45 € l'élément");
 e = parcours({ rubriqueId: "rental", formuleId: "court" });
 egal("2. location 62 m² : 105 min", e.dureeMin, 105); egal("2. location 62 m² : 52,50 €", e.totalC, 5250);
 e = parcours({ rubriqueId: "rental", formuleId: "court", surface: 25, chambres: 0 });
 egal("3. studio : 75 min", e.dureeMin, 75); egal("3. studio : 37,50 €", e.totalC, 3750);
-egal("3. complément minimum : 30 € → 35 €", 3000 + complementMinimum(3000, REGLES.MINIMUM_MENAGE_LOCATION_C), 3500);
+egal("3. complément minimum : 25 € → 29 €", 2500 + complementMinimum(2500, REGLES.MINIMUM_MENAGE_LOCATION_C), 2900);
+egal("3. studio au-dessus du minimum : sans complément", complementMinimum(3750, REGLES.MINIMUM_MENAGE_LOCATION_C), 0);
 e = parcours({ rubriqueId: "moving", formuleId: "depart" });
 egal("4. déménagement : 224,00 €", e.totalC, 22400); egal("4. confié à 2 Cleaneurs", e.nombreCleaneurs, 2); egal("4. durée sur place divisée par 2", e.dureeMin, 210);
 e = parcours({ rubriqueId: "textiles", formuleId: "canape", panier: [{ elementId: "canape_droit", tailleId: "t20", quantite: 1 }, { elementId: "fauteuil", quantite: 1 }] });

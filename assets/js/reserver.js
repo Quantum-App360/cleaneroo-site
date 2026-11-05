@@ -9,6 +9,8 @@ import { calculer, entreeEstimation, SALISSURE, disponibilite, meilleurPack, tac
 import { REGLES, euros, duree, heure, dateCourte, estPrelancement, MESSAGE_LANCEMENT } from "./regles.js";
 import { envoyerDemande } from "./donnees.js";
 import { traduire } from "./langue.js";
+import { icone } from "./icones.js";
+import { blocReassurance } from "./commun.js";
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const CLE_BROUILLON = "cleaneroo-brouillon";
@@ -50,7 +52,25 @@ function avecLogement(br, l) {
   return { ...br, ...dims, ...Object.fromEntries(CHAMPS_LOGEMENT.map(k => [k, l[k] || ""])), logementId: l.id, code: "" };
 }
 
+/* ------------------------------------------------------------------ Pré-remplissage depuis le calculateur ou une page ville
+   La page écrit { rubriqueId, champs } (calculateur) ou { lieu: { codePostal, ville } } (page ville), puis ouvre la réservation. */
+const CLE_PREREMPLI = "cleaneroo-prerempli";
+let lieuEnAttente = null;   // ville choisie sur une page ville : appliquée dès que la prestation est choisie
+function lirePrerempli() { const p = lire(CLE_PREREMPLI, null); try { localStorage.removeItem(CLE_PREREMPLI); } catch { /* rien */ } return p; }
+export function preremplir(donnees) { ecrire(CLE_PREREMPLI, donnees); }
+
+/** Brouillon d'exemple (pages ville, calculateur) : mêmes valeurs par défaut qu'une vraie réservation, donc mêmes prix. */
+export function brouillonExemple(rubriqueId, champs = {}) {
+  const r = rubrique(rubriqueId);
+  return { ...vierge(rubriqueId, "personnel", r, TYPES_LIEU[rubriqueId]), ...champs };
+}
+
 function nouveauBrouillon(rubriqueId, espace = "personnel", rapide = false) {
+  const br = brouillonInitial(rubriqueId, espace, rapide);
+  return lieuEnAttente && !br.rue ? { ...br, ...lieuEnAttente } : br;
+}
+
+function brouillonInitial(rubriqueId, espace = "personnel", rapide = false) {
   const r = rubrique(rubriqueId);
   const lieux = TYPES_LIEU[rubriqueId];
   const p = profil() || {};
@@ -96,6 +116,10 @@ export function ouvrirReservation(conteneur, rubriqueId, option = "") {
   // Code postal saisi sur l'accueil (« Voir mon prix »).
   const cp = option.match(/^cp-(\d{5})$/)?.[1];
   if (b && cp && !b.rue) b = { ...b, codePostal: cp };
+  // Calculateur : étape 2 préremplie. Page ville : étape 1, la ville sera reprise à l'adresse.
+  const pr = lirePrerempli();
+  if (pr?.lieu) { lieuEnAttente = pr.lieu; if (!rubriqueId) b = null; else if (b && !b.rue) b = { ...b, ...pr.lieu }; }
+  if (pr?.champs && pr.rubriqueId === rubriqueId && rubrique(rubriqueId)) b = { ...nouveauBrouillon(rubriqueId, ancien?.espace || "personnel"), ...pr.champs, etape: 2 };
   photos = [];
   vuesPrises = {};
   // Historique : une entrée par étape, pour que la touche retour du téléphone revienne à l'étape précédente.
@@ -150,17 +174,17 @@ function etape1() {
       <button type="button" data-espace="professionnel" class="${b?.espace === "professionnel" ? "choisi" : ""}">Professionnel</button></div>
     ${modeles().length ? titre("Comme la dernière fois") + `<div class="grille-2">${modeles().slice(0, 4).map(m => {
       const r = rubrique(m.rubriqueId), l = logements().find(x => x.id === m.logementId);
-      return `<a class="carte prestation rapide" href="#/reserver/${m.rubriqueId}/rapide"><div class="emoji">${r.emoji}</div><h3>${r.nom}</h3>
+      return `<a class="carte prestation rapide" href="#/reserver/${m.rubriqueId}/rapide">${icone(r.icone, { tuile: true })}<h3>${r.nom}</h3>
         <p class="muet" style="margin:4px 0 0">${l ? esc(nomLogement(l)) : ""}</p><span class="tampon vert">Recommander en 3 clics ›</span></a>`; }).join("")}</div>` : ""}
     ${titre("Votre prestation")}
     <div class="grille-3">${RUBRIQUES.map(r => `<button type="button" class="carte prestation" data-rubrique="${r.id}" style="text-align:left">
-      <div class="emoji">${r.emoji}</div><h3>${r.nom}</h3><p class="muet" style="margin:4px 0 0">${r.sousTitre}</p><span class="tampon">${pastille(r)}</span></button>`).join("")}</div>`;
+      ${icone(r.icone, { tuile: true })}<h3>${r.nom}</h3><p class="muet" style="margin:4px 0 0">${r.sousTitre}</p><span class="tampon">${pastille(r)}</span></button>`).join("")}</div>`;
 }
 
 function etape2() {
   const r = rubrique(b.rubriqueId);
   const formules = formulesPour(r);
-  let h = `<h2>${r.emoji} ${r.nom}</h2><p class="muet">Décrivez le besoin</p>`;
+  let h = `<h2>${icone(r.icone)} ${r.nom}</h2><p class="muet">Décrivez le besoin</p>`;
   if (r.toujoursSurDevis) {
     h += `<div class="note" style="margin-top:14px">Interventions réalisées par des professionnels qualifiés et équipés, sur devis après évaluation. La désinsectisation et la dératisation relèvent d'entreprises certifiées et ne sont pas proposées.</div>`
       ;
@@ -461,7 +485,7 @@ function etape5() {
   const contactOk = b.prenom.trim() && b.nom.trim() && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(b.email) && b.telephone.replace(/\D/g, "").length >= 10;
   const manque = !contactOk ? "Complétez vos coordonnées." : !b.cgv ? "Acceptez les conditions pour envoyer la demande." : "";
   return `<h2>Votre estimation</h2>
-    <p class="muet">${r.emoji} ${r.nom} · ${duree(est.dureeMin)}${est.nombreCleaneurs === 2 ? " · 2 Cleaneurs" : ""}${debut ? ` · ${dateCourte(debut)} · ${heure(debut.getHours())}` : estPrelancement() ? " · créneau fixé à l'ouverture" : " · flexible"}</p>
+    <p class="muet">${icone(r.icone)} ${r.nom} · ${duree(est.dureeMin)}${est.nombreCleaneurs === 2 ? " · 2 Cleaneurs" : ""}${debut ? ` · ${dateCourte(debut)} · ${heure(debut.getHours())}` : estPrelancement() ? " · créneau fixé à l'ouverture" : " · flexible"}</p>
     ${estPrelancement() ? `<div class="note" style="margin-top:10px"><span><b>Lancement le 31 décembre 2026.</b> ${MESSAGE_LANCEMENT} Votre pré-réservation est gratuite et sans engagement.</span></div>` : ""}
     <div class="carte" style="margin-top:12px">
       ${est.devisObligatoire ? `<h3 style="color:var(--turquoise)">Sur devis</h3><p class="muet" style="margin:4px 0 0">Un professionnel qualifié évalue votre besoin et vous propose un devis. Aucun engagement.</p>`
@@ -479,6 +503,7 @@ function etape5() {
     ${b.flexible || estPrelancement() ? "" : `<button type="button" class="option ${b.choixCleaneur === "directe" ? "choisi" : ""}" data-champ="choixCleaneur" data-valeur="directe">Réservation directe
       <span class="detail">Le premier Cleaneur qui se positionne au prix estimé, sans frais supplémentaire, obtient la mission.</span></button>`}
     <p class="petit">Aucun Cleaneur n'est accepté automatiquement sans votre choix.</p>
+    ${titre("Vos garanties")}${blocReassurance({ compact: true })}
     ${titre("Vos coordonnées")}
     <div class="carte"><div class="grille-2">${champTexte("Prénom", "prenom", b.prenom, "text", 'autocomplete="given-name" maxlength="80"')}${champTexte("Nom", "nom", b.nom, "text", 'autocomplete="family-name" maxlength="80"')}</div>
       <div class="grille-2">${champTexte("E-mail", "email", b.email, "email", 'autocomplete="email" maxlength="200"')}${champTexte("Téléphone", "telephone", b.telephone, "tel", 'autocomplete="tel" maxlength="20"')}</div></div>
