@@ -1,7 +1,7 @@
 // Navigation du site et pages simples. Le parcours de réservation est dans reserver.js.
 import { RUBRIQUES, RACCOURCIS_VITRINE, rubrique, TYPES_LIEU, pastille } from "./catalogue.js";
 import { traduire, traduireCatalogue, selecteurLangue, tr, langue } from "./langue.js";
-import { euros, duree, dateLongue, dateHeure, heure, estPrelancement, joursAvantLancement, MESSAGE_LANCEMENT } from "./regles.js";
+import { euros, duree, dateLongue, dateHeure, heure, estPrelancement, joursAvantLancement, MESSAGE_LANCEMENT, REGLES } from "./regles.js";
 
 // Langue : catalogue traduit avant tout affichage.
 traduireCatalogue(RUBRIQUES, TYPES_LIEU);
@@ -293,6 +293,21 @@ function pageComment() {
   </div></section>`;
 }
 
+/* Offre de lancement des Cleaneurs (mêmes valeurs que Regles.kt) */
+function blocOffreCleaneurs() {
+  const R = REGLES, prix = euros(R.ABONNEMENT_CLEANEUR_C);
+  return `<div class="offre-lancement revele"><div class="aurore" aria-hidden="true"><i></i><i></i></div>
+    <span class="surtitre-heros"><i></i>Offre de lancement</span>
+    <h2>Les ${R.OFFRE_LANCEMENT_PLACES} premiers Cleaneurs : ${R.OFFRE_LANCEMENT_MOIS} mois sans abonnement</h2>
+    <p>Inscrivez-vous et faites valider votre dossier parmi les ${R.OFFRE_LANCEMENT_PLACES} premiers : vous ne payez aucun abonnement pendant ${R.OFFRE_LANCEMENT_MOIS} mois.</p>
+    <ul>
+      <li>${R.OFFRE_LANCEMENT_PLACES} places, attribuées dans l'ordre de validation des dossiers.</li>
+      <li>${R.OFFRE_LANCEMENT_MOIS} mois sans abonnement à partir de la validation.</li>
+      <li>Ensuite, abonnement de ${prix} par mois.</li>
+      <li>Échéance impayée : ${R.PREAVIS_BLOCAGE_JOURS} jours après la date de facturation prévue, le compte est bloqué et les missions réservées sont redistribuées.</li>
+    </ul></div>`;
+}
+
 function pageDevenir() {
   const etapes = ["Avoir un statut d'indépendant", "Préparer vos documents (pièce d'identité, SIRET, RC Pro, attestation de vigilance URSSAF)",
     "Déposer votre dossier (zone, prestations ; chaque document vérifié avant activation)", "Suivre la charte qualité",
@@ -300,7 +315,7 @@ function pageDevenir() {
   return `<section class="fond-cleaneroo" style="padding:40px 0 90px">${decor([[90, 20, 90], [4, 60, 60]], [])}
     <div class="conteneur"><h1>Devenir Cleaneur</h1><div class="trait-corail"></div><p>Travaillez à votre rythme, près de chez vous.</p>
       <div class="etiquettes"><span class="etiquette">Missions proches</span><span class="etiquette">Compte rendu guidé</span><span class="etiquette">Paiement sécurisé</span></div></div></section>
-  <section class="bloc"><div class="etroit">${etapes.map((t, i) => `<div class="carte" style="margin-bottom:10px"><b style="color:var(--corail)">${i + 1}.</b> ${t}</div>`).join("")}
+  <section class="bloc"><div class="etroit">${blocOffreCleaneurs()}${etapes.map((t, i) => `<div class="carte" style="margin-bottom:10px"><b style="color:var(--corail)">${i + 1}.</b> ${t}</div>`).join("")}
     <div style="margin-top:18px">${formulaireInscription("cleaneur")}</div>
   </div></section>`;
 }
@@ -320,7 +335,8 @@ function pageConditions() {
   return pageTexte("Conditions d'utilisation", `
     <p>Cleaneroo met en relation des clients et des Cleaneurs indépendants vérifiés. Rien n'est ajouté à votre commande sans votre accord ; vous n'êtes débité qu'après avoir validé le compte rendu de l'intervention.</p>
     <p>Annulation gratuite jusqu'à 48 h avant l'intervention, puis 25 % du prix accepté. Un litige ou une déclaration de dommage (Garantie Cleaneroo) peut être ouvert dans les 48 h suivant l'intervention.</p>
-    <p>Le prix affiché est une estimation : le montant final ne peut pas la dépasser sans votre accord.</p>`);
+    <p>Le prix affiché est une estimation : le montant final ne peut pas la dépasser sans votre accord.</p>
+    <p><b>Cleaneurs :</b> les ${REGLES.OFFRE_LANCEMENT_PLACES} premiers inscrits et validés ne paient aucun abonnement pendant ${REGLES.OFFRE_LANCEMENT_MOIS} mois ; ensuite, l'abonnement est de ${euros(REGLES.ABONNEMENT_CLEANEUR_C)} par mois. En cas d'impayé, ${REGLES.PREAVIS_BLOCAGE_JOURS} jours après la date de facturation prévue, le compte est bloqué et les missions réservées sont redistribuées à d'autres Cleaneurs.</p>`);
 }
 function pageMentions() {
   return pageTexte("Mentions légales", `

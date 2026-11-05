@@ -579,3 +579,20 @@ label.champ input:focus, label.champ select:focus, label.champ textarea:focus, i
   color: var(--turquoise); font-weight: 700; font-size: 14px; cursor: pointer; box-shadow: var(--ombre); transition: border-color .2s; }
 .retour-haut:hover { border-color: color-mix(in srgb, var(--turquoise) 50%, transparent); }
 .barre-actions .bouton.secondaire { white-space: nowrap; flex: none; padding: 0 18px; }
+
+/* Offre de lancement des Cleaneurs */
+.offre-lancement { position: relative; overflow: hidden; margin-bottom: 26px; padding: 30px 28px; border-radius: var(--rayon-l); color: #fff;
+  background: radial-gradient(70% 90% at 100% 0%, rgba(245,210,122,.28), transparent 60%), linear-gradient(150deg, #0B3438, #10504F 60%, #1A7470);
+  box-shadow: var(--ombre-forte); }
+.offre-lancement > * { position: relative; z-index: 1; }
+.offre-lancement .aurore { z-index: 0; }
+.offre-lancement h2 { color: #fff; margin: 14px 0 10px; font-size: clamp(24px, 3vw, 32px); }
+.offre-lancement h2, .offre-lancement p { max-width: 620px; }
+.offre-lancement p { color: rgba(255,255,255,.85); margin: 0 0 14px; }
+.offre-lancement ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.offre-lancement li { position: relative; padding-left: 28px; color: rgba(255,255,255,.92); font-size: 15px; }
+.offre-lancement li::before { content: "✓"; position: absolute; left: 0; top: 0; width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center;
+  font-size: 12px; font-weight: 800; color: #0B3438; background: linear-gradient(135deg, #9BF5EA, #F5D27A); }
+
+/* En-tête sur écran moyen : seule l'éponge du logo, pour laisser la place au menu */
+@media (min-width: 861px) and (max-width: 1080px) { .marque .nom { display: none; } }

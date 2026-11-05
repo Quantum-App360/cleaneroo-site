@@ -39,6 +39,12 @@ export const REGLES = {
   // Immeubles : hall et entrée + chaque palier compte au moins un quart d'heure (le prix suit toujours le nombre d'étages)
   IMMEUBLE_HALL_MIN: 30,
   IMMEUBLE_MIN_PAR_PALIER: 15,
+  // Offre de lancement Cleaneurs (comme Regles.kt) : 500 premiers validés, 12 mois sans abonnement, puis 19,99 €/mois ;
+  // impayé : blocage et redistribution des missions réservées 3 jours après la date de facturation prévue.
+  OFFRE_LANCEMENT_PLACES: 500,
+  OFFRE_LANCEMENT_MOIS: 12,
+  ABONNEMENT_CLEANEUR_C: 1999,
+  PREAVIS_BLOCAGE_JOURS: 3,
   PALIERS_DEFAUT: 5,
   CHANTIER_MINIMUM_MIN: 120,
   CHANTIER_PIECES_MAX: 8,
