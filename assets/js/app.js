@@ -29,12 +29,13 @@ export function decor(bulles = [[88, 18, 120], [6, 62, 90], [72, 78, 40], [16, 8
 
 const TYPES_INSCRIPTION = [["client", "Je cherche un nettoyage"], ["cleaneur", "Je veux devenir Cleaneur"], ["conciergerie", "Je gère des locations / une conciergerie"]];
 
-function formulaireInscription(typeDefaut = "client") {
+/** fixe : le type est imposé (page Devenir Cleaneur) et le choix « Je cherche un nettoyage / Je gère des locations » n'est pas montré. */
+function formulaireInscription(typeDefaut = "client", fixe = false) {
   return `<form class="carte" id="form-inscription" novalidate>
     <h3>Inscrivez-vous pour le lancement</h3>
     <p class="muet" style="margin:4px 0 14px">Ouverture le <b>31 décembre 2026</b>. ${MESSAGE_LANCEMENT} Les premiers inscrits sont prévenus en priorité.</p>
-    <div class="choix" style="margin-bottom:14px">${TYPES_INSCRIPTION.map(([id, lib]) =>
-      `<button type="button" data-type-inscription="${id}" class="${id === typeDefaut ? "choisi" : ""}">${lib}</button>`).join("")}</div>
+    ${fixe ? "" : `<div class="choix" style="margin-bottom:14px">${TYPES_INSCRIPTION.map(([id, lib]) =>
+      `<button type="button" data-type-inscription="${id}" class="${id === typeDefaut ? "choisi" : ""}">${lib}</button>`).join("")}</div>`}
     <input type="hidden" name="type" value="${typeDefaut}">
     <div class="grille-2"><label class="champ">Prénom<input name="prenom" required maxlength="80" autocomplete="given-name"></label>
       <label class="champ">Nom<input name="nom" maxlength="80" autocomplete="family-name"></label></div>
@@ -254,7 +255,7 @@ function pageInscription(type = "client") {
     <div class="conteneur"><span class="etiquette" style="background:var(--corail)">J-${joursAvantLancement()}</span>
       <h1 style="margin-top:10px">Lancement le 31 décembre 2026</h1><div class="trait-corail"></div>
       <p class="slogan" style="font-size:20px;font-weight:600;margin:0">${MESSAGE_LANCEMENT}</p></div></section>
-  <section class="bloc"><div class="etroit">${formulaireInscription(type)}</div></section>`;
+  <section class="bloc"><div class="etroit">${formulaireInscription(type, type === "cleaneur")}</div></section>`;
 }
 
 function pagePrestations() {
@@ -305,7 +306,7 @@ function pageDevenir() {
     <div class="conteneur"><h1>Devenir Cleaneur</h1><div class="trait-corail"></div><p>Travaillez à votre rythme, près de chez vous.</p>
       <div class="etiquettes"><span class="etiquette">Missions proches</span><span class="etiquette">Compte rendu guidé</span><span class="etiquette">Paiement sécurisé</span></div></div></section>
   <section class="bloc"><div class="etroit">${blocOffreCleaneurs()}${etapes.map((t, i) => `<div class="carte" style="margin-bottom:10px"><b style="color:var(--corail)">${i + 1}.</b> ${t}</div>`).join("")}
-    <div style="margin-top:18px">${formulaireInscription("cleaneur")}</div>
+    <div style="margin-top:18px">${formulaireInscription("cleaneur", true)}</div>
   </div></section>`;
 }
 

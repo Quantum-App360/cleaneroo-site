@@ -8,8 +8,8 @@
 #   - les traductions des textes locaux des villes dans assets/js/langue.js (bloc <villes-textes>).
 import io, json, os, re, html
 
-VERSION = "2026110501"          # ← une seule constante à changer à chaque mise en ligne (AAAAMMJJ + numéro du jour)
-DATE_PLAN = "2026-11-05"        # date des pages dans sitemap.xml
+VERSION = "2026110601"          # ← une seule constante à changer à chaque mise en ligne (AAAAMMJJ + numéro du jour)
+DATE_PLAN = "2026-11-06"        # date des pages dans sitemap.xml
 SITE = "https://cleaneroo.fr"
 
 RACINE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -105,10 +105,10 @@ def gabarit(chemin, titre, description, corps, attrs="", indexer=True, og_type="
       <button class="burger" aria-label="Menu" aria-expanded="false">{MENU}</button>
       <nav class="nav" aria-label="Navigation principale">
         <a href="/#/prestations">Prestations</a>
-        <a href="/#/comment-ca-marche">Comment ça marche</a>
         <a href="/#/devenir-cleaneur">Devenir Cleaneur</a>
         <a href="/#/mes-demandes">Mes demandes</a>
         <a href="/calculateur/">Estimer mon prix</a>
+        <a href="/#/comment-ca-marche">Comment ça marche</a>
         <a href="/#/inscription" class="bouton clair" style="min-height:44px;padding:0 18px">Je m'inscris</a>
       </nav>
     </div>
