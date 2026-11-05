@@ -1,6 +1,6 @@
 // Calcul de l'estimation : copie EXACTE de Estimation.kt (§ 8 du cahier des charges), dans le même ordre.
 import { REGLES, duree } from "./regles.js";
-import { equipementsPour, minutesEtapesLocation, PACK_ETAPES_CONSEILLE, PACK_CONSOMMABLES_CONSEILLE } from "./catalogue.js";
+import { equipementsPour, surfaceEffective, tranchesConvives, minutesEtapesLocation, PACK_ETAPES_CONSEILLE, PACK_CONSOMMABLES_CONSEILLE } from "./catalogue.js";
 import { rubrique, formulesPour, TYPES_LIEU, RUBRIQUES_CREDIT_IMPOT, TYPES_VITRES_ELIGIBLES, prixLigne, minutesLigne, libelleLigne,
   arrondiEuro, tachesPour, tacheChiffree, packsPour, remisePack } from "./catalogue.js";
 
@@ -150,7 +150,13 @@ export function tachesChiffrees(b) {
   const r = rubrique(b.rubriqueId);
   // Véhicules : le gabarit joue sur le prix ET la durée de chaque tâche.
   const gabarit = b.rubriqueId === "car" ? ((TYPES_LIEU.car || []).find(l => l.id === b.typeLieuId)?.coef ?? 1) : 1;
-  return tachesPour(r, b.typeLieuId).map(t => tacheChiffree(t, r, b.surface, gabarit, gabarit));
+  const surface = b.rubriqueId === "windows" ? (b.surfaceVitree ?? 20) : surfaceEffective(b);
+  return tachesPour(r, b.typeLieuId).map(t => {
+    const c = tacheChiffree(t, r, surface, gabarit, gabarit);
+    if (!t.parConvives) return c;
+    const n = tranchesConvives(b.convives ?? 50);
+    return { ...c, prixC: c.prixC * n, minutes: c.minutes * n };
+  });
 }
 /** Cuisines : minutes des équipements choisis (proposés pour le type d'établissement). */
 export const minutesEquipements = b => equipementsPour(b.typeLieuId).reduce((s, e) => s + e.minutes * ((b.equipements || {})[e.id] || 0), 0);
@@ -158,6 +164,12 @@ export const minutesEquipements = b => equipementsPour(b.typeLieuId).reduce((s, 
 export function prixIndicatifEquipement(e, b) {
   const coefLieu = (TYPES_LIEU.kitchen || []).find(l => l.id === b.typeLieuId)?.coef ?? 1;
   return arrondiEuro(e.minutes * coefLieu * formuleDe(b).coef * rubrique("kitchen").tauxHoraireC / 60);
+}
+/** Événements : heures de début possibles (avant : fini avant le début ; après : à partir de la fin). */
+export function heuresEvenement(b, dureeMin, heures) {
+  const debut = b.evtDebutH ?? 18, fin = b.evtFinH ?? 23;
+  if (b.formuleId === "apres") { const h = heures.filter(x => x >= fin); return h.length ? h : [fin]; }
+  return heures.filter(x => x * 60 + dureeMin <= debut * 60);
 }
 /** Formule choisie (la première par défaut). */
 export function formuleDe(b) { const f = formulesPour(rubrique(b.rubriqueId)); return f.find(x => x.id === b.formuleId) || f[0]; }
@@ -228,11 +240,11 @@ export function entreeEstimation(b, espacePersonnel, debut) {
   const n = b.rubriqueId === "car" ? Math.min(REGLES.VEHICULES_MAX, Math.max(REGLES.VEHICULES_MIN, b.nombreVehicules || 1)) : 1;
   const tachesChoisies = chiffrees.filter(t => b.taches.includes(t.id)).map(t => (n === 1 ? t : { ...t, nom: `${t.nom} × ${n}`, prixC: t.prixC * n, minutes: t.minutes * n }));
   const pack = meilleurPack(packsPour(r, b.typeLieuId), b.taches, chiffrees);
-  let dureeImposee = 0, m2h = f.m2ParHeure, surface = b.surface;
+  let dureeImposee = 0, m2h = f.m2ParHeure, surface = surfaceEffective(b);
   // Temps de rotation exact (sans arrondi intermédiaire) : × formule, × salissure, + étapes, + consommables, puis quart d'heure.
   if (b.rubriqueId === "rental") { dureeImposee = tempsRotationLocation(b.chambres, b.sdb, b.surface, 1.0); m2h = 0; }
   if (b.rubriqueId === "windows") { dureeImposee = Math.max(f.minimumMin, b.fenetres * 15); m2h = 0; surface = 0; }
-  if (b.rubriqueId === "textiles") { m2h = 0; surface = 0; }
+  if (b.rubriqueId === "textiles" || b.rubriqueId === "special") { m2h = 0; surface = 0; }
   if (b.rubriqueId === "construction") { dureeImposee = b.surface * 60 / f.m2ParHeure * coefLieu; m2h = 0; }
   // Cuisines : max(1 h, (surface / 25 m²/h + équipements) × établissement × intensité), puis salissure
   if (b.rubriqueId === "kitchen") { dureeImposee = Math.max(f.minimumMin, (b.surface * 60 / f.m2ParHeure + minutesEquipements(b)) * coefLieu * f.coef); m2h = 0; }

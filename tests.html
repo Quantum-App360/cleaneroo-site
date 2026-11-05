@@ -73,6 +73,24 @@ egal("7. tapis de 2 à 3 m : 65,00 €", e.totalC, 6500); egal("7. sans complém
 e = calculer({ rubriqueId: "textiles", salissure: "MARQUE", panier: [{ elementId: "tapis_3", quantite: 1 }] });
 egal("textiles : salissure en prix (+15 %)", e.totalC, 6500 + 975);
 
+// Bureaux, immeubles, vitres, extérieurs, événements, prestations spécialisées (prompts 8 à 13)
+const bo = { rubriqueId: "office", formuleId: "ponctuel", typeLieuId: "bureaux", surface: 100 };
+egal("bureaux 100 m² : 59,00 €", parcours(bo).totalC, 5900);
+egal("bureaux + Essentiel : 103,00 €", parcours({ ...bo, taches: ["contact", "conteneurs", "paillasson", "reassort"] }).totalC, 10300);
+const bi = { rubriqueId: "communal", formuleId: "regulier", typeLieuId: "copro", surfacePalier: 20, paliers: 10 };
+egal("immeuble 20 m² × 10 paliers : 2 h 30", parcours(bi).dureeMin, 150); egal("immeuble : 70,00 €", parcours(bi).totalC, 7000);
+egal("immeuble + Essentiel : 125,00 €", parcours({ ...bi, taches: ["boites", "paillasson", "conteneurs", "rampes", "araignees"] }).totalC, 12500);
+egal("immeuble 20 paliers : 140,00 €", parcours({ ...bi, paliers: 20 }).totalC, 14000);
+const bw = { rubriqueId: "windows", formuleId: "ponctuel", typeLieuId: "fenetres_logement", fenetres: 8 };
+egal("vitres 8 fenêtres : 60,00 €", parcours(bw).totalC, 6000); egal("vitres : 30,00 € après crédit d'impôt", parcours(bw).apresCreditImpotC, 3000);
+egal("vitres + Essentiel : 74,00 €", parcours({ ...bw, taches: ["encadrements"] }).totalC, 7400);
+const bx = { rubriqueId: "outdoor", formuleId: "ponctuel", typeLieuId: "terrasse", surface: 30 };
+egal("terrasse 30 m² : 32,00 €", parcours(bx).totalC, 3200); egal("terrasse + haute pression : 72,00 €", parcours({ ...bx, taches: ["haute_pression"] }).totalC, 7200);
+const be = { rubriqueId: "event", formuleId: "apres", typeLieuId: "mariage", surface: 200 };
+egal("mariage 200 m², après : 5 h 30", parcours(be).dureeMin, 330); egal("mariage : 176,00 €", parcours(be).totalC, 17600);
+egal("mariage + Essentiel : 242,00 €", parcours({ ...be, taches: ["tri", "evacuation", "tables"] }).totalC, 24200);
+egal("prestations spécialisées : sur devis", parcours({ rubriqueId: "special", formuleId: "urgente", typeLieuId: "sinistre" }).devisObligatoire, true);
+
 // Cuisines (prompt 7)
 const bk = { rubriqueId: "kitchen", formuleId: "apres_service", typeLieuId: "restaurant", surface: 30, equipements: { piano: 1, hotte_pro: 1, plonge: 1 } };
 e = parcours(bk);
@@ -171,6 +189,28 @@ egal("4 passages en entretien régulier", passagesPlanifies({ rubriqueId: "home"
 egal("1 passage en ponctuel", passagesPlanifies({ rubriqueId: "home", formuleId: "ponctuel", passages: 4 }), 1);
 egal("dernier nettoyage → saleté", DERNIERS_NETTOYAGES.map(d => d.salissure).join(), "NORMAL,MARQUE,MARQUE,INTENSE");
 egal("remise en état des bureaux", formuleDe({ rubriqueId: "office", formuleId: "remise" }).genre, "REMISE_EN_ETAT");
+
+// Contrôle de cohérence du catalogue : doublons, packs, types, occasions (même contrôle que l'appli)
+import("./assets/js/catalogue.js").then(() => {});
+{
+  const { RUBRIQUES, TYPES_LIEU, formulesPour } = await import("./assets/js/catalogue.js");
+  const pb = [];
+  const ids = RUBRIQUES.map(r => r.id);
+  if (new Set(ids).size !== ids.length) pb.push("rubrique en double");
+  for (const r of RUBRIQUES) {
+    const t = r.taches.map(x => x.id), types = (TYPES_LIEU[r.id] || []).map(x => x.id);
+    if (new Set(t).size !== t.length) pb.push(`${r.id} : tâche en double`);
+    if (new Set(types).size !== types.length) pb.push(`${r.id} : type en double`);
+    const noms = r.taches.map(x => x.nom); if (new Set(noms).size !== noms.length) pb.push(`${r.id} : libellé de tâche en double`);
+    for (const p of r.packs) for (const id of p.tacheIds) if (!t.includes(id)) pb.push(`${r.id} : pack ${p.id} → tâche inconnue ${id}`);
+    for (const x of r.taches) for (const ty of x.types) if (!types.includes(ty)) pb.push(`${r.id} : tâche ${x.id} → type inconnu ${ty}`);
+    for (const p of r.packs) for (const ty of (p.types || [])) if (!types.includes(ty)) pb.push(`${r.id} : pack ${p.id} → type inconnu ${ty}`);
+    for (const o of r.occasions) if (o.packId && !r.packs.some(p => p.id === o.packId)) pb.push(`${r.id} : occasion ${o.id} → pack inconnu`);
+    const f = formulesPour(r).map(x => x.id); if (new Set(f).size !== f.length) pb.push(`${r.id} : formule en double`);
+    for (const x of r.taches) if (!(x.prixC > 0 && x.minutes > 0)) pb.push(`${r.id} : tâche ${x.id} sans prix ou durée`);
+  }
+  egal("catalogue cohérent (doublons, packs, types, occasions)", pb.join(" ; "), "");
+}
 
 const ok = res.filter(r => r[1]).length;
 document.getElementById("bilan").textContent = `${ok} tests sur ${res.length} réussis`;

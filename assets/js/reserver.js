@@ -3,9 +3,9 @@
 import { RUBRIQUES, rubrique, formulesPour, TYPES_LIEU, TYPES_LOGEMENT, BESOINS_SPECIAUX, ACCUEIL, accueilAutonomeInterdit, photosObligatoires,
   ELEMENTS_TEXTILES, TAILLES_CANAPE, prixLigne, minutesLigne, libelleLigne, pastille,
   FREQUENCES, JOURS_SEMAINE, DERNIERS_NETTOYAGES, packsPour, remisePack,
-  TACHES_A_TRAITER, TYPES_CHANTIER, equipementsPour, SELECTION_CONSEILLEE_VEHICULE, LIEUX_VEHICULE, FREQUENCES_VEHICULE, RUBRIQUES_LOGEMENT, vuesPhotos, vuesCompletes, PIECES_LOCATION, ETAPES_LOCATION, PACK_ETAPES_CONSEILLE, CONSOMMABLES_LOCATION, PACK_CONSOMMABLES_CONSEILLE } from "./catalogue.js";
+  TACHES_A_TRAITER, TYPES_CHANTIER, equipementsPour, DELAIS_URGENCE, TYPES_IMMEUBLE, surfaceEffective, SELECTION_CONSEILLEE_VEHICULE, LIEUX_VEHICULE, FREQUENCES_VEHICULE, RUBRIQUES_LOGEMENT, vuesPhotos, vuesCompletes, PIECES_LOCATION, ETAPES_LOCATION, PACK_ETAPES_CONSEILLE, CONSOMMABLES_LOCATION, PACK_CONSOMMABLES_CONSEILLE } from "./catalogue.js";
 import { calculer, entreeEstimation, SALISSURE, disponibilite, meilleurPack, tachesChiffrees, formuleDe, passagesPlanifies, datesPassages,
-  etapesDe, consommablesDe, menageTientEntreVoyageurs, frequenceDe, minutesEquipements, prixIndicatifEquipement } from "./estimation.js";
+  etapesDe, consommablesDe, menageTientEntreVoyageurs, frequenceDe, minutesEquipements, prixIndicatifEquipement, heuresEvenement } from "./estimation.js";
 import { REGLES, euros, duree, heure, dateCourte, estPrelancement, MESSAGE_LANCEMENT } from "./regles.js";
 import { envoyerDemande } from "./donnees.js";
 import { traduire } from "./langue.js";
@@ -141,25 +141,34 @@ function etape2() {
   let h = `<h2>${r.emoji} ${r.nom}</h2><p class="muet">Décrivez le besoin</p>`;
   if (r.toujoursSurDevis) {
     h += `<div class="note" style="margin-top:14px">Interventions réalisées par des professionnels qualifiés et équipés, sur devis après évaluation. La désinsectisation et la dératisation relèvent d'entreprises certifiées et ne sont pas proposées.</div>`
-      + titre("Votre besoin") + choix(BESOINS_SPECIAUX, b.formuleId, "formuleId");
+      ;
   }
   if (RUBRIQUES_LOGEMENT.includes(b.rubriqueId)) h += titre("Type de logement") + choix(TYPES_LOGEMENT.map(t => [t.id, t.nom]), b.typeLogementId, "typeLogementId");
   const lieux = TYPES_LIEU[b.rubriqueId];
-  if (lieux) h += titre({ car: "Gabarit du véhicule", construction: "Type de sol", kitchen: "Type d'établissement" }[b.rubriqueId] || "Type de lieu")
+  if (lieux) h += titre(r.titreTypes || { car: "Gabarit du véhicule", construction: "Type de sol", kitchen: "Type d'établissement" }[b.rubriqueId] || "Type de lieu")
     + choix(lieux.map(l => [l.id, l.nom]), b.typeLieuId, "typeLieuId");
-  if (!r.toujoursSurDevis && b.rubriqueId !== "car") {
+  if (b.rubriqueId !== "car") {
     h += titre("Choisissez votre formule") + formules.map(f => `<button type="button" class="option ${f.id === b.formuleId ? "choisi" : ""}" data-champ="formuleId" data-valeur="${f.id}">
       ${esc(f.nom)}${f.description ? `<span class="detail">${esc(f.description)}</span>` : ""}</button>`).join("");
     h += questionsFormule(r);
+    if (b.rubriqueId === "special" && b.formuleId === "urgente") h += titre("Délai souhaité") + choix(DELAIS_URGENCE, b.delai || "48h", "delai");
     if (b.rubriqueId === "textiles") h += panierTextiles();
     const inclus = (lieux || []).find(l => l.id === b.typeLieuId)?.inclus || r.inclus;
     if (inclus) h += `<div class="carte teintee" style="margin-top:6px"><b style="color:var(--turquoise)">Inclus dans votre forfait</b><p class="muet" style="margin:4px 0 0;font-size:14px">${esc(inclus)}</p></div>`;
-    if (b.rubriqueId !== "textiles") h += titre("Dimensions") + `<div class="carte">`
+    if (!["textiles", "special"].includes(b.rubriqueId)) h += titre("Dimensions") + `<div class="carte">`
       + (b.rubriqueId === "windows" ? compteur("Nombre de fenêtres", "fenetres", b.fenetres, { min: 1, max: 200 })
+          + compteur("Surface vitrée approximative", "surfaceVitree", b.surfaceVitree ?? 20, { min: 1, max: 500, unite: " m²" })
+          + `<p class="petit">La surface vitrée sert uniquement aux tâches à la surface.</p>`
+        : b.rubriqueId === "communal" && TYPES_IMMEUBLE.includes(b.typeLieuId)
+          ? compteur("Surface par palier", "surfacePalier", b.surfacePalier ?? REGLES.SURFACE_PALIER_DEFAUT_M2, { min: 5, max: 300, unite: " m²" })
+          + compteur("Nombre de paliers (étages)", "paliers", b.paliers ?? REGLES.PALIERS_DEFAUT, { min: 1, max: REGLES.PALIERS_MAX })
+          + `<p class="petit">Surface totale : ${surfaceEffective(b)} m² (${b.surfacePalier ?? REGLES.SURFACE_PALIER_DEFAUT_M2} m² × ${b.paliers ?? REGLES.PALIERS_DEFAUT} paliers).</p>`
         : compteur("Surface", "surface", b.surface, { min: 5, max: 5000, unite: " m²" }))
       + ([...RUBRIQUES_LOGEMENT, "rental"].includes(b.rubriqueId) ? compteur("Chambres", "chambres", b.chambres, { max: 12 }) + compteur("Salles de bain", "sdb", b.sdb, { min: 1, max: 8 }) : "")
       + (RUBRIQUES_LOGEMENT.includes(b.rubriqueId) ? compteur("Niveaux", "niveaux", b.niveaux, { min: 1, max: 5 }) + (b.niveaux > 1 ? `<p class="petit">+15 min par niveau supplémentaire</p>` : "") : "")
-      + (b.surface > REGLES.SEUIL_DEVIS_SURFACE_M2 ? `<p style="color:var(--alerte);font-size:14px">Au-delà de 300 m² : devis obligatoire.</p>` : "")
+      + (b.rubriqueId === "office" && ["bureaux", "agence"].includes(b.typeLieuId) ? compteur("Postes de travail", "postes", b.postes ?? 10, { min: 1, max: 500 }) : "")
+      + (b.rubriqueId === "event" ? compteur("Nombre de convives", "convives", b.convives ?? 50, { min: 1, max: 2000 }) : "")
+      + (surfaceEffective(b) > REGLES.SEUIL_DEVIS_SURFACE_M2 ? `<p style="color:var(--alerte);font-size:14px">Au-delà de 300 m² : devis obligatoire.</p>` : "")
       + `</div>`;
   }
   if (b.rubriqueId === "rental") h += etapesLocation();
@@ -188,6 +197,7 @@ function etape2() {
     h += groupes.map(g => (g ? `<p class="petit" style="margin:12px 0 4px"><b>${esc(g)}</b></p>` : "")
       + `<div class="carte">${chiffrees.filter(t => t.groupe === g).map(t => `<label class="case"><input type="checkbox" data-tache="${t.id}" ${b.taches.includes(t.id) ? "checked" : ""}>
       <span>${t.nom}</span><span class="info">${euros(t.prixC)} · ${duree(t.minutes)}</span></label>`).join("")}</div>`).join("");
+    if (r.noteTaches) h += `<div class="note alerte" style="margin-top:10px">${esc(r.noteTaches)}</div>`;
     if (r.surfaceReferenceM2 > 0 && chiffrees.some(t => t.parSurface)) h += `<p class="petit">Tâches marquées à la surface : prix pour ${r.surfaceReferenceM2} m², au prorata au-delà.</p>`;
   }
   if (!r.toujoursSurDevis) {
@@ -198,8 +208,10 @@ function etape2() {
       <p class="petit">Chaque tâche particulière compte 15 min dans l'estimation ; le Cleaneur la confirme.</p></div>`;
   }
   if (b.rubriqueId === "home") h += `<div class="carte" style="margin-top:14px">${caseCocher("Des animaux vivent dans le logement", "animaux", b.animaux)}</div>`;
+  if (b.rubriqueId === "office") h += `<div class="carte" style="margin-top:14px">${caseCocher("Les lieux seront vides pendant l'intervention", "lieuxVides", !!b.lieuxVides)}</div>`;
+  if (b.rubriqueId === "event") h += horairesEvenement();
   if (b.rubriqueId === "moving") h += `<div class="carte" style="margin-top:14px">${caseCocher("Le logement sera entièrement vide (meubles et cartons sortis)", "lieuxVides", !!b.lieuxVides)}</div>`;
-  const besoinOk = !r.toujoursSurDevis || b.formuleId;
+  const besoinOk = !r.toujoursSurDevis || (b.typeLieuId && b.formuleId);
   const panierOk = b.rubriqueId !== "textiles" || (b.panier || []).length > 0;
   const chantierOk = b.rubriqueId !== "construction" || !!b.artisansPartis;
   const equipementsOk = b.rubriqueId !== "kitchen" || minutesEquipements(b) > 0;
@@ -208,6 +220,17 @@ function etape2() {
     : !equipementsOk ? "Ajoutez au moins un équipement."
     : !chantierOk ? "Cochez « Les artisans auront quitté les lieux » pour continuer."
     : !joursOk ? "Choisissez au moins deux jours de passage." : "");
+}
+
+/** Événements : jour, heures de début et de fin, règles de passage (HorairesEvenement dans l'appli). */
+function horairesEvenement() {
+  const regle = { apres: "Après : le passage commence à partir de la fin de l'événement.",
+    avant_apres: "Avant et après : deux passages, l'un terminé avant le début, l'autre à partir de la fin." }[b.formuleId]
+    || "Avant : le passage est terminé avant le début de l'événement.";
+  return titre("Horaires de l'événement") + `<div class="carte">${champTexte("Jour de l'événement", "evtDate", b.evtDate || "", "date")}
+      ${compteur("Début de l'événement", "evtDebutH", b.evtDebutH ?? 18, { min: 6, max: 23, unite: " h" })}
+      ${compteur("Fin de l'événement", "evtFinH", b.evtFinH ?? 23, { min: 7, max: 23, unite: " h" })}
+      <p class="petit">${regle}</p></div>`;
 }
 
 /** Cuisines : équipements à l'unité, prix indicatif, note sur les produits (EquipementsCuisine dans l'appli). */
@@ -365,14 +388,17 @@ function debutChoisi() {
 
 function etape4() {
   const interdit = accueilAutonomeInterdit(b.rubriqueId, b.typeLieuId);
-  const options = Object.entries(ACCUEIL).filter(([k]) => !interdit || ["PRESENT", "TIERS"].includes(k));
+  // Prestations spécialisées : une personne sur place, obligatoire.
+  const options = Object.entries(ACCUEIL).filter(([k]) => (b.rubriqueId === "special" ? k === "PRESENT" : !interdit || ["PRESENT", "TIERS"].includes(k)));
   let acces = "";
   if (b.accueil === "TIERS") acces = champTexte("Nom de la personne", "tiersNom", b.tiersNom, "text", 'maxlength="80"') + champTexte("Son téléphone", "tiersTel", b.tiersTel, "tel", 'maxlength="20"');
   if (b.accueil === "BOITE") acces = champTexte("Emplacement de la boîte à clés", "boiteEmplacement", b.boiteEmplacement, "text", 'maxlength="120"') + champTexte("Code de la boîte", "code", b.code, "text", 'maxlength="30" autocomplete="off"');
   if (b.accueil === "AUTONOME") acces = champTexte("Code ou instructions d'accès", "code", b.code, "text", 'maxlength="120" autocomplete="off"');
   const maintenant = new Date();
   const location = b.rubriqueId === "rental";
-  const heures = []; if (location) heures.push(b.departVoyageursH ?? REGLES.DEPART_VOYAGEURS_DEFAUT_H); else for (let h = 7; h <= 20; h++) heures.push(h);
+  let heures = []; if (location) heures.push(b.departVoyageursH ?? REGLES.DEPART_VOYAGEURS_DEFAUT_H); else for (let h = 7; h <= 20; h++) heures.push(h);
+  // Événements : créneaux selon la formule (fini avant le début, ou à partir de la fin)
+  if (b.rubriqueId === "event") { const g = []; for (let h = 6; h <= 23; h++) g.push(h); heures = heuresEvenement(b, calculer(entreeEstimation(b, b.espace === "personnel", null)).dureeMin, g); }
   const tient = !location || menageTientEntreVoyageurs(b, calculer(entreeEstimation(b, b.espace === "personnel", null)).dureeMin);
   const jourDate = b.jour ? new Date(b.jour + "T00:00") : null;
   const creneaux = jourDate ? heures.map(h => {

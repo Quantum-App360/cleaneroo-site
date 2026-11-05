@@ -1,7 +1,7 @@
 // Catalogue des prestations : copie EXACTE de Catalogue.kt et de Reservation.kt (application Android).
 import { REGLES, euros } from "./regles.js";
 /** Tâche : groupe = intertitre ; parSurface = chiffrée pour la surface de référence, au prorata au-delà ; types = types de lieu (vide = tous). */
-const T = (id, nom, prixC, minutes, o = {}) => ({ id, nom, prixC, minutes, groupe: "", parSurface: false, types: [], ...o });
+const T = (id, nom, prixC, minutes, o = {}) => ({ id, nom, prixC, minutes, groupe: "", parSurface: false, types: [], parConvives: false, ...o });
 /** Genre de formule : décide des questions affichées sous les formules (GenreFormule dans l'appli). */
 export const genreParDefaut = id => ({ regulier: "REGULIER", saisonnier: "REGULIER", ponctuel: "PONCTUEL", remise: "REMISE_EN_ETAT", demoussage: "REMISE_EN_ETAT" })[id] || "AUTRE";
 /** avecDernierNettoyage : pose aussi « Dernier nettoyage en profondeur » (ex. Grand ménage) ; avecNatures : « Nature des salissures ». */
@@ -237,14 +237,157 @@ export const RUBRIQUES = [
     ],
     surfaceReferenceM2: 30, frequences: [["jour", "Chaque jour (après le service)"], ["plusieurs", "Plusieurs fois par semaine"], ["semaine", "Chaque semaine"], ["deux_semaines", "Toutes les 2 semaines"]], moments: [["midi", "Après le service du midi"], ["soir", "Après le service du soir"], ["avant", "Avant l'ouverture"], ["fermeture", "Jour de fermeture"]],
     naturesSalissure: ["Graisse incrustée", "Carbone et calamine", "Calcaire", "Odeurs", "Moisissures"] },
-  { id: "office", nom: "Bureaux et commerces", sousTitre: "Des locaux propres et accueillants", emoji: "🏢", tauxHoraireC: 2950, salissureSurTemps: false },
-  { id: "communal", nom: "Parties communes", sousTitre: "Escaliers, halls et espaces communs", emoji: "🏘️", tauxHoraireC: 2800, salissureSurTemps: false },
-  { id: "windows", nom: "Vitres et vitrines", sousTitre: "Fenêtres, vitrines et vérandas", emoji: "🪟", tauxHoraireC: 3000, salissureSurTemps: false },
-  { id: "outdoor", nom: "Espaces extérieurs", sousTitre: "Terrasses, balcons et garages", emoji: "🌿", tauxHoraireC: 3200, salissureSurTemps: false },
-  { id: "event", nom: "Avant et après événement", sousTitre: "Profitez pleinement de votre événement", emoji: "🎉", tauxHoraireC: 3200, salissureSurTemps: false },
-  { id: "special", nom: "Prestations spécialisées", sousTitre: "Une évaluation par un professionnel qualifié", emoji: "🧪", tauxHoraireC: null, salissureSurTemps: false, toujoursSurDevis: true },
+  { id: "office", nom: "Bureaux et commerces", sousTitre: "Des locaux propres et accueillants", emoji: "🏢", tauxHoraireC: 2950, salissureSurTemps: false,
+    titreTypes: "Type de lieu",
+    formules: [F("regulier", "Entretien régulier", "", 60, 60, 1.0, "REGULIER", false, false), F("ponctuel", "Nettoyage ponctuel", "", 60, 60, 1.15, "PONCTUEL", false, false), F("remise", "Remise en état des locaux", "", 60, 60, 1.6, "REMISE_EN_ETAT", true, false)],
+    taches: [
+      T("claviers", "Désinfection claviers, souris et téléphones", 1500, 20, { groupe: "Espaces de travail et accueil", types: ["bureaux", "agence", "medical"] }),
+      T("ecrans", "Dépoussiérage des écrans et du matériel informatique", 1200, 15, { groupe: "Espaces de travail et accueil", types: ["bureaux", "agence"] }),
+      T("reunion", "Salles de réunion (tables, chaises, écrans)", 2000, 25, { groupe: "Espaces de travail et accueil", types: ["bureaux", "agence"] }),
+      T("cloisons", "Cloisons vitrées intérieures", 2500, 30, { groupe: "Espaces de travail et accueil", types: ["bureaux", "agence", "showroom"] }),
+      T("sieges", "Shampoing des sièges tissu", 3500, 45, { groupe: "Espaces de travail et accueil", types: ["bureaux", "agence", "medical"] }),
+      T("attente", "Salle d'attente (sièges, tables, présentoirs)", 1500, 15, { groupe: "Espaces de travail et accueil", types: ["medical", "agence"] }),
+      T("paillasson", "Paillasson et sas d'entrée", 800, 10, { groupe: "Espaces de travail et accueil", types: ["bureaux", "boutique", "magasin", "medical", "agence", "showroom", "sport"] }),
+      T("kitchenette", "Kitchenette / coin café (frigo, micro-ondes, cafetière)", 2000, 25, { groupe: "Espaces de travail et accueil", types: ["bureaux", "agence", "atelier", "boutique", "sport"] }),
+      T("vitrine", "Vitrine (faces intérieure et extérieure)", 2500, 25, { groupe: "Vente et exposition", types: ["boutique", "magasin", "agence", "showroom"] }),
+      T("comptoir", "Comptoir, caisses et terminaux de paiement", 1500, 15, { groupe: "Vente et exposition", types: ["boutique", "magasin", "agence"] }),
+      T("presentoirs", "Présentoirs, étagères et rayonnages de vente", 3000, 35, { groupe: "Vente et exposition", parSurface: true, types: ["boutique", "magasin", "showroom"] }),
+      T("cabines", "Cabines d'essayage (miroirs, rideaux)", 1500, 15, { groupe: "Vente et exposition", types: ["boutique"] }),
+      T("miroirs", "Miroirs et vitrines d'exposition", 2000, 25, { groupe: "Vente et exposition", types: ["showroom", "boutique", "sport"] }),
+      T("reserve", "Réserve / arrière-boutique", 2500, 30, { groupe: "Vente et exposition", types: ["boutique", "magasin", "showroom"] }),
+      T("autolaveuse", "Lavage mécanisé des sols (autolaveuse)", 4500, 45, { groupe: "Sols", parSurface: true, types: ["magasin", "entrepot", "atelier", "sport"] }),
+      T("moquette", "Shampoing moquette", 4000, 50, { groupe: "Sols", parSurface: true, types: ["bureaux", "agence", "medical"] }),
+      T("decapage", "Décapage et protection des sols (cire)", 6000, 90, { groupe: "Sols", parSurface: true, types: ["boutique", "magasin", "medical", "showroom"] }),
+      T("degraissage_sols", "Dégraissage des sols d'atelier (huiles, traces)", 4000, 45, { groupe: "Sols", parSurface: true, types: ["atelier"] }),
+      T("sols_sport", "Désinfection des tapis et sols de sport", 3000, 30, { groupe: "Sols", parSurface: true, types: ["sport"] }),
+      T("contact", "Désinfection renforcée des points de contact", 1500, 20, { groupe: "Hygiène et sanitaires" }),
+      T("reassort", "Réassort des consommables sanitaires", 800, 10, { groupe: "Hygiène et sanitaires", types: ["bureaux", "agence", "medical", "sport", "magasin"] }),
+      T("cabinets", "Désinfection des cabinets (table d'examen, surfaces)", 2500, 25, { groupe: "Hygiène et sanitaires", types: ["medical"] }),
+      T("appareils", "Désinfection des appareils de sport", 3000, 35, { groupe: "Hygiène et sanitaires", types: ["sport"] }),
+      T("vestiaires", "Vestiaires et douches", 3000, 35, { groupe: "Hygiène et sanitaires", types: ["sport", "atelier", "magasin"] }),
+      T("rayonnages", "Dépoussiérage des rayonnages de stockage", 3500, 40, { groupe: "Stockage, atelier et déchets", parSurface: true, types: ["entrepot", "atelier", "magasin"] }),
+      T("quais", "Quais de chargement et allées de circulation", 3500, 40, { groupe: "Stockage, atelier et déchets", types: ["entrepot"] }),
+      T("etablis", "Établis et postes d'atelier", 2500, 30, { groupe: "Stockage, atelier et déchets", types: ["atelier"] }),
+      T("araignees", "Toiles d'araignées et hauteurs accessibles", 2000, 25, { groupe: "Stockage, atelier et déchets", types: ["entrepot", "atelier", "showroom"] }),
+      T("cartons", "Évacuation des cartons et déchets légers (sacs)", 1500, 15, { groupe: "Stockage, atelier et déchets", types: ["entrepot", "atelier", "boutique", "magasin"] }),
+      T("conteneurs", "Sortie et lavage des conteneurs poubelles", 1500, 15, { groupe: "Stockage, atelier et déchets" }),
+    ],
+    packs: [
+      { id: "essentiel", nom: "Essentiel", remisePct: 5, tacheIds: ["contact", "conteneurs", "paillasson", "reassort"] },
+      { id: "confort", nom: "Confort", remisePct: 10, tacheIds: ["contact", "conteneurs", "paillasson", "reassort", "claviers", "kitchenette", "vitrine", "comptoir", "attente", "vestiaires", "etablis", "cartons", "araignees"] },
+      { id: "prestige", nom: "Prestige", remisePct: 15, tacheIds: ["contact", "conteneurs", "paillasson", "reassort", "claviers", "kitchenette", "vitrine", "comptoir", "attente", "vestiaires", "etablis", "cartons", "araignees", "cloisons", "reunion", "ecrans", "presentoirs", "miroirs", "reserve", "moquette", "autolaveuse", "cabinets", "appareils", "rayonnages", "quais"] },
+    ],
+    surfaceReferenceM2: 100,
+    frequences: [["plusieurs", "Plusieurs fois par semaine"], ["semaine", "Chaque semaine"], ["deux_semaines", "Toutes les 2 semaines"], ["mois", "Chaque mois"]],
+    moments: [["avant", "Avant l'ouverture"], ["pendant", "Pendant les horaires d'ouverture"], ["apres", "Après la fermeture"], ["weekend", "Le week-end"]],
+    occasions: [{ id: "visite", nom: "Visite client ou audit", packId: "confort" }, { id: "inauguration", nom: "Inauguration / réouverture", packId: "prestige" }, { id: "avant_evt", nom: "Avant un événement", packId: "confort" }, { id: "apres_evt", nom: "Après un événement", packId: "essentiel" }, { id: "autre", nom: "Autre", packId: "" }] },
+  { id: "communal", nom: "Parties communes d'immeubles", sousTitre: "Hall, escaliers et paliers, prix selon les étages", emoji: "🏘️", tauxHoraireC: 2800, salissureSurTemps: false,
+    titreTypes: "Type d'immeuble",
+    formules: [F("regulier", "Entretien régulier", "", 80, 60, 1.0, "REGULIER", false, false), F("ponctuel", "Ponctuel", "", 80, 60, 1.15, "PONCTUEL", false, false), F("remise", "Remise en état", "", 80, 60, 1.6, "REMISE_EN_ETAT", true, false)],
+    taches: [
+      T("vitrerie", "Vitrerie du hall et porte d'entrée", 2000, 25, { groupe: "Hall et entrée", types: ["copro", "residence"] }),
+      T("boites", "Boîtes aux lettres et interphone", 1000, 10, { groupe: "Hall et entrée", types: ["copro", "residence"] }),
+      T("paillasson", "Paillasson et sas", 800, 10, { groupe: "Hall et entrée", types: ["copro", "residence"] }),
+      T("escaliers", "Lavage des escaliers", 3000, 40, { groupe: "Circulations", parSurface: true, types: ["copro", "residence"] }),
+      T("rampes", "Rampes, mains courantes et interrupteurs (désinfection)", 1500, 15, { groupe: "Circulations", types: ["copro", "residence"] }),
+      T("ascenseur", "Ascenseur (cabine, miroirs, seuils)", 1500, 15, { groupe: "Circulations", types: ["copro", "residence"] }),
+      T("portes", "Portes palières et plinthes", 1500, 20, { groupe: "Circulations", parSurface: true, types: ["copro", "residence"] }),
+      T("araignees", "Toiles d'araignées et hauteurs", 1500, 20, { groupe: "Circulations" }),
+      T("local_poubelles", "Local poubelles (lavage, désinfection)", 2500, 25, { groupe: "Locaux techniques" }),
+      T("conteneurs", "Sortie et rentrée des conteneurs", 1000, 10, { groupe: "Locaux techniques", types: ["copro", "residence"] }),
+      T("velos", "Local vélos et poussettes", 2000, 20, { groupe: "Locaux techniques", types: ["copro", "residence"] }),
+      T("caves", "Couloirs de caves", 2500, 30, { groupe: "Locaux techniques", types: ["copro", "parking"] }),
+      T("balayage", "Balayage mécanisé du parking", 6000, 60, { groupe: "Parking", parSurface: true, types: ["parking", "copro"] }),
+      T("huile", "Traitement des taches d'huile", 3000, 30, { groupe: "Parking", types: ["parking"] }),
+      T("rampes_acces", "Rampes d'accès et caniveaux", 2500, 30, { groupe: "Parking", types: ["parking"] }),
+    ],
+    packs: [
+      { id: "essentiel", nom: "Essentiel", remisePct: 5, tacheIds: ["boites", "paillasson", "conteneurs", "rampes", "araignees"] },
+      { id: "confort", nom: "Confort", remisePct: 10, tacheIds: ["boites", "paillasson", "conteneurs", "rampes", "araignees", "vitrerie", "ascenseur", "local_poubelles", "huile"] },
+      { id: "prestige", nom: "Prestige", remisePct: 15, tacheIds: ["boites", "paillasson", "conteneurs", "rampes", "araignees", "vitrerie", "ascenseur", "local_poubelles", "huile", "escaliers", "portes", "velos", "caves", "balayage", "rampes_acces"] },
+    ],
+    surfaceReferenceM2: 200,
+    occasions: [{ id: "ag", nom: "Assemblée générale", packId: "confort" }, { id: "vente_lot", nom: "Visite ou vente d'un lot", packId: "confort" }, { id: "demenagement", nom: "Après un déménagement dans l'immeuble", packId: "confort" }, { id: "autre", nom: "Autre", packId: "" }] },
+  { id: "windows", nom: "Vitres et vitrines", sousTitre: "Fenêtres, vitrines et vérandas", emoji: "🪟", tauxHoraireC: 3000, salissureSurTemps: false,
+    titreTypes: "Type de vitrage",
+    formules: [F("ponctuel", "Ponctuel", "15 min par fenêtre, minimum 1 h 30.", 0, 90, 1.0, "PONCTUEL", false, false), F("regulier", "Entretien régulier", "", 0, 90, 0.9, "REGULIER", false, false), F("travaux", "Après travaux", "", 0, 90, 1.5, "AUTRE", false, true)],
+    taches: [
+      T("encadrements", "Encadrements et rebords", 1500, 20, { groupe: "Vitrages", parSurface: true }),
+      T("rails", "Rails de baie vitrée", 1000, 15, { groupe: "Vitrages", types: ["fenetres_logement", "baies_veranda"] }),
+      T("moustiquaires", "Moustiquaires", 1000, 10, { groupe: "Vitrages", types: ["fenetres_logement", "baies_veranda"] }),
+      T("etiquettes", "Retrait d'étiquettes et adhésifs", 1500, 20, { groupe: "Vitrages" }),
+      T("enseigne", "Enseigne et lettrage de vitrine", 1500, 15, { groupe: "Vitrages", types: ["vitrine_commerce"] }),
+      T("toiture", "Toiture de véranda (côté intérieur ou accès sécurisé)", 6000, 60, { groupe: "Accès en hauteur", types: ["baies_veranda"] }),
+      T("volets", "Volets et persiennes", 2500, 30, { groupe: "Menuiseries et occultants", types: ["fenetres_logement", "baies_veranda"] }),
+      T("stores", "Stores intérieurs", 2000, 25, { groupe: "Menuiseries et occultants", types: ["fenetres_logement", "baies_veranda", "facades"] }),
+      T("rideau", "Rideau métallique (face extérieure)", 2000, 20, { groupe: "Menuiseries et occultants", types: ["vitrine_commerce"] }),
+      T("hauteur", "Vitrages en hauteur (perche à eau pure, jusqu'à 6 m)", 3000, 30, { groupe: "Accès en hauteur" }),
+    ],
+    packs: [
+      { id: "essentiel", nom: "Essentiel", remisePct: 5, tacheIds: ["encadrements"] },
+      { id: "confort", nom: "Confort", remisePct: 10, tacheIds: ["encadrements", "rails", "moustiquaires", "stores", "enseigne", "rideau"] },
+      { id: "prestige", nom: "Prestige", remisePct: 15, tacheIds: ["encadrements", "rails", "moustiquaires", "stores", "enseigne", "rideau", "volets", "etiquettes", "hauteur", "toiture"] },
+    ],
+    surfaceReferenceM2: 20,
+    frequences: [["mois", "Chaque mois"], ["deux_mois", "Tous les 2 mois"], ["trimestre", "Chaque trimestre"]],
+    occasions: [{ id: "beaux_jours", nom: "Retour des beaux jours", packId: "confort" }, { id: "vente", nom: "Avant une vente ou une location", packId: "prestige" }, { id: "evenement", nom: "Avant un événement", packId: "confort" }, { id: "autre", nom: "Autre", packId: "" }],
+    naturesSalissure: ["Peinture", "Plâtre", "Ciment", "Étiquettes et films", "Silicone"],
+    noteTaches: "Au-delà de 6 m ou sans accès sécurisé (nacelle, cordiste) : intervention sur devis." },
+  { id: "outdoor", nom: "Espaces extérieurs", sousTitre: "Terrasses, balcons et garages", emoji: "🌿", tauxHoraireC: 3200, salissureSurTemps: false,
+    titreTypes: "Espace à nettoyer",
+    formules: [F("ponctuel", "Ponctuel", "", 40, 60, 1.0, "PONCTUEL", false, false), F("demoussage", "Remise en état et démoussage", "", 40, 60, 1.5, "AUTRE", false, true), F("saisonnier", "Entretien saisonnier", "", 40, 60, 0.9, "REGULIER", false, false)],
+    taches: [
+      T("haute_pression", "Nettoyage haute pression des sols", 4000, 45, { groupe: "Sols", parSurface: true, types: ["terrasse", "jardin", "piscine", "cour_immeuble"] }),
+      T("demoussage", "Démoussage et traitement anti-mousse", 3500, 40, { groupe: "Sols", parSurface: true, types: ["terrasse", "jardin", "piscine", "cour_immeuble"] }),
+      T("joints", "Joints de dallage", 3000, 40, { groupe: "Sols", parSurface: true, types: ["terrasse", "piscine"] }),
+      T("huile", "Taches d'huile et de rouille", 2500, 25, { groupe: "Sols", types: ["garage", "cour_immeuble"] }),
+      T("mobilier", "Mobilier de jardin", 2000, 25, { groupe: "Équipements", types: ["terrasse", "jardin", "piscine"] }),
+      T("garde_corps", "Garde-corps et vitrages de balcon", 1500, 20, { groupe: "Équipements", types: ["terrasse"] }),
+      T("barbecue", "Barbecue et plancha", 2000, 25, { groupe: "Équipements", types: ["terrasse", "jardin"] }),
+      T("gouttieres", "Gouttières basses (accessibles depuis le sol)", 3000, 30, { groupe: "Équipements", types: ["terrasse", "jardin"] }),
+      T("recoins", "Toiles d'araignées et recoins", 1500, 15, { groupe: "Équipements", types: ["garage", "terrasse"] }),
+      T("rangement", "Rangement et tri du garage", 4000, 60, { groupe: "Équipements", types: ["garage"] }),
+      T("feuilles", "Ramassage des feuilles", 2000, 25, { groupe: "Évacuation", types: ["terrasse", "jardin", "piscine", "cour_immeuble"] }),
+      T("dechets_verts", "Évacuation des déchets verts (sacs)", 2000, 20, { groupe: "Évacuation", types: ["jardin", "cour_immeuble"] }),
+      T("encombrants", "Évacuation des encombrants légers (sacs)", 2000, 20, { groupe: "Évacuation", types: ["garage"] }),
+    ],
+    packs: [
+      { id: "essentiel", nom: "Essentiel", remisePct: 5, tacheIds: ["feuilles", "mobilier", "recoins", "huile"] },
+      { id: "confort", nom: "Confort", remisePct: 10, tacheIds: ["feuilles", "mobilier", "recoins", "huile", "haute_pression", "barbecue", "garde_corps", "dechets_verts", "encombrants"] },
+      { id: "prestige", nom: "Prestige", remisePct: 15, tacheIds: ["feuilles", "mobilier", "recoins", "huile", "haute_pression", "barbecue", "garde_corps", "dechets_verts", "encombrants", "demoussage", "joints", "gouttieres", "rangement"] },
+    ],
+    surfaceReferenceM2: 30,
+    frequences: [["saison", "Chaque saison (4 fois par an)"], ["semestre", "Deux fois par an"]],
+    occasions: [{ id: "ete", nom: "Avant l'été", packId: "confort" }, { id: "evenement", nom: "Avant un événement", packId: "confort" }, { id: "vente", nom: "Avant une vente ou une location", packId: "prestige" }, { id: "autre", nom: "Autre", packId: "" }],
+    naturesSalissure: ["Mousses et lichens", "Traces noires", "Taches d'huile", "Feuilles et débris"],
+    noteTaches: "Hors prestation : tonte, taille, élagage et nettoyage de toitures." },
+  { id: "event", nom: "Avant et après événement", sousTitre: "Profitez pleinement de votre événement", emoji: "🎉", tauxHoraireC: 3200, salissureSurTemps: false,
+    titreTypes: "Type d'événement",
+    formules: [F("avant", "Avant l'événement", "Passage terminé avant le début", 50, 60, 0.9, "AUTRE", false, false), F("apres", "Après", "Passage à partir de la fin", 50, 60, 1.2, "AUTRE", false, false), F("avant_apres", "Avant et après (2 passages)", "Un passage avant le début, un autre à partir de la fin", 50, 60, 2.0, "AUTRE", false, false)],
+    taches: [
+      T("tables", "Tables et chaises", 2500, 30, { groupe: "Salle et tables" }),
+      T("sols", "Sols : taches de boissons et piétinement", 3500, 40, { groupe: "Salle et tables", parSurface: true }),
+      T("desodorisation", "Désodorisation", 1000, 10, { groupe: "Salle et tables" }),
+      T("exterieurs", "Extérieurs (mégots, confettis)", 2500, 25, { groupe: "Salle et tables", types: ["mariage", "fete", "anniversaire"] }),
+      T("vaisselle", "Vaisselle et verrerie (par tranche de 50 convives)", 3000, 45, { groupe: "Cuisine et vaisselle", types: ["mariage", "fete", "anniversaire"], parConvives: true }),
+      T("traiteur", "Cuisine traiteur / office", 3500, 40, { groupe: "Cuisine et vaisselle", types: ["mariage", "seminaire", "salon", "anniversaire"] }),
+      T("cuisine_maison", "Cuisine de la maison", 2500, 30, { groupe: "Cuisine et vaisselle", types: ["fete"] }),
+      T("tri", "Ramassage et tri des déchets", 2500, 25, { groupe: "Déchets" }),
+      T("evacuation", "Évacuation des déchets (sacs)", 2000, 20, { groupe: "Déchets" }),
+      T("sanitaires", "Passage sanitaires pendant l'événement", 3000, 30, { groupe: "Pendant l'événement", types: ["mariage", "seminaire", "salon", "anniversaire"] }),
+    ],
+    packs: [
+      { id: "essentiel", nom: "Essentiel", remisePct: 5, tacheIds: ["tri", "evacuation", "tables"] },
+      { id: "confort", nom: "Confort", remisePct: 10, tacheIds: ["tri", "evacuation", "tables", "sols", "traiteur", "cuisine_maison", "desodorisation"] },
+      { id: "prestige", nom: "Prestige", remisePct: 15, tacheIds: ["tri", "evacuation", "tables", "sols", "traiteur", "cuisine_maison", "desodorisation", "vaisselle", "exterieurs", "sanitaires"] },
+    ],
+    surfaceReferenceM2: 100 },
+  { id: "special", nom: "Prestations spécialisées", sousTitre: "Une évaluation par un professionnel qualifié", emoji: "🧪", tauxHoraireC: null, salissureSurTemps: false,
+    toujoursSurDevis: true,
+    titreTypes: "Type d'intervention",
+    formules: [F("planifiee", "Intervention planifiée", "Visite d'évaluation, puis devis détaillé", 0, 0, 1.0, "AUTRE", false, false), F("urgente", "Intervention urgente", "Prise de contact prioritaire, évaluation sous 48 h", 0, 0, 1.0, "AUTRE", false, false)] },
 ].map(r => ({ inclus: "", formules: [], taches: [], packs: [], toujoursSurDevis: false, affichagePrix: "HORAIRE",
-  surfaceReferenceM2: 0, occasions: [], naturesSalissure: [], moments: MOMENTS_PAR_DEFAUT, frequences: FREQUENCES, ...r }));
+  surfaceReferenceM2: 0, occasions: [], naturesSalissure: [], moments: MOMENTS_PAR_DEFAUT, frequences: FREQUENCES, titreTypes: "", noteTaches: "", ...r }));
 
 export const rubrique = id => RUBRIQUES.find(r => r.id === id);
 
@@ -293,6 +436,14 @@ export const TAILLES_CANAPE = [
   { id: "t25", libelle: "2 à 2,5 m", prixC: 2000, minutes: 30 }, { id: "t30", libelle: "2,5 à 3 m", prixC: 3000, minutes: 45 },
   { id: "t3p", libelle: "plus de 3 m", prixC: 4000, minutes: 60 },
 ];
+/** Prestations spécialisées : délai souhaité (intervention urgente). */
+export const DELAIS_URGENCE = [["24h", "Sous 24 h"], ["48h", "Sous 48 h"], ["semaine", "Dans la semaine"]];
+/** Événements : nombre de tranches de 50 convives (au moins 1). */
+export const tranchesConvives = convives => Math.max(1, Math.ceil((convives || 0) / REGLES.CONVIVES_PAR_TRANCHE));
+/** Immeubles (copropriété, résidence services) : surface totale = surface par palier × nombre de paliers. */
+export const TYPES_IMMEUBLE = ["copro", "residence"];
+export const surfaceEffective = b => (b.rubriqueId === "communal" && TYPES_IMMEUBLE.includes(b.typeLieuId)
+  ? (b.surfacePalier ?? REGLES.SURFACE_PALIER_DEFAUT_M2) * (b.paliers ?? REGLES.PALIERS_DEFAUT) : b.surface);
 /** Cuisines : équipements à l'unité (minutes) ; pro = établissements seulement. */
 export const EQUIPEMENTS_CUISINE = [
   { id: "plaques", nom: "Plaques de cuisson", minutes: 15, pro: false },
@@ -370,19 +521,14 @@ export const TYPES_LOGEMENT = [
 /** Type de lieu : coefficient de temps (prix pour les véhicules) et texte « Inclus » propre au type (vide = celui de la rubrique). */
 const L = (id, nom, coef, inclus = "") => ({ id, nom, coef, inclus });
 export const TYPES_LIEU = {
-  office: [L("bureaux", "Bureaux", 1.0), L("boutique", "Local commercial / boutique", 1.1), L("magasin", "Magasin / supérette", 1.15),
-    L("medical", "Cabinet médical", 1.2), L("agence", "Agence / accueil du public", 1.05), L("showroom", "Showroom / galerie", 1.1),
-    L("entrepot", "Entrepôt", 0.7), L("atelier", "Atelier", 0.9), L("sport", "Salle de sport", 1.15)],
   kitchen: [L("particulier", "Particulier", 1.0), L("restaurant", "Restaurant", 1.1), L("hotel", "Hôtel", 1.1),
     L("collectivite", "Collectivité / cantine", 1.1), L("boulangerie", "Boulangerie, traiteur, labo", 1.15), L("foodtruck", "Food truck", 1.0)],
-  communal: [L("copro", "Immeuble résidentiel / copropriété", 1.0), L("residence", "Résidence services", 1.1),
-    L("immeuble_bureaux", "Immeuble de bureaux", 1.0), L("parking", "Parking / sous-sol", 0.7)],
-  windows: [L("fenetres_logement", "Fenêtres d'un logement", 1.0), L("baies_veranda", "Baies vitrées et véranda", 1.1),
-    L("vitrine_commerce", "Vitrine de commerce", 1.0), L("facades", "Bureaux et façades vitrées", 1.1)],
-  outdoor: [L("terrasse", "Terrasse / balcon", 1.0), L("jardin", "Jardin, allées et cour", 1.0), L("garage", "Garage, cave ou abri", 0.9),
-    L("piscine", "Abords de piscine", 1.1), L("cour_immeuble", "Cour d'immeuble / parking", 0.9)],
-  event: [L("mariage", "Mariage / réception", 1.1), L("fete", "Fête privée à domicile", 1.0), L("seminaire", "Séminaire d'entreprise", 1.0),
-    L("salon", "Salon / exposition", 1.1), L("anniversaire", "Anniversaire en salle", 1.0)],
+  office: [L("bureaux", "Bureaux", 1.0, "Bureaux et open space, sols, corbeilles, sanitaires"), L("boutique", "Local commercial / boutique", 1.1), L("magasin", "Magasin / supérette", 1.15), L("medical", "Cabinet médical / paramédical", 1.2), L("agence", "Agence / accueil du public", 1.05), L("showroom", "Showroom / galerie", 1.1), L("entrepot", "Entrepôt / remise / stockage", 0.7), L("atelier", "Atelier / local d'activité", 0.9), L("sport", "Salle de sport / studio", 1.15)],
+  communal: [L("copro", "Immeuble résidentiel / copropriété", 1.0, "Hall, escaliers, paliers, rampes"), L("residence", "Résidence services (seniors, étudiants)", 1.1), L("parking", "Parking / sous-sol", 0.7)],
+  windows: [L("fenetres_logement", "Fenêtres d'un logement", 1.0, "Vitres, faces intérieure et extérieure accessibles"), L("baies_veranda", "Baies vitrées et véranda", 1.1), L("vitrine_commerce", "Vitrine de commerce", 1.0), L("facades", "Bureaux et façades vitrées", 1.1)],
+  outdoor: [L("terrasse", "Terrasse / balcon", 1.0, "Balayage et lavage des sols"), L("jardin", "Jardin, allées et cour", 1.0), L("garage", "Garage, cave ou abri", 0.9), L("piscine", "Abords de piscine", 1.1, "Plages et margelles"), L("cour_immeuble", "Cour d'immeuble / parking extérieur", 0.9)],
+  event: [L("mariage", "Mariage / réception", 1.1, "Salle, sols, tables, sanitaires"), L("fete", "Fête privée à domicile", 1.0, "Pièces de réception, cuisine, sanitaires"), L("seminaire", "Séminaire / événement d'entreprise", 1.0), L("salon", "Salon / exposition", 1.1), L("anniversaire", "Anniversaire / fête en salle", 1.0)],
+  special: [L("desinfection", "Désinfection approfondie", 1.0, "Évaluation sur place, protocole et produits adaptés"), L("encombre", "Logement très encombré ou insalubre", 1.0, "Visite d'évaluation, tri, désencombrement et nettoyage"), L("sinistre", "Après sinistre (dégât des eaux, suies)", 1.0, "Évaluation des dégâts, nettoyage des surfaces et des suies"), L("deces", "Nettoyage après décès", 1.0, "Intervention discrète, désinfection et remise en état")],
   construction: [L("carrelage", "Carrelage", 1.0), L("parquet", "Parquet", 1.15), L("beton", "Béton ciré", 1.0),
     L("lino", "Lino / PVC", 0.9), L("moquette", "Moquette", 1.25), L("pierre", "Pierre naturelle", 1.2)],
   car: [L("citadine", "Citadine", 1.0), L("berline", "Berline", 1.15), L("suv", "SUV", 1.3), L("utilitaire", "Utilitaire", 1.45)],
@@ -392,11 +538,6 @@ export function formulesPour(r) {
   if (r.formules.length) return r.formules;
   switch (r.id) {
     case "construction": return [F("standard", "Nettoyage de fin de chantier", "Le niveau de salissure sera estimé dès que toutes les photos seront exploitables.", 12, 120)];
-    case "office": return [F("regulier", "Entretien régulier", "", 60, 60, 1.0), F("ponctuel", "Nettoyage ponctuel", "", 60, 60, 1.15), F("remise", "Remise en état des locaux", "", 60, 60, 1.6)];
-    case "communal": return [F("regulier", "Entretien régulier", "", 80, 60, 1.0), F("ponctuel", "Ponctuel", "", 80, 60, 1.15), F("remise", "Remise en état", "", 80, 60, 1.6)];
-    case "windows": return [F("ponctuel", "Ponctuel", "15 min par fenêtre, minimum 1 h 30.", 0, 90, 1.0), F("regulier", "Entretien régulier", "", 0, 90, 0.9), F("travaux", "Après travaux", "", 0, 90, 1.5)];
-    case "outdoor": return [F("ponctuel", "Ponctuel", "", 40, 60, 1.0), F("demoussage", "Remise en état et démoussage", "", 40, 60, 1.5), F("saisonnier", "Entretien saisonnier", "", 40, 60, 0.9)];
-    case "event": return [F("avant", "Avant l'événement", "", 50, 60, 0.9), F("apres", "Après", "", 50, 60, 1.2), F("avant_apres", "Avant et après (2 passages)", "", 50, 60, 2.0)];
     default: return [F("standard", "Standard", "", 25, 60)];
   }
 }
@@ -407,7 +548,7 @@ export const ACCUEIL = { PRESENT: "Je serai présent", TIERS: "Concierge / tiers
 
 /** Chez les professionnels : pas d'accès autonome ni de boîte à clés. */
 export const accueilAutonomeInterdit = (rubriqueId, typeLieuId) =>
-  ["office", "communal", "event"].includes(rubriqueId) || (rubriqueId === "windows" && ["vitrine_commerce", "facades"].includes(typeLieuId));
+  ["office", "communal", "event", "special"].includes(rubriqueId) || (rubriqueId === "windows" && ["vitrine_commerce", "facades"].includes(typeLieuId));
 export const photosObligatoires = rubriqueId => ["moving", "construction", "kitchen"].includes(rubriqueId);
 /** Rubriques qui décrivent un logement : type, chambres, salles de bain et niveaux (+15 min par niveau supplémentaire). */
 export const RUBRIQUES_LOGEMENT = ["home", "moving"];
