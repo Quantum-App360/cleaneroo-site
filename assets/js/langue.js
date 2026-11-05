@@ -13,8 +13,8 @@ export const LANGUES = {
 const CLE = "cleaneroo-langue";
 function detecter() {
   try { const l = localStorage.getItem(CLE); if (l && LANGUES[l]) return l; } catch { /* rien */ }
-  const n = (navigator.language || "fr").slice(0, 2);
-  return LANGUES[n] ? n : "fr";
+  // Français par défaut : les autres langues ne s'affichent que si le visiteur les choisit (drapeaux).
+  return "fr";
 }
 export const langue = detecter();
 export function choisirLangue(l) {
@@ -561,6 +561,19 @@ const T = [
   ["Allées et zones de stockage, sols, sanitaires", "Aisles and storage areas, floors, toilets", "Corsie e zone di stoccaggio, pavimenti, servizi igienici", "Pasillos y zonas de almacenaje, suelos, aseos"],
   ["Atelier, sols, corbeilles, sanitaires", "Workshop, floors, bins, toilets", "Laboratorio, pavimenti, cestini, servizi igienici", "Taller, suelos, papeleras, aseos"],
   // </locaux>
+  // <refonte> page d'accueil (5 novembre 2026)
+  ["Plateforme de ménage 100 % digitalisée", "100% digital cleaning platform", "Piattaforma di pulizie 100% digitale", "Plataforma de limpieza 100 % digital"],
+  ["Réservez en deux minutes, suivez votre Cleaneur en temps réel et recevez un compte rendu photo. Vous ne payez qu'une fois le travail validé.", "Book in two minutes, follow your Cleaneur in real time and receive a photo report. You only pay once the work is approved.", "Prenota in due minuti, segui il tuo Cleaneur in tempo reale e ricevi un report fotografico. Paghi solo dopo aver approvato il lavoro.", "Reserva en dos minutos, sigue a tu Cleaneur en tiempo real y recibe un informe con fotos. Solo pagas cuando apruebas el trabajo."],
+  ["Cleaneurs vérifiés", "Verified Cleaneurs", "Cleaneur verificati", "Cleaneurs verificados"],
+  ["−50 % de crédit d'impôt", "−50% tax credit", "−50% di credito d'imposta", "−50 % de crédito fiscal"],
+  ["Pourquoi Cleaneroo", "Why Cleaneroo", "Perché Cleaneroo", "Por qué Cleaneroo"],
+  ["En 5 étapes", "In 5 steps", "In 5 passi", "En 5 pasos"],
+  ["Voir toutes les prestations ›", "See all services ›", "Vedi tutti i servizi ›", "Ver todos los servicios ›"],
+  ["Estimer ›", "Get a price ›", "Calcola ›", "Calcular ›"],
+  ["Prêts pour le 31 décembre ?", "Ready for 31 December?", "Pronti per il 31 dicembre?", "¿Listos para el 31 de diciembre?"],
+  ["Inscrivez-vous maintenant : les premiers inscrits sont prévenus en priorité.", "Sign up now: the first to register are notified first.", "Iscriviti ora: i primi iscritti vengono avvisati per primi.", "Inscríbete ahora: los primeros inscritos son avisados primero."],
+  ["14 univers de nettoyage, un seul parcours de réservation.", "14 cleaning worlds, one booking journey.", "14 universi di pulizia, un unico percorso di prenotazione.", "14 universos de limpieza, un solo proceso de reserva."],
+  // </refonte>
   // <rubriques-textes> (généré)
   ["Une photo obligatoire par vue :", "One photo required per view:", "Una foto obbligatoria per vista:", "Una foto obligatoria por vista:"],
   ["Vues suggérées :", "Suggested views:", "Viste suggerite:", "Vistas sugeridas:"],

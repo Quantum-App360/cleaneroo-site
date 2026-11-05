@@ -1,6 +1,6 @@
 // Navigation du site et pages simples. Le parcours de réservation est dans reserver.js.
 import { RUBRIQUES, RACCOURCIS_VITRINE, rubrique, TYPES_LIEU, pastille } from "./catalogue.js";
-import { traduire, traduireCatalogue, selecteurLangue, tr } from "./langue.js";
+import { traduire, traduireCatalogue, selecteurLangue, tr, langue } from "./langue.js";
 import { euros, duree, dateLongue, dateHeure, heure, estPrelancement, joursAvantLancement, MESSAGE_LANCEMENT } from "./regles.js";
 
 // Langue : catalogue traduit avant tout affichage.
@@ -84,7 +84,7 @@ export function brancherInscription(racine) {
   };
 }
 
-const titreSection = (titre, sous = "") => `<div class="titre-section"><h2>${titre}</h2><div class="trait-corail"></div>${sous ? `<p class="muet">${sous}</p>` : ""}</div>`;
+const titreSection = (titre, sous = "", surtitre = "") => `<div class="titre-section">${surtitre ? `<span class="surtitre">${surtitre}</span>` : ""}<h2>${titre}</h2>${sous ? `<p class="muet">${sous}</p>` : ""}</div>`;
 
 /* ------------------------------------------------------------------ Pages */
 const ETAPES = [
@@ -113,7 +113,67 @@ const COMPARAISON = [
   ["Paiement", "À l'avance ou en espèces", "Seulement après votre validation"],
   ["En cas de souci", "Votre parole contre la sienne", "Litige en 48 h et Garantie Cleaneroo"],
 ];
-const CHIFFRES = [["2 min", "pour réserver"], ["13", "prestations"], ["−50 %", "de crédit d'impôt"], ["0 €", "avant validation"]];
+const CHIFFRES = [["2 min", "pour réserver"], [String(RUBRIQUES.length), "prestations"], ["−50 %", "de crédit d'impôt"], ["0 €", "avant validation"]];
+
+/* ------------------------------------------------------------------ Scène du héros : étoiles et notifications vivantes */
+/* Prénoms parmi les plus donnés en France ces dernières années : changent à chaque notification. */
+const PRENOMS = ["Louise", "Jade", "Ambre", "Alba", "Emma", "Rose", "Alma", "Alice", "Romy", "Anna", "Lina", "Mia", "Léna", "Iris", "Chloé",
+  "Gabriel", "Raphaël", "Louis", "Léo", "Maël", "Noah", "Jules", "Adam", "Arthur", "Sacha", "Lucas", "Hugo", "Isaac", "Gabin", "Liam"];
+const VILLES = ["Fréjus", "Saint-Raphaël", "Cannes", "Toulon", "Nice", "Hyères", "Antibes", "Draguignan"];
+/* Trois notifications, chacune avec trois messages : [icône, titre, détail] ; {p} prénom, {n} nombre, {v} ville. */
+const NOTIFS = {
+  fr: [
+    [["📍", "{p} est en route", "Arrivée dans {n} min"], ["🏠", "{p} est sur place", "Arrivée confirmée par géolocalisation"], ["✨", "{p} a terminé", "Toutes les tâches sont cochées"]],
+    [["📸", "Compte rendu reçu", "{n} photos avant / après"], ["⭐", "Nouvel avis ★★★★★", "« Impeccable, merci {p} ! »"], ["✅", "Tâches validées", "{n} tâches cochées et horodatées"]],
+    [["💳", "Payé après validation", "Crédit d'impôt déduit : −50 %"], ["⚡", "Prix affiché tout de suite", "Sans devis ni attente"], ["📅", "Réservé en 2 minutes", "{v} · créneau confirmé"]],
+  ],
+  en: [
+    [["📍", "{p} is on the way", "Arriving in {n} min"], ["🏠", "{p} is on site", "Arrival confirmed by geolocation"], ["✨", "{p} has finished", "Every task is ticked"]],
+    [["📸", "Report received", "{n} before / after photos"], ["⭐", "New review ★★★★★", "“Spotless, thank you {p}!”"], ["✅", "Tasks approved", "{n} tasks ticked and time-stamped"]],
+    [["💳", "Paid after approval", "Tax credit deducted: −50%"], ["⚡", "Price shown instantly", "No quote, no waiting"], ["📅", "Booked in 2 minutes", "{v} · slot confirmed"]],
+  ],
+  it: [
+    [["📍", "{p} è in arrivo", "Arrivo tra {n} min"], ["🏠", "{p} è sul posto", "Arrivo confermato dalla geolocalizzazione"], ["✨", "{p} ha finito", "Tutti i compiti sono spuntati"]],
+    [["📸", "Report ricevuto", "{n} foto prima / dopo"], ["⭐", "Nuova recensione ★★★★★", "«Impeccabile, grazie {p}!»"], ["✅", "Compiti convalidati", "{n} compiti spuntati e con orario"]],
+    [["💳", "Pagato dopo la convalida", "Credito d'imposta detratto: −50%"], ["⚡", "Prezzo subito visibile", "Senza preventivo né attesa"], ["📅", "Prenotato in 2 minuti", "{v} · fascia confermata"]],
+  ],
+  es: [
+    [["📍", "{p} está en camino", "Llega en {n} min"], ["🏠", "{p} está en el lugar", "Llegada confirmada por geolocalización"], ["✨", "{p} ha terminado", "Todas las tareas marcadas"]],
+    [["📸", "Informe recibido", "{n} fotos antes / después"], ["⭐", "Nueva reseña ★★★★★", "«Impecable, ¡gracias {p}!»"], ["✅", "Tareas validadas", "{n} tareas marcadas con hora"]],
+    [["💳", "Pagado tras validar", "Crédito fiscal deducido: −50 %"], ["⚡", "Precio al instante", "Sin presupuesto ni esperas"], ["📅", "Reservado en 2 minutos", "{v} · franja confirmada"]],
+  ],
+};
+const hasard = l => l[Math.floor(Math.random() * l.length)];
+function remplir(modele) {
+  const n = { "photos": 8 + Math.floor(Math.random() * 10) };
+  return modele.replace("{p}", hasard(PRENOMS)).replace("{v}", hasard(VILLES))
+    .replace("{n}", /photo|foto/.test(modele) ? n.photos : /tâche|task|compit|tarea/.test(modele) ? 12 + Math.floor(Math.random() * 14) : 4 + Math.floor(Math.random() * 12));
+}
+const messagesNotif = () => NOTIFS[langue] || NOTIFS.fr;
+const contenuNotif = ([icone, titre, detail]) =>
+  `<span class="pastille-notif">${icone}</span><span><b>${remplir(titre)}</b><small>${remplir(detail)}</small></span>`;
+
+/* Étoile à quatre branches (dégradé or → blanc). */
+const ETOILE = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 0C12.9 6.6 17.4 11.1 24 12C17.4 12.9 12.9 17.4 12 24C11.1 17.4 6.6 12.9 0 12C6.6 11.1 11.1 6.6 12 0Z"/></svg>`;
+const ETOILES = [["e1", 8, 66, 54], ["e2", 20, 80, 78], ["e3", 37, 72, 40], ["e4", 16, 18, 20], ["e5", 74, 12, 16], ["e6", 6, 44, 14], ["e7", 64, 86, 22]];
+const etoiles = () => ETOILES.map(([c, haut, gauche, t]) =>
+  `<span class="etoile ${c}" style="top:${haut}%;left:${gauche}%;width:${t}px;height:${t}px">${ETOILE}</span>`).join("");
+
+let minuterieNotifs = null;
+function animerNotifs(racine) {
+  clearInterval(minuterieNotifs);
+  const cartes = [...racine.querySelectorAll("[data-notif]")];
+  if (!cartes.length) return;
+  const etat = cartes.map(() => 0);
+  let tour = 0;
+  minuterieNotifs = setInterval(() => {
+    if (!document.body.contains(cartes[0])) return clearInterval(minuterieNotifs);
+    const i = tour++ % cartes.length, carte = cartes[i];
+    etat[i] = (etat[i] + 1) % 3;
+    carte.classList.add("change");
+    setTimeout(() => { carte.innerHTML = contenuNotif(messagesNotif()[i][etat[i]]); carte.classList.remove("change"); }, 380);
+  }, 2600);
+}
 
 function blocRecommander() {
   const m = modeles()[0];
@@ -125,51 +185,58 @@ function blocRecommander() {
 }
 
 function pageAccueil() {
+  const m = messagesNotif();
   return `
-  <section class="fond-cleaneroo heros">${decor()}${bullesMontantes()}
+  <section class="fond-cleaneroo heros">
+    <div class="aurore" aria-hidden="true"><i></i><i></i><i></i></div>${bullesMontantes()}
     <div class="conteneur grille">
       <div class="revele">
+        <span class="surtitre-heros"><i></i>Plateforme de ménage 100 % digitalisée</span>
         <h1 class="titre-heros"><span>Le ménage passe</span> <span class="brille">au digital.</span></h1>
-        <p class="sous">Réservez en 2 minutes, suivez votre Cleaneur en direct, recevez le compte rendu photo. Vous ne payez qu'après validation.</p>
+        <p class="sous">Réservez en deux minutes, suivez votre Cleaneur en temps réel et recevez un compte rendu photo. Vous ne payez qu'une fois le travail validé.</p>
         <form class="express" id="express">
           <label><span>Quelle prestation ?</span><select name="rubrique">${RUBRIQUES.map(r => `<option value="${r.id}">${r.emoji} ${r.nom}</option>`).join("")}</select></label>
           <label><span>Code postal</span><input name="cp" inputmode="numeric" maxlength="5" pattern="[0-9]{5}" placeholder="83600" autocomplete="postal-code"></label>
           <button class="bouton" type="submit">Voir mon prix</button>
         </form>
         ${blocRecommander()}
-        <div class="etiquettes"><span class="etiquette">Réservation</span><span class="etiquette">Suivi en direct</span><span class="etiquette">Compte rendu photo</span></div>
+        <ul class="confiance"><li><span>🛡️</span>Cleaneurs vérifiés</li><li><span>💳</span>Payé après validation</li><li><span>🧾</span>−50 % de crédit d'impôt</li></ul>
       </div>
       <div class="scene revele" aria-label="Aperçu de l'application">
-        <img class="eponge-grande" src="assets/img/logo_eponge.webp" alt="Éponge Cleaneroo">
-        <div class="notif n1"><span class="pastille-notif">📍</span><span><b>Sofia est en route</b><small>Arrivée dans 8 min</small></span></div>
-        <div class="notif n2"><span class="pastille-notif">📸</span><span><b>Compte rendu reçu</b><small>12 photos avant / après</small></span></div>
-        <div class="notif n3"><span class="pastille-notif">✅</span><span><b>Payé après validation</b><small>Crédit d'impôt déduit : −50 %</small></span></div>
+        <span class="halo"></span><span class="orbite"></span><span class="orbite o2"></span>
+        <img class="eponge-grande" src="assets/img/eponge_seule.webp" alt="Éponge Cleaneroo" width="480" height="421">
+        ${etoiles()}
+        ${m.map((liste, i) => `<div class="notif n${i + 1}" data-notif="${i}">${contenuNotif(liste[0])}</div>`).join("")}
       </div>
     </div>
+    <svg class="courbe" viewBox="0 0 1440 80" preserveAspectRatio="none" aria-hidden="true"><path d="M0,48 C320,96 640,0 960,30 C1180,52 1320,44 1440,30 L1440,80 L0,80 Z"/></svg>
   </section>
-  <section class="chiffres"><div class="conteneur">${CHIFFRES.map(([n, l]) => `<div class="revele"><b>${n}</b><span>${l}</span></div>`).join("")}</div></section>
+  <section class="chiffres"><div class="conteneur"><div class="carte-chiffres">${CHIFFRES.map(([n, l]) => `<div class="revele"><b>${n}</b><span>${l}</span></div>`).join("")}</div></div></section>
   <section class="bloc"><div class="conteneur">
-    ${titreSection("Nos prestations", "Le prix s'affiche dès que vous décrivez votre besoin.")}
+    ${titreSection("Nos prestations", "Le prix s'affiche dès que vous décrivez votre besoin.", "Prestations")}
     <div class="grille-3">${RACCOURCIS_VITRINE.map(([id, nom, sous]) => `
-      <a class="carte prestation revele" href="#/reserver/${id}"><div class="emoji">${rubrique(id).emoji}</div><h3>${nom}</h3><p class="muet" style="margin:4px 0 0">${sous}</p></a>`).join("")}</div>
-    <p style="text-align:center;margin-top:20px"><a href="#/prestations">Voir les 13 prestations ›</a></p>
-    <div class="carte revele" style="display:flex;gap:16px;align-items:center;margin-top:24px;background:color-mix(in srgb,var(--corail) 12%,var(--surface))">
-      <div style="flex:none;width:64px;height:64px;border-radius:50%;background:var(--corail);color:#fff;display:grid;place-items:center;font-weight:800">−50 %</div>
-      <div><h3>Le propre, à moitié prix.</h3><p class="muet" style="margin:2px 0 0">50 % de crédit d'impôt sur le ménage à domicile, déduit tout de suite avec l'avance immédiate.</p></div>
+      <a class="carte prestation revele" href="#/reserver/${id}"><span class="icone">${rubrique(id).emoji}</span><h3>${nom}</h3><p class="muet">${sous}</p><span class="aller">Estimer ›</span></a>`).join("")}</div>
+    <p class="centre" style="margin-top:26px"><a class="bouton secondaire" href="#/prestations">Voir toutes les prestations ›</a></p>
+    <div class="credit revele">
+      <div class="pastille-credit">−50 %</div>
+      <div><h3>Le propre, à moitié prix.</h3><p>50 % de crédit d'impôt sur le ménage à domicile, déduit tout de suite avec l'avance immédiate.</p></div>
     </div>
   </div></section>
-  <section class="bloc" style="padding-top:0"><div class="conteneur">
-    ${titreSection("Le ménage nouvelle génération", "Ce qui change quand tout est digitalisé.")}
+  <section class="bloc bloc-doux"><div class="conteneur">
+    ${titreSection("Le ménage nouvelle génération", "Ce qui change quand tout est digitalisé.", "Pourquoi Cleaneroo")}
     <div class="comparaison revele" role="table" aria-label="Le ménage nouvelle génération">
       <div class="ligne entete-comp" role="row"><span role="columnheader"></span><span role="columnheader">À l'ancienne</span><span role="columnheader">Avec Cleaneroo</span></div>
       ${COMPARAISON.map(([c, a, n]) => `<div class="ligne" role="row"><b role="rowheader">${c}</b><span class="ancien" role="cell">${a}</span><span class="nouveau" role="cell">${n}</span></div>`).join("")}
     </div>
   </div></section>
-  <section class="bloc" style="padding-top:0"><div class="conteneur">
-    ${titreSection("Comment ça marche ?", "Du clic à la validation, tout se passe en ligne.")}
+  <section class="bloc"><div class="conteneur">
+    ${titreSection("Comment ça marche ?", "Du clic à la validation, tout se passe en ligne.", "En 5 étapes")}
     ${blocEtapes()}
   </div></section>
-  ${estPrelancement() ? `<section class="bloc" id="inscription" style="padding-top:0"><div class="etroit revele">${formulaireInscription()}</div></section>` : ""}`;
+  ${estPrelancement() ? `<section class="fond-cleaneroo appel"><div class="aurore" aria-hidden="true"><i></i><i></i></div>
+    <div class="conteneur appel-grille"><div class="revele"><h2>Prêts pour le 31 décembre ?</h2><p>Inscrivez-vous maintenant : les premiers inscrits sont prévenus en priorité.</p>
+      <div class="boutons"><a class="bouton clair" href="#/reserver">Estimer mon prix</a></div></div>
+      <div class="revele" id="inscription">${formulaireInscription()}</div></div></section>` : ""}`;
 }
 
 /** Réservation express de l'accueil : prestation + code postal → parcours prérempli. */
@@ -205,9 +272,9 @@ function pageInscription(type = "client") {
 
 function pagePrestations() {
   return `<section class="fond-cleaneroo" style="padding:40px 0 90px">${decor([[90, 20, 90], [4, 60, 60]], [])}
-    <div class="conteneur"><h1>Nos prestations</h1><div class="trait-corail"></div><p>13 univers de nettoyage, un seul parcours de réservation.</p></div></section>
+    <div class="conteneur"><h1>Nos prestations</h1><div class="trait-corail"></div><p>${RUBRIQUES.length} univers de nettoyage, un seul parcours de réservation.</p></div></section>
   <section class="bloc"><div class="conteneur"><div class="grille-3">${RUBRIQUES.map(r => `
-    <a class="carte prestation" href="#/reserver/${r.id}"><div class="emoji">${r.emoji}</div><h3>${r.nom}</h3>
+    <a class="carte prestation" href="#/reserver/${r.id}"><span class="icone">${r.emoji}</span><h3>${r.nom}</h3>
       <p class="muet" style="margin:4px 0 8px">${r.sousTitre}</p>
       <span class="tampon">${pastille(r)}</span></a>`).join("")}</div></div></section>`;
 }
@@ -334,6 +401,7 @@ const ROUTES = {
 };
 
 async function afficher() {
+  clearInterval(minuterieNotifs);
   const chemin = location.hash.replace(/^#\/?/, "");
   const [route, param] = chemin.split("/");
   if (route === "gestion") { location.href = "gestion.html"; return; }
@@ -365,6 +433,7 @@ async function afficher() {
   });
   traduire(vue);
   reveler(vue);
+  animerNotifs(vue);
   window.scrollTo(0, 0);
 }
 
