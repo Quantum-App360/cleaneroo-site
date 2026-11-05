@@ -1,6 +1,6 @@
 // Calcul de l'estimation : copie EXACTE de Estimation.kt (§ 8 du cahier des charges), dans le même ordre.
 import { REGLES, duree } from "./regles.js";
-import { minutesEtapesLocation, PACK_ETAPES_CONSEILLE, PACK_CONSOMMABLES_CONSEILLE } from "./catalogue.js";
+import { equipementsPour, minutesEtapesLocation, PACK_ETAPES_CONSEILLE, PACK_CONSOMMABLES_CONSEILLE } from "./catalogue.js";
 import { rubrique, formulesPour, TYPES_LIEU, RUBRIQUES_CREDIT_IMPOT, TYPES_VITRES_ELIGIBLES, prixLigne, minutesLigne, libelleLigne,
   arrondiEuro, tachesPour, tacheChiffree, packsPour, remisePack } from "./catalogue.js";
 
@@ -19,7 +19,7 @@ const ENTREE_DEFAUT = {
   surfaceM2: 0, m2ParHeure: 0, minimumMin: 0, coefTemps: 1.0, coefPrix: 1.0, dureeBaseImposeeMin: 0,
   niveauxSupplementaires: 0, minutesEtapesLocation: 0, consommablesAControler: false, salissure: "NORMAL",
   taches: [], remisePackPct: 0, remisePackC: null, tachesPersonnalisees: 0, dimanche: false, creneauMalin: false,
-  engagementMois: 0, espacePersonnel: true, typeLieuId: "", panier: [],
+  engagementMois: 0, espacePersonnel: true, typeLieuId: "", panier: [], minutesEnPlus: 0, minimumApresMin: 0,
 };
 
 export function calculer(entree) {
@@ -46,6 +46,8 @@ export function calculer(entree) {
       t += e.minutesEtapesLocation || 0;
       if (e.consommablesAControler) t += REGLES.CONSOMMABLES_MIN;
     }
+    t += e.minutesEnPlus || 0;           // ex. 15 min par fenêtre en fin de chantier
+    t = Math.max(t, e.minimumApresMin || 0); // ex. minimum 2 h en fin de chantier
     dureeBase = arrondiQuartSup(t);
   }
 
@@ -150,6 +152,13 @@ export function tachesChiffrees(b) {
   const gabarit = b.rubriqueId === "car" ? ((TYPES_LIEU.car || []).find(l => l.id === b.typeLieuId)?.coef ?? 1) : 1;
   return tachesPour(r, b.typeLieuId).map(t => tacheChiffree(t, r, b.surface, gabarit, gabarit));
 }
+/** Cuisines : minutes des équipements choisis (proposés pour le type d'établissement). */
+export const minutesEquipements = b => equipementsPour(b.typeLieuId).reduce((s, e) => s + e.minutes * ((b.equipements || {})[e.id] || 0), 0);
+/** Cuisines : prix indicatif d'un équipement (temps × coefficients × taux, arrondi à l'euro). */
+export function prixIndicatifEquipement(e, b) {
+  const coefLieu = (TYPES_LIEU.kitchen || []).find(l => l.id === b.typeLieuId)?.coef ?? 1;
+  return arrondiEuro(e.minutes * coefLieu * formuleDe(b).coef * rubrique("kitchen").tauxHoraireC / 60);
+}
 /** Formule choisie (la première par défaut). */
 export function formuleDe(b) { const f = formulesPour(rubrique(b.rubriqueId)); return f.find(x => x.id === b.formuleId) || f[0]; }
 /** Entretien régulier : chaque passage est une demande séparée, au même prix. */
@@ -168,12 +177,14 @@ export function datesPassages(premier, frequence, jours, nombre) {
     }
     return res;
   }
-  if (frequence === "mois" || frequence === "trimestre") {
-    const pas = frequence === "mois" ? 1 : 3;
+  // Fréquences en mois : chaque mois, tous les 2 mois, chaque trimestre / saison, deux fois par an
+  const mois = { mois: 1, deux_mois: 2, trimestre: 3, saison: 3, semestre: 6 }[frequence];
+  if (mois) {
+    const pas = mois;
     for (let i = 0; i < nombre; i++) { const d = new Date(premier); d.setMonth(d.getMonth() + i * pas); res.push(d); }
     return res;
   }
-  const pas = { deux_semaines: 14, quatre_semaines: 28 }[frequence] || 7;
+  const pas = { jour: 1, deux_semaines: 14, quatre_semaines: 28 }[frequence] || 7;
   for (let i = 0; i < nombre; i++) { const d = new Date(premier); d.setDate(d.getDate() + i * pas); res.push(d); }
   return res;
 }
@@ -222,10 +233,13 @@ export function entreeEstimation(b, espacePersonnel, debut) {
   if (b.rubriqueId === "rental") { dureeImposee = tempsRotationLocation(b.chambres, b.sdb, b.surface, 1.0); m2h = 0; }
   if (b.rubriqueId === "windows") { dureeImposee = Math.max(f.minimumMin, b.fenetres * 15); m2h = 0; surface = 0; }
   if (b.rubriqueId === "textiles") { m2h = 0; surface = 0; }
+  if (b.rubriqueId === "construction") { dureeImposee = b.surface * 60 / f.m2ParHeure * coefLieu; m2h = 0; }
+  // Cuisines : max(1 h, (surface / 25 m²/h + équipements) × établissement × intensité), puis salissure
+  if (b.rubriqueId === "kitchen") { dureeImposee = Math.max(f.minimumMin, (b.surface * 60 / f.m2ParHeure + minutesEquipements(b)) * coefLieu * f.coef); m2h = 0; }
   const dispo = debut ? disponibilite(new Date(), debut) : null;
   return {
     rubriqueId: b.rubriqueId, surfaceM2: surface, m2ParHeure: m2h, minimumMin: f.minimumMin,
-    coefTemps: b.rubriqueId === "car" ? 1.0 : b.rubriqueId === "rental" ? f.coef : f.coef * coefLieu,
+    coefTemps: ["car", "construction", "kitchen"].includes(b.rubriqueId) ? 1.0 : b.rubriqueId === "rental" ? f.coef : f.coef * coefLieu,
     coefPrix: 1.0, // déjà appliqué aux tâches chiffrées
     dureeBaseImposeeMin: dureeImposee,
     niveauxSupplementaires: ["home", "moving"].includes(b.rubriqueId) ? Math.max(0, b.niveaux - 1) : 0,
@@ -237,5 +251,7 @@ export function entreeEstimation(b, espacePersonnel, debut) {
     creneauMalin: dispo === "MALIN" && !b.flexible,
     engagementMois: b.engagementMois, espacePersonnel, typeLieuId: b.typeLieuId,
     panier: b.rubriqueId === "textiles" ? b.panier || [] : [],
+    minutesEnPlus: b.rubriqueId === "construction" ? (b.fenetres || 0) * REGLES.CHANTIER_MIN_PAR_FENETRE : 0,
+    minimumApresMin: b.rubriqueId === "construction" ? REGLES.CHANTIER_MINIMUM_MIN : 0,
   };
 }

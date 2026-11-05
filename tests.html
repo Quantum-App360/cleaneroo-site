@@ -73,6 +73,23 @@ egal("7. tapis de 2 à 3 m : 65,00 €", e.totalC, 6500); egal("7. sans complém
 e = calculer({ rubriqueId: "textiles", salissure: "MARQUE", panier: [{ elementId: "tapis_3", quantite: 1 }] });
 egal("textiles : salissure en prix (+15 %)", e.totalC, 6500 + 975);
 
+// Cuisines (prompt 7)
+const bk = { rubriqueId: "kitchen", formuleId: "apres_service", typeLieuId: "restaurant", surface: 30, equipements: { piano: 1, hotte_pro: 1, plonge: 1 } };
+e = parcours(bk);
+egal("restaurant 30 m², après service : 3 h 15", e.dureeMin, 195); egal("restaurant : 117,00 €", e.totalC, 11700);
+egal("restaurant + Essentiel : 198,00 €", parcours({ ...bk, taches: ["surfaces", "eviers", "siphons", "poubelles"] }).totalC, 19800);
+e = parcours({ rubriqueId: "kitchen", formuleId: "degraissage", typeLieuId: "particulier", surface: 12, equipements: { four: 1, hotte: 1, frigo: 1 } });
+egal("particulier 12 m², dégraissage : 2 h 30", e.dureeMin, 150); egal("particulier : 90,00 €", e.totalC, 9000);
+egal("tâche HACCP réservée aux établissements", tachesPour(rubrique("kitchen"), "particulier").some(t => t.id === "haccp"), false);
+
+// Fin de chantier (prompt 6)
+const bc = { rubriqueId: "construction", formuleId: "standard", typeLieuId: "carrelage", surface: 100, fenetres: 5 };
+e = parcours(bc);
+egal("fin de chantier 100 m², 5 fenêtres : 370,50 €", e.totalC, 37050); egal("fin de chantier : 2 Cleaneurs", e.nombreCleaneurs, 2);
+egal("fin de chantier + étiquettes : 382,50 €", parcours({ ...bc, taches: ["etiquettes"] }).totalC, 38250);
+egal("fin de chantier : minimum 2 h", parcours({ ...bc, surface: 10, fenetres: 0 }).dureeMin, 120);
+egal("vues de la fin de chantier", vuesPhotos({ ...bc, pieces: 2 }).length, 5);
+
 // Canapés et textiles (prompt 5)
 e = parcours({ rubriqueId: "textiles", formuleId: "canape", panier: [{ elementId: "canape_angle", tailleId: "t25", quantite: 1 }], taches: ["detachage", "desodorisation", "acariens"] });
 egal("canapé d'angle 2 à 2,5 m + Confort : 169,00 €", e.totalC, 16900); egal("84,50 € après crédit d'impôt", e.apresCreditImpotC, 8450);

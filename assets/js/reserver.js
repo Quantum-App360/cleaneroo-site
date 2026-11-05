@@ -3,9 +3,9 @@
 import { RUBRIQUES, rubrique, formulesPour, TYPES_LIEU, TYPES_LOGEMENT, BESOINS_SPECIAUX, ACCUEIL, accueilAutonomeInterdit, photosObligatoires,
   ELEMENTS_TEXTILES, TAILLES_CANAPE, prixLigne, minutesLigne, libelleLigne, pastille,
   FREQUENCES, JOURS_SEMAINE, DERNIERS_NETTOYAGES, packsPour, remisePack,
-  TACHES_A_TRAITER, SELECTION_CONSEILLEE_VEHICULE, LIEUX_VEHICULE, FREQUENCES_VEHICULE, RUBRIQUES_LOGEMENT, vuesPhotos, vuesCompletes, PIECES_LOCATION, ETAPES_LOCATION, PACK_ETAPES_CONSEILLE, CONSOMMABLES_LOCATION, PACK_CONSOMMABLES_CONSEILLE } from "./catalogue.js";
+  TACHES_A_TRAITER, TYPES_CHANTIER, equipementsPour, SELECTION_CONSEILLEE_VEHICULE, LIEUX_VEHICULE, FREQUENCES_VEHICULE, RUBRIQUES_LOGEMENT, vuesPhotos, vuesCompletes, PIECES_LOCATION, ETAPES_LOCATION, PACK_ETAPES_CONSEILLE, CONSOMMABLES_LOCATION, PACK_CONSOMMABLES_CONSEILLE } from "./catalogue.js";
 import { calculer, entreeEstimation, SALISSURE, disponibilite, meilleurPack, tachesChiffrees, formuleDe, passagesPlanifies, datesPassages,
-  etapesDe, consommablesDe, menageTientEntreVoyageurs, frequenceDe } from "./estimation.js";
+  etapesDe, consommablesDe, menageTientEntreVoyageurs, frequenceDe, minutesEquipements, prixIndicatifEquipement } from "./estimation.js";
 import { REGLES, euros, duree, heure, dateCourte, estPrelancement, MESSAGE_LANCEMENT } from "./regles.js";
 import { envoyerDemande } from "./donnees.js";
 import { traduire } from "./langue.js";
@@ -168,7 +168,8 @@ function etape2() {
     h += titre("État de saleté") + `<div class="segments">${Object.entries(SALISSURE).map(([k, s]) =>
       `<button type="button" data-champ="salissure" data-valeur="${k}" class="${b.salissure === k ? "choisi" : ""}">${s.libelle}</button>`).join("")}</div>`;
   }
-  if (b.rubriqueId === "construction") h += `<div class="note" style="margin-top:16px">Fin de chantier : jamais « standard ». Le niveau de salissure sera estimé dès que toutes les photos seront exploitables.</div>`;
+  if (b.rubriqueId === "construction") h += questionsChantier();
+  if (b.rubriqueId === "kitchen") h += equipementsCuisine();
   const chiffrees = tachesChiffrees(b), packs = packsPour(r, b.typeLieuId);
   if (chiffrees.length) {
     h += titre("Tâches complémentaires");
@@ -200,9 +201,37 @@ function etape2() {
   if (b.rubriqueId === "moving") h += `<div class="carte" style="margin-top:14px">${caseCocher("Le logement sera entièrement vide (meubles et cartons sortis)", "lieuxVides", !!b.lieuxVides)}</div>`;
   const besoinOk = !r.toujoursSurDevis || b.formuleId;
   const panierOk = b.rubriqueId !== "textiles" || (b.panier || []).length > 0;
+  const chantierOk = b.rubriqueId !== "construction" || !!b.artisansPartis;
+  const equipementsOk = b.rubriqueId !== "kitchen" || minutesEquipements(b) > 0;
   const joursOk = !(formuleDe(b)?.genre === "REGULIER" && b.frequence === "plusieurs") || (b.jours || []).length >= REGLES.JOURS_MIN_PLUSIEURS_PAR_SEMAINE;
-  return h + actions(besoinOk && panierOk && joursOk, !besoinOk ? "Choisissez votre besoin." : !panierOk ? "Ajoutez chaque élément au panier."
+  return h + actions(besoinOk && panierOk && joursOk && chantierOk && equipementsOk, !besoinOk ? "Choisissez votre besoin." : !panierOk ? "Ajoutez chaque élément au panier."
+    : !equipementsOk ? "Ajoutez au moins un équipement."
+    : !chantierOk ? "Cochez « Les artisans auront quitté les lieux » pour continuer."
     : !joursOk ? "Choisissez au moins deux jours de passage." : "");
+}
+
+/** Cuisines : équipements à l'unité, prix indicatif, note sur les produits (EquipementsCuisine dans l'appli). */
+function equipementsCuisine() {
+  const eq = b.equipements || {};
+  return titre("Équipements à nettoyer") + `<div class="carte">${equipementsPour(b.typeLieuId).map(e =>
+      `<div class="compteur"><span>${e.nom} · ${euros(prixIndicatifEquipement(e, b))}</span><span class="regle">
+        <button type="button" data-equip-moins="${e.id}" aria-label="Moins" ${(eq[e.id] || 0) <= 0 ? "disabled" : ""}>−</button>
+        <output>${eq[e.id] || 0}</output>
+        <button type="button" data-equip-plus="${e.id}" aria-label="Plus" ${(eq[e.id] || 0) >= 20 ? "disabled" : ""}>+</button></span></div>`).join("")}
+      <p class="petit">Au moins un équipement. Prix indicatif par équipement, selon l'établissement et l'intensité.</p></div>`
+    + `<div class="note" style="margin-top:10px">Produits compatibles contact alimentaire.</div>`;
+}
+
+/** Fin de chantier : fenêtres, pièces, type de chantier, départ des artisans, réception des travaux (QuestionsChantier dans l'appli). */
+function questionsChantier() {
+  return `<div class="carte" style="margin-top:14px">${compteur("Nombre de fenêtres", "fenetres", b.fenetres ?? 8, { min: 0, max: 100 })}
+      ${compteur("Nombre de pièces", "pieces", b.pieces ?? 3, { min: 1, max: REGLES.CHANTIER_PIECES_MAX })}
+      <p class="petit">+15 min par fenêtre ; une photo par pièce à l'étape suivante.</p></div>`
+    + titre("Type de chantier") + choix(TYPES_CHANTIER, b.typeChantier || "", "typeChantier")
+    + `<div class="carte" style="margin-top:10px">${caseCocher("Les artisans auront quitté les lieux", "artisansPartis", !!b.artisansPartis)}</div>`
+    + titre("Réception ou livraison des travaux") + champTexte("Date (facultatif)", "dateReception", b.dateReception || "", "date")
+    + `<p class="petit">Le Cleaneur planifie son passage pour que tout soit prêt avant cette date.</p>`
+    + `<div class="note" style="margin-top:14px">Fin de chantier : jamais « standard ». Le niveau de salissure sera estimé dès que toutes les photos seront exploitables.</div>`;
 }
 
 /** Véhicules : nombre, lieu, eau et électricité, fréquence, animaux, sélection conseillée (QuestionsVehicule dans l'appli). */
@@ -265,13 +294,15 @@ function questionsFormule(r) {
         <p class="petit">Chaque passage est une demande séparée, au même prix.</p></div>`;
   }
   let h = f.genre === "PONCTUEL" && r.occasions.length ? titre("À quelle occasion ?") + choix(r.occasions.map(o => [o.id, o.nom]), b.occasion, "occasion") : "";
-  // Remise en état (et Grand ménage) : dernier nettoyage en profondeur, puis nature des salissures
-  if (f.avecDernierNettoyage) {
+  // Remise en état (et Grand ménage) : dernier nettoyage en profondeur
+  if (f.avecDernierNettoyage) h += titre("Dernier nettoyage en profondeur") + choix(DERNIERS_NETTOYAGES.map(d => [d.id, d.libelle]), b.dernierNettoyage, "dernierNettoyage");
+  // Nature des salissures (choix multiple, liste propre à la rubrique)
+  if (f.avecNatures) {
     const natures = b.natures || [];
-    h += titre("Dernier nettoyage en profondeur") + choix(DERNIERS_NETTOYAGES.map(d => [d.id, d.libelle]), b.dernierNettoyage, "dernierNettoyage")
-      + (r.naturesSalissure.length ? titre("Nature des salissures") + `<div class="carte">${r.naturesSalissure.map(n =>
+    h += (r.naturesSalissure.length ? titre("Nature des salissures") + `<div class="carte">${r.naturesSalissure.map(n =>
         `<label class="case"><input type="checkbox" data-nature="${esc(n)}" ${natures.includes(n) ? "checked" : ""}><span>${esc(n)}</span></label>`).join("")}</div>` : "");
   }
+  if (b.rubriqueId === "kitchen" && f.id === "controle") h += titre("Date du contrôle (si connue)") + champTexte("Date (facultatif)", "dateControle", b.dateControle || "", "date");
   return h;
 }
 
@@ -471,6 +502,12 @@ document.addEventListener("click", async e => {
   }
   if (ds.retirer !== undefined) return maj({ tachesPerso: b.tachesPerso.filter((_, i) => i !== +ds.retirer) });
   if (ds.retirerPanier !== undefined) return maj({ panier: (b.panier || []).filter((_, i) => i !== +ds.retirerPanier) });
+  if (ds.equipPlus || ds.equipMoins) {
+    const id = ds.equipPlus || ds.equipMoins, eq = { ...(b.equipements || {}) };
+    eq[id] = Math.max(0, Math.min(20, (eq[id] || 0) + (ds.equipPlus ? 1 : -1)));
+    if (!eq[id]) delete eq[id];
+    return maj({ equipements: eq });
+  }
   if (ds.tacheATraiter) { const l = b.tachesATraiter || [], v = ds.tacheATraiter; return maj({ tachesATraiter: l.includes(v) ? l.filter(x => x !== v) : [...l, v] }); }
   if (t.id === "ajouter-poils") return maj({ taches: [...new Set([...b.taches, "poils"])] });
   if (t.id === "selection-conseillee") return maj({ taches: [...new Set([...b.taches, ...SELECTION_CONSEILLEE_VEHICULE])] });

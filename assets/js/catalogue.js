@@ -4,9 +4,11 @@ import { REGLES, euros } from "./regles.js";
 const T = (id, nom, prixC, minutes, o = {}) => ({ id, nom, prixC, minutes, groupe: "", parSurface: false, types: [], ...o });
 /** Genre de formule : décide des questions affichées sous les formules (GenreFormule dans l'appli). */
 export const genreParDefaut = id => ({ regulier: "REGULIER", saisonnier: "REGULIER", ponctuel: "PONCTUEL", remise: "REMISE_EN_ETAT", demoussage: "REMISE_EN_ETAT" })[id] || "AUTRE";
-/** avecDernierNettoyage : pose aussi « Dernier nettoyage en profondeur » (ex. Grand ménage, qui garde les occasions). */
-const F = (id, nom, description = "", m2ParHeure = 0, minimumMin = 0, coef = 1.0, genre = genreParDefaut(id), avecDernierNettoyage = genre === "REMISE_EN_ETAT") =>
-  ({ id, nom, description, m2ParHeure, minimumMin, coef, genre, avecDernierNettoyage });
+/** avecDernierNettoyage : pose aussi « Dernier nettoyage en profondeur » (ex. Grand ménage) ; avecNatures : « Nature des salissures ». */
+const F = (id, nom, description = "", m2ParHeure = 0, minimumMin = 0, coef = 1.0, genre = genreParDefaut(id), avecDernierNettoyage = genre === "REMISE_EN_ETAT", avecNatures = avecDernierNettoyage) =>
+  ({ id, nom, description, m2ParHeure, minimumMin, coef, genre, avecDernierNettoyage, avecNatures });
+/** Cuisines : types d'établissement professionnels. */
+export const PROS_CUISINE = ["restaurant", "hotel", "collectivite", "boulangerie", "foodtruck"];
 
 /* Questions communes des formules (mêmes listes que l'appli : Catalogue.kt). */
 export const FREQUENCES = [["semaine", "Chaque semaine"], ["deux_semaines", "Toutes les 2 semaines"], ["quatre_semaines", "Toutes les 4 semaines"], ["plusieurs", "Plusieurs fois par semaine"]];
@@ -201,8 +203,40 @@ export const RUBRIQUES = [
       { id: "confort", nom: "Confort", remisePct: 10, tacheIds: ["detachage", "desodorisation", "acariens"] },
       { id: "prestige", nom: "Prestige", remisePct: 15, tacheIds: ["detachage", "desodorisation", "acariens", "protection", "sechage"] },
     ] },
-  { id: "construction", nom: "Fin de chantier", sousTitre: "Éliminer la poussière après les travaux", emoji: "🏗️", tauxHoraireC: 3800, salissureSurTemps: true },
-  { id: "kitchen", nom: "Cuisines", sousTitre: "Nettoyage approfondi et dégraissage", emoji: "🍳", tauxHoraireC: 3600, salissureSurTemps: true },
+  { id: "construction", nom: "Fin de chantier", sousTitre: "Éliminer la poussière après les travaux", emoji: "🏗️", tauxHoraireC: 3800, salissureSurTemps: true,
+    inclus: "Aspiration des poussières de chantier (filtre HEPA) · Sols lavés selon leur nature · Vitres et menuiseries intérieures · Sanitaires et cuisine · Retrait des traces et étiquettes courantes",
+    taches: [T("etiquettes", "Retrait des étiquettes et films de protection", REGLES.OPTION_GENERIQUE_C, REGLES.OPTION_GENERIQUE_MIN, { groupe: "Options" }), T("residus", "Résidus de plâtre ou de peinture au sol", REGLES.OPTION_GENERIQUE_C, REGLES.OPTION_GENERIQUE_MIN, { groupe: "Options" }), T("dechets", "Évacuation de déchets légers (sacs)", REGLES.OPTION_GENERIQUE_C, REGLES.OPTION_GENERIQUE_MIN, { groupe: "Options" })] },
+  { id: "kitchen", nom: "Cuisines", sousTitre: "Nettoyage approfondi et dégraissage", emoji: "🍳", tauxHoraireC: 3600, salissureSurTemps: true,
+    formules: [F("apres_service", "Après service", "", 25, 60, 1.0, "REGULIER"), F("degraissage", "Dégraissage approfondi", "", 25, 60, 1.5, "AUTRE", false, true),
+      F("controle", "Grand nettoyage avant contrôle sanitaire", "", 25, 60, 1.8, "AUTRE", false, true)],
+    taches: [
+    T("murs", "Murs et faïence", 3500, 45, { groupe: "Sols, murs et plafonds", parSurface: true }),
+    T("plinthes", "Plinthes, angles et gorges", 1500, 15, { groupe: "Sols, murs et plafonds", parSurface: true, types: PROS_CUISINE }),
+    T("siphons", "Siphons et caniveaux de sol (démontage, curage)", 2500, 20, { groupe: "Sols, murs et plafonds", types: PROS_CUISINE }),
+    T("plafond", "Plafond et luminaires", 3500, 40, { groupe: "Sols, murs et plafonds", parSurface: true, types: PROS_CUISINE }),
+    T("aerations", "Grilles et bouches d'aération", 2000, 20, { groupe: "Sols, murs et plafonds" }),
+    T("vitres", "Vitres et portes vitrées", 1500, 20, { groupe: "Sols, murs et plafonds" }),
+    T("poignees", "Portes, poignées et interrupteurs (désinfection)", 1200, 15, { groupe: "Sols, murs et plafonds" }),
+    T("eviers", "Éviers, robinetterie et détartrage", 1500, 15, { groupe: "Plonge, réserve et annexes" }),
+    T("congelateur", "Dégivrage et nettoyage d'un congélateur", 2500, 30, { groupe: "Plonge, réserve et annexes" }),
+    T("reserve", "Étagères et rayonnages de la réserve", 3000, 30, { groupe: "Plonge, réserve et annexes", types: PROS_CUISINE }),
+    T("chariots", "Chariots, bacs gastro et ustensiles", 2000, 25, { groupe: "Plonge, réserve et annexes", types: PROS_CUISINE }),
+    T("poubelles", "Poubelles et local poubelles (lavage, désinfection)", 2500, 25, { groupe: "Plonge, réserve et annexes", types: PROS_CUISINE }),
+    T("vestiaires", "Vestiaires et sanitaires du personnel", 3500, 40, { groupe: "Plonge, réserve et annexes", types: PROS_CUISINE }),
+    T("salle", "Salle de service : tables, chaises et sols (jusqu'à 40 couverts)", 4500, 60, { groupe: "Plonge, réserve et annexes", types: PROS_CUISINE }),
+    T("surfaces", "Désinfection des surfaces en contact alimentaire", 2000, 20, { groupe: "Hygiène et traçabilité" }),
+    T("haccp", "Fiche de traçabilité HACCP", 1500, 10, { groupe: "Hygiène et traçabilité", types: PROS_CUISINE }),
+    ],
+    packs: [
+    { id: "essentiel", nom: "Essentiel", remisePct: 5, tacheIds: ["surfaces", "eviers", "siphons", "poubelles"], types: PROS_CUISINE },
+    { id: "confort", nom: "Confort", remisePct: 10, tacheIds: ["surfaces", "eviers", "siphons", "poubelles", "murs", "aerations", "poignees", "reserve"], types: PROS_CUISINE },
+    { id: "prestige", nom: "Prestige", remisePct: 15, tacheIds: ["surfaces", "eviers", "siphons", "poubelles", "murs", "aerations", "poignees", "reserve", "plafond", "plinthes", "vestiaires", "haccp"], types: PROS_CUISINE },
+    { id: "essentiel", nom: "Essentiel", remisePct: 5, tacheIds: ["eviers", "surfaces"], types: ["particulier"] },
+    { id: "confort", nom: "Confort", remisePct: 10, tacheIds: ["eviers", "surfaces", "murs", "poignees"], types: ["particulier"] },
+    { id: "prestige", nom: "Prestige", remisePct: 15, tacheIds: ["eviers", "surfaces", "murs", "poignees", "vitres", "aerations", "congelateur"], types: ["particulier"] },
+    ],
+    surfaceReferenceM2: 30, frequences: [["jour", "Chaque jour (après le service)"], ["plusieurs", "Plusieurs fois par semaine"], ["semaine", "Chaque semaine"], ["deux_semaines", "Toutes les 2 semaines"]], moments: [["midi", "Après le service du midi"], ["soir", "Après le service du soir"], ["avant", "Avant l'ouverture"], ["fermeture", "Jour de fermeture"]],
+    naturesSalissure: ["Graisse incrustée", "Carbone et calamine", "Calcaire", "Odeurs", "Moisissures"] },
   { id: "office", nom: "Bureaux et commerces", sousTitre: "Des locaux propres et accueillants", emoji: "🏢", tauxHoraireC: 2950, salissureSurTemps: false },
   { id: "communal", nom: "Parties communes", sousTitre: "Escaliers, halls et espaces communs", emoji: "🏘️", tauxHoraireC: 2800, salissureSurTemps: false },
   { id: "windows", nom: "Vitres et vitrines", sousTitre: "Fenêtres, vitrines et vérandas", emoji: "🪟", tauxHoraireC: 3000, salissureSurTemps: false },
@@ -233,7 +267,7 @@ export const FREQUENCES_VEHICULE = [["unique", "Une seule fois"], ["mois", "Chaq
 export function packsPour(r, typeLieuId) {
   const ids = tachesPour(r, typeLieuId).map(t => t.id);
   const garde = new Map();
-  for (const p of r.packs.map(p => ({ ...p, tacheIds: p.tacheIds.filter(id => ids.includes(id)) })).filter(p => p.tacheIds.length)) {
+  for (const p of r.packs.filter(p => !p.types?.length || p.types.includes(typeLieuId)).map(p => ({ ...p, tacheIds: p.tacheIds.filter(id => ids.includes(id)) })).filter(p => p.tacheIds.length)) {
     const cle = [...p.tacheIds].sort().join(",");
     if (!garde.has(cle) || garde.get(cle).remisePct < p.remisePct) garde.set(cle, p);
   }
@@ -259,6 +293,29 @@ export const TAILLES_CANAPE = [
   { id: "t25", libelle: "2 à 2,5 m", prixC: 2000, minutes: 30 }, { id: "t30", libelle: "2,5 à 3 m", prixC: 3000, minutes: 45 },
   { id: "t3p", libelle: "plus de 3 m", prixC: 4000, minutes: 60 },
 ];
+/** Cuisines : équipements à l'unité (minutes) ; pro = établissements seulement. */
+export const EQUIPEMENTS_CUISINE = [
+  { id: "plaques", nom: "Plaques de cuisson", minutes: 15, pro: false },
+  { id: "four", nom: "Four", minutes: 30, pro: false },
+  { id: "microondes", nom: "Micro-ondes", minutes: 10, pro: false },
+  { id: "hotte", nom: "Hotte et filtres", minutes: 20, pro: false },
+  { id: "frigo", nom: "Réfrigérateur", minutes: 20, pro: false },
+  { id: "lave_vaisselle", nom: "Lave-vaisselle", minutes: 15, pro: false },
+  { id: "placards", nom: "Placards (intérieur)", minutes: 20, pro: false },
+  { id: "piano", nom: "Piano / plaques de cuisson", minutes: 30, pro: true },
+  { id: "four_pro", nom: "Four professionnel (mixte, à sole…)", minutes: 40, pro: true },
+  { id: "friteuse", nom: "Friteuse", minutes: 30, pro: true },
+  { id: "grill", nom: "Grill, plancha ou salamandre", minutes: 25, pro: true },
+  { id: "hotte_pro", nom: "Hotte et filtres professionnels", minutes: 45, pro: true },
+  { id: "armoire", nom: "Armoire réfrigérée", minutes: 25, pro: true },
+  { id: "chambre_froide", nom: "Chambre froide", minutes: 60, pro: true },
+  { id: "plonge", nom: "Plonge et lave-vaisselle pro", minutes: 30, pro: true },
+  { id: "inox", nom: "Poste de travail inox", minutes: 15, pro: true },
+  { id: "petit_materiel", nom: "Petit matériel (trancheuse, robots…)", minutes: 10, pro: true },
+];
+export const equipementsPour = typeLieuId => EQUIPEMENTS_CUISINE.filter(e => e.pro === PROS_CUISINE.includes(typeLieuId));
+/** Fin de chantier : type de chantier. */
+export const TYPES_CHANTIER = [["neuve", "Construction neuve"], ["renovation", "Rénovation"], ["amenagement", "Aménagement intérieur"], ["extension", "Extension"]];
 /** « Taches à traiter » (choix multiple, indicatif pour le Cleaneur). */
 export const TACHES_A_TRAITER = ["Vin", "Café ou thé", "Gras", "Urine", "Sang", "Encre", "Inconnues"];
 export const elementTextile = id => ELEMENTS_TEXTILES.find(e => e.id === id);
@@ -335,7 +392,6 @@ export function formulesPour(r) {
   if (r.formules.length) return r.formules;
   switch (r.id) {
     case "construction": return [F("standard", "Nettoyage de fin de chantier", "Le niveau de salissure sera estimé dès que toutes les photos seront exploitables.", 12, 120)];
-    case "kitchen": return [F("apres_service", "Après service", "", 25, 60, 1.0), F("degraissage", "Dégraissage approfondi", "", 25, 60, 1.5), F("controle", "Grand nettoyage avant contrôle sanitaire", "", 25, 60, 1.8)];
     case "office": return [F("regulier", "Entretien régulier", "", 60, 60, 1.0), F("ponctuel", "Nettoyage ponctuel", "", 60, 60, 1.15), F("remise", "Remise en état des locaux", "", 60, 60, 1.6)];
     case "communal": return [F("regulier", "Entretien régulier", "", 80, 60, 1.0), F("ponctuel", "Ponctuel", "", 80, 60, 1.15), F("remise", "Remise en état", "", 80, 60, 1.6)];
     case "windows": return [F("ponctuel", "Ponctuel", "15 min par fenêtre, minimum 1 h 30.", 0, 90, 1.0), F("regulier", "Entretien régulier", "", 0, 90, 0.9), F("travaux", "Après travaux", "", 0, 90, 1.5)];
