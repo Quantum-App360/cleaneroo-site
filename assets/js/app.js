@@ -304,6 +304,7 @@ function blocOffreCleaneurs() {
       <li>${R.OFFRE_LANCEMENT_PLACES} places, attribuées dans l'ordre de validation des dossiers.</li>
       <li>${R.OFFRE_LANCEMENT_MOIS} mois sans abonnement à partir de la validation.</li>
       <li>Ensuite, abonnement de ${prix} par mois.</li>
+      <li>La commission sur chaque mission s'applique normalement, offre comprise.</li>
       <li>Échéance impayée : ${R.PREAVIS_BLOCAGE_JOURS} jours après la date de facturation prévue, le compte est bloqué et les missions réservées sont redistribuées.</li>
     </ul></div>`;
 }
