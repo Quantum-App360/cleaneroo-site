@@ -98,8 +98,30 @@ export function ouvrirReservation(conteneur, rubriqueId, option = "") {
   if (b && cp && !b.rue) b = { ...b, codePostal: cp };
   photos = [];
   vuesPrises = {};
+  // Historique : une entrée par étape, pour que la touche retour du téléphone revienne à l'étape précédente.
+  const n = b ? b.etape : 1;
+  history.replaceState({ ...(history.state || {}), cleanerooEtape: 1 }, "");
+  for (let i = 2; i <= n; i++) history.pushState({ cleanerooEtape: i }, "");
   rendre();
 }
+
+/** Nouvelle étape vers l'avant : une entrée d'historique de plus. */
+function noterEtape() { history.pushState({ cleanerooEtape: b ? b.etape : 1 }, ""); }
+
+/** « ‹ Retour » à l'écran : comme la touche retour du téléphone. */
+function retour() {
+  if (history.state?.cleanerooEtape > 1) return history.back();
+  if (b && b.etape > 2) return maj({ etape: b.etape - 1 }, true);
+  b = { ...(b || {}), espace: b?.espace || "personnel", etape: 1 }; sauver(); rendre(); window.scrollTo(0, 0);
+}
+
+window.addEventListener("popstate", e => {
+  const n = e.state?.cleanerooEtape;
+  if (!n || !racine || !document.body.contains(racine) || !location.hash.startsWith("#/reserver")) return;
+  // Étape 1 : la prestation est gardée, on la retrouve telle quelle si on la choisit de nouveau.
+  b = n === 1 ? { ...(b || {}), espace: b?.espace || "personnel", etape: 1 } : { ...b, etape: n };
+  sauver(); rendre(); window.scrollTo(0, 0);
+});
 
 function maj(changes, defiler = false) {
   b = { ...b, ...changes };
@@ -475,9 +497,9 @@ function actions(ok, message = "", libelle = "Continuer", id = "suivant") {
 function rendre() {
   const etape = b ? b.etape : 1;
   let est = null;
-  if (b) est = calculer(entreeEstimation(b, b.espace === "personnel", debutChoisi()));
+  if (b && b.rubriqueId && etape > 1) est = calculer(entreeEstimation(b, b.espace === "personnel", debutChoisi()));
   racine.innerHTML = `<section class="bloc" style="padding-top:28px"><div class="etroit">
-    <div style="display:flex;justify-content:space-between;gap:10px" class="petit"><span>Étape ${etape} sur 5</span>
+    <div class="tete-etape petit">${etape > 1 ? `<button type="button" class="retour-haut" data-retour>‹ Retour</button>` : ""}<span>Étape ${etape} sur 5</span>
       ${est && !est.devisObligatoire ? `<b style="color:var(--turquoise)">Total estimé ${euros(est.totalC)}</b>` : ""}</div>
     <div class="progression">${[1, 2, 3, 4, 5].map(i => `<span class="${i <= etape ? "fait" : ""}"></span>`).join("")}</div>
     ${[etape1, etape2, etape3, etape4, etape5][etape - 1]()}
@@ -493,7 +515,8 @@ document.addEventListener("click", async e => {
   if (!t) return;
   const ds = t.dataset;
   if (ds.espace) { b = b ? { ...b, espace: ds.espace } : { espace: ds.espace, etape: 1 }; sauver(); return rendre(); }
-  if (ds.rubrique) { b = nouveauBrouillon(ds.rubrique, b?.espace || "personnel"); sauver(); rendre(); return window.scrollTo(0, 0); }
+  if (ds.rubrique) { b = b?.rubriqueId === ds.rubrique ? { ...b, etape: 2 } : nouveauBrouillon(ds.rubrique, b?.espace || "personnel"); sauver(); noterEtape(); rendre(); return window.scrollTo(0, 0); }
+  if (ds.retour !== undefined) return retour();
   if (ds.champ) {
     let v = ds.valeur;
     if (ds.champ === "engagementMois") v = +v;
@@ -554,9 +577,8 @@ document.addEventListener("click", async e => {
     if (s) maj({ tachesPerso: [...b.tachesPerso, s].slice(0, 10) });
     return;
   }
-  if (t.id === "changer") { b = { espace: b?.espace || "personnel", etape: 1 }; sauver(); rendre(); return window.scrollTo(0, 0); }
-  if (t.id === "precedent") return maj({ etape: b.etape - 1 }, true);
-  if (t.id === "suivant") return maj({ etape: b.etape + 1, ...(b.etape === 4 && b.flexible ? { choixCleaneur: "candidatures" } : {}) }, true);
+  if (t.id === "changer" || t.id === "precedent") return retour();
+  if (t.id === "suivant") { maj({ etape: b.etape + 1, ...(b.etape === 4 && b.flexible ? { choixCleaneur: "candidatures" } : {}) }, true); return noterEtape(); }
   if (t.id === "envoyer") return envoyer();
 });
 

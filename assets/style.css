@@ -571,3 +571,11 @@ label.champ input:focus, label.champ select:focus, label.champ textarea:focus, i
   .notif b { font-size: 13px; } .notif small { font-size: 11.5px; }
   .notif.n2 { top: 52%; }
 }
+
+/* Parcours de réservation : « ‹ Retour » en haut de chaque étape */
+.tete-etape { display: flex; align-items: center; gap: 12px; }
+.tete-etape > span { flex: 1; }
+.retour-haut { min-height: 40px; padding: 0 14px 0 10px; border-radius: 999px; border: 1px solid var(--separateur); background: var(--surface);
+  color: var(--turquoise); font-weight: 700; font-size: 14px; cursor: pointer; box-shadow: var(--ombre); transition: border-color .2s; }
+.retour-haut:hover { border-color: color-mix(in srgb, var(--turquoise) 50%, transparent); }
+.barre-actions .bouton.secondaire { white-space: nowrap; flex: none; padding: 0 18px; }
