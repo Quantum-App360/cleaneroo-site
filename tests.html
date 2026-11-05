@@ -11,7 +11,7 @@
 // Reprend app/src/test/.../ReglesTest.kt : le site doit donner exactement les mêmes résultats que l'application.
 import { calculer, meilleurPack, disponibilite, entreeEstimation, complementMinimum, datesPassages, passagesPlanifies, formuleDe } from "./assets/js/estimation.js";
 import { rubrique, pastille, tacheChiffree, tachesPour, packsPour, remisePack, DERNIERS_NETTOYAGES,
-  PACK_ETAPES_CONSEILLE, PACK_CONSOMMABLES_CONSEILLE, minutesEtapesLocation, nombreEtapesLocation } from "./assets/js/catalogue.js";
+  PACK_ETAPES_CONSEILLE, PACK_CONSOMMABLES_CONSEILLE, minutesEtapesLocation, nombreEtapesLocation, vuesPhotos, vuesCompletes } from "./assets/js/catalogue.js";
 import { menageTientEntreVoyageurs } from "./assets/js/estimation.js";
 import { euros, REGLES } from "./assets/js/regles.js";
 const res = [];
@@ -72,6 +72,20 @@ e = parcours({ rubriqueId: "textiles", formuleId: "tapis", panier: [{ elementId:
 egal("7. tapis de 2 à 3 m : 65,00 €", e.totalC, 6500); egal("7. sans complément", e.lignes.some(l => l.libelle.startsWith("Complément")), false);
 e = calculer({ rubriqueId: "textiles", salissure: "MARQUE", panier: [{ elementId: "tapis_3", quantite: 1 }] });
 egal("textiles : salissure en prix (+15 %)", e.totalC, 6500 + 975);
+
+// Déménagement (prompt 3)
+e = parcours({ rubriqueId: "moving", formuleId: "depart" });
+egal("déménagement 62 m² : 3 h 30 chacun", e.dureeMin, 210);
+e = parcours({ rubriqueId: "moving", formuleId: "depart", taches: ["sanitaires", "detartrage", "frigo", "adhesif"] });
+egal("déménagement + Essentiel : 290,00 €", e.totalC, 29000); egal("déménagement + Essentiel : 4 h 15 chacun", e.dureeMin, 255);
+egal("déménagement : 2 Cleaneurs", e.nombreCleaneurs, 2);
+egal("déménagement : 4 groupes", [...new Set(rubrique("moving").taches.map(t => t.groupe))].join(), "Cuisine,Pièces et rangements,Salle de bains,Extérieurs et annexes");
+egal("déménagement : +15 min par niveau", parcours({ rubriqueId: "moving", formuleId: "emmenagement", surface: 30, niveaux: 2 }).dureeMin, 195);
+const bm = { rubriqueId: "moving", chambres: 2, sdb: 1 };
+egal("vues du déménagement", vuesPhotos(bm).join(" | "), "Séjour | Cuisine | Chambre 1 | Chambre 2 | Salle de bain 1 | WC | Sols et plinthes | Fenêtres");
+egal("une vue manque → bloqué", vuesCompletes(bm, vuesPhotos(bm).filter(v => v !== "WC")), false);
+egal("toutes les vues → continuer", vuesCompletes(bm, vuesPhotos(bm)), true);
+egal("bureaux : vues suggérées seulement", vuesCompletes({ rubriqueId: "office" }, []), true);
 
 // Location saisonnière (prompt 2)
 e = parcours({ rubriqueId: "rental", formuleId: "court", etapesChoisies: [...PACK_ETAPES_CONSEILLE], consommablesChoisis: [...PACK_CONSOMMABLES_CONSEILLE] });

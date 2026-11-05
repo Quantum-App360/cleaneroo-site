@@ -3,7 +3,7 @@
 import { RUBRIQUES, rubrique, formulesPour, TYPES_LIEU, TYPES_LOGEMENT, BESOINS_SPECIAUX, ACCUEIL, accueilAutonomeInterdit, photosObligatoires,
   ELEMENTS_TEXTILES, TAILLES_CANAPE, prixLigne, minutesLigne, libelleLigne, pastille,
   FREQUENCES, JOURS_SEMAINE, DERNIERS_NETTOYAGES, packsPour, remisePack,
-  PIECES_LOCATION, ETAPES_LOCATION, PACK_ETAPES_CONSEILLE, CONSOMMABLES_LOCATION, PACK_CONSOMMABLES_CONSEILLE } from "./catalogue.js";
+  RUBRIQUES_LOGEMENT, vuesPhotos, vuesCompletes, PIECES_LOCATION, ETAPES_LOCATION, PACK_ETAPES_CONSEILLE, CONSOMMABLES_LOCATION, PACK_CONSOMMABLES_CONSEILLE } from "./catalogue.js";
 import { calculer, entreeEstimation, SALISSURE, disponibilite, meilleurPack, tachesChiffrees, formuleDe, passagesPlanifies, datesPassages,
   etapesDe, consommablesDe, menageTientEntreVoyageurs } from "./estimation.js";
 import { REGLES, euros, duree, heure, dateCourte, estPrelancement, MESSAGE_LANCEMENT } from "./regles.js";
@@ -80,6 +80,7 @@ function vierge(rubriqueId, espace, r, lieux) {
 
 let b = null;            // brouillon en cours
 let photos = [];         // fichiers choisis (non sauvegardés dans le brouillon)
+let vuesPrises = {};     // étape 3 : vue → fichier (une photo par vue)
 let racine = null;
 let envoi = false;
 
@@ -96,6 +97,7 @@ export function ouvrirReservation(conteneur, rubriqueId, option = "") {
   const cp = option.match(/^cp-(\d{5})$/)?.[1];
   if (b && cp && !b.rue) b = { ...b, codePostal: cp };
   photos = [];
+  vuesPrises = {};
   rendre();
 }
 
@@ -141,7 +143,7 @@ function etape2() {
     h += `<div class="note" style="margin-top:14px">Interventions réalisées par des professionnels qualifiés et équipés, sur devis après évaluation. La désinsectisation et la dératisation relèvent d'entreprises certifiées et ne sont pas proposées.</div>`
       + titre("Votre besoin") + choix(BESOINS_SPECIAUX, b.formuleId, "formuleId");
   }
-  if (b.rubriqueId === "home") h += titre("Type de logement") + choix(TYPES_LOGEMENT.map(t => [t.id, t.nom]), b.typeLogementId, "typeLogementId");
+  if (RUBRIQUES_LOGEMENT.includes(b.rubriqueId)) h += titre("Type de logement") + choix(TYPES_LOGEMENT.map(t => [t.id, t.nom]), b.typeLogementId, "typeLogementId");
   const lieux = TYPES_LIEU[b.rubriqueId];
   if (lieux) h += titre({ car: "Gabarit du véhicule", construction: "Type de sol", kitchen: "Type d'établissement" }[b.rubriqueId] || "Type de lieu")
     + choix(lieux.map(l => [l.id, l.nom]), b.typeLieuId, "typeLieuId");
@@ -155,8 +157,8 @@ function etape2() {
     if (b.rubriqueId !== "textiles") h += titre("Dimensions") + `<div class="carte">`
       + (b.rubriqueId === "windows" ? compteur("Nombre de fenêtres", "fenetres", b.fenetres, { min: 1, max: 200 })
         : compteur("Surface", "surface", b.surface, { min: 5, max: 5000, unite: " m²" }))
-      + (["home", "rental"].includes(b.rubriqueId) ? compteur("Chambres", "chambres", b.chambres, { max: 12 }) + compteur("Salles de bain", "sdb", b.sdb, { min: 1, max: 8 }) : "")
-      + (b.rubriqueId === "home" ? compteur("Niveaux", "niveaux", b.niveaux, { min: 1, max: 5 }) + (b.niveaux > 1 ? `<p class="petit">+15 min par niveau supplémentaire</p>` : "") : "")
+      + ([...RUBRIQUES_LOGEMENT, "rental"].includes(b.rubriqueId) ? compteur("Chambres", "chambres", b.chambres, { max: 12 }) + compteur("Salles de bain", "sdb", b.sdb, { min: 1, max: 8 }) : "")
+      + (RUBRIQUES_LOGEMENT.includes(b.rubriqueId) ? compteur("Niveaux", "niveaux", b.niveaux, { min: 1, max: 5 }) + (b.niveaux > 1 ? `<p class="petit">+15 min par niveau supplémentaire</p>` : "") : "")
       + (b.surface > REGLES.SEUIL_DEVIS_SURFACE_M2 ? `<p style="color:var(--alerte);font-size:14px">Au-delà de 300 m² : devis obligatoire.</p>` : "")
       + `</div>`;
   }
@@ -194,6 +196,7 @@ function etape2() {
       <p class="petit">Chaque tâche particulière compte 15 min dans l'estimation ; le Cleaneur la confirme.</p></div>`;
   }
   if (b.rubriqueId === "home") h += `<div class="carte" style="margin-top:14px">${caseCocher("Des animaux vivent dans le logement", "animaux", b.animaux)}</div>`;
+  if (b.rubriqueId === "moving") h += `<div class="carte" style="margin-top:14px">${caseCocher("Le logement sera entièrement vide (meubles et cartons sortis)", "lieuxVides", !!b.lieuxVides)}</div>`;
   const besoinOk = !r.toujoursSurDevis || b.formuleId;
   const panierOk = b.rubriqueId !== "textiles" || (b.panier || []).length > 0;
   const joursOk = !(formuleDe(b)?.genre === "REGULIER" && b.frequence === "plusieurs") || (b.jours || []).length >= REGLES.JOURS_MIN_PLUSIEURS_PAR_SEMAINE;
@@ -281,14 +284,22 @@ function panierTextiles() {
 
 function etape3() {
   const obl = photosObligatoires(b.rubriqueId);
+  const vues = vuesPhotos(b);
+  const blocVues = vues.length ? `<p class="petit"><b>${obl ? "Une photo obligatoire par vue :" : "Vues suggérées :"}</b></p><div class="carte">${vues.map(v => {
+    const prise = !!vuesPrises[v];
+    return `<div style="display:flex;align-items:center;gap:8px;padding:4px 0"><b style="width:20px;color:${prise ? "var(--succes)" : "var(--muet, #999)"}">${prise ? "✓" : "○"}</b>
+      <span style="flex:1">${esc(v)}</span><label class="lien-bouton" style="cursor:pointer">${prise ? "Reprendre" : "+ Photo"}<input type="file" accept="image/*" data-vue="${esc(v)}" hidden></label></div>`;
+  }).join("")}</div>` : "";
+  const pret = vues.length && obl ? vuesCompletes(b, Object.keys(vuesPrises)) : (!obl || photos.length > 0);
   return `<h2>Photos et précisions</h2><p class="muet">${obl ? "Photos obligatoires pour cette prestation : elles permettent d'estimer le travail." : "Facultatif, mais les photos aident le Cleaneur à bien préparer l'intervention."}</p>
     ${titre("Vos photos")}
-    <div class="carte"><div class="vignettes" id="vignettes">${photos.map((f, i) => `<img alt="Photo ${i + 1}" data-i="${i}">`).join("")}</div>
+    ${blocVues}
+    <div class="carte ${vues.length ? "masque" : ""}"><div class="vignettes" id="vignettes">${photos.map((f, i) => `<img alt="Photo ${i + 1}" data-i="${i}">`).join("")}</div>
       <label class="bouton secondaire" style="margin-top:12px;cursor:pointer">+ Ajouter des photos<input type="file" id="photos" accept="image/*" multiple hidden></label>
       <p class="petit">12 photos maximum. Elles sont réduites avant l'envoi.</p></div>
     ${titre("Une précision pour le Cleaneur ?")}
     <label class="champ" style="font-weight:400"><textarea data-texte="remarque" rows="4" maxlength="2000" placeholder="Ex. : arrivée des voyageurs à 16 h">${esc(b.remarque)}</textarea></label>
-    ${actions(!obl || photos.length > 0, obl && !photos.length ? "Ajoutez au moins une photo." : "")}`;
+    ${actions(pret, pret ? "" : vues.length ? "Ajoutez une photo pour chaque vue." : "Ajoutez au moins une photo.")}`;
 }
 
 function joursProposes() {
@@ -474,6 +485,11 @@ document.addEventListener("change", e => {
   if (ds.etape) { const l = etapesDe(b); return maj({ etapesChoisies: e.target.checked ? [...l, ds.etape] : l.filter(x => x !== ds.etape) }); }
   if (ds.conso) { const l = consommablesDe(b); return maj({ consommablesChoisis: e.target.checked ? [...l, ds.conso] : l.filter(x => x !== ds.conso) }); }
   if (ds.nature) { const n = b.natures || []; return maj({ natures: e.target.checked ? [...n, ds.nature] : n.filter(x => x !== ds.nature) }); }
+  if (ds.vue !== undefined && e.target.files?.[0]) {
+    vuesPrises = { ...vuesPrises, [ds.vue]: e.target.files[0] };
+    photos = Object.values(vuesPrises).slice(0, 12);
+    return rendre();
+  }
   if (e.target.id === "photos") { photos = [...photos, ...e.target.files].filter(f => f.type.startsWith("image/")).slice(0, 12); rendre(); }
 });
 // Les champs texte enregistrent aussi pendant la frappe (sans redessiner, pour garder le curseur).

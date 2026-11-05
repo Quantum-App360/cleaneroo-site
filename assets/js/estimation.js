@@ -219,7 +219,7 @@ export function entreeEstimation(b, espacePersonnel, debut) {
     coefTemps: b.rubriqueId === "car" ? 1.0 : b.rubriqueId === "rental" ? f.coef : f.coef * coefLieu,
     coefPrix: 1.0, // déjà appliqué aux tâches chiffrées
     dureeBaseImposeeMin: dureeImposee,
-    niveauxSupplementaires: b.rubriqueId === "home" ? Math.max(0, b.niveaux - 1) : 0,
+    niveauxSupplementaires: ["home", "moving"].includes(b.rubriqueId) ? Math.max(0, b.niveaux - 1) : 0,
     minutesEtapesLocation: b.rubriqueId === "rental" ? minutesEtapesLocation(etapesDe(b), (b.etapesPerso || []).length, b.chambres, b.sdb) : 0,
     consommablesAControler: b.rubriqueId === "rental" && consommablesDe(b).length > 0,
     salissure: b.salissure, taches: tachesChoisies, remisePackPct: pack ? pack.remisePct : 0, remisePackC: pack ? remisePack(pack, chiffrees) : null,

@@ -135,9 +135,31 @@ export const RUBRIQUES = [
     naturesSalissure: NATURES_SALISSURE_LOCATION },
   { id: "moving", nom: "Déménagement et remise en état", sousTitre: "Un nouveau départ, du sol au plafond", emoji: "📦", tauxHoraireC: 3200, salissureSurTemps: true,
     inclus: "Nettoyage complet du logement vide. Nettoyage uniquement : Cleaneroo ne réalise ni peinture, ni rebouchage, ni réparation.",
-    formules: [F("emmenagement", "Nettoyage d'emménagement", "", 10, 180, 1.0), F("depart", "Nettoyage de départ / état des lieux", "", 10, 180, 1.1),
-      F("remise", "Remise en état", "", 10, 180, 1.4)],
-    packs: packsLogement },
+    formules: [F("emmenagement", "Nettoyage d'emménagement", "Logement vide, nettoyé avant votre arrivée", 10, 180, 1.0),
+      F("depart", "Nettoyage de départ / état des lieux", "Logement vidé, remis au propre pour l'état des lieux de sortie", 10, 180, 1.1),
+      F("remise", "Remise en état", "Logement très encrassé : calcaire, graisse, traces incrustées · analyse des photos", 10, 180, 1.4)],
+    // Tâches propres au déménagement (« à la surface » = chiffré pour 60 m²) et packs propres
+    taches: [
+      T("four", "Intérieur du four", 2500, 30, { groupe: "Cuisine" }), T("frigo", "Intérieur du réfrigérateur", 1500, 20, { groupe: "Cuisine" }),
+      T("hotte", "Hotte et filtres", 1500, 20, { groupe: "Cuisine" }), T("placards_cuisine", "Intérieur des placards de cuisine", 2000, 30, { groupe: "Cuisine" }),
+      T("penderies", "Intérieur des placards et penderies", 3000, 40, { groupe: "Pièces et rangements", parSurface: true }),
+      T("vitres", "Vitres et encadrements", 3000, 45, { groupe: "Pièces et rangements", parSurface: true }),
+      T("volets", "Volets et stores", 2500, 30, { groupe: "Pièces et rangements", parSurface: true }),
+      T("murs", "Traces sur les murs (lessivage localisé)", 3500, 45, { groupe: "Pièces et rangements", parSurface: true }),
+      T("adhesif", "Traces d'adhésif et de scotch", 1500, 20, { groupe: "Pièces et rangements" }),
+      T("detartrage", "Détartrage renforcé (robinetterie, parois, joints)", 2500, 30, { groupe: "Salle de bains" }),
+      T("sanitaires", "Désinfection renforcée des sanitaires", 1500, 20, { groupe: "Salle de bains" }),
+      T("balcon", "Balcon ou terrasse", 2000, 25, { groupe: "Extérieurs et annexes" }),
+      T("cave", "Cave ou garage (balayage, dépoussiérage)", 3500, 45, { groupe: "Extérieurs et annexes" }),
+    ],
+    packs: [
+      { id: "essentiel", nom: "Essentiel", remisePct: 5, tacheIds: ["sanitaires", "detartrage", "frigo", "adhesif"] },
+      { id: "confort", nom: "Confort", remisePct: 10, tacheIds: ["sanitaires", "detartrage", "frigo", "adhesif", "four", "vitres", "penderies"] },
+      { id: "prestige", nom: "Prestige", remisePct: 15, tacheIds: ["sanitaires", "detartrage", "frigo", "adhesif", "four", "vitres", "penderies",
+        "hotte", "placards_cuisine", "volets", "murs", "balcon", "cave"] },
+    ],
+    surfaceReferenceM2: 60,
+    naturesSalissure: ["Poussière de travaux", "Calcaire", "Graisse", "Traces et marques", "Moisissures", "Odeurs"] },
   { id: "car", nom: "Véhicules", sousTitre: "Nettoyage intérieur et extérieur", emoji: "🚗", tauxHoraireC: 4000, salissureSurTemps: false, affichagePrix: "MINIMUM_COMMANDE",
     inclus: "100 % à la carte : choisissez les tâches.",
     taches: [T("aspiration", "Aspiration complète", 2500, 30), T("tableau", "Plastiques et tableau de bord", 1000, 15),
@@ -308,3 +330,18 @@ export const ACCUEIL = { PRESENT: "Je serai présent", TIERS: "Concierge / tiers
 export const accueilAutonomeInterdit = (rubriqueId, typeLieuId) =>
   ["office", "communal", "event"].includes(rubriqueId) || (rubriqueId === "windows" && ["vitrine_commerce", "facades"].includes(typeLieuId));
 export const photosObligatoires = rubriqueId => ["moving", "construction", "kitchen"].includes(rubriqueId);
+/** Rubriques qui décrivent un logement : type, chambres, salles de bain et niveaux (+15 min par niveau supplémentaire). */
+export const RUBRIQUES_LOGEMENT = ["home", "moving"];
+/** Étape 3 : vues à photographier (une photo par vue) ; obligatoires pour déménagement, fin de chantier, cuisines ; suggérées pour les bureaux. */
+export function vuesPhotos(b) {
+  const n = (k, f) => Array.from({ length: Math.max(1, k || 1) }, (_, i) => f(i + 1));
+  switch (b.rubriqueId) {
+    case "moving": return ["Séjour", "Cuisine", ...n(b.chambres, i => `Chambre ${i}`), ...n(b.sdb, i => `Salle de bain ${i}`), "WC", "Sols et plinthes", "Fenêtres"];
+    case "construction": return [...n(b.pieces ?? 3, i => `Pièce ${i} · vue d'ensemble`), "Sols (gros plan)", "Vitres et menuiseries", "Poussières et résidus (gros plan)"];
+    case "kitchen": return ["Angle 1 (vue depuis l'entrée)", "Angle 2 (face à l'entrée)", "Angle 3 (côté gauche)", "Angle 4 (côté droit)"];
+    case "office": return ["Vue d'ensemble côté entrée", "Vue d'ensemble côté opposé", "Zone la plus encrassée", "Sols (gros plan)"];
+    default: return [];
+  }
+}
+/** Toutes les vues obligatoires ont-elles leur photo ? (prises = noms des vues photographiées) */
+export const vuesCompletes = (b, prises) => !photosObligatoires(b.rubriqueId) || vuesPhotos(b).every(v => prises.includes(v));
