@@ -1,6 +1,6 @@
 // Calcul de l'estimation : copie EXACTE de Estimation.kt (§ 8 du cahier des charges), dans le même ordre.
 import { REGLES, duree } from "./regles.js";
-import { equipementsPour, surfaceEffective, TYPES_IMMEUBLE, tranchesConvives, minutesEtapesLocation, PACK_ETAPES_CONSEILLE, PACK_CONSOMMABLES_CONSEILLE } from "./catalogue.js";
+import { prixSpecialC, minutesSpeciales, equipementsPour, surfaceEffective, TYPES_IMMEUBLE, tranchesConvives, minutesEtapesLocation, PACK_ETAPES_CONSEILLE, PACK_CONSOMMABLES_CONSEILLE } from "./catalogue.js";
 import { rubrique, formulesPour, TYPES_LIEU, RUBRIQUES_CREDIT_IMPOT, TYPES_VITRES_ELIGIBLES, prixLigne, minutesLigne, libelleLigne,
   arrondiEuro, tachesPour, tacheChiffree, packsPour, remisePack } from "./catalogue.js";
 
@@ -52,7 +52,8 @@ export function calculer(entree) {
   }
 
   // 2. Prix de base (textiles : une ligne par élément du panier, au prix forfaitaire)
-  const prixBase = vehicule ? 0 : forfait ? panier.reduce((s, l) => s + prixLigne(l), 0) : Math.round(taux * dureeBase / 60);
+  // Prestations spécialisées : prix fixé à l'avance (forfait + m²), calculé dans entreeEstimation.
+  const prixBase = vehicule ? 0 : forfait ? panier.reduce((s, l) => s + prixLigne(l), 0) : e.prixImposeC > 0 ? e.prixImposeC : Math.round(taux * dureeBase / 60);
   if (forfait) panier.forEach(l => lignes.push({ libelle: libelleLigne(l), montantC: prixLigne(l) }));
   else if (!vehicule) lignes.push({ libelle: `${r.nom} · ${duree(dureeBase)}`, montantC: prixBase });
 
@@ -249,7 +250,9 @@ export function entreeEstimation(b, espacePersonnel, debut) {
   // Temps de rotation exact (sans arrondi intermédiaire) : × formule, × salissure, + étapes, + consommables, puis quart d'heure.
   if (b.rubriqueId === "rental") { dureeImposee = tempsRotationLocation(b.chambres, b.sdb, b.surface, 1.0); m2h = 0; }
   if (b.rubriqueId === "windows") { dureeImposee = Math.max(f.minimumMin, b.fenetres * 15); m2h = 0; surface = 0; }
-  if (b.rubriqueId === "textiles" || b.rubriqueId === "special") { m2h = 0; surface = 0; }
+  if (b.rubriqueId === "textiles") { m2h = 0; surface = 0; }
+  // Prestations spécialisées : durée et prix fixés par le type d'intervention et la surface à traiter
+  if (b.rubriqueId === "special") { dureeImposee = minutesSpeciales(b.typeLieuId, b.surface); m2h = 0; surface = b.surface; }
   // Immeubles : hall et entrée + chaque palier (au moins un quart d'heure), puis formule et type
   if (b.rubriqueId === "communal" && TYPES_IMMEUBLE.includes(b.typeLieuId)) { dureeImposee = dureeImmeubleMin(b.surfacePalier ?? REGLES.SURFACE_PALIER_DEFAUT_M2, b.paliers ?? REGLES.PALIERS_DEFAUT, f.m2ParHeure); m2h = 0; }
   if (b.rubriqueId === "construction") { dureeImposee = b.surface * 60 / f.m2ParHeure * coefLieu; m2h = 0; }
@@ -258,7 +261,8 @@ export function entreeEstimation(b, espacePersonnel, debut) {
   const dispo = debut ? disponibilite(new Date(), debut) : null;
   return {
     rubriqueId: b.rubriqueId, surfaceM2: surface, m2ParHeure: m2h, minimumMin: f.minimumMin,
-    coefTemps: ["car", "construction", "kitchen"].includes(b.rubriqueId) ? 1.0 : b.rubriqueId === "rental" ? f.coef : f.coef * coefLieu,
+    prixImposeC: b.rubriqueId === "special" ? prixSpecialC(b.typeLieuId, b.surface, b.formuleId === "urgente") : 0,
+    coefTemps: ["car", "construction", "kitchen", "special"].includes(b.rubriqueId) ? 1.0 : b.rubriqueId === "rental" ? f.coef : f.coef * coefLieu,
     coefPrix: 1.0, // déjà appliqué aux tâches chiffrées
     dureeBaseImposeeMin: dureeImposee,
     niveauxSupplementaires: ["home", "moving"].includes(b.rubriqueId) ? Math.max(0, b.niveaux - 1) : 0,

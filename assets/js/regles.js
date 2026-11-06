@@ -57,6 +57,7 @@ export const REGLES = {
   ARRIVEE_SUIVANTE_DEFAUT_H: 16,
   MAJORATION_DIMANCHE_PCT: 25,
   CRENEAU_MALIN_PCT: 10,
+  MAJORATION_URGENCE_SPECIALE_PCT: 30,  // prestations spécialisées : intervention urgente (sous 24 à 48 h)
   ENGAGEMENT_PCT: { 0: 0, 3: 5, 6: 10, 12: 15 },
   CREDIT_IMPOT_PCT: 50,
   CREDIT_IMPOT_PLAFOND_C: 1200000,

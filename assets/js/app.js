@@ -314,6 +314,7 @@ function blocOffreCleaneurs() {
 
 function pageDevenir() {
   const etapes = ["Avoir un statut d'indépendant", "Préparer vos documents (pièce d'identité, SIRET, RC Pro, attestation de vigilance URSSAF)",
+    "Pour la dératisation et la désinsectisation : Certibiocide « nuisibles » obligatoire",
     "Déposer votre dossier (zone, prestations ; chaque document vérifié avant activation)", "Suivre la charte qualité",
     "Choisir vos missions (prix et horaires proposés, libre d'accepter)", "Être payé (validation client → commission prélevée → versement)"];
   return `<section class="fond-cleaneroo" style="padding:40px 0 90px">${decor([[90, 20, 90], [4, 60, 60]], [])}
@@ -375,6 +376,30 @@ async function pageMesDemandes() {
 
 const ETAPES_SUIVI = ["VERIFICATION", "PUBLIEE", "CONFIRMEE", "EN_ROUTE", "SUR_PLACE", "EN_COURS", "A_VALIDER", "TERMINEE"];
 
+/**
+ * Sinistre : e-mail pré-rempli pour l'assureur du client (le client choisit l'adresse de son assureur et l'envoie).
+ * En français : il s'adresse à un assureur français. Même texte que l'appli (mailAssurance dans EcransClient.kt).
+ */
+function mailAssurance(d, lien) {
+  const quand = d.creneau ? dateLongue(new Date(d.creneau)) : "date à confirmer";
+  const corps = [
+    "Madame, Monsieur,",
+    "",
+    "Suite au sinistre survenu dans mon logement, je vous transmets les informations de l'intervention de nettoyage réalisée par Cleaneroo, en vue de sa prise en charge.",
+    "",
+    `Référence : ${d.reference}`,
+    `Adresse : ${d.rue}, ${d.code_postal} ${d.ville}`,
+    `Date : ${quand}`,
+    `Montant : ${d.sur_devis ? "sur devis" : euros(d.estimation_c)} TTC`,
+    `Compte rendu, photos avant / après et facture : ${lien}`,
+    "",
+    "Je reste à votre disposition pour tout complément.",
+    "",
+    `${d.prenom || ""} ${d.nom || ""}`.trim(),
+  ].join("\n");
+  return `mailto:?subject=${encodeURIComponent(`Sinistre : intervention de nettoyage Cleaneroo ${d.reference}`)}&body=${encodeURIComponent(corps)}`;
+}
+
 async function pageDemande(ref, jeton) {
   let d = null;
   try { d = await suivre(ref, jeton); } catch { /* lien invalide */ }
@@ -409,6 +434,9 @@ async function pageDemande(ref, jeton) {
       <p class="petit" style="margin:4px 0 8px">Gardez-le : il permet de suivre et d'annuler votre demande depuis n'importe quel appareil.</p>
       <input class="texte" readonly value="${esc(lien)}" onclick="this.select()">
       <button type="button" class="lien-bouton" onclick="navigator.clipboard.writeText('${esc(lien)}');this.textContent='Lien copié ✓'">Copier le lien</button></div>
+    ${d.rubrique_id === "special" ? `<div class="carte" style="margin-bottom:12px"><b>Dossier pour mon assurance</b>
+      <p class="petit" style="margin:4px 0 8px">Préparez l'e-mail pour votre assureur : référence, adresse, date et montant de l'intervention, avec le lien vers le compte rendu et les photos.</p>
+      <a class="bouton secondaire" href="${mailAssurance(d, lien)}">Préparer l'e-mail à mon assureur</a></div>` : ""}
     ${annulable ? `<button type="button" class="bouton danger plein" id="annuler-demande">Annuler la demande</button>
       <p class="petit">Annulation gratuite : aucun Cleaneur n'est encore confirmé.</p>` : ""}
   </div></section>`;

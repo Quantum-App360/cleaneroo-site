@@ -3,8 +3,8 @@
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Tests des prix</title>
 <meta name="robots" content="noindex">
 <style>body{font:15px system-ui;margin:24px}li.ok{color:#2E9E72}li.ko{color:#D0485A;font-weight:700}</style>  <!-- chargement : généré par outils/generer_pages.py, ne pas modifier à la main -->
-  <script type="importmap">{"imports":{"/assets/js/app.js":"/assets/js/app.js?v=2026110614","/assets/js/catalogue.js":"/assets/js/catalogue.js?v=2026110614","/assets/js/commun.js":"/assets/js/commun.js?v=2026110614","/assets/js/compteur.js":"/assets/js/compteur.js?v=2026110614","/assets/js/donnees.js":"/assets/js/donnees.js?v=2026110614","/assets/js/estimation.js":"/assets/js/estimation.js?v=2026110614","/assets/js/gestion.js":"/assets/js/gestion.js?v=2026110614","/assets/js/icones.js":"/assets/js/icones.js?v=2026110614","/assets/js/langue.js":"/assets/js/langue.js?v=2026110614","/assets/js/page.js":"/assets/js/page.js?v=2026110614","/assets/js/regles.js":"/assets/js/regles.js?v=2026110614","/assets/js/reserver.js":"/assets/js/reserver.js?v=2026110614","/assets/js/villes.js":"/assets/js/villes.js?v=2026110614"}}</script>
-  <link rel="stylesheet" href="/assets/style.css?v=2026110614">
+  <script type="importmap">{"imports":{"/assets/js/app.js":"/assets/js/app.js?v=2026110616","/assets/js/catalogue.js":"/assets/js/catalogue.js?v=2026110616","/assets/js/commun.js":"/assets/js/commun.js?v=2026110616","/assets/js/compteur.js":"/assets/js/compteur.js?v=2026110616","/assets/js/donnees.js":"/assets/js/donnees.js?v=2026110616","/assets/js/estimation.js":"/assets/js/estimation.js?v=2026110616","/assets/js/gestion.js":"/assets/js/gestion.js?v=2026110616","/assets/js/icones.js":"/assets/js/icones.js?v=2026110616","/assets/js/langue.js":"/assets/js/langue.js?v=2026110616","/assets/js/page.js":"/assets/js/page.js?v=2026110616","/assets/js/regles.js":"/assets/js/regles.js?v=2026110616","/assets/js/reserver.js":"/assets/js/reserver.js?v=2026110616","/assets/js/villes.js":"/assets/js/villes.js?v=2026110616"}}</script>
+  <link rel="stylesheet" href="/assets/style.css?v=2026110616">
   <!-- /chargement -->
 </head>
 <body>
@@ -101,7 +101,16 @@ egal("terrasse 30 m² : 32,00 €", parcours(bx).totalC, 3200); egal("terrasse +
 const be = { rubriqueId: "event", formuleId: "apres", typeLieuId: "mariage", surface: 200 };
 egal("mariage 200 m², après : 5 h 30", parcours(be).dureeMin, 330); egal("mariage : 176,00 €", parcours(be).totalC, 17600);
 egal("mariage + Essentiel : 242,00 €", parcours({ ...be, taches: ["tri", "evacuation", "tables"] }).totalC, 24200);
-egal("prestations spécialisées : sur devis", parcours({ rubriqueId: "special", formuleId: "urgente", typeLieuId: "sinistre" }).devisObligatoire, true);
+egal("spécialisées au-delà de 300 m² : sur devis", parcours({ rubriqueId: "special", formuleId: "urgente", typeLieuId: "sinistre", surface: 301 }).devisObligatoire, true);
+// Prestations spécialisées à prix fixé (mêmes cas que ReglesTest.kt)
+e = parcours({ rubriqueId: "special", formuleId: "planifiee", typeLieuId: "cafards", surface: 62 });
+egal("cafards 62 m² : 184,00 €", e.totalC, 18400); egal("cafards : 1 h 45", e.dureeMin, 105); egal("cafards : pas de devis", e.devisObligatoire, false);
+egal("cafards urgent : 239,00 €", parcours({ rubriqueId: "special", formuleId: "urgente", typeLieuId: "cafards", surface: 62 }).totalC, 23900);
+egal("punaises 60 m² : 540,00 €", parcours({ rubriqueId: "special", formuleId: "planifiee", typeLieuId: "punaises", surface: 60 }).totalC, 54000);
+egal("nid de guêpes : 130,00 €", parcours({ rubriqueId: "special", formuleId: "planifiee", typeLieuId: "guepes", surface: 62 }).totalC, 13000);
+egal("sinistre 62 m² urgent : 3 198,00 €", parcours({ rubriqueId: "special", formuleId: "urgente", typeLieuId: "sinistre", surface: 62 }).totalC, 319800);
+egal("pastille spécialisées", pastille(rubrique("special")), "dès 130 €");
+egal("dératisation : pas de crédit d'impôt", parcours({ rubriqueId: "special", formuleId: "planifiee", typeLieuId: "rats", surface: 62 }).creditImpotC, 0);
 
 // Cuisines (prompt 7)
 const bk = { rubriqueId: "kitchen", formuleId: "apres_service", typeLieuId: "restaurant", surface: 30, equipements: { piano: 1, hotte_pro: 1, plonge: 1 } };

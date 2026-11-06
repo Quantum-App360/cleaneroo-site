@@ -407,10 +407,10 @@ export const RUBRIQUES = [
       { id: "prestige", nom: "Prestige", remisePct: 15, tacheIds: ["tri", "evacuation", "tables", "sols", "traiteur", "cuisine_maison", "desodorisation", "vaisselle", "exterieurs", "sanitaires"] },
     ],
     surfaceReferenceM2: 100 },
-  { id: "special", nom: "Prestations spécialisées", sousTitre: "Une évaluation par un professionnel qualifié", icone: "specialise", tauxHoraireC: null, salissureSurTemps: false,
-    toujoursSurDevis: true,
+  { id: "special", nom: "Prestations spécialisées", sousTitre: "Nuisibles, sinistres et désinfection", icone: "specialise", tauxHoraireC: null, salissureSurTemps: false,
+    affichagePrix: "FORFAIT",
     titreTypes: "Type d'intervention",
-    formules: [F("planifiee", "Intervention planifiée", "Visite d'évaluation, puis devis détaillé", 0, 0, 1.0, "AUTRE", false, false), F("urgente", "Intervention urgente", "Prise de contact prioritaire, évaluation sous 48 h", 0, 0, 1.0, "AUTRE", false, false)] },
+    formules: [F("planifiee", "Intervention planifiée", "Intervention à la date de votre choix", 0, 0, 1.0, "AUTRE", false, false), F("urgente", "Intervention urgente", "Intervention sous 24 à 48 h · +30 %", 0, 0, 1.0, "AUTRE", false, false)] },
 ].map(r => ({ inclus: "", formules: [], taches: [], packs: [], toujoursSurDevis: false, affichagePrix: "HORAIRE",
   surfaceReferenceM2: 0, occasions: [], naturesSalissure: [], moments: MOMENTS_PAR_DEFAUT, frequences: FREQUENCES, titreTypes: "", noteTaches: "", ...r }));
 
@@ -519,6 +519,7 @@ export function libelleLigne(l) {
 export const eurosRond = c => (c % 100 === 0 ? euros(c).replace(",00", "") : euros(c));
 /** Pastille du catalogue : « dès 26,90 € / h », « dès 29 € le ménage », « dès 40 € », « dès 45 € l'élément ». */
 export function pastille(r) {
+  if (r.affichagePrix === "FORFAIT") return `dès ${eurosRond(prixAppelSpecialC())}`;
   if (r.toujoursSurDevis || r.tauxHoraireC == null) return "Sur devis";
   switch (r.affichagePrix) {
     case "PAR_MENAGE": return `dès ${eurosRond(REGLES.MINIMUM_MENAGE_LOCATION_C)} le ménage`;
@@ -554,7 +555,11 @@ export const TYPES_LIEU = {
   windows: [L("fenetres_logement", "Fenêtres d'un logement", 1.0, "Vitres, faces intérieure et extérieure accessibles"), L("baies_veranda", "Baies vitrées et véranda", 1.1), L("vitrine_commerce", "Vitrine de commerce", 1.0), L("facades", "Bureaux et façades vitrées", 1.1)],
   outdoor: [L("terrasse", "Terrasse / balcon", 1.0, "Balayage et lavage des sols"), L("jardin", "Jardin, allées et cour", 1.0), L("garage", "Garage, cave ou abri", 0.9), L("piscine", "Abords de piscine", 1.1, "Plages et margelles"), L("cour_immeuble", "Cour d'immeuble / parking extérieur", 0.9)],
   event: [L("mariage", "Mariage / réception", 1.1, "Salle, sols, tables, sanitaires"), L("fete", "Fête privée à domicile", 1.0, "Pièces de réception, cuisine, sanitaires"), L("seminaire", "Séminaire / événement d'entreprise", 1.0), L("salon", "Salon / exposition", 1.1), L("anniversaire", "Anniversaire / fête en salle", 1.0)],
-  special: [L("desinfection", "Désinfection approfondie", 1.0, "Évaluation sur place, protocole et produits adaptés"), L("encombre", "Logement très encombré ou insalubre", 1.0, "Visite d'évaluation, tri, désencombrement et nettoyage"), L("sinistre", "Après sinistre (dégât des eaux, suies)", 1.0, "Évaluation des dégâts, nettoyage des surfaces et des suies"), L("deces", "Nettoyage après décès", 1.0, "Intervention discrète, désinfection et remise en état")],
+  special: [L("cafards", "Cafards et blattes (désinsectisation)", 1.0, "Diagnostic, traitement gel et pulvérisation ciblée, passage de contrôle"),
+    L("punaises", "Punaises de lit", 1.0, "Traitement en 2 passages à 15 jours d'intervalle, conseils de préparation du logement"),
+    L("rats", "Rats et souris (dératisation)", 1.0, "Diagnostic, postes d'appâtage sécurisés, 2 passages de contrôle"),
+    L("guepes", "Nid de guêpes ou de frelons", 1.0, "Destruction d'un nid accessible (jusqu'à 5 m de hauteur), produit adapté"),
+    L("desinfection", "Désinfection approfondie", 1.0, "Évaluation sur place, protocole et produits adaptés"), L("encombre", "Logement très encombré ou insalubre", 1.0, "Visite d'évaluation, tri, désencombrement et nettoyage"), L("sinistre", "Après sinistre (dégât des eaux, suies)", 1.0, "Évaluation des dégâts, nettoyage des surfaces et des suies"), L("deces", "Nettoyage après décès", 1.0, "Intervention discrète, désinfection et remise en état")],
   construction: [L("carrelage", "Carrelage", 1.0), L("parquet", "Parquet", 1.15), L("beton", "Béton ciré", 1.0),
     L("lino", "Lino / PVC", 0.9), L("moquette", "Moquette", 1.25), L("pierre", "Pierre naturelle", 1.2)],
   car: [L("citadine", "Citadine", 1.0), L("berline", "Berline", 1.15), L("suv", "SUV", 1.3), L("utilitaire", "Utilitaire", 1.45)],
@@ -567,6 +572,35 @@ export function formulesPour(r) {
     default: return [F("standard", "Standard", "", 25, 60)];
   }
 }
+
+/**
+ * Prestations spécialisées : prix fixé à l'avance (copie de TARIFS_SPECIAUX dans Catalogue.kt).
+ * Forfait jusqu'à [jusquaM2], puis prix au m² au-delà ; durée de base + minutes par m² au-delà.
+ * Prix moyens du marché relevés en novembre 2026 (comparateurs de travaux, sites spécialisés).
+ * certibiocide : réservé aux Cleaneurs titulaires du Certibiocide « nuisibles ». surface : la surface est demandée.
+ */
+export const TARIFS_SPECIAUX = {
+  cafards: { prixC: 16000, jusquaM2: 50, prixM2C: 200, minutes: 90, minutesParM2: 1, certibiocide: true, surface: true },
+  punaises: { prixC: 30000, jusquaM2: 30, prixM2C: 800, minutes: 120, minutesParM2: 2, certibiocide: true, surface: true },
+  rats: { prixC: 22000, jusquaM2: 100, prixM2C: 100, minutes: 90, minutesParM2: 0.5, certibiocide: true, surface: true },
+  guepes: { prixC: 13000, jusquaM2: 0, prixM2C: 0, minutes: 60, minutesParM2: 0, certibiocide: true, surface: false },
+  desinfection: { prixC: 15000, jusquaM2: 25, prixM2C: 600, minutes: 90, minutesParM2: 2, certibiocide: false, surface: true },
+  encombre: { prixC: 40000, jusquaM2: 16, prixM2C: 2500, minutes: 240, minutesParM2: 6, certibiocide: false, surface: true },
+  sinistre: { prixC: 30000, jusquaM2: 8, prixM2C: 4000, minutes: 180, minutesParM2: 5, certibiocide: false, surface: true },
+  deces: { prixC: 40000, jusquaM2: 10, prixM2C: 3500, minutes: 180, minutesParM2: 4, certibiocide: false, surface: true },
+};
+const tarifSpecial = id => TARIFS_SPECIAUX[id] || TARIFS_SPECIAUX.desinfection;
+const auDela = (t, surface) => (t.surface ? Math.max(0, surface - t.jusquaM2) : 0);
+/** Prix TTC d'une prestation spécialisée (urgente : +30 %), arrondi à l'euro. */
+export function prixSpecialC(typeId, surface, urgent) {
+  const t = tarifSpecial(typeId);
+  const base = t.prixC + auDela(t, surface) * t.prixM2C;
+  return arrondiEuro(urgent ? base * (100 + REGLES.MAJORATION_URGENCE_SPECIALE_PCT) / 100 : base);
+}
+/** Durée de base (minutes) d'une prestation spécialisée. */
+export const minutesSpeciales = (typeId, surface) => { const t = tarifSpecial(typeId); return t.minutes + auDela(t, surface) * t.minutesParM2; };
+/** Prix d'appel de la pastille (« dès 130 € »). */
+export const prixAppelSpecialC = () => Math.min(...Object.values(TARIFS_SPECIAUX).map(t => t.prixC));
 
 export const BESOINS_SPECIAUX = [["desinfection", "Désinfection approfondie"], ["encombre", "Logement très encombré"], ["sinistre", "Après sinistre"], ["deces", "Nettoyage après décès"]];
 
