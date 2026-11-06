@@ -535,6 +535,21 @@ export const RACCOURCIS_VITRINE = [
   ["car", "Voiture", "Intérieur, extérieur — À la carte"], ["office", "Bureaux", "Cabinets et agences"],
 ];
 export const RUBRIQUES_CREDIT_IMPOT = ["home", "windows", "textiles"];
+
+/** Trois parties de réservation, chacune avec ses prestations (même liste que Catalogue.parties dans l'appli).
+ *  Le crédit d'impôt ne concerne que les particuliers (« personnel »). */
+export const PARTIES = [
+  { id: "personnel", nom: "Particulier", detail: "Crédit d'impôt sur le ménage, les vitres et les textiles (services à la personne)",
+    rubriques: ["home", "rental", "moving", "textiles", "windows", "outdoor", "car", "kitchen", "event", "construction", "special"] },
+  { id: "conciergerie", nom: "Conciergerie et locations", detail: "Locations saisonnières et logements gérés · facture au nom de votre société",
+    rubriques: ["rental", "home", "moving", "textiles", "windows", "outdoor", "construction", "special"] },
+  { id: "professionnel", nom: "Entreprise", detail: "Bureaux, commerces, immeubles, cuisines pro · facture au nom de votre société",
+    rubriques: ["office", "commerce", "communal", "kitchen", "windows", "outdoor", "construction", "car", "event", "textiles", "special"] },
+];
+export const partie = id => PARTIES.find(p => p.id === id) || PARTIES[0];
+/** Partie qui propose cette prestation (la partie demandée si elle la propose, sinon la première qui la propose). */
+export const partiePour = (rubriqueId, voulue = "personnel") =>
+  partie(voulue).rubriques.includes(rubriqueId) ? partie(voulue).id : (PARTIES.find(p => p.rubriques.includes(rubriqueId)) || PARTIES[0]).id;
 export const TYPES_VITRES_ELIGIBLES = ["fenetres_logement", "baies_veranda"];
 
 export const TYPES_LOGEMENT = [

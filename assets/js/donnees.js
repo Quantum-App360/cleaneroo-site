@@ -66,6 +66,17 @@ export async function mesDemandes() {
   return res.filter(Boolean).map((d, i) => ({ ...d, jeton: locales[i].jeton }));
 }
 
+/* Missions des Cleaneurs : le Cleaneur est rattaché automatiquement à la demande quand il prend la mission. */
+const rpc = async (nom, args = {}) => { const { data, error } = await supabase.rpc(nom, args); if (error) throw new Error(error.message); return data; };
+export const missionsDisponibles = () => rpc("missions_disponibles");
+export const mesMissions = () => rpc("mes_missions");
+/** "ok", "deja_prise", "ouverture" (avant le 1er janvier 2027), "dossier" ou "connexion". */
+export const prendreMission = reference => rpc("prendre_mission", { p_reference: reference });
+export const avancerMission = (reference, statut) => rpc("avancer_mission", { p_reference: reference, p_statut: statut });
+/** Position du Cleaneur pendant son trajet ("ok", "statut", "interdit"…). */
+export const envoyerPosition = (reference, lat, lon, cap = null) =>
+  rpc("envoyer_position", { p_reference: reference, p_lat: lat, p_lon: lon, p_cap: Number.isFinite(cap) ? cap : null });
+
 /** Suivi en direct : dernière position du Cleaneur (en route ou sur place), ou null. */
 export async function suivrePosition(reference, jeton) {
   const { data, error } = await supabase.rpc("position_suivi", { p_reference: reference, p_jeton: jeton });

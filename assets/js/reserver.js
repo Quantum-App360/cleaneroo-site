@@ -1,6 +1,6 @@
 // Parcours de réservation en 5 étapes : copie de Reservation.kt (application Android).
 // 1 prestation · 2 questionnaire · 3 photos · 4 adresse, accès et créneau · 5 estimation, coordonnées et envoi.
-import { TARIFS_SPECIAUX, RUBRIQUES, rubrique, formulesPour, TYPES_LIEU, TYPES_LOGEMENT, BESOINS_SPECIAUX, ACCUEIL, accueilAutonomeInterdit, photosObligatoires,
+import { PARTIES, partie, partiePour, TARIFS_SPECIAUX, RUBRIQUES, rubrique, formulesPour, TYPES_LIEU, TYPES_LOGEMENT, BESOINS_SPECIAUX, ACCUEIL, accueilAutonomeInterdit, photosObligatoires,
   ELEMENTS_TEXTILES, TAILLES_CANAPE, prixLigne, minutesLigne, libelleLigne, pastille,
   FREQUENCES, JOURS_SEMAINE, DERNIERS_NETTOYAGES, packsPour, remisePack,
   TACHES_A_TRAITER, TYPES_CHANTIER, equipementsPour, DELAIS_URGENCE, TYPES_IMMEUBLE, surfaceEffective, SELECTION_CONSEILLEE_VEHICULE, LIEUX_VEHICULE, FREQUENCES_VEHICULE, RUBRIQUES_LOGEMENT, vuesPhotos, vuesCompletes, PIECES_LOCATION, ETAPES_LOCATION, PACK_ETAPES_CONSEILLE, CONSOMMABLES_LOCATION, PACK_CONSOMMABLES_CONSEILLE } from "./catalogue.js";
@@ -66,7 +66,7 @@ export function brouillonExemple(rubriqueId, champs = {}) {
 }
 
 function nouveauBrouillon(rubriqueId, espace = "personnel", rapide = false) {
-  const br = brouillonInitial(rubriqueId, espace, rapide);
+  const br = brouillonInitial(rubriqueId, partiePour(rubriqueId, espace), rapide);
   return lieuEnAttente && !br.rue ? { ...br, ...lieuEnAttente } : br;
 }
 
@@ -115,6 +115,7 @@ export function ouvrirReservation(conteneur, rubriqueId, option = "") {
   const rapide = option === "rapide";
   if (rubriqueId && rubrique(rubriqueId)) b = !rapide && ancien && ancien.rubriqueId === rubriqueId ? ancien : nouveauBrouillon(rubriqueId, ancien?.espace, rapide);
   else b = ancien && ancien.etape > 1 ? ancien : null;
+  if (b?.rubriqueId) b = { ...b, espace: partiePour(b.rubriqueId, b.espace) };
   // Code postal saisi sur l'accueil (« Voir mon prix »).
   const cp = option.match(/^cp-(\d{5})$/)?.[1];
   if (b && cp && !b.rue) b = { ...b, codePostal: cp };
@@ -124,7 +125,7 @@ export function ouvrirReservation(conteneur, rubriqueId, option = "") {
   // Espace Pro : « Programmer le ménage » après un départ (bien et jour repris).
   if (pr?.bienId && rubrique(rubriqueId)) {
     const l = logements().find(x => x.id === pr.bienId);
-    b = { ...avecLogement(nouveauBrouillon(rubriqueId, "personnel"), l), jour: pr.jour || "", heure: -1, etape: 2 };
+    b = { ...avecLogement(nouveauBrouillon(rubriqueId, "conciergerie"), l), jour: pr.jour || "", heure: -1, etape: 2 };
   }
   if (pr?.champs && pr.rubriqueId === rubriqueId && rubrique(rubriqueId)) b = { ...nouveauBrouillon(rubriqueId, ancien?.espace || "personnel"), ...pr.champs, etape: 2 };
   photos = [];
@@ -177,14 +178,14 @@ const champTexte = (lib, champ, val, type = "text", extra = "") => `<label class
 function etape1() {
   return `<h1>Que souhaitez-vous nettoyer ?</h1><p class="muet">Choisissez votre prestation : le prix s'affiche dès que vous décrivez votre besoin.</p>
     ${titre("Pour qui ?")}
-    <div class="segments"><button type="button" data-espace="personnel" class="${(b?.espace || "personnel") === "personnel" ? "choisi" : ""}">Personnel</button>
-      <button type="button" data-espace="professionnel" class="${b?.espace === "professionnel" ? "choisi" : ""}">Professionnel</button></div>
+    <div class="segments trois">${PARTIES.map(p => `<button type="button" data-espace="${p.id}" class="${partie(b?.espace).id === p.id ? "choisi" : ""}">${p.nom}</button>`).join("")}</div>
+    <p class="petit" style="margin:6px 0 0">${partie(b?.espace).detail}</p>
     ${modeles().length ? titre("Comme la dernière fois") + `<div class="grille-2">${modeles().slice(0, 4).map(m => {
       const r = rubrique(m.rubriqueId), l = logements().find(x => x.id === m.logementId);
       return `<a class="carte prestation rapide" href="#/reserver/${m.rubriqueId}/rapide">${icone(r.icone, { tuile: true })}<h3>${r.nom}</h3>
         <p class="muet" style="margin:4px 0 0">${l ? esc(nomLogement(l)) : ""}</p><span class="tampon vert">Recommander en 3 clics ›</span></a>`; }).join("")}</div>` : ""}
     ${titre("Votre prestation")}
-    <div class="grille-3">${RUBRIQUES.map(r => `<button type="button" class="carte prestation" data-rubrique="${r.id}" style="text-align:left">
+    <div class="grille-3">${RUBRIQUES.filter(r => partie(b?.espace).rubriques.includes(r.id)).map(r => `<button type="button" class="carte prestation" data-rubrique="${r.id}" style="text-align:left">
       ${icone(r.icone, { tuile: true })}<h3>${r.nom}</h3><p class="muet" style="margin:4px 0 0">${r.sousTitre}</p><span class="tampon">${pastille(r)}</span></button>`).join("")}</div>`;
 }
 

@@ -898,3 +898,14 @@ details.carte > div > .carte, details.carte > form.carte { box-shadow: none; pad
 body.corps-mini { margin: 0; background: var(--fond); }
 body.corps-mini .suivi-live { border-radius: 0; box-shadow: none; height: 100vh; display: flex; flex-direction: column; }
 body.corps-mini .carte-live { flex: 1; height: auto; }
+
+/* ------------------------------------------------------------------ Accès Cleaneur : le menu ne garde que ce qui le concerne */
+body.acces-cleaneur .nav a[href$="#/prestations"], body.acces-cleaneur .nav a[href$="#/mes-demandes"],
+body.acces-cleaneur .nav a[href$="#/reserver"], body.acces-cleaneur .nav a[href$="#/inscription"] { display: none; }
+/* Réservation : trois parties (particulier, conciergerie, entreprise) */
+.segments.trois { display: grid; grid-template-columns: repeat(3, 1fr); }
+@media (max-width: 560px) { .segments.trois { grid-template-columns: 1fr; } }
+/* Espace Pro : recherche et tri des biens */
+.outils-biens { display: flex; gap: 8px; flex-wrap: wrap; margin: 4px 0 12px; }
+.outils-biens input { flex: 1 1 220px; min-height: 44px; border-radius: 12px; border: 1px solid var(--separateur); background: var(--surface); color: var(--texte); padding: 0 14px; font: inherit; }
+.outils-biens select { min-height: 44px; border-radius: 12px; border: 1px solid var(--separateur); background: var(--surface); color: var(--texte); padding: 0 10px; font: inherit; }

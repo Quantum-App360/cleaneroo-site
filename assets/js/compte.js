@@ -11,7 +11,7 @@ import {
   demandesDuCompte, mesDemandes, synchroniserBiens, enregistrerBien, supprimerBien,
 } from "./donnees.js";
 import { oublierMesInformations } from "./reserver.js";
-import { ONGLETS, ongletParDefaut, barreOnglets, ongletParticulier, ongletPro, brancherPro, ongletCleaneur } from "./espaces.js";
+import { ONGLETS, ongletParDefaut, barreOnglets, ongletParticulier, ongletPro, brancherPro, ongletCleaneur, brancherMissions, demanderGeoloc } from "./espaces.js";
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const OUVERTURE = "Les interventions commencent le 1er janvier 2027.";
@@ -40,6 +40,8 @@ export async function majLienCompte() {
   document.querySelectorAll("[data-lien-compte]").forEach(a => a.textContent = p?.prenom ? p.prenom : tr("Mon compte"));
   // Espace Cleaneur créé (Cleaneur ou administrateur) : « Devenir Cleaneur » devient « Mon espace Cleaneur ».
   const espace = p?.role === "cleaneur" || p?.role === "admin";
+  // Cleaneur (hors administration) : le menu ne garde que ce qui le concerne.
+  document.body.classList.toggle("acces-cleaneur", p?.role === "cleaneur");
   document.querySelectorAll('.nav a[href$="#/devenir-cleaneur"], .nav a[data-espace-cleaneur]').forEach(a => {
     a.dataset.espaceCleaneur = "1";
     const avant = a.getAttribute("href").split("#")[0]; // « / » sur les pages fixes (villes, calculateur…)
@@ -62,29 +64,32 @@ export async function pageCompte(vue, param) {
   if (!p) { vue.innerHTML = `<section class="bloc"><div class="etroit">${titre("Mon compte")}<p class="erreur">${tr("Le service est momentanément indisponible. Réessayez dans quelques minutes.")}</p></div></section>`; traduire(vue); return; }
   memoriserCoordonnees(p);
   const cleaneur = p.role === "cleaneur" || p.role === "admin";
-  const onglet = ONGLETS.some(o => o[0] === param) ? param : ongletParDefaut(p, biens);
+  // Cleaneur : uniquement son espace Cleaneur (pas d'onglets Particulier ni Pro).
+  const onglet = p.role === "cleaneur" ? "cleaneur" : ONGLETS.some(o => o[0] === param) ? param : ongletParDefaut(p, biens);
   const docs = cleaneur && onglet === "cleaneur" ? await mesDocuments().catch(() => []) : [];
   if (location.hash !== ici) return;
   const contenu = onglet === "pro" ? ongletPro(p, biens)
     : onglet === "cleaneur" ? ongletCleaneur(p, docs, { dossier: cleaneur ? blocDossier(p, docs) : "", profil: cleaneur ? formulaireProfil(p, true) : "" })
     : ongletParticulier(p, biens, demandes) + formulaireProfil(p, false);
   vue.innerHTML = `<section class="bloc"><div class="etroit large-compte">
+    ${p.role === "cleaneur" ? `<span class="surtitre">Mon espace Cleaneur</span>` : ""}
     ${titre(`Bonjour ${esc(p.prenom || "")}`.trim())}
     <p><span class="tampon">${ROLES[p.role]}</span> <span class="petit">${esc(p.email)}</span></p>
     <div class="note" style="margin:14px 0"><span><b>Comptes ouverts dès maintenant.</b> ${OUVERTURE}</span></div>
     ${p.role === "admin" ? `<div class="carte teintee" style="margin-bottom:14px"><b>Espace administrateur</b>
       <p class="petit" style="margin:4px 0 10px">Demandes, inscriptions et dossiers des Cleaneurs (documents, validation).</p>
       <a class="bouton secondaire" href="gestion.html">Ouvrir la gestion</a></div>` : ""}
-    ${barreOnglets(onglet)}
+    ${p.role === "cleaneur" ? "" : barreOnglets(onglet)}
     <div class="contenu-onglet">${contenu}</div>
     <p style="margin-top:18px"><button type="button" class="lien-bouton" id="deconnexion-compte">Se déconnecter</button></p>
   </div></section>`;
   traduire(vue);
   if (vue.querySelector("#form-profil")) brancherProfil(vue, p, onglet === "cleaneur" && cleaneur);
-  if (onglet === "cleaneur" && cleaneur) brancherDossier(vue, p);
+  if (onglet === "cleaneur" && cleaneur) { brancherDossier(vue, p); brancherMissions(vue, p); }
   if (onglet === "pro") brancherPro(vue, p, biens, demandes, { majProfil, recharger: () => pageCompte(vue) });
   vue.querySelector("#devenir-cleaneur")?.addEventListener("click", async e => {
     e.target.disabled = true;
+    demanderGeoloc();   // autorisation demandée dès l'inscription comme Cleaneur
     await devenirCleaneur().catch(() => null);
     majLienCompte();
     pageCompte(vue);
@@ -144,6 +149,7 @@ function ecranConnexion(vue, mode, message = "", ok = false, roleDefaut = "clien
     if (!f.cgu.checked) return erreur("Acceptez les conditions d'utilisation pour créer votre compte.");
     try {
       const pro = f.role.value === "pro";   // compte client ouvert sur l'espace Pro
+      if (f.role.value === "cleaneur") demanderGeoloc();   // autorisation de géolocalisation dès l'inscription
       const r = await creerCompte({ email, mdp: f.mdp.value, role: pro ? "client" : f.role.value, prenom: f.prenom.value.trim(), nom: f.nom.value.trim() });
       if (r === "connecte") { majLienCompte(); if (pro) { location.hash = "#/compte/pro"; return; } return pageCompte(vue); }
       ecranConnexion(vue, "connexion", tr("Compte créé. Ouvrez l'e-mail de confirmation que nous venons de vous envoyer, cliquez sur le lien, puis connectez-vous."), true);

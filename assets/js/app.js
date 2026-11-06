@@ -474,6 +474,8 @@ async function afficher() {
   const chemin = location.hash.replace(/^#\/?/, "");
   const [route, param] = chemin.split("/");
   if (route === "gestion") { location.href = "gestion.html"; return; }
+  // Accès Cleaneur : l'accueil, les prestations, l'estimation et « Mes prestations » mènent à son espace.
+  if (document.body.classList.contains("acces-cleaneur") && ["", "prestations", "reserver", "mes-demandes"].includes(route)) { location.replace("#/compte/cleaneur"); return; }
   compterPage(route, param);
   document.querySelector(".nav")?.classList.remove("ouvert");
   document.body.classList.toggle("sans-rappel", route === "reserver");
@@ -532,5 +534,5 @@ document.title = tr(document.title);
 installerRappel();
 window.addEventListener("hashchange", afficher);
 await retourEmail();
-majLienCompte();
+await majLienCompte();
 afficher();

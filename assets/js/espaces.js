@@ -6,6 +6,7 @@ import { icone } from "./icones.js";
 import { traduire, tr, LOCALE } from "./langue.js";
 import { DOCUMENTS_CLEANEUR, enregistrerBien, lireCalendrier } from "./donnees.js";
 import { preremplir } from "./reserver.js";
+export { brancherMissions, demanderGeoloc } from "./missions.js";
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 export const ONGLETS = [["particulier", "Particulier", "logement"], ["pro", "Pro", "bureaux"], ["cleaneur", "Cleaneur", "cleaneurs"]];
@@ -47,7 +48,9 @@ export function ongletParticulier(p, biens, demandes) {
       <a class="carte raccourci" href="#/mes-demandes">${icone("calendrier", { tuile: true })}<b>Mes prestations</b><span class="petit">À venir et passées</span></a>
       <a class="carte raccourci" href="#/mes-demandes">${icone("logement", { tuile: true })}<b>Mes biens</b><span class="petit">${biens.length} adresse${biens.length > 1 ? "s" : ""} enregistrée${biens.length > 1 ? "s" : ""}</span></a>
       <a class="carte raccourci" href="#/reserver">${icone("instantane", { tuile: true })}<b>Nouvelle demande</b><span class="petit">Prix immédiat</span></a>
-    </div>`;
+    </div>
+    ${p.role === "client" ? `<a class="carte ligne-compte" href="#/compte/cleaneur">${icone("cleaneurs", { tuile: true })}
+      <div class="corps"><b>Vous êtes auto-entrepreneur ?</b><p class="petit" style="margin:2px 0 0">Devenez Cleaneur : missions près de chez vous, à votre rythme.</p></div><span class="aller" aria-hidden="true">›</span></a>` : ""}`;
 }
 
 /* ------------------------------------------------------------------ Pro : conciergeries et multi-propriétaires */
@@ -94,9 +97,11 @@ export function ongletPro(p, biens) {
     <div id="a-programmer"><div class="vide-compte"><p class="muet">Lecture de vos calendriers…</p></div></div>
     <h2 class="titre-section">${icone("logement", { tuile: true })}Mon parc de biens</h2>
     <p class="petit" style="margin-top:0">Reliez le calendrier de chaque bien : les départs de vos voyageurs apparaissent dans l'agenda.</p>
-    ${biens.length ? biens.map(l => {
+    ${biens.length > 1 ? `<div class="outils-biens"><input type="search" id="cherche-bien" placeholder="${esc(tr("Rechercher un bien, une rue, une ville…"))}" aria-label="Rechercher un bien">
+      <select id="tri-biens" aria-label="Trier les biens"><option value="nom">Nom (A → Z)</option><option value="nom-inv">Nom (Z → A)</option><option value="ville">Ville</option><option value="depart">Prochain départ</option></select></div>` : ""}
+    <div id="liste-biens">${biens.length ? biens.slice().sort((a, b) => nomBien(a).localeCompare(nomBien(b), "fr", { sensitivity: "base", numeric: true })).map(l => {
       const cals = (l.calendriers || []).filter(c => c.url);
-      return `<div class="carte bien-pro" data-bien="${esc(l.id)}">
+      return `<div class="carte bien-pro" data-bien="${esc(l.id)}" data-texte="${esc(`${nomBien(l)} ${l.rue} ${l.codePostal} ${l.ville}`.toLowerCase())}">
         <div class="ligne-compte" style="padding:0;box-shadow:none;border:0;background:none">${icone("logement", { tuile: true })}
           <div class="corps"><b>${esc(nomBien(l))}</b><div class="petit">${esc(l.rue)}, ${esc(l.codePostal)} ${esc(l.ville)}${l.surface ? `<span> · ${l.surface} m²</span>` : ""}${l.chambres != null ? `<span> · ${l.chambres} ch.</span>` : ""}</div>
           <div class="pastilles">${cals.length ? cals.map(c => `<span class="pastille ${c.source}" data-etat-cal="${esc(c.url)}">${SOURCES.find(s => s[0] === c.source)?.[1] || ""}</span>`).join("") : `<span class="pastille vide">Aucun calendrier relié</span>`}</div></div></div>
@@ -105,7 +110,8 @@ export function ongletPro(p, biens) {
             <label class="champ">Nom du bien<input name="nom" maxlength="60" value="${esc(l.nom)}" placeholder="${esc(tr("Ex. : Studio Vieux-Port"))}"></label>
             ${SOURCES.map(([id, nom]) => `<label class="champ">Lien du calendrier ${nom}<input name="${id}" type="url" inputmode="url" maxlength="600" placeholder="https://…ics" value="${esc((l.calendriers || []).find(c => c.source === id)?.url)}"></label>`).join("")}
             <p class="erreur" data-erreur-cal></p><button class="bouton plein" type="submit">Enregistrer</button></form></details></div>`;
-    }).join("") : `<div class="vide-compte"><p class="muet">Aucun bien enregistré pour l'instant.</p><p class="petit">Ajoutez vos biens dans « Mes prestations » ou lors d'une réservation.</p></div>`}
+    }).join("") : `<div class="vide-compte"><p class="muet">Aucun bien enregistré pour l'instant.</p><p class="petit">Ajoutez vos biens dans « Mes prestations » ou lors d'une réservation.</p></div>`}</div>
+    <p class="petit" id="aucun-bien" hidden>Aucun bien ne correspond à votre recherche.</p>
     <div class="boutons"><a class="bouton secondaire" href="#/mes-demandes">＋ Ajouter un bien</a><a class="bouton secondaire" href="#/reserver/rental">Réserver un ménage de location</a></div>
     <details class="carte aide-ical"><summary>Où trouver le lien de mon calendrier ?</summary>
       <p><b>Airbnb</b> : Annonces › votre annonce › Disponibilités › Synchroniser les calendriers › Exporter le calendrier. Copiez le lien.</p>
@@ -137,12 +143,37 @@ export function brancherPro(vue, p, biens, demandes, { majProfil, recharger }) {
     try { await enregistrerBien({ ...l, nom: f.nom.value.trim(), calendriers }); recharger(); }
     catch { err.textContent = tr("Le service est momentanément indisponible. Réessayez dans quelques minutes."); }
   });
-  remplirAgenda(vue, biens, demandes);
+  remplirAgenda(vue, biens, demandes).then(prochains => trierBiens(vue, biens, prochains));
+  trierBiens(vue, biens, {});
+}
+
+/** Recherche (nom, rue, ville) et tri des biens : nom A → Z par défaut, Z → A, ville ou prochain départ. */
+function trierBiens(vue, biens, prochains) {
+  const liste = vue.querySelector("#liste-biens"), cherche = vue.querySelector("#cherche-bien"), tri = vue.querySelector("#tri-biens");
+  if (!liste || !cherche) return;
+  const comparer = (a, b) => a.localeCompare(b, "fr", { sensitivity: "base", numeric: true });
+  const appliquer = () => {
+    const q = cherche.value.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const cartes = [...liste.querySelectorAll("[data-bien]")];
+    const cle = id => biens.find(x => x.id === id);
+    cartes.sort((x, y) => {
+      const a = cle(x.dataset.bien), b = cle(y.dataset.bien);
+      if (tri.value === "nom-inv") return comparer(nomBien(b), nomBien(a));
+      if (tri.value === "ville") return comparer(a.ville, b.ville) || comparer(nomBien(a), nomBien(b));
+      if (tri.value === "depart") return (prochains[a.id] || "9999").localeCompare(prochains[b.id] || "9999") || comparer(nomBien(a), nomBien(b));
+      return comparer(nomBien(a), nomBien(b));
+    }).forEach(c => liste.appendChild(c));
+    let visibles = 0;
+    cartes.forEach(c => { const ok = !q || c.dataset.texte.normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(q); c.hidden = !ok; visibles += ok; });
+    vue.querySelector("#aucun-bien").hidden = visibles > 0;
+  };
+  cherche.oninput = appliquer; tri.onchange = appliquer;
+  appliquer();
 }
 
 async function remplirAgenda(vue, biens, demandes) {
   const { sejours, erreurs } = await sejoursDes(biens);
-  if (!vue.querySelector("#agenda-pro")) return;   // page quittée entre-temps
+  if (!vue.querySelector("#agenda-pro")) return {};   // page quittée entre-temps
   // Calendriers injoignables : pastille rouge sur le bien.
   vue.querySelectorAll("[data-etat-cal]").forEach(s => { if (erreurs[s.dataset.etatCal]) { s.classList.add("ko"); s.title = tr("Calendrier injoignable"); } });
   const auj = new Date(); auj.setHours(0, 0, 0, 0);
@@ -152,6 +183,9 @@ async function remplirAgenda(vue, biens, demandes) {
     return demandes.some(d => d.statut !== "ANNULEE" && l && memeAdresse(d, l) && d.creneau && iso(new Date(d.creneau)) === jour);
   };
   const departs = sejours.filter(s => s.fin >= debut && s.fin <= fin).sort((a, b) => a.fin.localeCompare(b.fin));
+  // Prochain départ de chaque bien (tri « Prochain départ »).
+  const prochains = {};
+  sejours.filter(s => s.fin >= debut).forEach(s => { if (!prochains[s.bienId] || s.fin < prochains[s.bienId]) prochains[s.bienId] = s.fin; });
   const rotation = s => sejours.some(x => x.bienId === s.bienId && x.debut === s.fin);
   const aProgrammer = departs.filter(s => !menagePrevu(s.bienId, s.fin))
     .filter((s, i, t) => t.findIndex(x => x.bienId === s.bienId && x.fin === s.fin) === i);   // même départ sur deux calendriers
@@ -204,6 +238,7 @@ async function remplirAgenda(vue, biens, demandes) {
     boite.querySelector("#filtre-bien")?.addEventListener("change", e => { filtreBien = e.target.value; dessiner(); });
   };
   dessiner();
+  return prochains;
 }
 
 /* ------------------------------------------------------------------ Cleaneur : se concentrer sur ses missions */
@@ -223,18 +258,16 @@ export function preparationCleaneur(p, docs) {
 
 export function ongletCleaneur(p, docs, { dossier, profil }) {
   if (p.role === "client") return `<div class="carte mise-en-avant"><span class="surtitre">Espace Cleaneur</span>
-      <h2 style="margin:6px 0 4px">Vous êtes indépendant du ménage ?</h2>
-      <p class="muet" style="margin:0 0 10px">Ouvrez votre espace Cleaneur avec ce compte : missions près de chez vous, planning, déroulé guidé et paiement sécurisé.</p>
+      <h2 style="margin:6px 0 4px">Devenez Cleaneur en auto-entrepreneur</h2>
+      <p class="muet" style="margin:0 0 6px">Missions près de chez vous, à votre rythme, déroulé guidé et paiement sécurisé.</p>
+      <ul class="petit" style="margin:0 0 10px;padding-left:18px"><li>Statut d'auto-entrepreneur (micro-entreprise) avec un numéro SIRET</li>
+        <li>Assurance responsabilité civile professionnelle et attestation URSSAF</li>
+        <li>Votre compte devient un compte Cleaneur : il ne sert plus à réserver des ménages.</li></ul>
       <button type="button" class="bouton" id="devenir-cleaneur">Devenir Cleaneur avec ce compte</button></div>`;
   const etapes = preparationCleaneur(p, docs), faites = etapes.filter(e => e[1]).length;
   const admin = p.role === "admin";
-  return `<div class="carte mise-en-avant">
-      <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap"><span class="surtitre">Aujourd'hui</span>${admin ? `<span class="tampon">Accès administrateur</span>` : ""}</div>
-      <h2 style="margin:6px 0 2px">Aucune mission aujourd'hui</h2>
-      <p class="muet" style="margin:0">Les missions commencent le 1er janvier 2027. Elles s'afficheront ici, dans l'ordre de la journée.</p>
-    </div>
-    <h2 class="titre-section">${icone("calendrier", { tuile: true })}Mes prochaines missions</h2>
-    <div class="vide-compte"><p class="muet">Aucune mission pour l'instant.</p><p class="petit">Vous recevrez les missions proches de chez vous, dans votre périmètre d'intervention.</p></div>
+  return `${admin ? `<p style="margin:0 0 10px"><span class="tampon">Accès administrateur</span></p>` : ""}
+    <div id="missions-cleaneur"><div class="vide-compte"><p class="muet">Chargement…</p></div></div>
     ${admin ? "" : `<h2 class="titre-section">${icone("valide", { tuile: true })}Ma préparation <span class="tampon${faites === etapes.length ? " vert" : ""}" style="margin:0 0 0 auto">${faites}/${etapes.length}</span></h2>
     <div class="carte"><div class="jauge" role="progressbar" aria-valuemin="0" aria-valuemax="${etapes.length}" aria-valuenow="${faites}"><span style="width:${Math.round(faites / etapes.length * 100)}%"></span></div>
       <ul class="liste-preparation">${etapes.map(([t, ok]) => `<li class="${ok ? "fait" : ""}"><span class="coche" aria-hidden="true">${ok ? "✓" : ""}</span><span>${t}</span></li>`).join("")}</ul></div>`}

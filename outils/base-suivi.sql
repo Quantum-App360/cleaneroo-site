@@ -17,3 +17,9 @@ revoke all on public.positions_cleaneur from anon, authenticated;
 -- envoyer_position(p_reference, p_lat, p_lon, p_cap) → 'ok', 'connexion', 'introuvable', 'interdit' ou 'statut'.
 -- Le client lit la position avec son lien de suivi : position_suivi(p_reference, p_jeton), seulement en route / sur place
 -- et si elle a moins de 10 minutes. La position est effacée dès que la mission passe à une autre étape (pas d'historique des trajets).
+
+-- Missions des Cleaneurs (migration « missions_cleaneur ») : missions_disponibles(), prendre_mission(ref) → rattachement
+-- automatique du Cleaneur (cleaneur_id) et demande confirmée ; aucune mission avant le 1er janvier 2027 (sauf administration),
+-- mes_missions(), avancer_mission(ref, statut) : CONFIRMEE › EN_ROUTE › SUR_PLACE › EN_COURS › A_VALIDER.
+-- Parties de réservation (migration « espace_conciergerie ») : espace = personnel | conciergerie | professionnel ;
+-- crédit d'impôt refusé par la base hors particulier (contrainte demandes_credit_impot_particulier).
