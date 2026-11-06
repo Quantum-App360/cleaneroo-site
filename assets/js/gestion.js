@@ -54,10 +54,11 @@ const TYPES_INSCRIPTION = { client: "Client", cleaneur: "Cleaneur", conciergerie
 const CRENEAUX_RAPPEL = { matin: "le matin", midi: "à midi", apres_midi: "l'après-midi", soir: "en soirée" };
 let onglet = "demandes";
 
-const ongletsHtml = () => `<div class="segments" style="margin:6px 0 4px">
+const ongletsHtml = () => `<div class="segments" style="margin:6px 0 4px;flex-wrap:wrap;border-radius:22px">
   <button type="button" data-onglet="demandes" class="${onglet === "demandes" ? "choisi" : ""}">Demandes</button>
   <button type="button" data-onglet="inscriptions" class="${onglet === "inscriptions" ? "choisi" : ""}">Inscriptions au lancement</button>
-  <button type="button" data-onglet="dossiers" class="${onglet === "dossiers" ? "choisi" : ""}">Dossiers Cleaneurs</button></div>`;
+  <button type="button" data-onglet="dossiers" class="${onglet === "dossiers" ? "choisi" : ""}">Dossiers Cleaneurs</button>
+  <button type="button" data-onglet="visites" class="${onglet === "visites" ? "choisi" : ""}">Visites</button></div>`;
 const brancherOnglets = () => vue.querySelectorAll("[data-onglet]").forEach(bt => bt.onclick = () => { onglet = bt.dataset.onglet; liste(); });
 
 async function listeInscriptions() {
@@ -158,9 +159,45 @@ async function detailDossier(d) {
   });
 }
 
+/* Visites du site et ouvertures de l'appli (table « visites », sans donnée personnelle). */
+const APPAREILS = { mobile: "Téléphone", tablette: "Tablette", ordinateur: "Ordinateur" };
+async function listeVisites() {
+  const { data: st, error } = await supabase.rpc("statistiques_visites");
+  if (error) { vue.innerHTML = `<h1>Gestion</h1><div class="trait-corail"></div>${ongletsHtml()}<p class="erreur">${esc(error.message)}</p>`; brancherOnglets(); return; }
+  const [jour, semaine, mois, total] = st.periodes;
+  const tuile = (titre, p) => `<div class="carte" style="text-align:center"><div class="petit">${titre}</div>
+    <div style="font-size:30px;font-weight:800;color:var(--primaire)">${p.visites}</div><div class="petit">visites · ${p.pages} pages vues</div>
+    <div class="petit">${p.appli} ouverture(s) de l'appli</div></div>`;
+  const max = Math.max(1, ...st.par_jour.map(d => d.visites + d.appli));
+  const barres = st.par_jour.map(d => {
+    const date = new Date(d.jour + "T12:00:00");
+    return `<div title="${date.toLocaleDateString("fr-FR", { day: "numeric", month: "long" })} : ${d.visites} visite(s), ${d.appli} ouverture(s) de l'appli"
+      style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:1px;height:140px">
+      <span style="display:block;height:${Math.round(d.appli * 130 / max)}px;background:var(--corail);border-radius:3px 3px 0 0"></span>
+      <span style="display:block;height:${Math.round(d.visites * 130 / max)}px;background:var(--turquoise);border-radius:${d.appli ? 0 : "3px 3px"} 0 0"></span></div>`;
+  }).join("");
+  const debut = new Date(st.par_jour[0].jour + "T12:00:00"), fin = new Date(st.par_jour.at(-1).jour + "T12:00:00");
+  const appareils = Object.entries(st.appareils);
+  const totalApp = appareils.reduce((a, [, n]) => a + n, 0) || 1;
+  vue.innerHTML = `<h1>Gestion</h1><div class="trait-corail"></div>${ongletsHtml()}
+    <p class="muet">Compteur sans cookie ni donnée personnelle. Une visite = une personne qui ouvre le site dans un onglet (les pages vues ensuite ne comptent pas comme nouvelles visites).</p>
+    <div class="grille-3" style="grid-template-columns:repeat(auto-fit,minmax(170px,1fr))">${tuile("Aujourd'hui", jour)}${tuile("7 derniers jours", semaine)}${tuile("30 derniers jours", mois)}${tuile("Depuis le début", total)}</div>
+    <div class="carte" style="margin-top:14px"><b>30 derniers jours</b>
+      <div style="display:flex;gap:3px;align-items:flex-end;margin-top:12px">${barres}</div>
+      <div class="petit" style="display:flex;justify-content:space-between;margin-top:6px"><span>${debut.toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}</span><span>${fin.toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}</span></div>
+      <div class="legende-creneaux petit"><span>Visites du site</span><span class="forte">Ouvertures de l'appli</span></div></div>
+    <div class="grille-2" style="margin-top:14px">
+      <div class="carte"><b>Pages les plus vues (30 jours)</b>${st.pages.map(p => `<div class="ligne-montant"><span>${esc(p.page)}</span><b>${p.n}</b></div>`).join("") || `<p class="muet">Aucune page vue pour l'instant.</p>`}</div>
+      <div><div class="carte"><b>Appareils (30 jours)</b>${appareils.map(([a, n]) => `<div class="ligne-montant"><span>${APPAREILS[a] || a}</span><b>${Math.round(n * 100 / totalApp)} %</b></div>`).join("") || `<p class="muet">—</p>`}</div>
+        <div class="carte" style="margin-top:14px"><b>D'où viennent les visiteurs (30 jours)</b>${st.origines.map(o => `<div class="ligne-montant"><span>${esc(o.origine)}</span><b>${o.n}</b></div>`).join("") || `<p class="muet">Accès direct uniquement pour l'instant.</p>`}</div></div>
+    </div>`;
+  brancherOnglets();
+}
+
 async function liste() {
   if (onglet === "inscriptions") return listeInscriptions();
   if (onglet === "dossiers") return listeDossiers();
+  if (onglet === "visites") return listeVisites();
   const { data, error } = await supabase.from("demandes").select("*").order("cree_le", { ascending: false }).limit(300);
   if (error) { vue.innerHTML = `<p class="erreur">${esc(error.message)}</p>`; return; }
   const compte = s => data.filter(d => d.statut === s).length;

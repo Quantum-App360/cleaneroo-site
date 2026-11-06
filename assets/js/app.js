@@ -335,7 +335,7 @@ function pageConfidentialite() {
     <p>Le code d'accès à votre logement n'est communiqué qu'au Cleaneur retenu, le jour de l'intervention.</p>
     <p>Vous pouvez à tout moment demander l'accès, la correction ou la suppression de vos données en écrivant à <a href="mailto:contact@cleaneroo.fr">contact@cleaneroo.fr</a>. Les factures sont conservées le temps imposé par la loi.</p>
     <p>Pour aller plus vite à la commande suivante, votre navigateur garde sur cet appareil vos coordonnées, vos adresses enregistrées et votre dernière commande (jamais le code d'accès). Vous pouvez tout effacer depuis « Mes prestations ». Avec un compte, vos biens et vos demandes sont aussi gardés dans votre compte, hébergé dans l'Union européenne.</p>
-    <p>Le site n'utilise ni traceur publicitaire ni cookie. Pour connaître sa fréquentation, il compte les pages vues avec GoatCounter, un outil sans cookie qui ne garde aucune donnée personnelle (ni adresse IP, ni identifiant) : seuls le nom de la page, le pays, le type d'appareil et le site d'origine sont comptés.</p>`);
+    <p>Le site n'utilise ni traceur publicitaire ni cookie. Pour connaître sa fréquentation, il compte lui-même les pages vues, sans aucune donnée personnelle (ni adresse IP, ni identifiant) : seuls le nom de la page, le type d'appareil et le site d'origine sont comptés, dans notre base hébergée dans l'Union européenne.</p>`);
 }
 function pageConditions() {
   return pageTexte("Conditions d'utilisation", `
