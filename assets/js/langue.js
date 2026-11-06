@@ -232,7 +232,7 @@ const T = [
   ["Nos formules", "Our packages", "Le nostre formule", "Nuestras fórmulas"],
   ["La remise s'applique tant que toutes les tâches de la formule restent cochées. Une seule formule remisée par demande.", "The discount applies as long as all the package's tasks stay ticked. One discounted package per request.", "Lo sconto si applica finché tutti i compiti della formula restano spuntati. Una sola formula scontata per richiesta.", "El descuento se aplica mientras todas las tareas de la fórmula sigan marcadas. Una sola fórmula con descuento por solicitud."],
   ["Une autre demande ?", "Anything else?", "Un'altra richiesta?", "¿Otra petición?"],
-  ["Ex. : nettoyer la cage du lapin", "E.g. clean the rabbit's cage", "Es.: pulire la gabbia del coniglio", "Ej.: limpiar la jaula del conejo"],
+  ["Ex. : nettoyer l'intérieur du lave-linge", "E.g. clean inside the washing machine", "Es.: pulire l'interno della lavatrice", "Ej.: limpiar el interior de la lavadora"],
   ["Ajouter", "Add", "Aggiungi", "Añadir"],
   ["Retirer", "Remove", "Rimuovi", "Quitar"],
   ["Chaque tâche particulière compte 15 min dans l'estimation ; le Cleaneur la confirme.", "Each special task counts as 15 min in the estimate; the Cleaneur confirms it.", "Ogni compito particolare vale 15 min nella stima; il Cleaneur lo conferma.", "Cada tarea especial cuenta 15 min en la estimación; el Cleaneur la confirma."],

@@ -20,36 +20,54 @@ const aplat = d => `<path class="a" d="${d}"/>`;
 
 /** Rubriques (avec étincelle). */
 const RUBRIQUES = {
-  logement: aplat("M2.8 11 12 3.6 21.2 11Z") + `<path d="M2.8 11 12 3.6 21.2 11M5 9.3V20.5h14V9.3M10 20.5V16.5a2 2 0 0 1 4 0v4"/>`,
-  location: `<rect class="a" x="4" y="8" width="11" height="11.5" rx="2"/><rect x="4" y="8" width="11" height="11.5" rx="2"/>`
-    + `<path d="M7.5 8V3.8h4V8M8 11.5v4.5M11 11.5v4.5"/><circle cx="6.8" cy="21" r="1"/><circle cx="12.2" cy="21" r="1"/>`
-    + `<path d="M11.5 5.2c3 0 6 1.2 6 4"/><circle cx="17.5" cy="10.8" r="1.6"/><path d="M17.5 12.4v5.1m0-2h1.5m-1.5 2h1.5"/>`,
-  demenagement: aplat("M3 11 11 13v8l-8-2.5Z") + `<path d="M3 11 11 13v8l-8-2.5ZM11 13l8-2v8l-8 2M3 11l8-2 8 2M3 11 2 6.8 9.5 5 11 9M11 9l1.5-4 6 2.2.5 3.8"/>`,
-  vehicule: aplat("M8.2 14.1 10.3 11.7H15l2 2.4Z")
-    + `<path d="M4.8 19H2.5v-2.5c0-1 .7-1.6 1.7-1.8l2.8-.6 2.5-3c.4-.4.9-.6 1.5-.6h4.2c.6 0 1.1.3 1.5.8l2.3 2.8 1.5.4c.8.2 1 .8 1 1.6V19h-2.3M15.2 19H8.8M7 14.1h12M12.7 11.7v2.4"/>`
-    + `<circle cx="6.8" cy="19" r="2"/><circle cx="17.2" cy="19" r="2"/>`
-    + `<path d="M6.5 3.2S4.8 5.3 4.8 6.5a1.7 1.7 0 0 0 3.4 0c0-1.2-1.7-3.3-1.7-3.3ZM11 3s-1.2 1.5-1.2 2.4a1.2 1.2 0 0 0 2.4 0C12.2 4.5 11 3 11 3Z"/>`,
-  canape: `<rect class="a" x="6.5" y="12.5" width="11" height="4"/>`
-    + `<path d="M6.5 12V9.5A2.5 2.5 0 0 1 9 7h6a2.5 2.5 0 0 1 2.5 2.5V12M6.5 12.5h11M6.5 16.5h11M12 12.5v4M5 18.5v2M19 18.5v2"/>`
-    + `<rect x="2.5" y="11" width="4" height="7.5" rx="2"/><rect x="17.5" y="11" width="4" height="7.5" rx="2"/><path d="M6.5 18.5h11"/>`,
-  chantier: aplat("M5 12a7 7 0 0 1 14 0Z") + `<path d="M5 12a7 7 0 0 1 14 0M3.5 12h17M10 5.3V9M14 5.3V9M4 21c1.6-3.4 4.7-5.4 9-5.8l1.3 1.3c-.4 4-3.6 5-10.3 4.5ZM14.3 16.5l2.2-2h4"/>`,
-  cuisine: aplat("M4.5 13a7.5 3.3 0 0 1 15 0Z")
-    + `<path d="M4.5 13a7.5 3.3 0 0 1 15 0M4 13h16M5 13v5.5A2.5 2.5 0 0 0 7.5 21h9a2.5 2.5 0 0 0 2.5-2.5V13M5 14.8H2.8M19 14.8h2.2M12 9.7V8.5M10.8 8.5h2.4"/>`
-    + `<path d="M9.3 6.8c-1-1 1-2 0-3.5M14.3 6.8c-1-1 1-2 0-3.5"/>`,
-  bureaux: `<rect class="a" x="4" y="6" width="11" height="8" rx="1.5"/><rect x="4" y="6" width="11" height="8" rx="1.5"/>`
-    + `<path d="M9.5 14v5M2.5 19h19M4 19v2.5M20 19v2.5M16 14h4v3.5a1.5 1.5 0 0 1-1.5 1.5h-1a1.5 1.5 0 0 1-1.5-1.5ZM20 15h.6a1.2 1.2 0 0 1 0 2.4H20"/>`,
-  commerce: aplat("M3 8h18v2.5a1.5 1.5 0 0 1-3 0 1.5 1.5 0 0 1-3 0 1.5 1.5 0 0 1-3 0 1.5 1.5 0 0 1-3 0 1.5 1.5 0 0 1-3 0 1.5 1.5 0 0 1-3 0Z")
-    + `<path d="M3 8h18v2.5a1.5 1.5 0 0 1-3 0 1.5 1.5 0 0 1-3 0 1.5 1.5 0 0 1-3 0 1.5 1.5 0 0 1-3 0 1.5 1.5 0 0 1-3 0 1.5 1.5 0 0 1-3 0ZM4.5 12.5V21h15v-8.5M3 21h18M7 21v-5.5h4V21"/>`
-    + `<rect x="13" y="14.5" width="4" height="3.5" rx=".6"/>`,
-  "parties-communes": aplat("M4 21V9h4v3h4v3h4v3h4v3Z") + `<path d="M4 21V9h4v3h4v3h4v3h4v3ZM6 9V4.2M10 12V7.2M14 15v-4.8M18 18v-4.8M5 3.5l14 10.5"/>`,
-  vitres: aplat("M5 7.5h6v7H4v-6a1 1 0 0 1 1-1Z") + `<rect x="4" y="7.5" width="14" height="14" rx="1"/><path d="M11 7.5v14M4 14.5h14M6.2 12 9 9.2M8 12.8l1.6-1.6"/>`,
-  exterieurs: aplat("M5.5 12.5C5.5 7 9.5 4 16 4c0 6-3.5 9-10.5 8.5Z") + `<path d="M5.5 12.5C5.5 7 9.5 4 16 4c0 6-3.5 9-10.5 8.5ZM5.5 12.5l7-6M5.5 12.5 4 14"/>`
-    + `<rect x="3" y="16" width="5.3" height="5.5" rx="1"/><rect x="9.35" y="16" width="5.3" height="5.5" rx="1"/><rect x="15.7" y="16" width="5.3" height="5.5" rx="1"/>`,
-  evenement: `<ellipse class="a" cx="8.5" cy="8.5" rx="4" ry="4.8"/><ellipse cx="8.5" cy="8.5" rx="4" ry="4.8"/><ellipse cx="15" cy="10.3" rx="3.5" ry="4.2"/>`
-    + `<path d="M8.5 13.3c-1 2.7 1 4.7 0 8.2M15 14.5c1 2.4-1 4.4 0 7M3.3 16.3l1.2.8M19.3 17.3l1.2-.8M3.5 3.5l.8 1.2"/>`,
-  specialise: aplat("M7 13l1.2-2h5.6l1.2 2v7a1.5 1.5 0 0 1-1.5 1.5h-5A1.5 1.5 0 0 1 7 20Z")
-    + `<path d="M7 13l1.2-2h5.6l1.2 2v7a1.5 1.5 0 0 1-1.5 1.5h-5A1.5 1.5 0 0 1 7 20ZM9.5 11V8.5h3V11M8 8.5V5.8h5.5l1.5 1.4v1.3ZM8 6.6H6.3M9.5 8.5l-1.2 2.2"/>`
-    + `<path d="M3.6 4.8h.01M3.4 7h.01M3.8 9.2h.01M14 13.5h4a2.3 2.3 0 0 1 2.3 2.3v5.7M14 16.4h4.2M14 19.2h2.4c.9 0 1.6.7 1.6 1.6v.7"/>`,
+  // Maison : toit débordant, cheminée, porte et fenêtre
+  logement: aplat("M3 10.5 12 3l9 7.5Z")
+    + `<path d="M3 10.5 12 3l9 7.5M5.5 8.8v11.7h13V8.8M10 20.5v-4.6a2 2 0 0 1 4 0v4.6M14.4 4.9V3.4h2v3.2"/><rect x="14.8" y="11.6" width="2.2" height="2.2" rx=".4"/>`,
+  // Valise à roulettes
+  location: `<rect class="a" x="4.5" y="7.5" width="15" height="12" rx="2.5"/><rect x="4.5" y="7.5" width="15" height="12" rx="2.5"/>`
+    + `<path d="M9 7.5V5.6A1.6 1.6 0 0 1 10.6 4h2.8A1.6 1.6 0 0 1 15 5.6v1.9M8.5 7.5v12M15.5 7.5v12"/><circle cx="7.5" cy="21.2" r=".9"/><circle cx="16.5" cy="21.2" r=".9"/>`,
+  // Carton ouvert
+  demenagement: aplat("M4 10.5h16v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 19.5Z")
+    + `<path d="M4 10.5h16v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 19.5ZM4 10.5 2.3 6.8h7.4L12 10.5l2.3-3.7h7.4L20 10.5M9.5 14.5h5"/>`,
+  // Voiture de profil et bulles
+  vehicule: aplat("M8 12.6 9.7 10h4.8l1.9 2.6Z")
+    + `<path d="M4.8 17.2H3.6a1 1 0 0 1-1-1v-2.4a1 1 0 0 1 .7-1l2.6-.8 2.4-3.4A2 2 0 0 1 9.9 7.8h4.6a2 2 0 0 1 1.6.8l2.7 3.7 1.6.5a1 1 0 0 1 .7 1v2.4a1 1 0 0 1-1 1h-1.2M9 17.2h6M8 12.6 9.7 10h4.8l1.9 2.6Z"/>`
+    + `<circle cx="6.9" cy="17.2" r="2.1"/><circle cx="17.1" cy="17.2" r="2.1"/><circle cx="5" cy="4.6" r="1.4"/><circle cx="8.6" cy="3.4" r=".8"/>`,
+  // Canapé
+  canape: `<path class="a" d="M6.5 13h11v3.5h-11Z"/>`
+    + `<path d="M6.3 12.5V9.6A2.6 2.6 0 0 1 8.9 7h6.2a2.6 2.6 0 0 1 2.6 2.6v2.9M6.5 16.5h11M12 13v3.5M5.2 18.5V20.5M18.8 18.5V20.5"/>`
+    + `<rect x="2.5" y="11" width="4" height="7.5" rx="2"/><rect x="17.5" y="11" width="4" height="7.5" rx="2"/><path d="M6.5 13h11M6.5 18.5h11"/>`,
+  // Casque de chantier et poussière
+  chantier: aplat("M5 14.5a7 7 0 0 1 14 0Z")
+    + `<path d="M5 14.5a7 7 0 0 1 14 0M10 8V11.5M14 8v3.5M10 8a7.3 7.3 0 0 1 4 0"/><path d="M3 14.5h18v1.2a1.8 1.8 0 0 1-1.8 1.8H4.8A1.8 1.8 0 0 1 3 15.7Z"/>`
+    + `<path d="M6 20.8h.01M10 21h.01M14 21h.01M18 20.8h.01"/>`,
+  // Faitout fumant
+  cuisine: aplat("M5 12h14v6.5a2.5 2.5 0 0 1-2.5 2.5h-9A2.5 2.5 0 0 1 5 18.5Z")
+    + `<path d="M5 12h14v6.5a2.5 2.5 0 0 1-2.5 2.5h-9A2.5 2.5 0 0 1 5 18.5ZM3.5 12h17M5 14.3H2.8M19 14.3h2.2M10.5 9.6h3"/>`
+    + `<path d="M9 7.5c-.9-.9.9-1.8 0-3.2M12 7.5c-.9-.9.9-1.8 0-3.2M15 7.5c-.9-.9.9-1.8 0-3.2"/>`,
+  // Immeuble de bureaux
+  bureaux: `<rect class="a" x="4" y="4" width="12.5" height="17" rx="1.5"/><rect x="4" y="4" width="12.5" height="17" rx="1.5"/>`
+    + `<path d="M7.5 7.8h1.6M11.4 7.8H13M7.5 11.2h1.6M11.4 11.2H13M7.5 14.6h1.6M11.4 14.6H13M8.8 21v-2.8h2.9V21M16.5 11h2.5a1.5 1.5 0 0 1 1.5 1.5V21M2.5 21h19"/>`,
+  // Boutique à auvent
+  commerce: aplat("M3.5 4h17l1 4.5a2 2 0 0 1-4 .5 2.2 2.2 0 0 1-4.3 0 2.2 2.2 0 0 1-4.4 0 2.2 2.2 0 0 1-4.3 0 2 2 0 0 1-4-.5Z")
+    + `<path d="M3.5 4h17l1 4.5a2 2 0 0 1-4 .5 2.2 2.2 0 0 1-4.3 0 2.2 2.2 0 0 1-4.4 0 2.2 2.2 0 0 1-4.3 0 2 2 0 0 1-4-.5ZM8.2 4l-.4 5M12 4v5M15.8 4l.4 5"/>`
+    + `<path d="M4.5 11v10h15V11M2.8 21h18.4M7.5 21v-5h3.5v5"/><rect x="13" y="14" width="4" height="3.5" rx=".6"/>`,
+  // Immeuble d'habitation, hall et escalier
+  "parties-communes": aplat("M4 21V9h4v3h4v3h4v3h4v3Z")
+    + `<path d="M4 21V9h4v3h4v3h4v3h4v3ZM2.5 21h19M6 9V5M10 12V8M14 15v-4M18 18v-4M6 5l12 9"/>`,
+  // Fenêtre et reflets
+  vitres: `<rect class="a" x="4" y="6" width="7" height="7"/><rect x="4" y="6" width="14" height="14" rx="1.5"/>`
+    + `<path d="M11 6v14M4 13h14M6.2 10.6l2.4-2.4M6.4 12.2l.9-.9M2.5 20h17"/>`,
+  // Arbre et pelouse
+  exterieurs: `<circle class="a" cx="11" cy="9" r="5.5"/><circle cx="11" cy="9" r="5.5"/>`
+    + `<path d="M11 13.5V21M11 17l2.4-2.2M11 15.6 9 13.8M3 21h17M16.5 21v-1.6M18.5 21v-2.6M5 21v-1.8"/>`,
+  // Ballons
+  evenement: `<ellipse class="a" cx="8.8" cy="8.3" rx="4.2" ry="5"/><ellipse cx="8.8" cy="8.3" rx="4.2" ry="5"/><ellipse cx="15.6" cy="10.4" rx="3.6" ry="4.3"/>`
+    + `<path d="m8.1 13.3.7 1 .7-1M14.9 14.7l.7 1 .7-1M8.8 14.3c-.9 2.4.9 4.4 0 7.2M15.6 15.7c.9 2-.9 3.8 0 5.8M6.6 6.4a2.3 2.3 0 0 1 1.5-1.5"/>`,
+  // Pulvérisateur professionnel
+  specialise: aplat("M8 11.5h7l1.2 2.6v6.4a1.5 1.5 0 0 1-1.5 1.5H8.3a1.5 1.5 0 0 1-1.5-1.5v-6.4Z")
+    + `<path d="M8 11.5h7l1.2 2.6v6.4a1.5 1.5 0 0 1-1.5 1.5H8.3a1.5 1.5 0 0 1-1.5-1.5v-6.4ZM9.6 11.5V9h3.8v2.5M15.5 9H8.8L7 7.4V5.5h8.5ZM15.5 7.2h1.8M9.3 16h4.4M9.3 18.4h2.8"/>`
+    + `<path d="M4.3 4.3h.01M3.2 6.5h.01M4.4 8.6h.01"/>`,
 };
 
 /** Interface (sans étincelle). */
@@ -91,5 +109,5 @@ export function icone(nom, { tuile = false, classe = "" } = {}) {
   if (!contenu) return "";
   const svg = `<svg class="ico${classe ? " " + classe : ""}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" `
     + `stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${contenu}</svg>`;
-  return tuile ? `<span class="tuile-ico">${svg}</span>` : svg;
+  return tuile ? `<span class="tuile-ico${RUBRIQUES[nom] ? " tuile-rubrique" : ""}">${svg}</span>` : svg;
 }

@@ -259,10 +259,9 @@ function pageInscription(type = "client") {
 }
 
 function pagePrestations() {
-  return `<section class="fond-cleaneroo" style="padding:40px 0 90px">${decor([[90, 20, 90], [4, 60, 60]], [])}
-    <div class="conteneur"><h1>Nos prestations</h1><div class="trait-corail"></div><p>${RUBRIQUES.length} univers de nettoyage, un seul parcours de réservation.</p>
-      <a class="bouton clair" href="/calculateur/">Combien coûte votre ménage ? Calculer mon prix ›</a></div></section>
-  <section class="bloc"><div class="conteneur"><div class="grille-3">${RUBRIQUES.map(r => `
+  return `<section class="fond-cleaneroo" style="padding:32px 0 56px">${decor([[90, 20, 90], [72, 70, 44]], [])}
+    <div class="conteneur"><h1>Nos prestations</h1><div class="trait-corail"></div><p>${RUBRIQUES.length} univers de nettoyage, un seul parcours de réservation.</p></div></section>
+  <section class="bloc" style="padding-top:28px"><div class="conteneur"><div class="grille-3">${RUBRIQUES.map(r => `
     <a class="carte prestation" href="#/reserver/${r.id}">${icone(r.icone, { tuile: true })}<h3>${r.nom}</h3>
       <p class="muet" style="margin:4px 0 8px">${r.sousTitre}</p>
       <span class="tampon">${pastille(r)}</span></a>`).join("")}</div></div></section>`;

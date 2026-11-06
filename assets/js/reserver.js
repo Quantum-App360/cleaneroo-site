@@ -253,7 +253,7 @@ function etape2() {
   if (!r.toujoursSurDevis) {
     h += titre("Une autre demande ?") + `<div class="carte">${b.tachesPerso.map((t, i) => `<div style="display:flex;align-items:center"><span style="flex:1">• ${esc(t)}</span>
       <button type="button" class="lien-bouton" style="color:var(--erreur)" data-retirer="${i}">Retirer</button></div>`).join("")}
-      <div style="display:flex;gap:8px;align-items:center"><input class="texte" id="saisie-perso" maxlength="120" placeholder="Ex. : nettoyer la cage du lapin" style="margin:0">
+      <div style="display:flex;gap:8px;align-items:center"><input class="texte" id="saisie-perso" maxlength="120" placeholder="Ex. : nettoyer l'intérieur du lave-linge" style="margin:0">
       <button type="button" class="lien-bouton" id="ajouter-perso">Ajouter</button></div>
       <p class="petit">Chaque tâche particulière compte 15 min dans l'estimation ; le Cleaneur la confirme.</p></div>`;
   }
