@@ -30,6 +30,12 @@ async function reduirePhoto(fichier) {
   return new Promise(ok => c.toBlob(ok, "image/jpeg", 0.6));
 }
 
+/** Offre de lancement : places restantes (500 moins les dossiers Cleaneurs validés). null si la base ne répond pas. */
+export async function placesRestantes() {
+  const { data, error } = await supabase.rpc("places_offre_restantes");
+  return error || typeof data !== "number" ? null : data;
+}
+
 /** Envoie une demande de nettoyage et ses photos. Renvoie { reference, jeton }. */
 export async function envoyerDemande(demande, photos = []) {
   const reference = nouvelleReference();

@@ -5,7 +5,7 @@ import { rubrique, formulesPour, TYPES_LIEU, RUBRIQUES_CREDIT_IMPOT, TYPES_VITRE
   arrondiEuro, tachesPour, tacheChiffree, packsPour, remisePack } from "./catalogue.js";
 
 export const SALISSURE = {
-  LEGER: { libelle: "Léger", tempsPct: -10, prixPct: 0 },
+  LEGER: { libelle: "Léger", tempsPct: 0, prixPct: -10 },
   NORMAL: { libelle: "Normal", tempsPct: 0, prixPct: 0 },
   MARQUE: { libelle: "Marqué", tempsPct: 20, prixPct: 15 },
   INTENSE: { libelle: "Intense", tempsPct: 40, prixPct: 30 },
@@ -58,9 +58,10 @@ export function calculer(entree) {
 
   // 3. Salissure en prix
   let sousTotal = prixBase;
-  if (!r.salissureSurTemps && sal.prixPct !== 0 && !vehicule) {
+  // « Léger » (réduction) s'applique à toutes les rubriques, même celles où la salissure joue sur le temps
+  if ((!r.salissureSurTemps || sal.prixPct < 0) && sal.prixPct !== 0 && !vehicule) {
     const s = pct(prixBase, sal.prixPct);
-    lignes.push({ libelle: `Salissure ${sal.libelle.toLowerCase()} (+${sal.prixPct} %)`, montantC: s });
+    lignes.push({ libelle: `Salissure ${sal.libelle.toLowerCase()} (${sal.prixPct > 0 ? "+" : "−"}${Math.abs(sal.prixPct)} %)`, montantC: s });
     sousTotal += s;
   }
 

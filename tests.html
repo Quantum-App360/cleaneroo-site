@@ -3,8 +3,8 @@
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Tests des prix</title>
 <meta name="robots" content="noindex">
 <style>body{font:15px system-ui;margin:24px}li.ok{color:#2E9E72}li.ko{color:#D0485A;font-weight:700}</style>  <!-- chargement : généré par outils/generer_pages.py, ne pas modifier à la main -->
-  <script type="importmap">{"imports":{"/assets/js/app.js":"/assets/js/app.js?v=2026110612","/assets/js/catalogue.js":"/assets/js/catalogue.js?v=2026110612","/assets/js/commun.js":"/assets/js/commun.js?v=2026110612","/assets/js/compteur.js":"/assets/js/compteur.js?v=2026110612","/assets/js/donnees.js":"/assets/js/donnees.js?v=2026110612","/assets/js/estimation.js":"/assets/js/estimation.js?v=2026110612","/assets/js/gestion.js":"/assets/js/gestion.js?v=2026110612","/assets/js/icones.js":"/assets/js/icones.js?v=2026110612","/assets/js/langue.js":"/assets/js/langue.js?v=2026110612","/assets/js/page.js":"/assets/js/page.js?v=2026110612","/assets/js/regles.js":"/assets/js/regles.js?v=2026110612","/assets/js/reserver.js":"/assets/js/reserver.js?v=2026110612","/assets/js/villes.js":"/assets/js/villes.js?v=2026110612"}}</script>
-  <link rel="stylesheet" href="/assets/style.css?v=2026110612">
+  <script type="importmap">{"imports":{"/assets/js/app.js":"/assets/js/app.js?v=2026110614","/assets/js/catalogue.js":"/assets/js/catalogue.js?v=2026110614","/assets/js/commun.js":"/assets/js/commun.js?v=2026110614","/assets/js/compteur.js":"/assets/js/compteur.js?v=2026110614","/assets/js/donnees.js":"/assets/js/donnees.js?v=2026110614","/assets/js/estimation.js":"/assets/js/estimation.js?v=2026110614","/assets/js/gestion.js":"/assets/js/gestion.js?v=2026110614","/assets/js/icones.js":"/assets/js/icones.js?v=2026110614","/assets/js/langue.js":"/assets/js/langue.js?v=2026110614","/assets/js/page.js":"/assets/js/page.js?v=2026110614","/assets/js/regles.js":"/assets/js/regles.js?v=2026110614","/assets/js/reserver.js":"/assets/js/reserver.js?v=2026110614","/assets/js/villes.js":"/assets/js/villes.js?v=2026110614"}}</script>
+  <link rel="stylesheet" href="/assets/style.css?v=2026110614">
   <!-- /chargement -->
 </head>
 <body>
@@ -45,6 +45,11 @@ egal("2 Cleaneurs au-delà de 6 h", e.nombreCleaneurs, 2); egal("durée partagé
 egal("devis au-delà de 300 m²", menage({ surface: 301 }).devisObligatoire, true);
 e = calculer({ rubriqueId: "office", minimumMin: 120, salissure: "MARQUE", espacePersonnel: false });
 egal("bureaux salissure marquée", e.totalC, 5900 + 885); egal("bureaux sans crédit d'impôt", e.creditImpotC, 0);
+egal("bureaux salissure légère : −10 %", calculer({ rubriqueId: "office", minimumMin: 120, salissure: "LEGER", espacePersonnel: false }).totalC, 5900 - 590);
+for (const rub of ["office", "home"]) {
+  const p = ["LEGER", "NORMAL", "MARQUE", "INTENSE"].map(s => calculer({ rubriqueId: rub, minimumMin: 120, salissure: s, espacePersonnel: false }).totalC);
+  egal(`${rub} : léger < normal < marqué < intense`, p.every((v, i) => i === 0 || v > p[i - 1]), true);
+}
 const mardi15h = new Date(); mardi15h.setDate(mardi15h.getDate() + ((2 - mardi15h.getDay() + 7) % 7 || 7) + 7); mardi15h.setHours(14, 0, 0, 0);
 egal("créneau malin mardi 14 h", disponibilite(new Date(), mardi15h), "MALIN");
 

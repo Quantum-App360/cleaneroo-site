@@ -6,7 +6,7 @@ import { euros, duree, dateLongue, dateHeure, heure, estPrelancement, joursAvant
 // Langue : catalogue traduit avant tout affichage.
 traduireCatalogue(RUBRIQUES, TYPES_LIEU);
 import { ouvrirReservation, modeles, logements, nomLogement, oublierMesInformations } from "./reserver.js";
-import { mesDemandes, suivre, annuler, memoriser, inscrire } from "./donnees.js";
+import { mesDemandes, suivre, annuler, memoriser, inscrire, placesRestantes } from "./donnees.js";
 import { compterPage } from "./compteur.js";
 import { icone, ICONES_RUBRIQUES, ICONES_INTERFACE } from "./icones.js";
 import { blocEtapes, blocReassurance, installerRappel, bandeauLancement } from "./commun.js";
@@ -281,12 +281,27 @@ function pageComment() {
   </div></section>`;
 }
 
+/** Compteur de l'offre de lancement : lu dans la base (dossiers validés), masqué si elle ne répond pas. */
+async function afficherPlaces(racine) {
+  const bloc = racine.querySelector("[data-places]");
+  if (!bloc) return;
+  const n = await placesRestantes().catch(() => null);
+  if (n === null) return;
+  const total = REGLES.OFFRE_LANCEMENT_PLACES;
+  bloc.querySelector("[data-places-nombre]").textContent = n;
+  bloc.querySelector("[data-places-jauge]").style.width = `${Math.round(n * 100 / total)}%`;
+  if (n === 0) bloc.querySelector(".chiffre span").textContent = tr("Offre complète : toutes les places sont attribuées.");
+  bloc.hidden = false;
+}
+
 /* Offre de lancement des Cleaneurs (mêmes valeurs que Regles.kt) */
 function blocOffreCleaneurs() {
   const R = REGLES, prix = euros(R.ABONNEMENT_CLEANEUR_C);
   return `<div class="offre-lancement revele"><div class="aurore" aria-hidden="true"><i></i><i></i></div>
     <span class="surtitre-heros"><i></i>Offre de lancement</span>
     <h2>Les ${R.OFFRE_LANCEMENT_PLACES} premiers Cleaneurs : ${R.OFFRE_LANCEMENT_MOIS} mois sans abonnement</h2>
+    <div class="compteur-places" data-places hidden><div class="chiffre"><b data-places-nombre>${R.OFFRE_LANCEMENT_PLACES}</b><span>places restantes sur ${R.OFFRE_LANCEMENT_PLACES}</span></div>
+      <div class="jauge"><span data-places-jauge style="width:100%"></span></div></div>
     <p>Inscrivez-vous et faites valider votre dossier parmi les ${R.OFFRE_LANCEMENT_PLACES} premiers : vous ne payez aucun abonnement pendant ${R.OFFRE_LANCEMENT_MOIS} mois.</p>
     <ul>
       <li>${R.OFFRE_LANCEMENT_PLACES} places, attribuées dans l'ordre de validation des dossiers.</li>
@@ -452,6 +467,7 @@ async function afficher() {
   traduire(vue);
   reveler(vue);
   animerNotifs(vue);
+  afficherPlaces(vue);
   window.scrollTo(0, 0);
 }
 

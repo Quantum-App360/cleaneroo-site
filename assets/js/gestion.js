@@ -73,13 +73,26 @@ async function listeInscriptions() {
   };
   vue.innerHTML = `<h1>Gestion</h1><div class="trait-corail"></div>${ongletsHtml()}
     <p class="muet">${data.length} inscrits · ${n("client")} clients · ${n("cleaneur")} Cleaneurs · ${n("conciergerie")} conciergeries · ${n("rappel")} à rappeler</p>
+    <p class="note">Offre de lancement : <b>${data.filter(i => i.type === "cleaneur" && i.valide_le).length}</b> dossier(s) Cleaneur validé(s) · <b>${Math.max(0, 500 - data.filter(i => i.type === "cleaneur" && i.valide_le).length)}</b> places restantes sur 500 (compteur affiché sur le site et dans l'appli).</p>
     <button class="bouton secondaire" id="export">Télécharger la liste (Excel)</button>
     <div style="margin-top:14px">${data.map(i => `<div class="carte" style="margin-bottom:10px">
       <b>${esc(i.prenom)} ${esc(i.nom)}</b> <span class="tampon">${TYPES_INSCRIPTION[i.type]}</span>
       <div class="petit">${i.type === "rappel" ? `${esc(i.profil)} · à rappeler ${CRENEAUX_RAPPEL[i.creneau] || ""}` : `<a href="mailto:${esc(i.email)}">${esc(i.email)}</a>`}${i.telephone ? ` · <a href="tel:${esc(i.telephone)}">${esc(i.telephone)}</a>` : ""} · ${esc(i.code_postal)} ${esc(i.ville)} · ${dateLongue(new Date(i.cree_le))}</div>
-      ${i.message ? `<p class="muet" style="margin:6px 0 0">${esc(i.message)}</p>` : ""}</div>`).join("") || `<p class="muet">Aucune inscription pour l'instant.</p>`}</div>`;
+      ${i.message ? `<p class="muet" style="margin:6px 0 0">${esc(i.message)}</p>` : ""}
+      ${i.type === "cleaneur" ? (i.valide_le
+        ? `<p class="petit" style="margin:8px 0 0;color:var(--succes)"><b>Dossier validé le ${dateLongue(new Date(i.valide_le))}</b> · <button type="button" class="lien-bouton" style="padding:0;min-height:0" data-valider="${i.id}" data-valeur="non">Annuler la validation</button></p>`
+        : `<button type="button" class="bouton secondaire" style="margin-top:8px" data-valider="${i.id}" data-valeur="oui">Valider le dossier (offre de lancement)</button>`) : ""}</div>`).join("") || `<p class="muet">Aucune inscription pour l'instant.</p>`}</div>`;
   brancherOnglets();
   document.getElementById("export").onclick = csv;
+  // Validation d'un dossier Cleaneur : une place de l'offre de lancement est attribuée (ordre de validation).
+  vue.querySelectorAll("[data-valider]").forEach(bt => bt.onclick = async () => {
+    const oui = bt.dataset.valeur === "oui";
+    if (!confirm(oui ? "Valider ce dossier ? Une place de l'offre de lancement lui est attribuée." : "Annuler la validation de ce dossier ?")) return;
+    bt.disabled = true;
+    const { error } = await supabase.rpc("valider_dossier_cleaneur", { inscription: bt.dataset.valider, valide: oui });
+    if (error) { alert(error.message); bt.disabled = false; return; }
+    listeInscriptions();
+  });
 }
 
 async function liste() {
