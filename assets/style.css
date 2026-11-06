@@ -752,3 +752,12 @@ label.champ input:focus, label.champ select:focus, label.champ textarea:focus, i
 @media (min-width: 861px) and (max-width: 1000px) { .nav a:not(.bouton) { padding: 10px 7px; font-size: 13.5px; } .nav a:not(.bouton)::after { left: 7px; right: 7px; } .nav a.bouton { padding: 0 12px !important; } }
 @media (max-width: 860px) { .nav a { font-size: 17px; font-weight: 600; padding: 14px 12px; } .nav a.actif { background: rgba(255,255,255,.12); } }
 @media (min-width: 861px) and (max-width: 1080px) { .nav a[href$="#/reserver"], .nav a[href="/calculateur/"] { display: none; } }  /* écrans moyens : « Estimer mon prix » reste dans la page (réservation express, Prestations) */
+/* Menu avec « Mon compte » (6 novembre 2026) : plus serré sur ordinateur, jamais par-dessus le logo. */
+.marque { flex: none; }
+@media (min-width: 861px) {
+  .rappel-entete span { display: none; } .rappel-entete .ico { margin: 0; } .rappel-entete { padding: 0 11px; }
+  .nav { gap: 0; } .nav a:not(.bouton) { padding: 10px 9px; font-size: 14.5px; } .nav a:not(.bouton)::after { left: 9px; right: 9px; }
+  .nav a.bouton { padding: 0 14px !important; }
+}
+@media (min-width: 861px) and (max-width: 1360px) { .marque .nom { display: none; } }
+@media (min-width: 861px) and (max-width: 1120px) { .nav a:not(.bouton) { padding: 10px 6px; font-size: 13px; } .nav a:not(.bouton)::after { left: 6px; right: 6px; } }

@@ -156,6 +156,10 @@ const T = [
   ["Cleaneroo — [raison sociale, adresse et numéro SIRET à compléter].", "Cleaneroo — [company name, address and SIRET number to be completed].", "Cleaneroo — [ragione sociale, indirizzo e numero SIRET da completare].", "Cleaneroo — [razón social, dirección y número SIRET por completar]."],
 
   // Comptes : Mon compte, dossier Cleaneur, Mes prestations (compte.js)
+  ["Mon espace Cleaneur", "My Cleaneur area", "Il mio spazio Cleaneur", "Mi espacio de Cleaneur"],
+  ["Accès administrateur", "Administrator access", "Accesso amministratore", "Acceso de administrador"],
+  ["Ouvert sans dossier vérifié : l'administration n'a pas besoin de documents.", "Open without a checked file: administrators don't need documents.", "Aperto senza pratica verificata: l'amministrazione non ha bisogno di documenti.", "Abierto sin expediente verificado: la administración no necesita documentos."],
+  ["Essayer le dépôt de documents (comme un Cleaneur)", "Try uploading documents (like a Cleaneur)", "Prova il caricamento dei documenti (come un Cleaneur)", "Probar la subida de documentos (como un Cleaneur)"],
   ["Mon compte", "My account", "Il mio account", "Mi cuenta"],
   ["Mes prestations", "My services", "I miei servizi", "Mis servicios"],
   ["Se connecter", "Sign in", "Accedi", "Iniciar sesión"],

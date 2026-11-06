@@ -60,7 +60,10 @@ export async function pageCompte(vue, param) {
     ${p.role !== "cleaneur" ? `<div class="carte" style="margin-bottom:14px"><b>Mes prestations</b>
       <p class="petit" style="margin:4px 0 10px">Vos biens enregistrés, vos prestations à venir et passées.</p>
       <div class="boutons" style="margin-top:0"><a class="bouton" href="#/mes-demandes">Voir mes prestations</a><a class="bouton secondaire" href="#/reserver">Ajouter une prestation</a></div></div>` : ""}
-    ${cleaneur ? blocDossier(p, docs) : ""}
+    ${p.role === "admin" ? `<div class="carte teintee" style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><b>Mon espace Cleaneur</b><span class="tampon">Accès administrateur</span></div>
+      <p class="petit" style="margin:6px 0 0">Ouvert sans dossier vérifié : l'administration n'a pas besoin de documents.</p></div>
+      <details class="carte" style="margin-bottom:14px"><summary style="cursor:pointer;font-weight:700">Essayer le dépôt de documents (comme un Cleaneur)</summary><div style="margin-top:12px">${blocDossier(p, docs)}</div></details>`
+      : cleaneur ? blocDossier(p, docs) : ""}
     ${formulaireProfil(p, cleaneur)}
     ${cleaneur ? `<div class="carte" style="margin-top:14px"><b>Mes missions</b>
       <p class="petit" style="margin:4px 0 0">Les missions proches de chez vous s'afficheront ici à partir du 1er janvier 2027.</p></div>` : ""}
