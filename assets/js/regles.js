@@ -102,9 +102,11 @@ export function dateLongue(d) {
   if (langue !== "fr") return d.toLocaleDateString(LOCALE, { weekday: "long", day: "numeric", month: "long" });
   return `${JOURS[d.getDay()]} ${d.getDate()} ${MOIS[d.getMonth()]}`;
 }
+// Mois abrégés comme l'appli (format Java « MMM » en français)
+const MOIS_COURTS = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."];
 export function dateCourte(d) {
   if (langue !== "fr") return d.toLocaleDateString(LOCALE, { weekday: "short", day: "numeric", month: "short" });
-  return `${JOURS[d.getDay()].slice(0, 3)}. ${d.getDate()} ${MOIS[d.getMonth()].slice(0, 4)}.`;
+  return `${JOURS[d.getDay()].slice(0, 3)}. ${d.getDate()} ${MOIS_COURTS[d.getMonth()]}`;
 }
 /** « mardi 10 novembre à 14 h » dans la langue choisie. */
 export function dateHeure(d) {

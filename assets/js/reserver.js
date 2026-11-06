@@ -6,7 +6,7 @@ import { RUBRIQUES, rubrique, formulesPour, TYPES_LIEU, TYPES_LOGEMENT, BESOINS_
   TACHES_A_TRAITER, TYPES_CHANTIER, equipementsPour, DELAIS_URGENCE, TYPES_IMMEUBLE, surfaceEffective, SELECTION_CONSEILLEE_VEHICULE, LIEUX_VEHICULE, FREQUENCES_VEHICULE, RUBRIQUES_LOGEMENT, vuesPhotos, vuesCompletes, PIECES_LOCATION, ETAPES_LOCATION, PACK_ETAPES_CONSEILLE, CONSOMMABLES_LOCATION, PACK_CONSOMMABLES_CONSEILLE } from "./catalogue.js";
 import { calculer, entreeEstimation, SALISSURE, disponibilite, meilleurPack, tachesChiffrees, formuleDe, passagesPlanifies, datesPassages,
   etapesDe, consommablesDe, menageTientEntreVoyageurs, frequenceDe, minutesEquipements, prixIndicatifEquipement, heuresEvenement } from "./estimation.js";
-import { REGLES, euros, duree, heure, dateCourte, estPrelancement, MESSAGE_LANCEMENT } from "./regles.js";
+import { REGLES, euros, duree, heure, dateCourte, dateLongue, estPrelancement, MESSAGE_LANCEMENT } from "./regles.js";
 import { envoyerDemande } from "./donnees.js";
 import { traduire } from "./langue.js";
 import { icone } from "./icones.js";
@@ -27,7 +27,7 @@ export const logements = () => lire(CLE_LOGEMENTS, []);
 export const modeles = () => Object.values(lire(CLE_MODELES, {})).sort((a, b) => b.quand - a.quand);
 export function oublierMesInformations() { [CLE_PROFIL, CLE_LOGEMENTS, CLE_MODELES, CLE_BROUILLON].forEach(k => { try { localStorage.removeItem(k); } catch { /* rien */ } }); }
 const CHAMPS_LOGEMENT = ["rue", "codePostal", "ville", "accueil", "tiersNom", "tiersTel", "boiteEmplacement"];
-const PRIVES = ["prenom", "nom", "email", "telephone", "code", "jour", "heure", "cgv", "etape", ...CHAMPS_LOGEMENT];
+const PRIVES = ["prenom", "nom", "email", "telephone", "code", "jour", "heure", "cgv", "etape", "sansPhotos", "flexible", ...CHAMPS_LOGEMENT];
 /** Libellé court d'une adresse enregistrée : « Appartement · Fréjus ». */
 export const nomLogement = l => `${(TYPES_LOGEMENT.find(t => t.id === l.typeLogementId) || {}).nom || "Adresse"} · ${l.ville}`;
 
@@ -82,10 +82,12 @@ function brouillonInitial(rubriqueId, espace = "personnel", rapide = false) {
   return avecLogement({ ...vierge(rubriqueId, espace, r, lieux), prenom: p.prenom || "", nom: p.nom || "", email: p.email || "", telephone: p.telephone || "" }, log);
 }
 
+/** Surface proposée au départ, selon la prestation (comme nouveauBrouillon dans l'appli). */
+const SURFACE_DEPART = { office: 120, commerce: 120, communal: 200, kitchen: 30, outdoor: 40, event: 100, construction: 80 };
 function vierge(rubriqueId, espace, r, lieux) {
   return {
-    rubriqueId, espace, etape: 2, typeLogementId: "appartement", surface: 62, chambres: 2, sdb: 1, niveaux: 1, fenetres: 8,
-    formuleId: r.toujoursSurDevis ? "" : formulesPour(r)[0].id, typeLieuId: lieux ? lieux[0].id : "", salissure: "NORMAL",
+    rubriqueId, espace, etape: 2, typeLogementId: "appartement", surface: SURFACE_DEPART[rubriqueId] ?? 62, chambres: 2, sdb: 1, niveaux: 1, fenetres: 8,
+    formuleId: formulesPour(r)[0]?.id || "", typeLieuId: lieux ? lieux[0].id : "", salissure: "NORMAL",
     taches: [], tachesPerso: [], animaux: false, etapesLocation: 8, consommables: true, remarque: "",
     accueil: "", tiersNom: "", tiersTel: "", boiteEmplacement: "", code: "",
     rue: "", codePostal: "", ville: "", jour: "", heure: -1, flexible: false, engagementMois: 0,
@@ -168,7 +170,7 @@ const champTexte = (lib, champ, val, type = "text", extra = "") => `<label class
 
 /* ------------------------------------------------------------------ Étapes */
 function etape1() {
-  return `<h1>Réserver un nettoyage</h1><p class="muet">Choisissez votre prestation : le prix s'affiche dès que vous décrivez votre besoin.</p>
+  return `<h1>Que souhaitez-vous nettoyer ?</h1><p class="muet">Choisissez votre prestation : le prix s'affiche dès que vous décrivez votre besoin.</p>
     ${titre("Pour qui ?")}
     <div class="segments"><button type="button" data-espace="personnel" class="${(b?.espace || "personnel") === "personnel" ? "choisi" : ""}">Personnel</button>
       <button type="button" data-espace="professionnel" class="${b?.espace === "professionnel" ? "choisi" : ""}">Professionnel</button></div>
@@ -198,9 +200,11 @@ function etape2() {
       ${esc(f.nom)}${f.description ? `<span class="detail">${esc(f.description)}</span>` : ""}</button>`).join("");
     h += questionsFormule(r);
     if (b.rubriqueId === "special" && b.formuleId === "urgente") h += titre("Délai souhaité") + choix(DELAIS_URGENCE, b.delai || "48h", "delai");
-    if (b.rubriqueId === "textiles") h += panierTextiles();
     const inclus = (lieux || []).find(l => l.id === b.typeLieuId)?.inclus || r.inclus;
-    if (inclus) h += `<div class="carte teintee" style="margin-top:6px"><b style="color:var(--turquoise)">Inclus dans votre forfait</b><p class="muet" style="margin:4px 0 0;font-size:14px">${esc(inclus)}</p></div>`;
+    if (inclus) h += `<div class="carte teintee" style="margin-top:6px"><b style="color:var(--primaire)">Inclus dans votre forfait</b><p class="muet" style="margin:4px 0 0;font-size:14px">${esc(inclus)}</p></div>`;
+  }
+  if (b.rubriqueId === "textiles") h += panierTextiles();
+  if (b.rubriqueId !== "car") {
     if (!["textiles", "special"].includes(b.rubriqueId)) h += titre("Dimensions") + `<div class="carte">`
       + (b.rubriqueId === "windows" ? compteur("Nombre de fenêtres", "fenetres", b.fenetres, { min: 1, max: 200 })
           + compteur("Surface vitrée approximative", "surfaceVitree", b.surfaceVitree ?? 20, { min: 1, max: 500, unite: " m²" })
@@ -257,15 +261,40 @@ function etape2() {
   if (b.rubriqueId === "office" || b.rubriqueId === "commerce") h += `<div class="carte" style="margin-top:14px">${caseCocher("Les lieux seront vides pendant l'intervention", "lieuxVides", !!b.lieuxVides)}</div>`;
   if (b.rubriqueId === "event") h += horairesEvenement();
   if (b.rubriqueId === "moving") h += `<div class="carte" style="margin-top:14px">${caseCocher("Le logement sera entièrement vide (meubles et cartons sortis)", "lieuxVides", !!b.lieuxVides)}</div>`;
-  const besoinOk = !r.toujoursSurDevis || (b.typeLieuId && b.formuleId);
+  h += blocAccueil();
+  const accueilOk = accueilValide(b);
+  const tachesOk = b.rubriqueId !== "car" || b.taches.length > 0;
   const panierOk = b.rubriqueId !== "textiles" || (b.panier || []).length > 0;
   const chantierOk = b.rubriqueId !== "construction" || !!b.artisansPartis;
   const equipementsOk = b.rubriqueId !== "kitchen" || minutesEquipements(b) > 0;
   const joursOk = !(formuleDe(b)?.genre === "REGULIER" && b.frequence === "plusieurs") || (b.jours || []).length >= REGLES.JOURS_MIN_PLUSIEURS_PAR_SEMAINE;
-  return h + actions(besoinOk && panierOk && joursOk && chantierOk && equipementsOk, !besoinOk ? "Choisissez votre besoin." : !panierOk ? "Ajoutez chaque élément au panier."
-    : !equipementsOk ? "Ajoutez au moins un équipement."
+  const ok = accueilOk && tachesOk && panierOk && joursOk && chantierOk && equipementsOk;
+  return h + actions(ok, ok ? "" : !equipementsOk ? "Ajoutez au moins un équipement."
     : !chantierOk ? "Cochez « Les artisans auront quitté les lieux » pour continuer."
-    : !joursOk ? "Choisissez au moins deux jours de passage." : "");
+    : !panierOk ? "Ajoutez chaque élément au panier."
+    : !joursOk ? "Choisissez au moins deux jours de passage."
+    : !tachesOk ? "Choisissez au moins une tâche." : "Précisez l'accueil du Cleaneur pour continuer.");
+}
+
+/** Téléphone : au moins 10 chiffres (Validation.telephoneValide dans l'appli). */
+const telephoneValide = t => (t || "").replace(/\D/g, "").length >= 10;
+function accueilValide(b) {
+  return !!b.accueil && ({ TIERS: b.tiersNom.trim() && telephoneValide(b.tiersTel), BOITE: b.boiteEmplacement.trim() && b.code.trim(), AUTONOME: b.code.trim(), PRESENT: true }[b.accueil]);
+}
+/** « Accueil du Cleaneur » : mêmes choix, champs et textes que l'appli (fin de l'étape 2). */
+function blocAccueil() {
+  const interdit = accueilAutonomeInterdit(b.rubriqueId, b.typeLieuId);
+  const options = Object.entries(ACCUEIL).filter(([k]) => (b.rubriqueId === "special" ? k === "PRESENT" : !interdit || ["PRESENT", "TIERS"].includes(k)));
+  let acces = "";
+  if (b.accueil === "TIERS") acces = champTexte("Prénom et nom", "tiersNom", b.tiersNom, "text", 'maxlength="80"') + champTexte("Téléphone", "tiersTel", b.tiersTel, "tel", 'maxlength="20"')
+    + (b.tiersTel && !telephoneValide(b.tiersTel) ? `<p class="erreur" style="margin:0">Au moins 10 chiffres.</p>` : "");
+  if (b.accueil === "BOITE") acces = champTexte("Emplacement de la boîte", "boiteEmplacement", b.boiteEmplacement, "text", 'maxlength="120"') + champTexte("Code", "code", b.code, "text", 'maxlength="30" autocomplete="off"')
+    + `<p class="petit">Le code n'est transmis au Cleaneur qu'une fois la mission confirmée.</p>`;
+  if (b.accueil === "AUTONOME") acces = champTexte("Consignes et code d'arrivée", "code", b.code, "text", 'maxlength="120" autocomplete="off"');
+  return titre("Accueil du Cleaneur")
+    + (interdit ? `<div class="note" style="margin-bottom:10px">Accueil par une personne sur place, sans accès autonome.</div>` : "")
+    + choix(options, b.accueil, "accueil")
+    + (acces ? `<div class="carte" style="margin-top:10px">${acces}</div>` : "");
 }
 
 /** Événements : jour, heures de début et de fin, règles de passage (HorairesEvenement dans l'appli). */
@@ -283,7 +312,7 @@ function horairesEvenement() {
 function equipementsCuisine() {
   const eq = b.equipements || {};
   return titre("Équipements à nettoyer") + `<div class="carte">${equipementsPour(b.typeLieuId).map(e =>
-      `<div class="compteur"><span>${e.nom} · ${euros(prixIndicatifEquipement(e, b))}</span><span class="regle">
+      `<div class="compteur"><span><span>${e.nom}</span> · ${euros(prixIndicatifEquipement(e, b))}</span><span class="regle">
         <button type="button" data-equip-moins="${e.id}" aria-label="Moins" ${(eq[e.id] || 0) <= 0 ? "disabled" : ""}>−</button>
         <output>${eq[e.id] || 0}</output>
         <button type="button" data-equip-plus="${e.id}" aria-label="Plus" ${(eq[e.id] || 0) >= 20 ? "disabled" : ""}>+</button></span></div>`).join("")}
@@ -408,16 +437,17 @@ function etape3() {
     return `<div style="display:flex;align-items:center;gap:8px;padding:4px 0"><b style="width:20px;color:${prise ? "var(--succes)" : "var(--muet, #999)"}">${prise ? "✓" : "○"}</b>
       <span style="flex:1">${esc(v)}</span><label class="lien-bouton" style="cursor:pointer">${prise ? "Reprendre" : "+ Photo"}<input type="file" accept="image/*" data-vue="${esc(v)}" hidden></label></div>`;
   }).join("")}</div>` : "";
-  const pret = vues.length && obl ? vuesCompletes(b, Object.keys(vuesPrises)) : (!obl || photos.length > 0);
-  return `<h2>Photos et précisions</h2><p class="muet">${obl ? "Photos obligatoires pour cette prestation : elles permettent d'estimer le travail." : "Facultatif, mais les photos aident le Cleaneur à bien préparer l'intervention."}</p>
-    ${titre("Vos photos")}
+  const location = b.rubriqueId === "rental";
+  const pret = obl ? (vues.length ? vuesCompletes(b, Object.keys(vuesPrises)) : photos.length > 0) : (location || photos.length > 0 || !!b.sansPhotos);
+  return `<h2>${location ? "Une dernière remarque ?" : "Ajoutez des photos pour préciser votre besoin"}</h2>
+    ${obl ? `<div class="note alerte" style="margin:10px 0">${b.rubriqueId === "kitchen" ? "4 photos obligatoires de la cuisine (4 angles)." : "Photos obligatoires de l'état actuel, pré-analysées (luminosité, pièce reconnue)."}</div>` : ""}
+    ${location ? `<label class="champ" style="font-weight:400"><textarea data-texte="remarque" rows="4" maxlength="2000" placeholder="Ex. : arrivée des voyageurs à 16 h">${esc(b.remarque)}</textarea></label>` : ""}
     ${blocVues}
     <div class="carte ${vues.length ? "masque" : ""}"><div class="vignettes" id="vignettes">${photos.map((f, i) => `<img alt="Photo ${i + 1}" data-i="${i}">`).join("")}</div>
       <label class="bouton secondaire" style="margin-top:12px;cursor:pointer">+ Ajouter des photos<input type="file" id="photos" accept="image/*" multiple hidden></label>
       <p class="petit">12 photos maximum. Elles sont réduites avant l'envoi.</p></div>
-    ${titre("Une précision pour le Cleaneur ?")}
-    <label class="champ" style="font-weight:400"><textarea data-texte="remarque" rows="4" maxlength="2000" placeholder="Ex. : arrivée des voyageurs à 16 h">${esc(b.remarque)}</textarea></label>
-    ${actions(pret, pret ? "" : vues.length ? "Ajoutez une photo pour chaque vue." : "Ajoutez au moins une photo.")}`;
+    ${obl ? "" : `<div class="carte" style="margin-top:10px">${caseCocher("Je ne peux pas encore photographier l'état actuel", "sansPhotos", !!b.sansPhotos)}</div>`}
+    ${actions(pret, pret ? "" : obl ? "Ajoutez une photo pour chaque vue." : "Ajoutez une photo ou cochez la case.")}`;
 }
 
 function joursProposes() {
@@ -433,48 +463,42 @@ function debutChoisi() {
 }
 
 function etape4() {
-  const interdit = accueilAutonomeInterdit(b.rubriqueId, b.typeLieuId);
-  // Prestations spécialisées : une personne sur place, obligatoire.
-  const options = Object.entries(ACCUEIL).filter(([k]) => (b.rubriqueId === "special" ? k === "PRESENT" : !interdit || ["PRESENT", "TIERS"].includes(k)));
-  let acces = "";
-  if (b.accueil === "TIERS") acces = champTexte("Nom de la personne", "tiersNom", b.tiersNom, "text", 'maxlength="80"') + champTexte("Son téléphone", "tiersTel", b.tiersTel, "tel", 'maxlength="20"');
-  if (b.accueil === "BOITE") acces = champTexte("Emplacement de la boîte à clés", "boiteEmplacement", b.boiteEmplacement, "text", 'maxlength="120"') + champTexte("Code de la boîte", "code", b.code, "text", 'maxlength="30" autocomplete="off"');
-  if (b.accueil === "AUTONOME") acces = champTexte("Code ou instructions d'accès", "code", b.code, "text", 'maxlength="120" autocomplete="off"');
   const maintenant = new Date();
   const location = b.rubriqueId === "rental";
-  let heures = []; if (location) heures.push(b.departVoyageursH ?? REGLES.DEPART_VOYAGEURS_DEFAUT_H); else for (let h = 7; h <= 20; h++) heures.push(h);
+  // Mêmes heures que le planning de l'appli : 7 h-11 h et 13 h-18 h (jusqu'à 23 h pour les événements).
+  const grille = [7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23];
+  let heures = location ? [b.departVoyageursH ?? REGLES.DEPART_VOYAGEURS_DEFAUT_H] : grille.slice(0, 11);
   // Événements : créneaux selon la formule (fini avant le début, ou à partir de la fin)
-  if (b.rubriqueId === "event") { const g = []; for (let h = 6; h <= 23; h++) g.push(h); heures = heuresEvenement(b, calculer(entreeEstimation(b, b.espace === "personnel", null)).dureeMin, g); }
+  if (b.rubriqueId === "event") heures = heuresEvenement(b, calculer(entreeEstimation(b, b.espace === "personnel", null)).dureeMin, grille);
   const tient = !location || menageTientEntreVoyageurs(b, calculer(entreeEstimation(b, b.espace === "personnel", null)).dureeMin);
   const jourDate = b.jour ? new Date(b.jour + "T00:00") : null;
   const creneaux = jourDate ? heures.map(h => {
     const c = new Date(jourDate); c.setHours(h);
     const dispo = disponibilite(maintenant, c);
-    return `<button type="button" data-heure="${h}" class="${b.heure === h ? "choisi" : ""} ${dispo === "MALIN" ? "malin" : ""}" ${dispo === "INDISPONIBLE" ? "disabled" : ""}
-      title="${{ MALIN: "Créneau malin −10 %", FORTE_DEMANDE: "Forte demande", PEU: "Peu de disponibilités" }[dispo] || ""}">${heure(h)}</button>`;
+    return `<button type="button" data-heure="${h}" class="${b.heure === h ? "choisi" : ""} ${{ MALIN: "malin", FORTE_DEMANDE: "forte", PEU: "peu" }[dispo] || ""}" ${dispo === "INDISPONIBLE" ? "disabled" : ""}
+      title="${{ MALIN: "Créneau malin −10 %", FORTE_DEMANDE: "Forte demande", PEU: "Peu de Cleaneurs" }[dispo] || ""}">${heure(h)}</button>`;
   }).join("") : "";
-  const accesOk = b.accueil && ({ TIERS: b.tiersNom.trim() && b.tiersTel.trim().length >= 6, BOITE: b.boiteEmplacement.trim() && b.code.trim(), AUTONOME: b.code.trim(), PRESENT: true }[b.accueil]);
   const adresseOk = b.rue.trim().length >= 3 && /^[0-9]{5}$/.test(b.codePostal) && b.ville.trim();
   const creneauOk = estPrelancement() || b.flexible || (b.jour && b.heure >= 0 && (!location || b.heure === (b.departVoyageursH ?? REGLES.DEPART_VOYAGEURS_DEFAUT_H)));
-  const manque = !adresseOk ? "Indiquez l'adresse complète." : !accesOk ? "Indiquez comment le Cleaneur accède au lieu."
+  const manque = !adresseOk ? "Vérifiez l'adresse pour continuer."
     : !tient ? "Le ménage ne tient pas entre le départ et l'arrivée suivante : avancez le départ ou retardez l'arrivée." : !creneauOk ? "Choisissez un créneau." : "";
   return `<h2>Adresse et créneau</h2>
-    ${titre("Adresse de l'intervention")}
-    ${logements().length ? `<p class="petit"><b>Vos adresses enregistrées</b></p>${logements().map(l => `<button type="button" class="option ${b.logementId === l.id ? "choisi" : ""}" data-logement="${l.id}">${esc(nomLogement(l))}<span class="detail">${esc(l.rue)}, ${esc(l.codePostal)} ${esc(l.ville)}</span></button>`).join("")}
-      <button type="button" class="option ${b.logementId ? "" : "choisi"}" data-logement="">+ Nouvelle adresse</button>` : ""}
-    <div class="carte ${b.logementId ? "masque" : ""}">${champTexte("Adresse", "rue", b.rue, "text", 'autocomplete="street-address" maxlength="200"')}
+    ${logements().length ? `${titre("Choisissez un logement déjà renseigné")}${logements().map(l => `<button type="button" class="option ${b.logementId === l.id ? "choisi" : ""}" data-logement="${l.id}">${esc(nomLogement(l))}<span class="detail">${esc(l.rue)}, ${esc(l.codePostal)} ${esc(l.ville)}</span></button>`).join("")}
+      <button type="button" class="option ${b.logementId ? "" : "choisi"}" data-logement="">+ Ajouter une nouvelle adresse</button>` : ""}
+    <div class="carte ${b.logementId ? "masque" : ""}" style="margin-top:14px">${champTexte("Rue", "rue", b.rue, "text", 'autocomplete="street-address" maxlength="200"')}
       <div class="grille-2">${champTexte("Code postal", "codePostal", b.codePostal, "text", 'inputmode="numeric" maxlength="5" autocomplete="postal-code"')}${champTexte("Ville", "ville", b.ville, "text", 'autocomplete="address-level2" maxlength="100"')}</div>
       <p class="petit">Elle sert au calcul du déplacement et à l'arrivée du Cleaneur.</p></div>
-    ${titre("Accès au lieu")}
-    ${choix(options, b.accueil, "accueil")}
-    ${acces ? `<div class="carte" style="margin-top:10px">${acces}<p class="petit">Le code n'est communiqué qu'au Cleaneur retenu, le jour de l'intervention.</p></div>` : ""}
-    ${interdit ? `<p class="petit">Chez les professionnels, une personne doit être présente pour accueillir le Cleaneur.</p>` : ""}
-    ${titre("Créneau")}
-    ${location ? `<div class="note ${tient ? "" : "alerte"}" style="margin-bottom:10px">Départ des voyageurs à ${b.departVoyageursH ?? 10} h · fin avant ${b.arriveeSuivanteH ?? 16} h</div>` : ""}
-    ${estPrelancement() ? `<div class="note">Les réservations ouvrent le <b>31 décembre 2026</b>. Envoyez votre pré-réservation dès maintenant : nous vous recontacterons en priorité pour fixer le créneau.</div>` : `
+    ${estPrelancement() ? "" : titre("Touchez un créneau dans le planning")}
+    ${estPrelancement() ? `<div class="note" style="margin-top:14px">Les réservations ouvrent le <b>31 décembre 2026</b>. Envoyez votre pré-réservation dès maintenant : nous vous recontacterons en priorité pour fixer le créneau.</div>` : `
     <div class="carte">${caseCocher("Je suis flexible", "flexible", b.flexible, "Vous recevez des candidatures sur 7 jours")}</div>
     ${b.flexible ? "" : `<div class="jours" style="margin-top:12px">${joursProposes().map(d => `<button type="button" data-jour="${iso(d)}" class="${b.jour === iso(d) ? "choisi" : ""}">${dateCourte(d)}</button>`).join("")}</div>
-      ${jourDate ? `<div class="creneaux" style="margin-top:12px">${creneaux}</div><p class="petit">Bordure verte : créneau malin, −10 %. Dimanche : +25 %.</p>` : `<p class="petit">Choisissez un jour.</p>`}`}`}
+      ${jourDate ? `<div class="creneaux" style="margin-top:12px">${creneaux}</div>
+        <div class="legende-creneaux petit"><span class="dispo">Disponible</span><span class="malin">Créneau malin −10 %</span><span class="forte">Forte demande</span><span class="peu">Peu de Cleaneurs</span></div>` : `<p class="petit">Choisissez un jour.</p>`}
+      ${jourDate && b.heure >= 0 ? `<div class="note" style="margin-top:10px">Arrivée entre ${heure(b.heure)} et ${heure(b.heure + 1)} · ${dateLongue(jourDate)}</div>`
+        + (disponibilite(maintenant, new Date(jourDate.getFullYear(), jourDate.getMonth(), jourDate.getDate(), b.heure)) === "PEU" ? `<div class="note alerte" style="margin-top:8px">Peu de Cleaneurs sur ce créneau : prévoyez une solution de repli.</div>` : "") : ""}
+      <p class="petit">Réservation au moins 24 h à l'avance. Pour une urgence, la nuit ou un événement : horaire particulier (bientôt).</p>`}`}
+    ${location ? `<div class="note ${tient ? "" : "alerte"}" style="margin-top:10px">Départ des voyageurs à ${b.departVoyageursH ?? 10} h · fin avant ${b.arriveeSuivanteH ?? 16} h</div>`
+      + (tient ? "" : `<div class="note alerte" style="margin-top:8px">Le ménage ne tient pas entre le départ et l'arrivée suivante : avancez le départ ou retardez l'arrivée.</div>`) : ""}
     ${actions(!manque, manque)}`;
 }
 
@@ -485,22 +509,23 @@ function etape5() {
   const contactOk = b.prenom.trim() && b.nom.trim() && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(b.email) && b.telephone.replace(/\D/g, "").length >= 10;
   const manque = !contactOk ? "Complétez vos coordonnées." : !b.cgv ? "Acceptez les conditions pour envoyer la demande." : "";
   return `<h2>Votre estimation</h2>
-    <p class="muet">${icone(r.icone)} ${r.nom} · ${duree(est.dureeMin)}${est.nombreCleaneurs === 2 ? " · 2 Cleaneurs" : ""}${debut ? ` · ${dateCourte(debut)} · ${heure(debut.getHours())}` : estPrelancement() ? " · créneau fixé à l'ouverture" : " · flexible"}</p>
+    <p class="muet">${icone(r.icone)} ${r.nom} · ${duree(est.dureeMin)}${est.nombreCleaneurs === 2 ? " · 2 Cleaneurs" : ""}</p>
     ${estPrelancement() ? `<div class="note" style="margin-top:10px"><span><b>Lancement le 31 décembre 2026.</b> ${MESSAGE_LANCEMENT} Votre pré-réservation est gratuite et sans engagement.</span></div>` : ""}
     <div class="carte" style="margin-top:12px">
-      ${est.devisObligatoire ? `<h3 style="color:var(--turquoise)">Sur devis</h3><p class="muet" style="margin:4px 0 0">Un professionnel qualifié évalue votre besoin et vous propose un devis. Aucun engagement.</p>`
-        : est.lignes.map(l => `<div class="ligne-montant"><span>${esc(l.libelle)}${l.note ? `<span class="note-ligne">${l.note}</span>` : ""}</span><span>${euros(l.montantC)}</span></div>`).join("")
+      ${est.devisObligatoire ? `<h3 style="color:var(--primaire)">Sur devis</h3><p class="muet" style="margin:4px 0 0">Un professionnel qualifié évalue votre besoin et vous propose un devis. Aucun engagement.</p>`
+        : est.lignes.map(l => { const inclus = l.montantC === 0 && l.note === "inclus";
+            return `<div class="ligne-montant"><span>${esc(l.libelle)}${l.note && !inclus ? `<span class="note-ligne">${l.note}</span>` : ""}</span><span>${inclus ? "Inclus" : euros(l.montantC)}</span></div>`; }).join("")
           + `<div class="ligne-montant total"><span>Total estimé</span><span>${euros(est.totalC)}</span></div>
-             ${est.creditImpotC ? `<div class="ligne-montant" style="color:var(--succes);font-weight:700"><span>Après crédit d'impôt (50 %)</span><span>${euros(est.apresCreditImpotC)}</span></div>` : ""}
+             ${est.creditImpotC ? `<div class="ligne-montant" style="color:var(--succes);font-weight:700"><span>soit ${euros(est.apresCreditImpotC)} après crédit d'impôt</span></div>` : ""}
              <p class="petit">Prix approximatif : le montant final ne peut pas le dépasser sans votre accord.</p>
              ${est.nombreCleaneurs === 2 ? `<p class="petit">Au-delà de 6 h de travail, la mission est confiée à 2 Cleaneurs.</p>` : ""}
              ${passagesPlanifies(b) > 1 ? `<p class="petit">${passagesPlanifies(b)} passages planifiés : chaque passage est une demande séparée, au même prix.</p>` : ""}`}
     </div>
     ${est.creditImpotC ? `<p class="petit">50 % des dépenses pour les prestations éligibles réalisées à votre domicile (résidence principale ou secondaire), dans la limite des plafonds légaux (12 000 € par an, majorés dans certains cas).</p>` : ""}
-    ${titre("Comment choisir votre Cleaneur ?")}
+    ${titre("Choix du Cleaneur")}
     <button type="button" class="option ${b.choixCleaneur === "candidatures" ? "choisi" : ""}" data-champ="choixCleaneur" data-valeur="candidatures">Je choisis parmi les candidatures
-      <span class="detail">Les Cleaneurs vous proposent un horaire et un prix. Vous êtes prévenu à chaque candidature et vous choisissez.</span></button>
-    ${b.flexible || estPrelancement() ? "" : `<button type="button" class="option ${b.choixCleaneur === "directe" ? "choisi" : ""}" data-champ="choixCleaneur" data-valeur="directe">Réservation directe
+      <span class="detail">Les Cleaneurs vous proposent un horaire et un prix. Vous êtes notifié à chaque candidature et vous choisissez.</span></button>
+    ${b.flexible || estPrelancement() || est.devisObligatoire ? "" : `<button type="button" class="option ${b.choixCleaneur === "directe" ? "choisi" : ""}" data-champ="choixCleaneur" data-valeur="directe">Réservation directe
       <span class="detail">Le premier Cleaneur qui se positionne au prix estimé, sans frais supplémentaire, obtient la mission.</span></button>`}
     <p class="petit">Aucun Cleaneur n'est accepté automatiquement sans votre choix.</p>
     ${titre("Vos garanties")}${blocReassurance({ compact: true })}
@@ -509,7 +534,7 @@ function etape5() {
       <div class="grille-2">${champTexte("E-mail", "email", b.email, "email", 'autocomplete="email" maxlength="200"')}${champTexte("Téléphone", "telephone", b.telephone, "tel", 'autocomplete="tel" maxlength="20"')}</div></div>
     <div class="note" style="margin-top:14px">Aucun paiement maintenant : vous ne serez débité qu'après avoir validé la prestation. Annulation gratuite jusqu'à 48 h avant ; ensuite 25 % du prix accepté.</div>
     <div class="carte" style="margin-top:12px">${caseCocher(`J'accepte les <a href="#/conditions" target="_blank">conditions d'utilisation</a> et la <a href="#/confidentialite" target="_blank">politique de confidentialité</a>`, "cgv", b.cgv)}</div>
-    ${actions(!manque && !envoi, manque, envoi ? "Envoi en cours…" : estPrelancement() ? "Envoyer ma pré-réservation" : "Envoyer ma demande", "envoyer")}`;
+    ${actions(!manque && !envoi, manque, envoi ? "Envoi en cours…" : estPrelancement() ? "Envoyer ma pré-réservation" : est.devisObligatoire ? "Envoyer ma demande de devis" : "Envoyer ma demande", "envoyer")}`;
 }
 
 function actions(ok, message = "", libelle = "Continuer", id = "suivant") {
@@ -525,7 +550,7 @@ function rendre() {
   if (b && b.rubriqueId && etape > 1) est = calculer(entreeEstimation(b, b.espace === "personnel", debutChoisi()));
   racine.innerHTML = `<section class="bloc" style="padding-top:28px"><div class="etroit">
     <div class="tete-etape petit">${etape > 1 ? `<button type="button" class="retour-haut" data-retour>‹ Retour</button>` : ""}<span>Étape ${etape} sur 5</span>
-      ${est && !est.devisObligatoire ? `<b style="color:var(--turquoise)">Total estimé ${euros(est.totalC)}</b>` : ""}</div>
+      ${est && !est.devisObligatoire ? `<b style="color:var(--primaire)">Total estimé ${euros(est.totalC)}</b>` : ""}</div>
     <div class="progression">${[1, 2, 3, 4, 5].map(i => `<span class="${i <= etape ? "fait" : ""}"></span>`).join("")}</div>
     ${[etape1, etape2, etape3, etape4, etape5][etape - 1]()}
   </div></section>`;
@@ -628,7 +653,7 @@ document.addEventListener("input", e => {
   if (!racine || !racine.contains(e.target) || !e.target.dataset.texte) return;
   b = { ...b, [e.target.dataset.texte]: e.target.value }; sauver();
   const bouton = racine.querySelector("#suivant, #envoyer");
-  if (bouton && b.etape >= 4) { clearTimeout(window.__rendreTimer); window.__rendreTimer = setTimeout(() => {
+  if (bouton && b.etape >= 2) { clearTimeout(window.__rendreTimer); window.__rendreTimer = setTimeout(() => {
     const actif = document.activeElement?.dataset?.texte, pos = document.activeElement?.selectionStart;
     rendre();
     if (actif) { const el = racine.querySelector(`[data-texte="${actif}"]`); if (el) { el.focus(); try { el.setSelectionRange(pos, pos); } catch { /* email */ } } }

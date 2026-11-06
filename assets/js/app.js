@@ -252,7 +252,7 @@ function reveler(racine) {
 
 function pageInscription(type = "client") {
   return `<section class="fond-cleaneroo" style="padding:40px 0 90px">${decor([[90, 20, 90], [4, 60, 60]], [])}
-    <div class="conteneur"><span class="etiquette" style="background:var(--corail)">J-${joursAvantLancement()}</span>
+    <div class="conteneur"><span class="etiquette" style="background:#C24A38">J-${joursAvantLancement()}</span>
       <h1 style="margin-top:10px">Lancement le 31 décembre 2026</h1><div class="trait-corail"></div>
       <p class="slogan" style="font-size:20px;font-weight:600;margin:0">${MESSAGE_LANCEMENT}</p></div></section>
   <section class="bloc"><div class="etroit">${formulaireInscription(type, type === "cleaneur")}</div></section>`;
@@ -305,7 +305,7 @@ function pageDevenir() {
   return `<section class="fond-cleaneroo" style="padding:40px 0 90px">${decor([[90, 20, 90], [4, 60, 60]], [])}
     <div class="conteneur"><h1>Devenir Cleaneur</h1><div class="trait-corail"></div><p>Travaillez à votre rythme, près de chez vous.</p>
       <div class="etiquettes"><span class="etiquette">Missions proches</span><span class="etiquette">Compte rendu guidé</span><span class="etiquette">Paiement sécurisé</span></div></div></section>
-  <section class="bloc"><div class="etroit">${blocOffreCleaneurs()}${etapes.map((t, i) => `<div class="carte" style="margin-bottom:10px"><b style="color:var(--corail)">${i + 1}.</b> ${t}</div>`).join("")}
+  <section class="bloc"><div class="etroit">${blocOffreCleaneurs()}${etapes.map((t, i) => `<div class="carte" style="margin-bottom:10px"><b style="color:var(--corail-texte)">${i + 1}.</b> ${t}</div>`).join("")}
     <div style="margin-top:18px">${formulaireInscription("cleaneur", true)}</div>
   </div></section>`;
 }

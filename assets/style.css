@@ -10,12 +10,14 @@
   --surface: #FFFFFF;
   --creux: #E3EDED;
   --texte: #16343A;
-  --texte2: #4A6B6E;
-  --texte3: #7E9A9C;
+  --texte2: #425E62;
+  --texte3: #566C6F;
+  --primaire: #146B63;
+  --corail-texte: #B4502E;   /* textes orangés lisibles sur fond clair */   /* textes et liens turquoise : primary de l'appli */
   --separateur: rgba(74, 107, 110, 0.18);
-  --succes: #2E9E72;
+  --succes: #24735A;
   --alerte: #D9822B;
-  --erreur: #D0485A;
+  --erreur: #B43F4A;
   --rayon: 16px;
   --rayon-l: 24px;
   --ombre: 0 6px 22px rgba(14, 59, 64, 0.10);
@@ -25,6 +27,8 @@
   :root {
     --fond: #0E1A1B; --surface: #1C2F31; --creux: #152425; --texte: #E4EEEE; --texte2: #A9BEC0; --texte3: #8AA0A2;
     --separateur: rgba(169, 190, 192, 0.22); --ombre: 0 6px 22px rgba(0, 0, 0, 0.35);
+    /* Mêmes couleurs que l'appli en mode sombre (Charte.kt, CouleursSombre) : plus lisibles sur fond foncé */
+    --primaire: #4FB8AC; --corail-texte: #E09A55; --succes: #5CC49E; --alerte: #E3A955; --erreur: #F07D86;
   }
 }
 
@@ -35,7 +39,7 @@ body {
   font: 16px/1.5 "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 img { max-width: 100%; display: block; }
-a { color: var(--turquoise); }
+a { color: var(--primaire); }
 button, input, select, textarea { font: inherit; color: inherit; }
 h1, h2, h3 { line-height: 1.2; margin: 0; }
 h1 { font-size: clamp(28px, 4.4vw, 46px); font-weight: 700; }
@@ -126,10 +130,11 @@ h3 { font-size: 19px; font-weight: 600; }
 .bouton:active { transform: scale(.97); }
 .bouton:disabled { opacity: .45; cursor: not-allowed; }
 .bouton.clair { background: #fff; color: var(--canard); }
-.bouton.secondaire { background: color-mix(in srgb, var(--turquoise) 12%, transparent); color: var(--turquoise); border: 1px solid color-mix(in srgb, var(--turquoise) 40%, transparent); }
+.bouton.secondaire { background: color-mix(in srgb, var(--turquoise) 12%, transparent); color: var(--primaire); border: 1px solid color-mix(in srgb, var(--turquoise) 40%, transparent); }
 .bouton.danger { background: color-mix(in srgb, var(--erreur) 12%, transparent); color: var(--erreur); }
 .bouton.plein { width: 100%; }
-.lien-bouton { background: none; border: 0; color: var(--turquoise); font-weight: 600; cursor: pointer; min-height: 48px; padding: 0 8px; }
+.lien-bouton { background: none; border: 0; color: var(--primaire); font-weight: 600; cursor: pointer; min-height: 48px; padding: 0 8px; }
+label.lien-bouton { display: inline-flex; align-items: center; }
 
 /* ---------------------------------------------------------------- Sections et cartes */
 section.bloc { padding: 56px 0; }
@@ -170,12 +175,12 @@ section.bloc { padding: 56px 0; }
   text-align: left; min-height: 52px; padding: 12px 14px; border-radius: 14px; cursor: pointer;
   background: var(--surface); border: 1.5px solid var(--separateur);
 }
-.choix button.choisi, .option.choisi { border-color: var(--turquoise); background: color-mix(in srgb, var(--turquoise) 10%, var(--surface)); color: var(--turquoise); font-weight: 600; }
+.choix button.choisi, .option.choisi { border-color: var(--turquoise); background: color-mix(in srgb, var(--turquoise) 10%, var(--surface)); color: var(--primaire); font-weight: 600; }
 .option { display: block; width: 100%; margin-bottom: 8px; }
 .option .detail { display: block; font-weight: 400; color: var(--texte2); font-size: 14px; }
 .segments { display: flex; background: var(--creux); border-radius: 999px; padding: 4px; }
 .segments button { flex: 1; min-height: 44px; border: 0; background: none; border-radius: 999px; cursor: pointer; font-weight: 600; color: var(--texte2); }
-.segments button.choisi { background: var(--surface); color: var(--turquoise); box-shadow: 0 2px 6px rgba(0,0,0,.08); }
+.segments button.choisi { background: var(--surface); color: var(--primaire); box-shadow: 0 2px 6px rgba(0,0,0,.08); }
 .compteur { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--separateur); }
 .compteur:last-child { border-bottom: 0; }
 .compteur .regle { display: flex; align-items: center; gap: 4px; }
@@ -196,16 +201,23 @@ label.case .info { margin-left: auto; color: var(--texte3); font-size: 13px; whi
 .ligne-montant { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; }
 .ligne-montant .note-ligne { display: block; font-size: 12px; color: var(--texte3); }
 .ligne-montant.total { border-top: 1px solid var(--separateur); margin-top: 6px; padding-top: 12px; font-weight: 700; font-size: 18px; }
-.tampon { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; background: color-mix(in srgb, var(--corail) 18%, transparent); color: #C7613E; }
+.tampon { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; background: color-mix(in srgb, var(--corail) 18%, transparent); color: var(--corail-texte); }
 .barre-actions { position: sticky; bottom: 0; background: linear-gradient(transparent, var(--fond) 30%); padding: 18px 0 16px; margin-top: 18px; }
 .creneaux { display: grid; grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)); gap: 8px; }
 .creneaux button { min-height: 48px; border-radius: 12px; border: 1.5px solid var(--separateur); background: var(--surface); cursor: pointer; font-weight: 600; }
 .creneaux button.choisi { border-color: var(--turquoise); background: var(--turquoise); color: #fff; }
 .creneaux button.malin { border-color: var(--succes); }
+.creneaux button.forte { border-color: var(--corail); }
+.creneaux button.peu { border-color: var(--alerte); }
+.legende-creneaux { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 10px; }
+.legende-creneaux span::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; background: var(--turquoise); }
+.legende-creneaux .malin::before { background: var(--succes); }
+.legende-creneaux .forte::before { background: var(--corail); }
+.legende-creneaux .peu::before { background: var(--alerte); }
 .creneaux button:disabled { opacity: .35; cursor: not-allowed; }
 .jours { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; }
 .jours button { flex: none; width: 74px; min-height: 64px; border-radius: 14px; border: 1.5px solid var(--separateur); background: var(--surface); cursor: pointer; }
-.jours button.choisi { border-color: var(--turquoise); background: color-mix(in srgb, var(--turquoise) 12%, var(--surface)); color: var(--turquoise); font-weight: 700; }
+.jours button.choisi { border-color: var(--turquoise); background: color-mix(in srgb, var(--turquoise) 12%, var(--surface)); color: var(--primaire); font-weight: 700; }
 .vignettes { display: flex; flex-wrap: wrap; gap: 8px; }
 .vignettes img { width: 84px; height: 84px; object-fit: cover; border-radius: 12px; }
 .erreur { color: var(--erreur); font-size: 14px; }
@@ -229,7 +241,7 @@ label.case .info { margin-left: auto; color: var(--texte3); font-size: 13px; whi
 .langues .drapeau { width: auto; height: auto; display: inline-grid; opacity: 1; background: none; }
 .menu-langues { position: absolute; right: 0; top: calc(100% + 6px); min-width: 170px; padding: 6px; border-radius: 14px; background: var(--surface); box-shadow: 0 14px 40px rgba(0,0,0,.25); display: grid; gap: 2px; z-index: 40; animation: deplie .18s ease-out; }
 .menu-langues button { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border: 0; border-radius: 10px; background: none; cursor: pointer; color: var(--texte); font-weight: 600; text-align: left; }
-.menu-langues button:hover, .menu-langues button.choisi { background: color-mix(in srgb, var(--turquoise) 12%, transparent); color: var(--turquoise); }
+.menu-langues button:hover, .menu-langues button.choisi { background: color-mix(in srgb, var(--turquoise) 12%, transparent); color: var(--primaire); }
 @keyframes deplie { from { opacity: 0; transform: translateY(-4px) scale(.98); } }
 
 /* Fond vivant : bulles qui flottent, étincelles qui scintillent, vagues qui ondulent, bulles qui montent */
@@ -379,7 +391,7 @@ h3 { font-size: 18px; font-weight: 700; letter-spacing: -.01em; }
 /* ---------------------------------------------------------------- Bandeau de lancement */
 .lancement { background: linear-gradient(90deg, #F4705C, #FF9A6B 50%, #F4705C); background-size: 200% 100%; animation: glisse 12s linear infinite; font-size: 13.5px; }
 .lancement .conteneur { padding: 7px 0; }
-.lancement .compte { background: rgba(255,255,255,.95); color: #E2604C; padding: 1px 10px; }
+.lancement .compte { background: rgba(255,255,255,.95); color: #C24A38; padding: 1px 10px; }
 @keyframes glisse { to { background-position: -200% 0; } }
 
 /* ---------------------------------------------------------------- Fond des bannières : dégradé maillé et aurore */
@@ -490,7 +502,7 @@ section.bloc-doux { background: linear-gradient(180deg, transparent, color-mix(i
 .prestation:hover { transform: translateY(-6px); box-shadow: var(--ombre-forte); }
 .prestation:hover::before { opacity: 1; }
 .prestation p.muet { margin: 6px 0 0; font-size: 15px; }
-.prestation .aller { display: inline-block; margin-top: 14px; font-weight: 700; font-size: 14px; color: var(--turquoise); transition: transform .2s; }
+.prestation .aller { display: inline-block; margin-top: 14px; font-weight: 700; font-size: 14px; color: var(--primaire); transition: transform .2s; }
 .prestation:hover .aller { transform: translateX(4px); }
 .prestation .tampon { margin-top: 12px; }
 
@@ -508,7 +520,7 @@ section.bloc-doux { background: linear-gradient(180deg, transparent, color-mix(i
 .bouton:hover { filter: brightness(1.05); box-shadow: 0 12px 28px rgba(15,127,120,.32); }
 .bouton.clair { box-shadow: 0 8px 20px rgba(0,0,0,.12); }
 .bouton.secondaire { box-shadow: none; background: var(--surface); border: 1px solid var(--separateur); color: var(--texte); }
-.bouton.secondaire:hover { border-color: color-mix(in srgb, var(--turquoise) 50%, transparent); color: var(--turquoise); }
+.bouton.secondaire:hover { border-color: color-mix(in srgb, var(--turquoise) 50%, transparent); color: var(--primaire); }
 .bouton.corail { background: var(--degrade-corail); box-shadow: 0 10px 24px rgba(244,112,92,.35); }
 .bouton.danger { box-shadow: none; }
 
@@ -557,7 +569,7 @@ label.champ input:focus, label.champ select:focus, label.champ textarea:focus, i
 .titre-heros > span { display: block; }
 .appel .carte p { color: var(--texte2); font-size: 15px; }
 .appel .carte .erreur { color: var(--erreur); }
-.appel .carte a { color: var(--turquoise); }
+.appel .carte a { color: var(--primaire); }
 @media (max-width: 860px) {
   .heros .grille { grid-template-columns: 1fr; }
   .scene { margin-top: 18px; }
@@ -570,7 +582,7 @@ label.champ input:focus, label.champ select:focus, label.champ textarea:focus, i
 .tete-etape { display: flex; align-items: center; gap: 12px; }
 .tete-etape > span { flex: 1; }
 .retour-haut { min-height: 40px; padding: 0 14px 0 10px; border-radius: 999px; border: 1px solid var(--separateur); background: var(--surface);
-  color: var(--turquoise); font-weight: 700; font-size: 14px; cursor: pointer; box-shadow: var(--ombre); transition: border-color .2s; }
+  color: var(--primaire); font-weight: 700; font-size: 14px; cursor: pointer; box-shadow: var(--ombre); transition: border-color .2s; }
 .retour-haut:hover { border-color: color-mix(in srgb, var(--turquoise) 50%, transparent); }
 .barre-actions .bouton.secondaire { white-space: nowrap; flex: none; padding: 0 18px; }
 
