@@ -785,3 +785,81 @@ a.ligne-compte:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba
 .vide-compte { border: 1.5px dashed var(--separateur); border-radius: var(--rayon); padding: 16px 18px; text-align: center; background: color-mix(in srgb, var(--surface) 50%, transparent); }
 .vide-compte p { margin: 0; }
 .vide-compte .petit { margin-top: 4px; }
+
+/* ------------------------------------------------------------------ Mon compte : 3 espaces (Particulier, Pro, Cleaneur) */
+.large-compte { max-width: 820px; }
+.onglets-compte { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 6px; margin: 4px 0 20px; background: var(--creux); border-radius: 18px; position: sticky; top: 70px; z-index: 5; box-shadow: 0 4px 14px rgba(8,38,42,.06); }
+.onglets-compte a { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; border-radius: 13px; font-weight: 700; color: var(--texte2); text-decoration: none; transition: background .2s, color .2s, box-shadow .2s; }
+.onglets-compte a svg { width: 20px; height: 20px; }
+.onglets-compte a:hover { color: var(--texte); }
+.onglets-compte a.actif { background: var(--surface); color: var(--primaire); box-shadow: var(--ombre); }
+@media (max-width: 480px) { .onglets-compte a { flex-direction: column; gap: 2px; font-size: 13px; min-height: 56px; } }
+.contenu-onglet { animation: apparaitre .25s ease; }
+@keyframes apparaitre { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .contenu-onglet { animation: none; } }
+.carte.mise-en-avant { background: linear-gradient(135deg, color-mix(in srgb, var(--turquoise) 14%, var(--surface)), var(--surface) 70%); border: 1px solid color-mix(in srgb, var(--turquoise) 28%, transparent); }
+.grille-raccourcis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 14px 0; }
+.carte.raccourci { display: flex; flex-direction: column; gap: 6px; text-decoration: none; color: var(--texte); transition: transform .2s, box-shadow .2s; }
+.carte.raccourci:hover { transform: translateY(-2px); box-shadow: var(--ombre-forte); }
+@media (max-width: 600px) { .grille-raccourcis { grid-template-columns: 1fr; } .carte.raccourci { flex-direction: row; align-items: center; flex-wrap: wrap; } }
+/* Pro */
+.entete-pro { display: grid; gap: 10px; background: var(--degrade); color: #fff; border: 0; }
+.entete-pro .surtitre, .entete-pro .petit { color: rgba(255,255,255,.9); }
+.entete-pro h2 { color: #fff; }
+.entete-pro details.societe { background: rgba(255,255,255,.14); border-radius: 12px; padding: 10px 14px; }
+.entete-pro details.societe summary { cursor: pointer; font-weight: 700; color: #fff; }
+.entete-pro .champ { color: #fff; }
+.entete-pro .erreur { color: #FFE1E1; }
+.tuiles-chiffres { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 14px 0 4px; }
+.tuile-chiffre { background: var(--surface); border-radius: var(--rayon); box-shadow: var(--ombre); padding: 14px 12px; text-align: center; }
+.tuile-chiffre b { display: block; font-size: 28px; font-weight: 800; color: var(--primaire); }
+.tuile-chiffre.alerte b { color: var(--corail-texte); }
+.tuile-chiffre span { font-size: 13px; color: var(--texte2); font-weight: 600; }
+@media (max-width: 600px) { .tuiles-chiffres { grid-template-columns: 1fr 1fr; } }
+.agenda-haut { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.agenda-haut [data-mois] { font-size: 26px; line-height: 1; min-width: 44px; min-height: 44px; }
+.agenda-mois { text-transform: capitalize; font-size: 17px; min-width: 150px; text-align: center; }
+.agenda-haut select { margin-left: auto; max-width: 100%; min-height: 40px; border-radius: 10px; border: 1px solid var(--separateur); background: var(--surface); color: var(--texte); padding: 0 10px; }
+.agenda-grille { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.agenda-grille .jour-sem { text-align: center; font-size: 12px; font-weight: 700; color: var(--texte3); text-transform: uppercase; padding: 4px 0; }
+.agenda-grille .jour { min-height: 54px; border-radius: 10px; background: var(--creux); padding: 5px; display: flex; flex-direction: column; justify-content: space-between; }
+.agenda-grille .jour.hors { background: none; }
+.agenda-grille .jour.occupe { background: color-mix(in srgb, var(--turquoise) 22%, var(--creux)); }
+.agenda-grille .jour.aujourdhui { outline: 2px solid var(--primaire); outline-offset: -2px; }
+.agenda-grille .num { font-size: 13px; font-weight: 700; }
+.marques { display: flex; gap: 3px; flex-wrap: wrap; }
+.marques i, .agenda-legende i { display: inline-flex; align-items: center; justify-content: center; min-width: 12px; height: 12px; border-radius: 6px; font-style: normal; font-size: 9px; font-weight: 800; color: #fff; padding: 0 2px; }
+.m-depart { background: var(--corail); }
+.m-arrivee { background: var(--turquoise); }
+.m-menage { background: var(--succes); }
+.agenda-legende { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 10px; }
+.agenda-legende span { display: inline-flex; align-items: center; gap: 6px; }
+.agenda-legende i.occupe { background: color-mix(in srgb, var(--turquoise) 35%, var(--creux)); }
+@media (max-width: 480px) { .agenda-grille .jour { min-height: 44px; padding: 3px; } .agenda-grille { gap: 3px; } }
+.bien-pro details { margin-top: 10px; border-top: 1px solid var(--separateur); padding-top: 8px; }
+.bien-pro summary, details.carte > summary { cursor: pointer; font-weight: 700; color: var(--primaire); }
+.pastilles { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+.pastille { font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: var(--creux); color: var(--texte2); }
+.pastille.airbnb { background: color-mix(in srgb, #FF5A5F 16%, transparent); color: #B8363B; }
+.pastille.booking { background: color-mix(in srgb, #003580 14%, transparent); color: #1E4C9A; }
+.pastille.autre { background: color-mix(in srgb, var(--turquoise) 16%, transparent); color: var(--primaire); }
+.pastille.ko { background: color-mix(in srgb, var(--erreur) 16%, transparent); color: var(--erreur); }
+.pastille.ko::after { content: " ⚠"; }
+@media (prefers-color-scheme: dark) { .pastille.airbnb { color: #FF9A9D; } .pastille.booking { color: #8FB4F0; } }
+.aide-ical { margin-top: 14px; }
+.aide-ical p { margin: 8px 0; font-size: 14.5px; }
+.ligne-compte .bouton { white-space: nowrap; }
+@media (max-width: 600px) { .ligne-compte:has([data-programmer]) { flex-wrap: wrap; } .ligne-compte [data-programmer] { width: 100%; } }
+/* Cleaneur */
+.jauge { height: 10px; border-radius: 6px; background: var(--creux); overflow: hidden; margin-bottom: 12px; }
+.jauge span { display: block; height: 100%; background: var(--degrade); border-radius: 6px; transition: width .4s; }
+.liste-preparation { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.liste-preparation li { display: flex; gap: 10px; align-items: center; color: var(--texte2); }
+.liste-preparation li.fait { color: var(--texte); }
+.liste-preparation .coche { width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--separateur); display: inline-flex; align-items: center; justify-content: center; flex: none; font-weight: 800; font-size: 13px; }
+.liste-preparation li.fait .coche { background: var(--succes); border-color: var(--succes); color: #fff; }
+.deroule-mission { list-style: none; counter-reset: etape; padding: 0; margin: 0 0 14px; display: grid; gap: 8px; }
+.deroule-mission li { counter-increment: etape; display: grid; grid-template-columns: 36px 1fr; column-gap: 12px; background: var(--surface); border-radius: var(--rayon); box-shadow: var(--ombre); padding: 12px 14px; }
+.deroule-mission li::before { content: counter(etape); grid-row: span 2; width: 36px; height: 36px; border-radius: 50%; background: var(--degrade); color: #fff; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+details.carte { margin-bottom: 12px; }
+details.carte > div > .carte, details.carte > form.carte { box-shadow: none; padding-inline: 0; margin-top: 8px; background: none; border: 0; }

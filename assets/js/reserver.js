@@ -29,16 +29,16 @@ export function oublierMesInformations() { [CLE_PROFIL, CLE_LOGEMENTS, CLE_MODEL
 const CHAMPS_LOGEMENT = ["rue", "codePostal", "ville", "accueil", "tiersNom", "tiersTel", "boiteEmplacement"];
 const PRIVES = ["prenom", "nom", "email", "telephone", "code", "jour", "heure", "cgv", "etape", "sansPhotos", "flexible", ...CHAMPS_LOGEMENT];
 /** Libellé court d'une adresse enregistrée : « Appartement · Fréjus ». */
-export const nomLogement = l => `${(TYPES_LOGEMENT.find(t => t.id === l.typeLogementId) || {}).nom || "Adresse"} · ${l.ville}`;
+export const nomLogement = l => l.nom ? `${l.nom} · ${l.ville}` : `${(TYPES_LOGEMENT.find(t => t.id === l.typeLogementId) || {}).nom || "Adresse"} · ${l.ville}`;
 
 function memoriserCommande(b) {
   ecrire(CLE_PROFIL, { prenom: b.prenom.trim(), nom: b.nom.trim(), email: b.email.trim(), telephone: b.telephone.trim() });
   const liste = logements();
   const meme = l => l.rue.trim().toLowerCase() === b.rue.trim().toLowerCase() && l.codePostal === b.codePostal;
   const ancien = liste.find(meme);
-  const log = { id: ancien?.id || "l" + Date.now(), typeLogementId: b.typeLogementId, surface: b.surface, chambres: b.chambres, sdb: b.sdb, niveaux: b.niveaux,
+  const log = { ...(ancien || {}), id: ancien?.id || "l" + Date.now(), typeLogementId: b.typeLogementId, surface: b.surface, chambres: b.chambres, sdb: b.sdb, niveaux: b.niveaux,
     ...Object.fromEntries(CHAMPS_LOGEMENT.map(k => [k, String(b[k] ?? "").trim()])) };
-  ecrire(CLE_LOGEMENTS, [log, ...liste.filter(l => !meme(l))].slice(0, 10));
+  ecrire(CLE_LOGEMENTS, [log, ...liste.filter(l => !meme(l))].slice(0, REGLES.BIENS_MAX));
   const modele = Object.fromEntries(Object.entries(b).filter(([k]) => !PRIVES.includes(k)));
   // « Mémoriser ces étapes pour ce logement » décoché : les étapes ne sont pas reprises la prochaine fois.
   if (b.rubriqueId === "rental" && b.memoriserEtapes === false) { delete modele.etapesChoisies; delete modele.etapesPerso; delete modele.consommablesChoisis; }
@@ -121,6 +121,11 @@ export function ouvrirReservation(conteneur, rubriqueId, option = "") {
   // Calculateur : étape 2 préremplie. Page ville : étape 1, la ville sera reprise à l'adresse.
   const pr = lirePrerempli();
   if (pr?.lieu) { lieuEnAttente = pr.lieu; if (!rubriqueId) b = null; else if (b && !b.rue) b = { ...b, ...pr.lieu }; }
+  // Espace Pro : « Programmer le ménage » après un départ (bien et jour repris).
+  if (pr?.bienId && rubrique(rubriqueId)) {
+    const l = logements().find(x => x.id === pr.bienId);
+    b = { ...avecLogement(nouveauBrouillon(rubriqueId, "personnel"), l), jour: pr.jour || "", heure: -1, etape: 2 };
+  }
   if (pr?.champs && pr.rubriqueId === rubriqueId && rubrique(rubriqueId)) b = { ...nouveauBrouillon(rubriqueId, ancien?.espace || "personnel"), ...pr.champs, etape: 2 };
   photos = [];
   vuesPrises = {};

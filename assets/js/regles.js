@@ -48,6 +48,11 @@ export const REGLES = {
   // Périmètre d'intervention d'un Cleaneur (menu déroulant du profil), en km ; défaut 15 km.
   ZONES_KM: [5, 10, 15, 20, 25, 30, 40, 50, 75, 100],
   ZONE_KM_DEFAUT: 15,
+  // Espace Pro : agenda relié aux calendriers iCal (Airbnb, Booking…).
+  AGENDA_HORIZON_JOURS: 14,      // départs proposés « à programmer »
+  AGENDA_CACHE_MIN: 15,          // calendrier relu au plus toutes les 15 min
+  SEUIL_ESPACE_PRO_BIENS: 3,     // à partir de 3 biens, le compte s'ouvre sur l'espace Pro
+  BIENS_MAX: 200,
   PALIERS_DEFAUT: 5,
   CHANTIER_MINIMUM_MIN: 120,
   CHANTIER_PIECES_MAX: 8,

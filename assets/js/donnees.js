@@ -1,6 +1,7 @@
 // Accès aux données : base Supabase « cleaneroo » (Paris). La clé publiable est faite pour être publique :
 // la sécurité est assurée par les règles de la base (dépôt libre, lecture réservée au client concerné et à l'administration).
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/+esm";
+import { REGLES } from "./regles.js";
 
 export const CONFIG = {
   supabaseUrl: "https://wmxrmnujuqkdgvdtlnai.supabase.co",
@@ -133,7 +134,7 @@ export async function monProfil() {
   if (error) throw new Error(error.message);
   return data ? { ...data, email: s.user.email } : null;
 }
-const CHAMPS_PROFIL = ["prenom", "nom", "telephone", "code_postal", "ville", "siret", "prestations", "zone_km"];
+const CHAMPS_PROFIL = ["prenom", "nom", "telephone", "code_postal", "ville", "siret", "societe", "prestations", "zone_km"];
 export async function majProfil(champs) {
   const s = await session();
   const maj = Object.fromEntries(Object.entries(champs).filter(([k]) => CHAMPS_PROFIL.includes(k)));
@@ -245,4 +246,20 @@ export async function deciderDossier(id, valide, motif = "") {
 export async function deciderDocument(id, accepte, motif = "") {
   const { error } = await supabase.rpc("decider_document", { p_id: id, p_accepte: accepte, p_motif: motif });
   if (error) throw new Error(error.message);
+}
+
+/* Espace Pro : agenda relié aux calendriers iCal (Airbnb, Booking…). Lecture par le serveur (fonction agenda-ical). */
+const CLE_AGENDA = "cleaneroo-agenda";
+/** Réservations d'un calendrier : [{ debut, fin, titre, bloque }] (dates AAAA-MM-JJ). Erreur : { erreur }. */
+export async function lireCalendrier(url, forcer = false) {
+  let cache = {};
+  try { cache = JSON.parse(sessionStorage.getItem(CLE_AGENDA) || "{}"); } catch { /* rien */ }
+  const c = cache[url];
+  if (!forcer && c && Date.now() - c.quand < REGLES.AGENDA_CACHE_MIN * 60000) return c.r;
+  const { data, error } = await supabase.functions.invoke("agenda-ical", { body: { url } });
+  let r;
+  if (error) { let corps = null; try { corps = await error.context?.json(); } catch { /* rien */ } r = { erreur: corps?.erreur || "inaccessible" }; }
+  else r = data;
+  if (!r.erreur) { cache[url] = { quand: Date.now(), r }; try { sessionStorage.setItem(CLE_AGENDA, JSON.stringify(cache)); } catch { /* rien */ } }
+  return r;
 }

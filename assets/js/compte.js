@@ -11,6 +11,7 @@ import {
   demandesDuCompte, mesDemandes, synchroniserBiens, enregistrerBien, supprimerBien,
 } from "./donnees.js";
 import { oublierMesInformations } from "./reserver.js";
+import { ONGLETS, ongletParDefaut, barreOnglets, ongletParticulier, ongletPro, brancherPro, ongletCleaneur } from "./espaces.js";
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const OUVERTURE = "Les interventions commencent le 1er janvier 2027.";
@@ -50,47 +51,42 @@ export async function majLienCompte() {
 /* ------------------------------------------------------------------ Mon compte */
 
 export async function pageCompte(vue, param) {
+  param = param ?? location.hash.split("/")[2];
   const ici = location.hash;
   const s = await session();
   if (location.hash !== ici) return;
   if (param === "mdp" && s) return ecranNouveauMdp(vue);
-  if (!s) return ecranConnexion(vue, param === "creer" || param === "cleaneur" ? "creer" : "connexion", "", false, param === "cleaneur" ? "cleaneur" : "client");
-  const p = await monProfil().catch(() => null);
+  if (!s) return ecranConnexion(vue, ["creer", "cleaneur", "pro"].includes(param) ? "creer" : "connexion", "", false, param === "cleaneur" || param === "pro" ? param : "client");
+  const [p, biens, demandes] = await Promise.all([monProfil().catch(() => null), synchroniserBiens().catch(() => []), demandesDuCompte().catch(() => [])]);
   if (location.hash !== ici) return;
   if (!p) { vue.innerHTML = `<section class="bloc"><div class="etroit">${titre("Mon compte")}<p class="erreur">${tr("Le service est momentanément indisponible. Réessayez dans quelques minutes.")}</p></div></section>`; traduire(vue); return; }
   memoriserCoordonnees(p);
   const cleaneur = p.role === "cleaneur" || p.role === "admin";
-  const docs = cleaneur ? await mesDocuments().catch(() => []) : [];
+  const onglet = ONGLETS.some(o => o[0] === param) ? param : ongletParDefaut(p, biens);
+  const docs = cleaneur && onglet === "cleaneur" ? await mesDocuments().catch(() => []) : [];
   if (location.hash !== ici) return;
-  vue.innerHTML = `<section class="bloc"><div class="etroit">
+  const contenu = onglet === "pro" ? ongletPro(p, biens)
+    : onglet === "cleaneur" ? ongletCleaneur(p, docs, { dossier: cleaneur ? blocDossier(p, docs) : "", profil: cleaneur ? formulaireProfil(p, true) : "" })
+    : ongletParticulier(p, biens, demandes) + formulaireProfil(p, false);
+  vue.innerHTML = `<section class="bloc"><div class="etroit large-compte">
     ${titre(`Bonjour ${esc(p.prenom || "")}`.trim())}
     <p><span class="tampon">${ROLES[p.role]}</span> <span class="petit">${esc(p.email)}</span></p>
     <div class="note" style="margin:14px 0"><span><b>Comptes ouverts dès maintenant.</b> ${OUVERTURE}</span></div>
     ${p.role === "admin" ? `<div class="carte teintee" style="margin-bottom:14px"><b>Espace administrateur</b>
       <p class="petit" style="margin:4px 0 10px">Demandes, inscriptions et dossiers des Cleaneurs (documents, validation).</p>
       <a class="bouton secondaire" href="gestion.html">Ouvrir la gestion</a></div>` : ""}
-    ${p.role !== "cleaneur" ? `<div class="carte" style="margin-bottom:14px"><b>Mes prestations</b>
-      <p class="petit" style="margin:4px 0 10px">Vos biens enregistrés, vos prestations à venir et passées.</p>
-      <div class="boutons" style="margin-top:0"><a class="bouton" href="#/mes-demandes">Voir mes prestations</a><a class="bouton secondaire" href="#/reserver">Ajouter une prestation</a></div></div>` : ""}
-    ${p.role === "admin" ? `<div class="carte teintee" id="espace-cleaneur" style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><b>Mon espace Cleaneur</b><span class="tampon">Accès administrateur</span></div>
-      <p class="petit" style="margin:6px 0 0">Ouvert sans dossier vérifié : l'administration n'a pas besoin de documents.</p></div>
-      <details class="carte" style="margin-bottom:14px"><summary style="cursor:pointer;font-weight:700">Essayer le dépôt de documents (comme un Cleaneur)</summary><div style="margin-top:12px">${blocDossier(p, docs)}</div></details>`
-      : cleaneur ? blocDossier(p, docs) : ""}
-    ${formulaireProfil(p, cleaneur)}
-    ${cleaneur ? `<div class="carte" style="margin-top:14px"><b>Mes missions</b>
-      <p class="petit" style="margin:4px 0 0">Les missions proches de chez vous s'afficheront ici à partir du 1er janvier 2027.</p></div>` : ""}
-    ${p.role === "client" ? `<div class="carte" style="margin-top:14px"><b>Vous êtes indépendant ?</b>
-      <p class="petit" style="margin:4px 0 10px">Ouvrez votre espace Cleaneur avec ce compte pour préparer votre dossier.</p>
-      <button type="button" class="bouton secondaire" id="devenir-cleaneur">Devenir Cleaneur avec ce compte</button></div>` : ""}
+    ${barreOnglets(onglet)}
+    <div class="contenu-onglet">${contenu}</div>
     <p style="margin-top:18px"><button type="button" class="lien-bouton" id="deconnexion-compte">Se déconnecter</button></p>
   </div></section>`;
   traduire(vue);
-  if (param === "cleaneur") (vue.querySelector("#espace-cleaneur") || vue.querySelector("#dossier"))?.scrollIntoView({ block: "start" });
-  brancherProfil(vue, p, cleaneur);
-  if (cleaneur) brancherDossier(vue, p);
+  if (vue.querySelector("#form-profil")) brancherProfil(vue, p, onglet === "cleaneur" && cleaneur);
+  if (onglet === "cleaneur" && cleaneur) brancherDossier(vue, p);
+  if (onglet === "pro") brancherPro(vue, p, biens, demandes, { majProfil, recharger: () => pageCompte(vue) });
   vue.querySelector("#devenir-cleaneur")?.addEventListener("click", async e => {
     e.target.disabled = true;
     await devenirCleaneur().catch(() => null);
+    majLienCompte();
     pageCompte(vue);
   });
   vue.querySelector("#deconnexion-compte").onclick = async () => { await deconnecter(); majLienCompte(); location.hash = "#/compte"; pageCompte(vue); };
@@ -113,6 +109,7 @@ function ecranConnexion(vue, mode, message = "", ok = false, roleDefaut = "clien
     <form class="carte" id="form-compte" novalidate>
       ${creer ? `<p style="margin:0 0 8px;font-weight:600">Vous êtes :</p>
         <div class="choix" style="margin-bottom:14px"><button type="button" data-role="client" class="${roleDefaut === "client" ? "choisi" : ""}">Client : je cherche un nettoyage</button>
+          <button type="button" data-role="pro" class="${roleDefaut === "pro" ? "choisi" : ""}">Conciergerie ou plusieurs biens : je gère des locations</button>
           <button type="button" data-role="cleaneur" class="${roleDefaut === "cleaneur" ? "choisi" : ""}">Cleaneur : je propose mes services</button></div>
         <input type="hidden" name="role" value="${roleDefaut}">
         <div class="grille-2"><label class="champ">Prénom<input name="prenom" required maxlength="80" autocomplete="given-name"></label>
@@ -146,8 +143,9 @@ function ecranConnexion(vue, mode, message = "", ok = false, roleDefaut = "clien
     if (f.mdp.value.length < 10) return erreur("Le mot de passe doit contenir au moins 10 caractères.");
     if (!f.cgu.checked) return erreur("Acceptez les conditions d'utilisation pour créer votre compte.");
     try {
-      const r = await creerCompte({ email, mdp: f.mdp.value, role: f.role.value, prenom: f.prenom.value.trim(), nom: f.nom.value.trim() });
-      if (r === "connecte") { majLienCompte(); return pageCompte(vue); }
+      const pro = f.role.value === "pro";   // compte client ouvert sur l'espace Pro
+      const r = await creerCompte({ email, mdp: f.mdp.value, role: pro ? "client" : f.role.value, prenom: f.prenom.value.trim(), nom: f.nom.value.trim() });
+      if (r === "connecte") { majLienCompte(); if (pro) { location.hash = "#/compte/pro"; return; } return pageCompte(vue); }
       ecranConnexion(vue, "connexion", tr("Compte créé. Ouvrez l'e-mail de confirmation que nous venons de vous envoyer, cliquez sur le lien, puis connectez-vous."), true);
     } catch (err) {
       erreur(/registered|already/i.test(err.message) ? "Un compte existe déjà avec cet e-mail : connectez-vous." : /password/i.test(err.message) ? "Mot de passe trop simple : choisissez-en un plus long ou plus varié." : "Le service est momentanément indisponible. Réessayez dans quelques minutes.");
