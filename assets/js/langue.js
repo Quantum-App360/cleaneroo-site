@@ -156,6 +156,15 @@ const T = [
   ["Cleaneroo — [raison sociale, adresse et numéro SIRET à compléter].", "Cleaneroo — [company name, address and SIRET number to be completed].", "Cleaneroo — [ragione sociale, indirizzo e numero SIRET da completare].", "Cleaneroo — [razón social, dirección y número SIRET por completar]."],
 
   // Comptes : Mon compte, dossier Cleaneur, Mes prestations (compte.js)
+  ["Créez votre compte Cleaneur", "Create your Cleaneur account", "Crea il tuo account Cleaneur", "Crea tu cuenta de Cleaneur"],
+  ["Préparez dès maintenant votre profil et votre dossier : tout sera prêt pour vos premières missions le 1er janvier 2027.", "Prepare your profile and file now: everything will be ready for your first jobs on 1 January 2027.", "Prepara subito profilo e pratica: tutto sarà pronto per le prime missioni il 1° gennaio 2027.", "Prepara ya tu perfil y tu expediente: todo estará listo para tus primeras misiones el 1 de enero de 2027."],
+  ["Créer mon compte Cleaneur", "Create my Cleaneur account", "Crea il mio account Cleaneur", "Crear mi cuenta de Cleaneur"],
+  ["J'ai déjà un compte", "I already have an account", "Ho già un account", "Ya tengo una cuenta"],
+  ["Votre espace Cleaneur est ouvert sans dossier ni documents.", "Your Cleaneur area is open without a file or documents.", "Il tuo spazio Cleaneur è aperto senza pratica né documenti.", "Tu espacio de Cleaneur está abierto sin expediente ni documentos."],
+  ["Ouvrir mon espace Cleaneur", "Open my Cleaneur area", "Apri il mio spazio Cleaneur", "Abrir mi espacio de Cleaneur"],
+  ["Votre profil, votre dossier et vos missions sont dans votre compte.", "Your profile, file and jobs are in your account.", "Profilo, pratica e missioni sono nel tuo account.", "Tu perfil, tu expediente y tus misiones están en tu cuenta."],
+  ["Vous avez déjà un compte client", "You already have a client account", "Hai già un account cliente", "Ya tienes una cuenta de cliente"],
+  ["Ouvrez votre espace Cleaneur avec le même compte pour préparer votre dossier.", "Open your Cleaneur area with the same account to prepare your file.", "Apri il tuo spazio Cleaneur con lo stesso account per preparare la pratica.", "Abre tu espacio de Cleaneur con la misma cuenta para preparar tu expediente."],
   ["Mon espace Cleaneur", "My Cleaneur area", "Il mio spazio Cleaneur", "Mi espacio de Cleaneur"],
   ["Accès administrateur", "Administrator access", "Accesso amministratore", "Acceso de administrador"],
   ["Ouvert sans dossier vérifié : l'administration n'a pas besoin de documents.", "Open without a checked file: administrators don't need documents.", "Aperto senza pratica verificata: l'amministrazione non ha bisogno di documenti.", "Abierto sin expediente verificado: la administración no necesita documentos."],

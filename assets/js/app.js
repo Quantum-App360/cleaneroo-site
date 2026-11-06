@@ -8,7 +8,7 @@ traduireCatalogue(RUBRIQUES, TYPES_LIEU);
 import { ouvrirReservation, modeles, logements, nomLogement } from "./reserver.js";
 import { suivre, annuler, memoriser, inscrire, placesRestantes } from "./donnees.js";
 import { compterPage } from "./compteur.js";
-import { pageCompte, pageMesPrestations, retourEmail, majLienCompte } from "./compte.js";
+import { pageCompte, pageMesPrestations, retourEmail, majLienCompte, afficherAccesCleaneur } from "./compte.js";
 import { icone, ICONES_RUBRIQUES, ICONES_INTERFACE } from "./icones.js";
 import { blocEtapes, blocReassurance, installerRappel, bandeauLancement } from "./commun.js";
 export { bandeauLancement };
@@ -321,7 +321,7 @@ function pageDevenir() {
   return `<section class="fond-cleaneroo" style="padding:40px 0 90px">${decor([[90, 20, 90], [4, 60, 60]], [])}
     <div class="conteneur"><h1>Devenir Cleaneur</h1><div class="trait-corail"></div><p>Travaillez à votre rythme, près de chez vous.</p>
       <div class="etiquettes"><span class="etiquette">Missions proches</span><span class="etiquette">Compte rendu guidé</span><span class="etiquette">Paiement sécurisé</span></div></div></section>
-  <section class="bloc"><div class="etroit">${blocOffreCleaneurs()}${etapes.map((t, i) => `<div class="carte" style="margin-bottom:10px"><b style="color:var(--corail-texte)">${i + 1}.</b> ${t}</div>`).join("")}
+  <section class="bloc"><div class="etroit"><div data-acces-cleaneur></div>${blocOffreCleaneurs()}${etapes.map((t, i) => `<div class="carte" style="margin-bottom:10px"><b style="color:var(--corail-texte)">${i + 1}.</b> ${t}</div>`).join("")}
     <div style="margin-top:18px">${formulaireInscription("cleaneur", true)}</div>
   </div></section>`;
 }
@@ -451,7 +451,7 @@ async function afficher() {
   document.querySelector(".nav")?.classList.remove("ouvert");
   document.body.classList.toggle("sans-rappel", route === "reserver");
   document.querySelectorAll(".nav a").forEach(a => a.classList.toggle("actif", a.getAttribute("href") === `#/${route}`));
-  if (route === "compte") { await pageCompte(vue, param); window.scrollTo(0, 0); return; }
+  if (route === "compte") { window.scrollTo(0, 0); await pageCompte(vue, param); return; }
   if (route === "mes-demandes") { await pageMesPrestations(vue); window.scrollTo(0, 0); return; }
   if (route === "reserver") { ouvrirReservation(vue, param || null, chemin.split("/")[2] || ""); window.scrollTo(0, 0); return; }
   if (route === "inscription" && param) { vue.innerHTML = pageInscription(param); brancherInscription(vue); traduire(vue); window.scrollTo(0, 0); return; }
@@ -476,6 +476,7 @@ async function afficher() {
   reveler(vue);
   animerNotifs(vue);
   afficherPlaces(vue);
+  afficherAccesCleaneur(vue);
   window.scrollTo(0, 0);
 }
 

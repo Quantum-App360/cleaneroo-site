@@ -44,7 +44,7 @@ export async function majLienCompte() {
 export async function pageCompte(vue, param) {
   const s = await session();
   if (param === "mdp" && s) return ecranNouveauMdp(vue);
-  if (!s) return ecranConnexion(vue, param === "creer" ? "creer" : "connexion");
+  if (!s) return ecranConnexion(vue, param === "creer" || param === "cleaneur" ? "creer" : "connexion", "", false, param === "cleaneur" ? "cleaneur" : "client");
   const p = await monProfil().catch(() => null);
   if (!p) { vue.innerHTML = `<section class="bloc"><div class="etroit">${titre("Mon compte")}<p class="erreur">${tr("Le service est momentanément indisponible. Réessayez dans quelques minutes.")}</p></div></section>`; traduire(vue); return; }
   memoriserCoordonnees(p);
@@ -60,7 +60,7 @@ export async function pageCompte(vue, param) {
     ${p.role !== "cleaneur" ? `<div class="carte" style="margin-bottom:14px"><b>Mes prestations</b>
       <p class="petit" style="margin:4px 0 10px">Vos biens enregistrés, vos prestations à venir et passées.</p>
       <div class="boutons" style="margin-top:0"><a class="bouton" href="#/mes-demandes">Voir mes prestations</a><a class="bouton secondaire" href="#/reserver">Ajouter une prestation</a></div></div>` : ""}
-    ${p.role === "admin" ? `<div class="carte teintee" style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><b>Mon espace Cleaneur</b><span class="tampon">Accès administrateur</span></div>
+    ${p.role === "admin" ? `<div class="carte teintee" id="espace-cleaneur" style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><b>Mon espace Cleaneur</b><span class="tampon">Accès administrateur</span></div>
       <p class="petit" style="margin:6px 0 0">Ouvert sans dossier vérifié : l'administration n'a pas besoin de documents.</p></div>
       <details class="carte" style="margin-bottom:14px"><summary style="cursor:pointer;font-weight:700">Essayer le dépôt de documents (comme un Cleaneur)</summary><div style="margin-top:12px">${blocDossier(p, docs)}</div></details>`
       : cleaneur ? blocDossier(p, docs) : ""}
@@ -73,6 +73,7 @@ export async function pageCompte(vue, param) {
     <p style="margin-top:18px"><button type="button" class="lien-bouton" id="deconnexion-compte">Se déconnecter</button></p>
   </div></section>`;
   traduire(vue);
+  if (param === "cleaneur") (vue.querySelector("#espace-cleaneur") || vue.querySelector("#dossier"))?.scrollIntoView({ block: "start" });
   brancherProfil(vue, p, cleaneur);
   if (cleaneur) brancherDossier(vue, p);
   vue.querySelector("#devenir-cleaneur")?.addEventListener("click", async e => {
@@ -91,7 +92,7 @@ function memoriserCoordonnees(p) {
   } catch { /* navigation privée */ }
 }
 
-function ecranConnexion(vue, mode, message = "", ok = false) {
+function ecranConnexion(vue, mode, message = "", ok = false, roleDefaut = "client") {
   const creer = mode === "creer";
   vue.innerHTML = `<section class="bloc"><div class="etroit">
     ${titre("Mon compte", "Préparez dès maintenant votre espace : profil, biens, demandes ou dossier Cleaneur. " + OUVERTURE)}
@@ -99,9 +100,9 @@ function ecranConnexion(vue, mode, message = "", ok = false) {
       <button type="button" data-mode="creer" class="${creer ? "choisi" : ""}">Créer un compte</button></div>
     <form class="carte" id="form-compte" novalidate>
       ${creer ? `<p style="margin:0 0 8px;font-weight:600">Vous êtes :</p>
-        <div class="choix" style="margin-bottom:14px"><button type="button" data-role="client" class="choisi">Client : je cherche un nettoyage</button>
-          <button type="button" data-role="cleaneur">Cleaneur : je propose mes services</button></div>
-        <input type="hidden" name="role" value="client">
+        <div class="choix" style="margin-bottom:14px"><button type="button" data-role="client" class="${roleDefaut === "client" ? "choisi" : ""}">Client : je cherche un nettoyage</button>
+          <button type="button" data-role="cleaneur" class="${roleDefaut === "cleaneur" ? "choisi" : ""}">Cleaneur : je propose mes services</button></div>
+        <input type="hidden" name="role" value="${roleDefaut}">
         <div class="grille-2"><label class="champ">Prénom<input name="prenom" required maxlength="80" autocomplete="given-name"></label>
           <label class="champ">Nom<input name="nom" required maxlength="80" autocomplete="family-name"></label></div>` : ""}
       <label class="champ">E-mail<input type="email" name="email" required maxlength="200" autocomplete="username"></label>
@@ -112,7 +113,7 @@ function ecranConnexion(vue, mode, message = "", ok = false) {
       ${creer ? "" : `<button class="lien-bouton" type="button" id="mdp-oublie">Mot de passe oublié ?</button>`}
     </form></div></section>`;
   traduire(vue);
-  vue.querySelectorAll("[data-mode]").forEach(b => b.onclick = () => ecranConnexion(vue, b.dataset.mode));
+  vue.querySelectorAll("[data-mode]").forEach(b => b.onclick = () => ecranConnexion(vue, b.dataset.mode, "", false, roleDefaut));
   const f = vue.querySelector("#form-compte");
   f.querySelectorAll("[data-role]").forEach(b => b.onclick = () => {
     f.querySelectorAll("[data-role]").forEach(x => x.classList.toggle("choisi", x === b));
@@ -255,6 +256,22 @@ function brancherDossier(vue, p) {
       : r === "documents" ? "Ajoutez les 4 documents obligatoires avant d'envoyer votre dossier."
       : "Le service est momentanément indisponible. Réessayez dans quelques minutes.");
   });
+}
+
+/* ------------------------------------------------------------------ « Devenir Cleaneur » : accès direct à son espace selon le compte */
+
+export async function afficherAccesCleaneur(racine) {
+  const bloc = racine.querySelector("[data-acces-cleaneur]");
+  if (!bloc) return;
+  const p = await monProfil().catch(() => null);
+  const carte = (titre, texte, bouton, lien, second = "") => `<div class="carte teintee" style="margin-bottom:16px"><b>${titre}</b>
+    <p class="petit" style="margin:4px 0 10px">${texte}</p><div class="boutons" style="margin-top:0"><a class="bouton" href="${lien}">${bouton}</a>${second}</div></div>`;
+  bloc.innerHTML = !p ? carte("Créez votre compte Cleaneur", "Préparez dès maintenant votre profil et votre dossier : tout sera prêt pour vos premières missions le 1er janvier 2027.",
+      "Créer mon compte Cleaneur", "#/compte/cleaneur", `<a class="bouton secondaire" href="#/compte">J'ai déjà un compte</a>`)
+    : p.role === "admin" ? carte("Accès administrateur", "Votre espace Cleaneur est ouvert sans dossier ni documents.", "Ouvrir mon espace Cleaneur", "#/compte/cleaneur")
+    : p.role === "cleaneur" ? carte("Mon espace Cleaneur", "Votre profil, votre dossier et vos missions sont dans votre compte.", "Ouvrir mon espace Cleaneur", "#/compte/cleaneur")
+    : carte("Vous avez déjà un compte client", "Ouvrez votre espace Cleaneur avec le même compte pour préparer votre dossier.", "Devenir Cleaneur avec ce compte", "#/compte");
+  traduire(bloc);
 }
 
 /* ------------------------------------------------------------------ Mes prestations : biens, à venir, passées, ajouter */
