@@ -1,7 +1,7 @@
 -- Base Supabase « cleaneroo » (Paris) : vrais comptes avant l'ouverture (décision de l'utilisateur, 6 novembre 2026).
 -- Clients : compte, profil, demandes liées au compte. Cleaneurs : profil, documents, dossier envoyé à la vérification.
 -- Aucune intervention avant le 1er janvier 2027 (Regles.DATE_PREMIERES_INTERVENTIONS / regles.js), même pour l'administration.
--- Sans effet sur les demandes et inscriptions existantes.
+-- Appliqué le 6 novembre 2026 (accord de l'utilisateur), testé avec deux comptes de test ensuite supprimés. Sans effet sur les demandes et inscriptions existantes.
 
 -- 1. Profil : informations du compte et dossier Cleaneur.
 alter table public.profils add column if not exists code_postal text not null default '' check (code_postal = '' or code_postal ~ '^[0-9]{5}$');
@@ -155,3 +155,17 @@ alter table public.biens enable row level security;
 create policy "bien : le client gère les siens" on public.biens for all to authenticated
   using (client_id = (select auth.uid())) with check (client_id = (select auth.uid()));
 create policy "bien : admin lit" on public.biens for select to authenticated using ((select public.est_admin()));
+
+-- 8. (appliqué ensuite) L'ancienne règle « modifier le sien (sans changer de rôle) » relisait profils : récursion infinie.
+--    Le rôle et le dossier sont protégés par les droits par colonne ci-dessus.
+drop policy if exists "profil : modifier le sien (sans changer de rôle)" on public.profils;
+create policy "profil : modifier le sien" on public.profils for update to authenticated
+  using (id = (select auth.uid())) with check (id = (select auth.uid()));
+
+-- 9. (appliqué ensuite) Fonctions du compte et de l'administration fermées aux visiteurs non connectés.
+revoke execute on function public.devenir_cleaneur() from anon;
+revoke execute on function public.soumettre_dossier() from anon;
+revoke execute on function public.dossiers_cleaneurs() from anon;
+revoke execute on function public.decider_dossier_cleaneur(uuid, boolean, text) from anon;
+revoke execute on function public.decider_document(uuid, boolean, text) from anon;
+revoke execute on function public.valider_dossier_cleaneur(uuid, boolean) from anon;
