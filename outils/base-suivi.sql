@@ -23,3 +23,5 @@ revoke all on public.positions_cleaneur from anon, authenticated;
 -- mes_missions(), avancer_mission(ref, statut) : CONFIRMEE › EN_ROUTE › SUR_PLACE › EN_COURS › A_VALIDER.
 -- Parties de réservation (migration « espace_conciergerie ») : espace = personnel | conciergerie | professionnel ;
 -- crédit d'impôt refusé par la base hors particulier (contrainte demandes_credit_impot_particulier).
+-- Contrôle du 6 novembre 2026 : droit de modifier « societe » ajouté (grant update (societe) on profils), index sur demandes.cleaneur_id
+-- et positions_cleaneur.cleaneur_id (migration « profil_societe_modifiable »).
