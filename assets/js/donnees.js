@@ -66,6 +66,13 @@ export async function mesDemandes() {
   return res.filter(Boolean).map((d, i) => ({ ...d, jeton: locales[i].jeton }));
 }
 
+/** Suivi en direct : dernière position du Cleaneur (en route ou sur place), ou null. */
+export async function suivrePosition(reference, jeton) {
+  const { data, error } = await supabase.rpc("position_suivi", { p_reference: reference, p_jeton: jeton });
+  if (error) throw new Error(error.message);
+  return data?.[0] || null;
+}
+
 export async function suivre(reference, jeton) {
   const { data, error } = await supabase.rpc("suivi_demande", { p_reference: reference, p_jeton: jeton });
   if (error) throw new Error(error.message);

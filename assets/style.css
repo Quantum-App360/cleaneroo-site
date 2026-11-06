@@ -863,3 +863,38 @@ a.ligne-compte:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba
 .deroule-mission li::before { content: counter(etape); grid-row: span 2; width: 36px; height: 36px; border-radius: 50%; background: var(--degrade); color: #fff; font-weight: 800; display: flex; align-items: center; justify-content: center; }
 details.carte { margin-bottom: 12px; }
 details.carte > div > .carte, details.carte > form.carte { box-shadow: none; padding-inline: 0; margin-top: 8px; background: none; border: 0; }
+
+/* ------------------------------------------------------------------ Suivi en direct du Cleaneur (comme une livraison) */
+.suivi-live { position: relative; border-radius: var(--rayon-l); overflow: hidden; box-shadow: var(--ombre-forte); background: var(--surface); }
+.carte-live { height: 360px; background: #E8F0EF; }
+.carte-live .leaflet-tile-pane { filter: saturate(.75) contrast(.95); }
+@media (max-width: 600px) { .carte-live { height: 300px; } }
+.panneau-live { position: relative; margin-top: -26px; z-index: 500; background: var(--surface); border-radius: 22px 22px 0 0; padding: 16px 18px 14px;
+  display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; align-items: center; box-shadow: 0 -8px 24px rgba(8,38,42,.10); }
+.panneau-live::before { content: ""; position: absolute; top: 7px; left: 50%; width: 38px; height: 4px; margin-left: -19px; border-radius: 2px; background: var(--separateur); }
+.eta-live { grid-row: span 2; display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 84px; padding: 10px 8px;
+  border-radius: 16px; background: var(--degrade); color: #fff; text-align: center; }
+.eta-live b { font-size: 24px; font-weight: 800; line-height: 1.1; }
+.eta-live span { font-size: 12px; opacity: .92; }
+.texte-live { display: flex; flex-direction: column; gap: 2px; }
+.texte-live b { font-size: 17px; }
+.etapes-live { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 10px; font-size: 12px; font-weight: 700; color: var(--texte3); text-align: center; }
+.etapes-live span { padding-top: 8px; border-top: 4px solid var(--creux); }
+.etapes-live span.fait { border-color: var(--turquoise); color: var(--primaire); }
+.etapes-live span.actif { border-image: linear-gradient(90deg, var(--turquoise) 0 40%, var(--creux) 40%) 1; animation: avance 1.6s linear infinite; }
+@keyframes avance { 0% { border-image: linear-gradient(90deg, var(--turquoise) 0 10%, var(--creux) 10%) 1; } 100% { border-image: linear-gradient(90deg, var(--turquoise) 0 95%, var(--creux) 95%) 1; } }
+.pin-maison span { display: flex; width: 40px; height: 40px; align-items: center; justify-content: center; font-size: 19px; background: var(--corail);
+  border: 3px solid #fff; border-radius: 50%; box-shadow: 0 4px 12px rgba(0,0,0,.25); position: relative; }
+.pin-maison span::after { content: ""; position: absolute; bottom: -9px; left: 50%; margin-left: -6px; border: 6px solid transparent; border-top-color: #fff; }
+.pin-cleaneur { position: relative; }
+.pin-cleaneur b { position: absolute; inset: 6px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--degrade);
+  color: #fff; font-weight: 800; font-size: 16px; border: 3px solid #fff; box-shadow: 0 4px 14px rgba(8,38,42,.35); }
+.pin-cleaneur .onde { position: absolute; inset: 0; border-radius: 50%; background: rgba(42,157,147,.35); animation: onde 1.8s ease-out infinite; }
+@keyframes onde { from { transform: scale(.6); opacity: .9; } to { transform: scale(1.7); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .pin-cleaneur .onde, .etapes-live span.actif { animation: none; } }
+.actions-live { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.actions-live .bouton { flex: 1 1 220px; }
+/* Petite fenêtre de suivi (toujours au-dessus, ordinateur) */
+body.corps-mini { margin: 0; background: var(--fond); }
+body.corps-mini .suivi-live { border-radius: 0; box-shadow: none; height: 100vh; display: flex; flex-direction: column; }
+body.corps-mini .carte-live { flex: 1; height: auto; }

@@ -8,6 +8,7 @@ traduireCatalogue(RUBRIQUES, TYPES_LIEU);
 import { ouvrirReservation, modeles, logements, nomLogement } from "./reserver.js";
 import { suivre, annuler, memoriser, inscrire, placesRestantes } from "./donnees.js";
 import { compterPage } from "./compteur.js";
+import { suivreEnDirect, demoSuivi } from "./suivi-live.js";
 import { pageCompte, pageMesPrestations, retourEmail, majLienCompte, afficherAccesCleaneur } from "./compte.js";
 import { icone, ICONES_RUBRIQUES, ICONES_INTERFACE } from "./icones.js";
 import { blocEtapes, blocReassurance, installerRappel, bandeauLancement } from "./commun.js";
@@ -275,6 +276,8 @@ function pageComment() {
     <div class="grille-2 etroit" style="margin-top:28px">
       <div class="carte fond-cleaneroo" style="border:0"><h3>Côté Cleaneur</h3><div class="trait-corail"></div>
         <p style="margin:0">Je pars, puis j'arrive (géolocalisé) · Selfie du jour · Tâches et photos guidées · Signature et compte rendu · Paiement après validation.</p></div>
+      <a class="carte ligne-compte" href="#/suivi-demo" style="grid-column:1/-1">${icone("position", { tuile: true })}
+        <div class="corps"><h3 style="margin:0">Suivez votre Cleaneur en direct</h3><p class="muet" style="margin:2px 0 0">Sur une carte, jusqu'à chez vous, comme une livraison. Voir la démonstration.</p></div><span class="aller" aria-hidden="true">›</span></a>
       <div class="carte"><h3>Vos garanties</h3><div class="trait-corail"></div>
         <p class="muet" style="margin:0">Débit seulement après validation · Garantie Cleaneroo · Crédit d'impôt de 50 % · Cleaneurs vérifiés · Annulation gratuite jusqu'à 48 h avant.</p></div>
     </div>
@@ -383,9 +386,11 @@ function mailAssurance(d, lien) {
   return `mailto:?subject=${encodeURIComponent(`Sinistre : intervention de nettoyage Cleaneroo ${d.reference}`)}&body=${encodeURIComponent(corps)}`;
 }
 
+let demandeAffichee = null;   // pour le suivi en direct (carte)
 async function pageDemande(ref, jeton) {
   let d = null;
   try { d = await suivre(ref, jeton); } catch { /* lien invalide */ }
+  demandeAffichee = d ? { ...d, jeton } : null;
   if (!d) return pageTexte("Demande introuvable", `<p class="muet">Ce lien de suivi n'est pas valable. Vérifiez qu'il est complet.</p>`);
   memoriser(ref, jeton, d.rubrique_id);
   const r = rubrique(d.rubrique_id);
@@ -406,6 +411,9 @@ async function pageDemande(ref, jeton) {
   <section class="bloc" style="padding-top:28px"><div class="etroit">
     <div class="progression">${ETAPES_SUIVI.map((_, i) => `<span class="${d.statut !== "ANNULEE" && i <= idx ? "fait" : ""}"></span>`).join("")}</div>
     <div class="note" style="margin-bottom:14px">${etat}</div>
+    ${["EN_ROUTE", "SUR_PLACE"].includes(d.statut) ? `<div id="suivi-live" style="margin-bottom:14px"></div>`
+      : ["VERIFICATION", "PUBLIEE", "CONFIRMEE"].includes(d.statut) ? `<a class="carte ligne-compte" href="#/suivi-demo" style="margin-bottom:14px">${icone("position", { tuile: true })}
+        <div class="corps"><b>Suivi en direct le jour J</b><p class="petit" style="margin:2px 0 0">Vous suivrez votre Cleaneur sur une carte jusqu'à chez vous. Voir la démonstration.</p></div><span class="aller" aria-hidden="true">›</span></a>` : ""}
     <div class="carte" style="margin-bottom:12px">
       <p style="margin:0"><b>Quand :</b> ${d.creneau ? dateHeure(new Date(d.creneau)) : "Flexible, candidatures sur 7 jours"}</p>
       <p style="margin:6px 0 0"><b>Où :</b> ${esc(d.rue)}, ${esc(d.code_postal)} ${esc(d.ville)}</p>
@@ -422,6 +430,22 @@ async function pageDemande(ref, jeton) {
       <a class="bouton secondaire" href="${mailAssurance(d, lien)}">Préparer l'e-mail à mon assureur</a></div>` : ""}
     ${annulable ? `<button type="button" class="bouton danger plein" id="annuler-demande">Annuler la demande</button>
       <p class="petit">Annulation gratuite : aucun Cleaneur n'est encore confirmé.</p>` : ""}
+  </div></section>`;
+}
+
+/* ------------------------------------------------------------------ Démonstration du suivi en direct (aucune vraie mission avant l'ouverture) */
+const DEMO_TRAJET = { depart: { lat: 43.4364, lon: 6.7366 }, arrivee: { lat: 43.4232, lon: 6.7700 }, prenom: "Louise", dureeS: 60 };
+function pageSuiviDemo() {
+  return `<section class="fond-cleaneroo" style="padding:34px 0 86px">${decor([[90, 18, 90], [5, 55, 60]], [])}
+    <div class="etroit"><span class="etiquette" style="background:rgba(255,255,255,.22)">Démonstration</span><h1>Suivez votre Cleaneur en direct</h1><div class="trait-corail"></div>
+      <p style="margin:0">Le jour J, vous voyez votre Cleaneur avancer sur la carte jusqu'à chez vous, comme une livraison.</p></div></section>
+  <section class="bloc" style="padding-top:28px"><div class="etroit">
+    <div id="suivi-live" style="margin-bottom:14px"></div>
+    <button type="button" class="bouton secondaire" id="rejouer">↻ Rejouer la démonstration</button>
+    <div class="grille-2" style="margin-top:22px">
+      <div class="carte"><b>Position en direct</b><p class="petit" style="margin:4px 0 0">Le téléphone du Cleaneur envoie sa position pendant le trajet uniquement. Elle est effacée dès son arrivée.</p></div>
+      <div class="carte"><b>Même en arrière-plan</b><p class="petit" style="margin:4px 0 0">Gardez une petite fenêtre de suivi au-dessus de vos autres fenêtres, ou recevez une alerte à son arrivée.</p></div>
+    </div>
   </div></section>`;
 }
 
@@ -443,8 +467,10 @@ const ROUTES = {
   "icones": pageIcones,
 };
 
+let arreterSuivi = () => {};
 async function afficher() {
   clearInterval(minuterieNotifs);
+  arreterSuivi(); arreterSuivi = () => {};
   const chemin = location.hash.replace(/^#\/?/, "");
   const [route, param] = chemin.split("/");
   if (route === "gestion") { location.href = "gestion.html"; return; }
@@ -456,11 +482,22 @@ async function afficher() {
   if (route === "mes-demandes") { await pageMesPrestations(vue); window.scrollTo(0, 0); return; }
   if (route === "reserver") { ouvrirReservation(vue, param || null, chemin.split("/")[2] || ""); window.scrollTo(0, 0); return; }
   if (route === "inscription" && param) { vue.innerHTML = pageInscription(param); brancherInscription(vue); traduire(vue); window.scrollTo(0, 0); return; }
+  if (route === "suivi-demo") {
+    vue.innerHTML = pageSuiviDemo();
+    traduire(vue);
+    window.scrollTo(0, 0);
+    const lancer = () => { arreterSuivi(); demoSuivi(vue.querySelector("#suivi-live"), DEMO_TRAJET).then(f => arreterSuivi = f); };
+    lancer();
+    vue.querySelector("#rejouer").onclick = lancer;
+    return;
+  }
   if (route === "demande") {
     const [, ref, jeton] = chemin.split("/");
     vue.innerHTML = await pageDemande(decodeURIComponent(ref || ""), decodeURIComponent(jeton || ""));
     traduire(vue);
     window.scrollTo(0, 0);
+    const boite = document.getElementById("suivi-live");
+    if (boite && demandeAffichee) suivreEnDirect(boite, demandeAffichee).then(f => { if (document.body.contains(boite)) arreterSuivi = f; else f(); });
     document.getElementById("annuler-demande")?.addEventListener("click", async e => {
       if (!confirm(tr("Annuler cette demande ? Aucun frais ne sera appliqué."))) return;
       e.target.disabled = true;

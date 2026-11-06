@@ -128,13 +128,14 @@ revoke all on function public.decider_document(uuid, boolean, text) from public;
 grant execute on function public.decider_document(uuid, boolean, text) to authenticated;
 
 -- 5. Offre de lancement : places restantes = 500 moins les Cleaneurs validés (pré-inscriptions et comptes, une fois par e-mail).
+--    501 places au total : une place est prise par le compte de test du fondateur, il reste donc bien 500 places réelles.
 create or replace function public.places_offre_restantes()
 returns integer language sql stable security definer set search_path = '' as $$
-  select greatest(0, 500 - (select count(*) from (
+  select greatest(0, least(500, 501 - (select count(*) from (
     select lower(i.email) from public.inscriptions i where i.type = 'cleaneur' and i.valide_le is not null
     union
     select lower(u.email) from public.profils p join auth.users u on u.id = p.id where p.role = 'cleaneur' and p.dossier = 'VALIDE'
-  ) v))::integer;
+  ) v)))::integer;
 $$;
 
 -- 6. Aucune intervention avant le 1er janvier 2027 (heure de Paris), quelle que soit la personne qui enregistre la demande.
