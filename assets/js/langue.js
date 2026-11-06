@@ -316,6 +316,10 @@ const T = [
   ["Léger", "Light", "Leggero", "Ligero"],
   ["Normal", "Normal", "Normale", "Normal"],
   ["Autre", "Other", "Altro", "Otro"],
+  ["Prendre une photo", "Take a photo", "Scatta una foto", "Hacer una foto"],
+  ["+ Choisir dans la galerie", "+ Choose from gallery", "+ Scegli dalla galleria", "+ Elegir de la galería"],
+  ["Galerie", "Gallery", "Galleria", "Galería"],
+  ["Photo", "Photo", "Foto", "Foto"],
   // Parcours de réservation aligné sur l'appli (traductions reprises de Traductions*.kt)
   ["Que souhaitez-vous nettoyer ?", "What would you like cleaned?", "Cosa vuoi pulire?", "¿Qué quieres limpiar?"],
   ["Accueil du Cleaneur", "Welcoming the Cleaneur", "Accoglienza del Cleaneur", "Recibimiento del Cleaneur"],

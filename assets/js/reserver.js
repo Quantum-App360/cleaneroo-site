@@ -435,7 +435,9 @@ function etape3() {
   const blocVues = vues.length ? `<p class="petit"><b>${obl ? "Une photo obligatoire par vue :" : "Vues suggérées :"}</b></p><div class="carte">${vues.map(v => {
     const prise = !!vuesPrises[v];
     return `<div style="display:flex;align-items:center;gap:8px;padding:4px 0"><b style="width:20px;color:${prise ? "var(--succes)" : "var(--muet, #999)"}">${prise ? "✓" : "○"}</b>
-      <span style="flex:1">${esc(v)}</span><label class="lien-bouton" style="cursor:pointer">${prise ? "Reprendre" : "+ Photo"}<input type="file" accept="image/*" data-vue="${esc(v)}" hidden></label></div>`;
+      <span style="flex:1">${esc(v)}</span>
+      <label class="lien-bouton" style="cursor:pointer">${icone("photo")} ${prise ? "Reprendre" : "Photo"}<input type="file" accept="image/*" capture="environment" data-vue="${esc(v)}" hidden></label>
+      <label class="lien-bouton" style="cursor:pointer">Galerie<input type="file" accept="image/*" data-vue="${esc(v)}" hidden></label></div>`;
   }).join("")}</div>` : "";
   const location = b.rubriqueId === "rental";
   const pret = obl ? (vues.length ? vuesCompletes(b, Object.keys(vuesPrises)) : photos.length > 0) : (location || photos.length > 0 || !!b.sansPhotos);
@@ -444,7 +446,8 @@ function etape3() {
     ${location ? `<label class="champ" style="font-weight:400"><textarea data-texte="remarque" rows="4" maxlength="2000" placeholder="Ex. : arrivée des voyageurs à 16 h">${esc(b.remarque)}</textarea></label>` : ""}
     ${blocVues}
     <div class="carte ${vues.length ? "masque" : ""}"><div class="vignettes" id="vignettes">${photos.map((f, i) => `<img alt="Photo ${i + 1}" data-i="${i}">`).join("")}</div>
-      <label class="bouton secondaire" style="margin-top:12px;cursor:pointer">+ Ajouter des photos<input type="file" id="photos" accept="image/*" multiple hidden></label>
+      <div class="boutons-photo"><label class="bouton secondaire" style="cursor:pointer">${icone("photo")} Prendre une photo<input type="file" id="photos-appareil" accept="image/*" capture="environment" hidden></label>
+      <label class="bouton secondaire" style="cursor:pointer">+ Choisir dans la galerie<input type="file" id="photos" accept="image/*" multiple hidden></label></div>
       <p class="petit">12 photos maximum. Elles sont réduites avant l'envoi.</p></div>
     ${obl ? "" : `<div class="carte" style="margin-top:10px">${caseCocher("Je ne peux pas encore photographier l'état actuel", "sansPhotos", !!b.sansPhotos)}</div>`}
     ${actions(pret, pret ? "" : obl ? "Ajoutez une photo pour chaque vue." : "Ajoutez une photo ou cochez la case.")}`;
@@ -646,7 +649,7 @@ document.addEventListener("change", e => {
     photos = Object.values(vuesPrises).slice(0, 12);
     return rendre();
   }
-  if (e.target.id === "photos") { photos = [...photos, ...e.target.files].filter(f => f.type.startsWith("image/")).slice(0, 12); rendre(); }
+  if (e.target.id === "photos" || e.target.id === "photos-appareil") { photos = [...photos, ...e.target.files].filter(f => f.type.startsWith("image/")).slice(0, 12); rendre(); }
 });
 // Les champs texte enregistrent aussi pendant la frappe (sans redessiner, pour garder le curseur).
 document.addEventListener("input", e => {

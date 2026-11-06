@@ -134,7 +134,9 @@ h3 { font-size: 19px; font-weight: 600; }
 .bouton.danger { background: color-mix(in srgb, var(--erreur) 12%, transparent); color: var(--erreur); }
 .bouton.plein { width: 100%; }
 .lien-bouton { background: none; border: 0; color: var(--primaire); font-weight: 600; cursor: pointer; min-height: 48px; padding: 0 8px; }
-label.lien-bouton { display: inline-flex; align-items: center; }
+label.lien-bouton { display: inline-flex; align-items: center; gap: 5px; }
+.boutons-photo { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+.boutons-photo .bouton { flex: 1 1 200px; gap: 8px; }
 
 /* ---------------------------------------------------------------- Sections et cartes */
 section.bloc { padding: 56px 0; }
