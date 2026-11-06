@@ -135,11 +135,10 @@ export const RUBRIQUES = [
       F("long", "Après un long séjour (10 nuits et +)", "Rotation complète.", 0, 0, 1.45),
       F("grand", "Grand ménage périodique", "Remise à niveau complète du logement.", 0, 0, 1.8, "AUTRE", true)],
     naturesSalissure: NATURES_SALISSURE_LOCATION },
-  { id: "moving", nom: "Déménagement et remise en état", sousTitre: "Un nouveau départ, du sol au plafond", icone: "demenagement", tauxHoraireC: 3200, salissureSurTemps: true,
+  { id: "moving", nom: "Déménagement", sousTitre: "Un nouveau départ, du sol au plafond", icone: "demenagement", tauxHoraireC: 3200, salissureSurTemps: true,
     inclus: "Nettoyage complet du logement vide. Nettoyage uniquement : Cleaneroo ne réalise ni peinture, ni rebouchage, ni réparation.",
     formules: [F("emmenagement", "Nettoyage d'emménagement", "Logement vide, nettoyé avant votre arrivée", 10, 180, 1.0),
-      F("depart", "Nettoyage de départ / état des lieux", "Logement vidé, remis au propre pour l'état des lieux de sortie", 10, 180, 1.1),
-      F("remise", "Remise en état", "Logement très encrassé : calcaire, graisse, traces incrustées · analyse des photos", 10, 180, 1.4)],
+      F("depart", "Nettoyage de départ / état des lieux", "Logement vidé, remis au propre pour l'état des lieux de sortie", 10, 180, 1.1)],
     // Tâches propres au déménagement (« à la surface » = chiffré pour 60 m²) et packs propres
     taches: [
       T("four", "Intérieur du four", 2500, 30, { groupe: "Cuisine" }), T("frigo", "Intérieur du réfrigérateur", 1500, 20, { groupe: "Cuisine" }),

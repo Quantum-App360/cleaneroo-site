@@ -56,20 +56,20 @@ export const VILLES = /* <villes> */ [
     "nom": "Nice", "slug": "nice", "codePostal": "06000", "departement": "Alpes-Maritimes",
     "voisines": ["Saint-Laurent-du-Var", "Villefranche-sur-Mer", "Cagnes-sur-Mer", "Saint-André-de-la-Roche"],
     "texte": [
-      "À Nice, beaucoup d'appartements anciens sans ascenseur côtoient les locations meublées du Vieux-Nice et de la Promenade, louées toute l'année. Pour un ménage régulier comme pour une remise en état après un départ, vous décrivez le logement, le prix s'affiche, et vous ne payez qu'après avoir validé le compte rendu.",
+      "À Nice, beaucoup d'appartements anciens sans ascenseur côtoient les locations meublées du Vieux-Nice et de la Promenade, louées toute l'année. Pour un ménage régulier comme pour un grand nettoyage après un départ, vous décrivez le logement, le prix s'affiche, et vous ne payez qu'après avoir validé le compte rendu.",
       "In Nice, many older flats without a lift sit alongside furnished rentals in the Old Town and on the Promenade, let all year round. For regular cleaning or a full clean after someone moves out, you describe the home, the price appears, and you only pay once you have approved the report.",
-      "A Nizza, molti appartamenti d'epoca senza ascensore convivono con gli affitti arredati della città vecchia e della Promenade, affittati tutto l'anno. Per una pulizia regolare o un ripristino dopo una partenza, descrivi l'alloggio, il prezzo appare e paghi solo dopo aver convalidato il resoconto.",
-      "En Niza, muchos pisos antiguos sin ascensor conviven con los alquileres amueblados del casco antiguo y de la Promenade, alquilados todo el año. Para una limpieza regular o una puesta a punto tras una salida, describes la vivienda, aparece el precio y solo pagas después de validar el informe."
+      "A Nizza, molti appartamenti d'epoca senza ascensore convivono con gli affitti arredati della città vecchia e della Promenade, affittati tutto l'anno. Per una pulizia regolare o una pulizia a fondo dopo una partenza, descrivi l'alloggio, il prezzo appare e paghi solo dopo aver convalidato il resoconto.",
+      "En Niza, muchos pisos antiguos sin ascensor conviven con los alquileres amueblados del casco antiguo y de la Promenade, alquilados todo el año. Para una limpieza regular o una limpieza a fondo tras una salida, describes la vivienda, aparece el precio y solo pagas después de validar el informe."
     ]
   },
   {
     "nom": "Draguignan", "slug": "draguignan", "codePostal": "83300", "departement": "Var",
     "voisines": ["Trans-en-Provence", "Les Arcs", "Flayosc", "Lorgues"],
     "texte": [
-      "Dans la Dracénie, les maisons individuelles avec jardin sont nombreuses, tout comme les gîtes et mas loués aux vacanciers de l'arrière-pays. Cleaneroo propose le ménage de la maison, le nettoyage des extérieurs et la remise en état avant ou après un déménagement, réalisés par des Cleaneurs vérifiés du secteur.",
+      "Dans la Dracénie, les maisons individuelles avec jardin sont nombreuses, tout comme les gîtes et mas loués aux vacanciers de l'arrière-pays. Cleaneroo propose le ménage de la maison, le nettoyage des extérieurs et le nettoyage avant ou après un déménagement, réalisés par des Cleaneurs vérifiés du secteur.",
       "Around Draguignan, there are many detached houses with gardens, as well as gîtes and farmhouses rented to holidaymakers in the hinterland. Cleaneroo offers house cleaning, outdoor cleaning and a full clean before or after a move, carried out by verified local Cleaneurs.",
-      "Nella zona di Draguignan sono numerose le case indipendenti con giardino, così come gli agriturismi e i casali affittati ai villeggianti dell'entroterra. Cleaneroo offre la pulizia della casa, degli spazi esterni e il ripristino prima o dopo un trasloco, eseguiti da Cleaneur verificati della zona.",
-      "En la zona de Draguignan abundan las casas con jardín, así como las casas rurales y masías alquiladas a los veraneantes del interior. Cleaneroo ofrece la limpieza de la casa, de los exteriores y la puesta a punto antes o después de una mudanza, realizadas por Cleaneurs verificados de la zona."
+      "Nella zona di Draguignan sono numerose le case indipendenti con giardino, così come gli agriturismi e i casali affittati ai villeggianti dell'entroterra. Cleaneroo offre la pulizia della casa, degli spazi esterni e la pulizia prima o dopo un trasloco, eseguiti da Cleaneur verificati della zona.",
+      "En la zona de Draguignan abundan las casas con jardín, así como las casas rurales y masías alquiladas a los veraneantes del interior. Cleaneroo ofrece la limpieza de la casa, de los exteriores y la limpieza antes o después de una mudanza, realizadas por Cleaneurs verificados de la zona."
     ]
   },
   {
