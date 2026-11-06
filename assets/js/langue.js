@@ -153,6 +153,7 @@ const T = [
   ["Cleaneroo — [raison sociale, adresse et numéro SIRET à compléter].", "Cleaneroo — [company name, address and SIRET number to be completed].", "Cleaneroo — [ragione sociale, indirizzo e numero SIRET da completare].", "Cleaneroo — [razón social, dirección y número SIRET por completar]."],
 
   // Comptes : Mon compte, dossier Cleaneur, Mes prestations (compte.js)
+  ["Périmètre d'intervention", "Service area", "Zona di intervento", "Zona de intervención"],
   ["Créez votre compte Cleaneur", "Create your Cleaneur account", "Crea il tuo account Cleaneur", "Crea tu cuenta de Cleaneur"],
   ["Préparez dès maintenant votre profil et votre dossier : tout sera prêt pour vos premières missions le 1er janvier 2027.", "Prepare your profile and file now: everything will be ready for your first jobs on 1 January 2027.", "Prepara subito profilo e pratica: tutto sarà pronto per le prime missioni il 1° gennaio 2027.", "Prepara ya tu perfil y tu expediente: todo estará listo para tus primeras misiones el 1 de enero de 2027."],
   ["Créer mon compte Cleaneur", "Create my Cleaneur account", "Crea il mio account Cleaneur", "Crear mi cuenta de Cleaneur"],
@@ -1217,6 +1218,7 @@ const MOTIFS = IDX === undefined ? [] : [
   [/^Surface\ totale\ :\ (.+?)\ m²\ \((.+?)\ m²\ ×\ (.+?)\ paliers\)\.$/, (m, a0, a1, a2) => [`Total area: ${traduireTexte(a0)} m² (${traduireTexte(a1)} m² × ${traduireTexte(a2)} landings).`, `Superficie totale: ${traduireTexte(a0)} m² (${traduireTexte(a1)} m² × ${traduireTexte(a2)} pianerottoli).`, `Superficie total: ${traduireTexte(a0)} m² (${traduireTexte(a1)} m² × ${traduireTexte(a2)} rellanos).`][IDX]],
   // </rubriques-motifs>
   [/^(Studio|Appartement|Maison|Duplex \/ loft|Adresse) · (.+)$/, (m, t, v) => `${traduireTexte(t)} · ${v}`],
+  [/^(\d+) km autour de chez moi$/, (m, n) => [`${n} km around my home`, `${n} km intorno a casa mia`, `${n} km alrededor de mi casa`][IDX]],
   [/^Bonjour (.+)$/, (m, n) => [`Hello ${n}`, `Ciao ${n}`, `Hola ${n}`][IDX]],
   [/^Bonjour$/, () => ["Hello", "Ciao", "Hola"][IDX]],
   [/^· (\d+) ch\.$/, (m, n) => [`· ${n} bd`, `· ${n} cam.`, `· ${n} hab.`][IDX]],

@@ -2,7 +2,7 @@
 // Les comptes s'ouvrent avant l'ouverture ; aucune intervention avant le 1er janvier 2027 (DATE_PREMIERES_INTERVENTIONS).
 // Mêmes écrans que l'application (EcranCompte.kt).
 import { RUBRIQUES, rubrique, TYPES_LOGEMENT } from "./catalogue.js";
-import { euros, dateLongue, heure } from "./regles.js";
+import { euros, dateLongue, heure, REGLES } from "./regles.js";
 import { icone } from "./icones.js";
 import { traduire, tr } from "./langue.js";
 import {
@@ -171,7 +171,8 @@ function formulaireProfil(p, cleaneur) {
       <label class="champ">Code postal<input name="code_postal" inputmode="numeric" maxlength="5" value="${esc(p.code_postal)}" autocomplete="postal-code"></label></div>
     <label class="champ">Ville<input name="ville" maxlength="100" value="${esc(p.ville)}" autocomplete="address-level2"></label>
     ${cleaneur ? `<div class="grille-2"><label class="champ">Numéro SIRET (14 chiffres)<input name="siret" inputmode="numeric" maxlength="17" value="${esc(p.siret)}"></label>
-      <label class="champ">Distance maximale (km)<input name="zone_km" type="number" min="1" max="100" value="${p.zone_km || 15}"></label></div>
+      <label class="champ">Périmètre d'intervention<select name="zone_km">${[...new Set([...REGLES.ZONES_KM, p.zone_km || REGLES.ZONE_KM_DEFAUT])].sort((a, b) => a - b)
+        .map(km => `<option value="${km}" ${km === (p.zone_km || REGLES.ZONE_KM_DEFAUT) ? "selected" : ""}>${km} km autour de chez moi</option>`).join("")}</select></label></div>
       <p style="margin:6px 0 4px;font-weight:600;font-size:14px">Prestations que je propose</p>
       ${RUBRIQUES.map(r => `<label class="case"><input type="checkbox" name="prestation" value="${r.id}" ${p.prestations?.includes(r.id) ? "checked" : ""}> <span>${icone(r.icone)} ${r.nom}</span></label>`).join("")}` : ""}
     <p class="erreur" id="erreur-profil" style="margin:8px 0 0"></p>
@@ -191,7 +192,7 @@ function brancherProfil(vue, p, cleaneur) {
     if (cleaneur) {
       const siret = f.siret.value.replace(/\D/g, "");
       if (siret && siret.length !== 14) { err.textContent = tr("Le numéro SIRET compte 14 chiffres."); return; }
-      Object.assign(champs, { siret, zone_km: Math.min(100, Math.max(1, Number(f.zone_km.value) || 15)),
+      Object.assign(champs, { siret, zone_km: Number(f.zone_km.value) || REGLES.ZONE_KM_DEFAUT,
         prestations: [...f.querySelectorAll("[name=prestation]:checked")].map(c => c.value) });
     }
     f.querySelector("[type=submit]").disabled = true;

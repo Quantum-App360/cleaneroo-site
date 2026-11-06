@@ -45,6 +45,9 @@ export const REGLES = {
   OFFRE_LANCEMENT_MOIS: 12,
   ABONNEMENT_CLEANEUR_C: 1999,
   PREAVIS_BLOCAGE_JOURS: 3,
+  // Périmètre d'intervention d'un Cleaneur (menu déroulant du profil), en km ; défaut 15 km.
+  ZONES_KM: [5, 10, 15, 20, 25, 30, 40, 50, 75, 100],
+  ZONE_KM_DEFAUT: 15,
   PALIERS_DEFAUT: 5,
   CHANTIER_MINIMUM_MIN: 120,
   CHANTIER_PIECES_MAX: 8,
