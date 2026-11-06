@@ -41,7 +41,8 @@ export async function majLienCompte() {
   const espace = p?.role === "cleaneur" || p?.role === "admin";
   document.querySelectorAll('.nav a[href$="#/devenir-cleaneur"], .nav a[data-espace-cleaneur]').forEach(a => {
     a.dataset.espaceCleaneur = "1";
-    a.setAttribute("href", espace ? "#/compte/cleaneur" : "#/devenir-cleaneur");
+    const avant = a.getAttribute("href").split("#")[0]; // « / » sur les pages fixes (villes, calculateur…)
+    a.setAttribute("href", avant + (espace ? "#/compte/cleaneur" : "#/devenir-cleaneur"));
     a.textContent = tr(espace ? "Mon espace Cleaneur" : "Devenir Cleaneur");
   });
 }
@@ -229,7 +230,7 @@ function brancherCarte(f) {
       const L = await chargerLeaflet();
       boite.hidden = false;
       if (!carte) {
-        carte = L.map(boite, { scrollWheelZoom: false, attributionControl: true });
+        carte = L.map(boite, { scrollWheelZoom: false, attributionControl: true, dragging: !L.Browser.mobile, touchZoom: false, tap: false });
         L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 18, attribution: "© OpenStreetMap" }).addTo(carte);
       }
       const centre = [point.lat, point.lon];
@@ -363,21 +364,22 @@ export async function pageMesPrestations(vue) {
   const carte = d => {
     const r = rubrique(d.rubrique_id);
     const date = d.creneau ? `${dateLongue(new Date(d.creneau))} · ${heure(new Date(d.creneau).getHours())}` : tr("Date à fixer");
-    return `<a class="carte prestation" href="#/demande/${esc(d.reference)}/${esc(d.jeton)}" style="margin-bottom:12px">
-      <div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><h3>${icone(r.icone)} ${r.nom}</h3><span class="tampon">${STATUTS[d.statut] || d.statut}</span></div>
-      <p class="muet" style="margin:6px 0 0">${date} · ${esc(d.ville)}</p>
-      <p class="petit" style="margin:4px 0 0">Réf. ${esc(d.reference)} · ${d.sur_devis ? "Sur devis" : `estimé ${euros(d.estimation_c)}`}</p></a>`;
+    const teinte = d.statut === "TERMINEE" ? " vert" : d.statut === "ANNULEE" ? " gris" : "";
+    return `<a class="carte ligne-compte" href="#/demande/${esc(d.reference)}/${esc(d.jeton)}">${icone(r.icone, { tuile: true })}
+      <div class="corps"><div class="haut"><h3>${r.nom}</h3><span class="tampon${teinte}">${STATUTS[d.statut] || d.statut}</span></div>
+      <p class="muet">${date} · ${esc(d.ville)}</p>
+      <p class="petit">Réf. ${esc(d.reference)} · ${d.sur_devis ? "Sur devis" : `estimé ${euros(d.estimation_c)}`}</p></div><span class="aller" aria-hidden="true">›</span></a>`;
   };
-  const vide = t => `<p class="muet">${t}</p>`;
+  const vide = (t, plus = "") => `<div class="vide-compte"><p class="muet">${t}</p>${plus ? `<p class="petit">${plus}</p>` : ""}</div>`;
   if (location.hash !== ici) return;
   vue.innerHTML = `<section class="bloc"><div class="etroit">
     ${titre("Mes prestations")}
     <a class="bouton plein" href="#/reserver" style="margin-bottom:10px">＋ Ajouter une prestation</a>
     ${s ? "" : `<div class="note" style="margin:8px 0 6px"><span>Créez votre compte pour retrouver vos biens et vos prestations sur tous vos appareils et dans l'application. <a href="#/compte/creer">Créer mon compte</a> · <a href="#/compte">Se connecter</a></span></div>`}
-    <h2 style="margin-top:26px">Mes biens</h2>
+    <h2 class="titre-section">${icone("logement", { tuile: true })}Mes biens</h2>
     <p class="petit" style="margin-top:0">Vos adresses déjà renseignées : elles sont proposées automatiquement à la réservation.</p>
-    ${biens.length ? biens.map(l => `<div class="carte" style="margin-bottom:10px;display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap">
-      <div><b><span>${esc((TYPES_LOGEMENT.find(t => t.id === l.typeLogementId) || {}).nom || tr("Adresse"))}</span> · ${esc(l.ville)}</b><div class="petit">${esc(l.rue)}, ${esc(l.codePostal)} ${esc(l.ville)}${l.surface ? `<span> · ${l.surface} m²</span>` : ""}${l.chambres != null ? `<span> · ${l.chambres} ch.</span>` : ""}</div></div>
+    ${biens.length ? biens.map(l => `<div class="carte ligne-compte">${icone("position", { tuile: true })}
+      <div class="corps"><b><span>${esc((TYPES_LOGEMENT.find(t => t.id === l.typeLogementId) || {}).nom || tr("Adresse"))}</span> · ${esc(l.ville)}</b><div class="petit">${esc(l.rue)}, ${esc(l.codePostal)} ${esc(l.ville)}${l.surface ? `<span> · ${l.surface} m²</span>` : ""}${l.chambres != null ? `<span> · ${l.chambres} ch.</span>` : ""}</div></div>
       <button type="button" class="lien-bouton" style="color:var(--erreur)" data-retirer-bien="${esc(l.id)}">Retirer</button></div>`).join("") : vide("Aucun bien enregistré pour l'instant.")}
     <details class="carte" style="margin-top:6px"><summary style="cursor:pointer;font-weight:700">＋ Ajouter un bien</summary>
       <form id="form-bien" novalidate style="margin-top:12px">
@@ -390,9 +392,9 @@ export async function pageMesPrestations(vue) {
           <label class="champ">Salles de bain<input name="sdb" type="number" min="0" max="10"></label></div>
         <p class="erreur" id="erreur-bien"></p>
         <button class="bouton plein" type="submit">Enregistrer ce bien</button></form></details>
-    <h2 style="margin-top:30px">Mes prestations à venir</h2>
-    ${aVenir.length ? aVenir.map(carte).join("") : vide("Aucune prestation à venir.") + `<p class="petit">${OUVERTURE}</p>`}
-    <h2 style="margin-top:30px">Mes prestations passées</h2>
+    <h2 class="titre-section">${icone("calendrier", { tuile: true })}Mes prestations à venir</h2>
+    ${aVenir.length ? aVenir.map(carte).join("") : vide("Aucune prestation à venir.", OUVERTURE)}
+    <h2 class="titre-section">${icone("termine", { tuile: true })}Mes prestations passées</h2>
     ${passees.length ? passees.map(carte).join("") : vide("Aucune prestation passée.")}
     ${s ? "" : `<p class="petit" style="margin-top:18px">Vous avez réservé depuis un autre appareil ? Ouvrez le lien de suivi reçu après la réservation : la demande s'ajoutera ici.</p>`}
     ${biens.length ? `<p style="margin-top:18px"><button type="button" class="lien-bouton" style="color:var(--erreur);padding:0" id="oublier">Oublier mes informations sur cet appareil</button></p>` : ""}

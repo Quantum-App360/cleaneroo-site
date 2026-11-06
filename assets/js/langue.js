@@ -1256,11 +1256,18 @@ export function traduireTexte(s) {
 }
 
 /** Traduit tous les textes et attributs d'un morceau de page. */
+/** Espaces insécables : « 100 % », « 29 € », « 8 h 15 », « 20 km », « ? » ne sont jamais coupés en fin de ligne (comme l'appli). */
+export function insecables(s) {
+  if (!s.includes(" ")) return s;
+  return s.replace(/(\d) (%|€|h|km|m²|min)(?!\p{L})/gu, "$1 $2").replace(/(\d h) (\d)/g, "$1 $2")
+    .replace(/ ([:;!?»])/g, " $1").replace(/« /g, "« ");
+}
+
 export function traduire(racine = document.body) {
-  if (IDX === undefined) return;
   const w = document.createTreeWalker(racine, NodeFilter.SHOW_TEXT, { acceptNode: n => n.parentNode && !["SCRIPT", "STYLE", "TEXTAREA"].includes(n.parentNode.nodeName) ? 1 : 2 });
   const noeuds = []; while (w.nextNode()) noeuds.push(w.currentNode);
-  for (const n of noeuds) { const t = traduireTexte(n.nodeValue); if (t !== n.nodeValue) n.nodeValue = t; }
+  for (const n of noeuds) { const t = insecables(traduireTexte(n.nodeValue)); if (t !== n.nodeValue) n.nodeValue = t; }
+  if (IDX === undefined) return;
   racine.querySelectorAll?.("[placeholder],[title],[aria-label],[alt]").forEach(el => {
     for (const a of ["placeholder", "title", "aria-label", "alt"]) if (el.hasAttribute(a)) { const v = el.getAttribute(a); const t = traduireTexte(v); if (t !== v) el.setAttribute(a, t); }
   });

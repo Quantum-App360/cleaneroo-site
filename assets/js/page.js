@@ -144,3 +144,8 @@ document.title = tr(document.title);
 document.querySelectorAll(".revele, .etape").forEach(el => el.classList.add("visible"));
 installerRappel(v?.nom || "");
 compterStatique();
+// Personne connectée (session Supabase dans ce navigateur) : prénom et « Mon espace Cleaneur » dans le menu, comme sur l'accueil.
+try {
+  if (Object.keys(localStorage).some(k => k.startsWith("sb-") && k.endsWith("-auth-token")))
+    import("./compte.js").then(m => m.majLienCompte()).catch(() => { /* hors ligne */ });
+} catch { /* navigation privée */ }

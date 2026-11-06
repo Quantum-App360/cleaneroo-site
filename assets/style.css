@@ -763,3 +763,25 @@ label.champ input:focus, label.champ select:focus, label.champ textarea:focus, i
 @media (min-width: 861px) and (max-width: 1120px) { .nav a:not(.bouton) { padding: 10px 6px; font-size: 13px; } .nav a:not(.bouton)::after { left: 6px; right: 6px; } }
 /* Carte du périmètre d'intervention (profil Cleaneur) */
 .carte-perimetre { height: 260px; border-radius: 14px; overflow: hidden; border: 1px solid var(--separateur); margin-top: 4px; z-index: 0; }
+
+/* ---------------------------------------------------------------- Mes prestations : titres et lignes avec icône */
+.titre-section { display: flex; align-items: center; gap: 12px; margin: 34px 0 4px; font-size: clamp(20px, 2.4vw, 24px); }
+.titre-section .tuile-ico { width: 40px; height: 40px; border-radius: 12px; }
+.titre-section .tuile-ico .ico { width: 22px; height: 22px; }
+.titre-section + .petit { margin: 0 0 12px 52px; }
+.ligne-compte { display: flex; align-items: center; gap: 14px; margin-bottom: 10px; text-decoration: none; color: inherit; padding: 14px 16px; transition: transform .15s, box-shadow .15s; }
+.ligne-compte .tuile-ico { width: 44px; height: 44px; border-radius: 14px; }
+.ligne-compte .tuile-ico .ico { width: 24px; height: 24px; }
+.ligne-compte .corps { flex: 1; min-width: 0; }
+.ligne-compte .haut { display: flex; justify-content: space-between; gap: 10px; align-items: center; flex-wrap: wrap; }
+.ligne-compte h3 { font-size: 17px; }
+.ligne-compte p { margin: 4px 0 0; }
+.ligne-compte .tampon { margin: 0; }
+.ligne-compte .aller { font-size: 26px; color: var(--primaire); line-height: 1; }
+a.ligne-compte:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(14, 59, 64, 0.14); }
+.tampon.gris { background: var(--creux); color: var(--texte2); }
+.ligne-compte .tampon.vert { margin: 0; }
+@media (max-width: 520px) { .titre-section + .petit { margin-left: 0; } .ligne-compte { padding: 12px; gap: 12px; } }
+.vide-compte { border: 1.5px dashed var(--separateur); border-radius: var(--rayon); padding: 16px 18px; text-align: center; background: color-mix(in srgb, var(--surface) 50%, transparent); }
+.vide-compte p { margin: 0; }
+.vide-compte .petit { margin-top: 4px; }
