@@ -77,6 +77,8 @@ export const REGLES = {
 
 // ---- Lancement (copie de Regles.DATE_LANCEMENT dans l'application) : ouverture de l'activité et des réservations.
 export const DATE_LANCEMENT = new Date(2026, 11, 31, 0, 0, 0);
+// Premières interventions (copie de Regles.DATE_PREMIERES_INTERVENTIONS) : les comptes s'ouvrent avant, aucune intervention avant cette date.
+export const DATE_PREMIERES_INTERVENTIONS = new Date(2027, 0, 1, 0, 0, 0);
 export const MESSAGE_LANCEMENT = "Soyez prêts pour une nouvelle dimension du nettoyage, 100 % digitalisé.";
 export const estPrelancement = (maintenant = new Date()) => maintenant < DATE_LANCEMENT;
 export const joursAvantLancement = (maintenant = new Date()) => Math.max(0, Math.ceil((DATE_LANCEMENT - maintenant) / 864e5));

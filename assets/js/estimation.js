@@ -1,5 +1,5 @@
 // Calcul de l'estimation : copie EXACTE de Estimation.kt (§ 8 du cahier des charges), dans le même ordre.
-import { REGLES, duree } from "./regles.js";
+import { REGLES, duree, DATE_PREMIERES_INTERVENTIONS } from "./regles.js";
 import { prixSpecialC, minutesSpeciales, equipementsPour, surfaceEffective, TYPES_IMMEUBLE, tranchesConvives, minutesEtapesLocation, PACK_ETAPES_CONSEILLE, PACK_CONSOMMABLES_CONSEILLE } from "./catalogue.js";
 import { rubrique, formulesPour, TYPES_LIEU, RUBRIQUES_CREDIT_IMPOT, TYPES_VITRES_ELIGIBLES, prixLigne, minutesLigne, libelleLigne,
   arrondiEuro, tachesPour, tacheChiffree, packsPour, remisePack } from "./catalogue.js";
@@ -219,6 +219,7 @@ export const tempsRotationLocation = (chambres, sdb, surface, coef) =>
 /** Disponibilité d'un créneau (ReglesMetier.disponibilite). jour : 1 = lundi … 7 = dimanche. */
 export function disponibilite(maintenant, creneau) {
   if (creneau < new Date(maintenant.getTime() + REGLES.DELAI_MIN_RESERVATION_H * 3600e3)) return "INDISPONIBLE";
+  if (creneau < DATE_PREMIERES_INTERVENTIONS) return "INDISPONIBLE";
   const j = creneau.getDay() === 0 ? 7 : creneau.getDay();
   const h = creneau.getHours();
   if (h < 7 || h >= 20 || j === 7) return "PEU";

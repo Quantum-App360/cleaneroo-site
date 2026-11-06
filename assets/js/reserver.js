@@ -6,7 +6,7 @@ import { TARIFS_SPECIAUX, RUBRIQUES, rubrique, formulesPour, TYPES_LIEU, TYPES_L
   TACHES_A_TRAITER, TYPES_CHANTIER, equipementsPour, DELAIS_URGENCE, TYPES_IMMEUBLE, surfaceEffective, SELECTION_CONSEILLEE_VEHICULE, LIEUX_VEHICULE, FREQUENCES_VEHICULE, RUBRIQUES_LOGEMENT, vuesPhotos, vuesCompletes, PIECES_LOCATION, ETAPES_LOCATION, PACK_ETAPES_CONSEILLE, CONSOMMABLES_LOCATION, PACK_CONSOMMABLES_CONSEILLE } from "./catalogue.js";
 import { calculer, entreeEstimation, SALISSURE, disponibilite, meilleurPack, tachesChiffrees, formuleDe, passagesPlanifies, datesPassages,
   etapesDe, consommablesDe, menageTientEntreVoyageurs, frequenceDe, minutesEquipements, prixIndicatifEquipement, heuresEvenement } from "./estimation.js";
-import { REGLES, euros, duree, heure, dateCourte, dateLongue, estPrelancement, MESSAGE_LANCEMENT } from "./regles.js";
+import { REGLES, euros, duree, heure, dateCourte, dateLongue, estPrelancement, MESSAGE_LANCEMENT, DATE_PREMIERES_INTERVENTIONS } from "./regles.js";
 import { envoyerDemande } from "./donnees.js";
 import { traduire } from "./langue.js";
 import { icone } from "./icones.js";
@@ -17,7 +17,7 @@ const CLE_BROUILLON = "cleaneroo-brouillon";
 
 /* ------------------------------------------------------------------ Mémoire : la 2e commande en quelques secondes (comme l'app : AppData.modeles et logements)
    Gardé sur l'appareil du client uniquement : coordonnées, adresses enregistrées, dernière commande par prestation.
-   Jamais le code d'accès ni le créneau. « Oublier mes informations » dans Mes demandes efface tout. */
+   Jamais le code d'accès ni le créneau. « Oublier mes informations » dans Mes prestations efface tout. */
 const CLE_PROFIL = "cleaneroo-profil", CLE_LOGEMENTS = "cleaneroo-logements", CLE_MODELES = "cleaneroo-modeles";
 const lire = (cle, defaut) => { try { return JSON.parse(localStorage.getItem(cle) || "null") ?? defaut; } catch { return defaut; } };
 const ecrire = (cle, v) => { try { localStorage.setItem(cle, JSON.stringify(v)); } catch { /* rien */ } };
@@ -457,6 +457,9 @@ function etape3() {
 
 function joursProposes() {
   const j = []; const d = new Date(); d.setHours(0, 0, 0, 0);
+  // Aucune intervention avant le 1er janvier 2027 : le planning commence au plus tôt ce jour-là.
+  const veille = new Date(DATE_PREMIERES_INTERVENTIONS); veille.setDate(veille.getDate() - 1);
+  if (d < veille) d.setTime(veille.getTime());
   for (let i = 1; i <= 21; i++) { const x = new Date(d); x.setDate(d.getDate() + i); j.push(x); }
   return j;
 }

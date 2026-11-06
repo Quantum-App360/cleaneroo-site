@@ -1,6 +1,6 @@
 // Écran de gestion Cleaneroo : réservé aux comptes « admin » (règles de sécurité de la base).
 // Équivalent de « Administration (démo) » de l'application : vérifier, publier, confirmer, faire avancer ou refuser une demande.
-import { supabase } from "./donnees.js";
+import { supabase, dossiersCleaneurs, documentsDe, deciderDossier, deciderDocument, lienDocument, DOCUMENTS_CLEANEUR } from "./donnees.js";
 import { rubrique } from "./catalogue.js";
 import { icone } from "./icones.js";
 import { euros, duree, heure, dateLongue } from "./regles.js";
@@ -56,7 +56,8 @@ let onglet = "demandes";
 
 const ongletsHtml = () => `<div class="segments" style="margin:6px 0 4px">
   <button type="button" data-onglet="demandes" class="${onglet === "demandes" ? "choisi" : ""}">Demandes</button>
-  <button type="button" data-onglet="inscriptions" class="${onglet === "inscriptions" ? "choisi" : ""}">Inscriptions au lancement</button></div>`;
+  <button type="button" data-onglet="inscriptions" class="${onglet === "inscriptions" ? "choisi" : ""}">Inscriptions au lancement</button>
+  <button type="button" data-onglet="dossiers" class="${onglet === "dossiers" ? "choisi" : ""}">Dossiers Cleaneurs</button></div>`;
 const brancherOnglets = () => vue.querySelectorAll("[data-onglet]").forEach(bt => bt.onclick = () => { onglet = bt.dataset.onglet; liste(); });
 
 async function listeInscriptions() {
@@ -95,8 +96,71 @@ async function listeInscriptions() {
   });
 }
 
+/* Dossiers des Cleaneurs inscrits avec un compte : profil, documents scannés, validation (place de l'offre de lancement). */
+const ETAT_DOSSIER = { BROUILLON: "À compléter", A_VERIFIER: "À vérifier", VALIDE: "Validé", REFUSE: "À corriger" };
+const NOM_DOC = Object.fromEntries(DOCUMENTS_CLEANEUR.map(d => [d.type, d.nom]));
+async function listeDossiers() {
+  let data;
+  try { data = await dossiersCleaneurs(); } catch (e) { vue.innerHTML = `<h1>Gestion</h1><div class="trait-corail"></div>${ongletsHtml()}<p class="erreur">${esc(e.message)}</p>`; brancherOnglets(); return; }
+  const n = e => data.filter(d => d.dossier === e).length;
+  vue.innerHTML = `<h1>Gestion</h1><div class="trait-corail"></div>${ongletsHtml()}
+    <p class="muet">${data.length} compte(s) Cleaneur · ${n("A_VERIFIER")} à vérifier · ${n("VALIDE")} validé(s) · ${n("BROUILLON")} en préparation · ${n("REFUSE")} à corriger</p>
+    ${data.map(d => `<div class="carte ligne-demande" data-dossier="${d.id}"><div><b>${esc(d.prenom)} ${esc(d.nom)}</b>
+      <div class="petit">${esc(d.email)} · ${esc(d.code_postal)} ${esc(d.ville)}${d.dossier_soumis_le ? ` · envoyé le ${dateLongue(new Date(d.dossier_soumis_le))}` : ""}</div></div>
+      <div style="text-align:right"><span class="tampon">${ETAT_DOSSIER[d.dossier]}</span></div></div>`).join("") || `<p class="muet">Aucun compte Cleaneur pour l'instant.</p>`}`;
+  brancherOnglets();
+  vue.querySelectorAll("[data-dossier]").forEach(c => c.onclick = () => detailDossier(data.find(d => d.id === c.dataset.dossier)));
+}
+
+async function detailDossier(d) {
+  const docs = await documentsDe(d.id).catch(() => []);
+  vue.innerHTML = `<button class="lien-bouton" id="retour">‹ Tous les dossiers</button>
+    <h1>${esc(d.prenom)} ${esc(d.nom)}</h1><div class="trait-corail"></div>
+    <p class="muet">Compte créé le ${dateLongue(new Date(d.cree_le))} · <span class="tampon">${ETAT_DOSSIER[d.dossier]}</span>${d.valide_le ? ` · validé le ${dateLongue(new Date(d.valide_le))}` : ""}</p>
+    <div class="carte"><dl class="detail-demande" style="margin:0">
+      <dt>Contact</dt><dd><a href="mailto:${esc(d.email)}">${esc(d.email)}</a>${d.telephone ? ` · <a href="tel:${esc(d.telephone)}">${esc(d.telephone)}</a>` : ""}</dd>
+      <dt>Secteur</dt><dd>${esc(d.code_postal)} ${esc(d.ville)} · ${d.zone_km} km</dd>
+      <dt>SIRET</dt><dd>${d.siret ? `${esc(d.siret)} · <a href="https://annuaire-entreprises.data.gouv.fr/etablissement/${esc(d.siret)}" target="_blank" rel="noopener">vérifier dans l'annuaire des entreprises</a>` : "—"}</dd>
+      <dt>Prestations</dt><dd>${(d.prestations || []).map(id => esc(rubrique(id)?.nom || id)).join(", ") || "—"}</dd>
+      ${d.dossier_motif ? `<dt>Motif envoyé</dt><dd>${esc(d.dossier_motif)}</dd>` : ""}
+    </dl></div>
+    <h2 style="margin-top:20px">Documents</h2>
+    ${docs.map(x => `<div class="carte" style="margin-bottom:10px"><b>${NOM_DOC[x.type] || x.type}</b> <span class="tampon">${{ A_VERIFIER: "À vérifier", ACCEPTE: "Accepté", REFUSE: "Refusé" }[x.statut]}</span>
+      <div class="petit">déposé le ${dateLongue(new Date(x.cree_le))}${x.motif ? ` · ${esc(x.motif)}` : ""}</div>
+      <div class="boutons" style="margin-top:8px"><button class="bouton secondaire" data-voir="${esc(x.chemin)}">Voir</button>
+        ${x.statut !== "ACCEPTE" ? `<button class="bouton secondaire" data-doc-ok="${x.id}">Accepter</button>` : ""}
+        ${x.statut !== "REFUSE" ? `<button class="bouton danger" data-doc-non="${x.id}">Refuser</button>` : ""}</div></div>`).join("") || `<p class="muet">Aucun document déposé.</p>`}
+    <div class="boutons" style="margin-top:14px">
+      ${d.dossier !== "VALIDE" ? `<button class="bouton" id="valider">Valider le dossier (offre de lancement)</button>` : `<button class="bouton secondaire" id="invalider">Annuler la validation</button>`}
+      ${d.dossier !== "REFUSE" ? `<button class="bouton danger" id="refuser">Demander une correction</button>` : ""}
+    </div>`;
+  const recharger = async () => { const liste = await dossiersCleaneurs().catch(() => []); const n = liste.find(x => x.id === d.id); n ? detailDossier(n) : listeDossiers(); };
+  document.getElementById("retour").onclick = listeDossiers;
+  vue.querySelectorAll("[data-voir]").forEach(b => b.onclick = async () => { const f = window.open("", "_blank"); try { f.location = await lienDocument(b.dataset.voir); } catch { f?.close(); } });
+  vue.querySelectorAll("[data-doc-ok]").forEach(b => b.onclick = async () => { await deciderDocument(b.dataset.docOk, true).catch(e => alert(e.message)); recharger(); });
+  vue.querySelectorAll("[data-doc-non]").forEach(b => b.onclick = async () => {
+    const motif = prompt("Motif du refus (visible par le Cleaneur) :", "Document illisible ou périmé");
+    if (motif === null) return;
+    await deciderDocument(b.dataset.docNon, false, motif).catch(e => alert(e.message)); recharger();
+  });
+  document.getElementById("valider")?.addEventListener("click", async () => {
+    if (!confirm("Valider ce dossier ? Tous ses documents sont acceptés et une place de l'offre de lancement lui est attribuée.")) return;
+    await deciderDossier(d.id, true).catch(e => alert(e.message)); recharger();
+  });
+  document.getElementById("invalider")?.addEventListener("click", async () => {
+    if (!confirm("Annuler la validation ? Le dossier repasse « À corriger ».")) return;
+    await deciderDossier(d.id, false, "Validation annulée par l'équipe Cleaneroo.").catch(e => alert(e.message)); recharger();
+  });
+  document.getElementById("refuser")?.addEventListener("click", async () => {
+    const motif = prompt("Que doit corriger le Cleaneur ? (visible dans son espace)", "");
+    if (!motif) return;
+    await deciderDossier(d.id, false, motif).catch(e => alert(e.message)); recharger();
+  });
+}
+
 async function liste() {
   if (onglet === "inscriptions") return listeInscriptions();
+  if (onglet === "dossiers") return listeDossiers();
   const { data, error } = await supabase.from("demandes").select("*").order("cree_le", { ascending: false }).limit(300);
   if (error) { vue.innerHTML = `<p class="erreur">${esc(error.message)}</p>`; return; }
   const compte = s => data.filter(d => d.statut === s).length;

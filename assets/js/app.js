@@ -5,9 +5,10 @@ import { euros, duree, dateLongue, dateHeure, heure, estPrelancement, joursAvant
 
 // Langue : catalogue traduit avant tout affichage.
 traduireCatalogue(RUBRIQUES, TYPES_LIEU);
-import { ouvrirReservation, modeles, logements, nomLogement, oublierMesInformations } from "./reserver.js";
-import { mesDemandes, suivre, annuler, memoriser, inscrire, placesRestantes } from "./donnees.js";
+import { ouvrirReservation, modeles, logements, nomLogement } from "./reserver.js";
+import { suivre, annuler, memoriser, inscrire, placesRestantes } from "./donnees.js";
 import { compterPage } from "./compteur.js";
+import { pageCompte, pageMesPrestations, retourEmail, majLienCompte } from "./compte.js";
 import { icone, ICONES_RUBRIQUES, ICONES_INTERFACE } from "./icones.js";
 import { blocEtapes, blocReassurance, installerRappel, bandeauLancement } from "./commun.js";
 export { bandeauLancement };
@@ -333,7 +334,7 @@ function pageConfidentialite() {
     <p>Ces informations servent à trouver un Cleaneur, à organiser l'intervention et à vous en rendre compte. Elles ne sont jamais vendues ni utilisées pour de la publicité. Les données sont hébergées dans l'Union européenne.</p>
     <p>Le code d'accès à votre logement n'est communiqué qu'au Cleaneur retenu, le jour de l'intervention.</p>
     <p>Vous pouvez à tout moment demander l'accès, la correction ou la suppression de vos données en écrivant à <a href="mailto:contact@cleaneroo.fr">contact@cleaneroo.fr</a>. Les factures sont conservées le temps imposé par la loi.</p>
-    <p>Pour aller plus vite à la commande suivante, votre navigateur garde sur cet appareil vos coordonnées, vos adresses enregistrées et votre dernière commande (jamais le code d'accès). Vous pouvez tout effacer depuis « Mes demandes ».</p>
+    <p>Pour aller plus vite à la commande suivante, votre navigateur garde sur cet appareil vos coordonnées, vos adresses enregistrées et votre dernière commande (jamais le code d'accès). Vous pouvez tout effacer depuis « Mes prestations ». Avec un compte, vos biens et vos demandes sont aussi gardés dans votre compte, hébergé dans l'Union européenne.</p>
     <p>Le site n'utilise ni traceur publicitaire ni cookie. Pour connaître sa fréquentation, il compte les pages vues avec GoatCounter, un outil sans cookie qui ne garde aucune donnée personnelle (ni adresse IP, ni identifiant) : seuls le nom de la page, le pays, le type d'appareil et le site d'origine sont comptés.</p>`);
 }
 function pageConditions() {
@@ -354,25 +355,6 @@ function pageMentions() {
 const STATUTS = { VERIFICATION: "En cours de vérification", PUBLIEE: "En ligne · candidatures", CONFIRMEE: "Confirmée", EN_ROUTE: "Cleaneur en route",
   SUR_PLACE: "Cleaneur sur place", EN_COURS: "En cours", A_VALIDER: "À valider", TERMINEE: "Terminée", ANNULEE: "Annulée" };
 export const libelleStatut = s => STATUTS[s] || s;
-
-async function pageMesDemandes() {
-  let liste = [];
-  try { liste = await mesDemandes(); } catch { /* hors ligne */ }
-  const carte = d => {
-    const r = rubrique(d.rubrique_id);
-    const quand = d.creneau ? `${dateLongue(new Date(d.creneau))} · ${heure(new Date(d.creneau).getHours())}` : "Flexible (7 jours)";
-    return `<a class="carte prestation" href="#/demande/${esc(d.reference)}/${esc(d.jeton)}" style="margin-bottom:12px">
-      <div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><h3>${icone(r.icone)} ${r.nom}</h3><span class="tampon">${libelleStatut(d.statut)}</span></div>
-      <p class="muet" style="margin:6px 0 0">${quand} · ${esc(d.ville)}</p>
-      <p class="petit" style="margin:4px 0 0">Réf. ${esc(d.reference)} · ${d.sur_devis ? "Sur devis" : `estimé ${euros(d.estimation_c)}`}</p></a>`;
-  };
-  return pageTexte("Mes demandes", (liste.length ? liste.map(carte).join("")
-    : `<p class="muet">Aucune demande depuis ce navigateur.</p><p><a class="bouton" href="#/reserver">Réserver un nettoyage</a></p>`)
-    + `<p class="petit" style="margin-top:18px">Vous avez réservé depuis un autre appareil ? Ouvrez le lien de suivi reçu après la réservation : la demande s'ajoutera ici.</p>`
-    + (logements().length || modeles().length ? `<div class="carte" style="margin-top:18px"><b>Vos informations enregistrées</b>
-      <p class="petit" style="margin:4px 0 8px">${logements().length} adresse(s) et vos coordonnées sont gardées sur cet appareil pour commander plus vite.</p>
-      <button type="button" class="lien-bouton" style="color:var(--erreur);padding:0" id="oublier">Oublier mes informations</button></div>` : ""));
-}
 
 const ETAPES_SUIVI = ["VERIFICATION", "PUBLIEE", "CONFIRMEE", "EN_ROUTE", "SUR_PLACE", "EN_COURS", "A_VALIDER", "TERMINEE"];
 
@@ -456,7 +438,7 @@ function pageIcones() {
 
 const ROUTES = {
   "": pageAccueil, "prestations": pagePrestations, "comment-ca-marche": pageComment, "devenir-cleaneur": pageDevenir,
-  "inscription": () => pageInscription(), "confidentialite": pageConfidentialite, "conditions": pageConditions, "mentions-legales": pageMentions, "mes-demandes": pageMesDemandes,
+  "inscription": () => pageInscription(), "confidentialite": pageConfidentialite, "conditions": pageConditions, "mentions-legales": pageMentions,
   "icones": pageIcones,
 };
 
@@ -469,6 +451,8 @@ async function afficher() {
   document.querySelector(".nav")?.classList.remove("ouvert");
   document.body.classList.toggle("sans-rappel", route === "reserver");
   document.querySelectorAll(".nav a").forEach(a => a.classList.toggle("actif", a.getAttribute("href") === `#/${route}`));
+  if (route === "compte") { await pageCompte(vue, param); window.scrollTo(0, 0); return; }
+  if (route === "mes-demandes") { await pageMesPrestations(vue); window.scrollTo(0, 0); return; }
   if (route === "reserver") { ouvrirReservation(vue, param || null, chemin.split("/")[2] || ""); window.scrollTo(0, 0); return; }
   if (route === "inscription" && param) { vue.innerHTML = pageInscription(param); brancherInscription(vue); traduire(vue); window.scrollTo(0, 0); return; }
   if (route === "demande") {
@@ -488,10 +472,6 @@ async function afficher() {
   vue.innerHTML = await page();
   brancherInscription(vue);
   brancherExpress(vue);
-  vue.querySelector("#oublier")?.addEventListener("click", () => {
-    oublierMesInformations();
-    vue.querySelector("#oublier").closest(".carte").innerHTML = `<p class="muet" style="margin:0">${tr("Vos informations ont été effacées de cet appareil.")}</p>`;
-  });
   traduire(vue);
   reveler(vue);
   animerNotifs(vue);
@@ -512,4 +492,6 @@ traduire(document.querySelector("footer"));
 document.title = tr(document.title);
 installerRappel();
 window.addEventListener("hashchange", afficher);
+await retourEmail();
+majLienCompte();
 afficher();
