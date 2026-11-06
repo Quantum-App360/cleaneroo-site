@@ -37,19 +37,30 @@ export async function retourEmail() {
 export async function majLienCompte() {
   const p = await monProfil().catch(() => null);
   document.querySelectorAll("[data-lien-compte]").forEach(a => a.textContent = p?.prenom ? p.prenom : tr("Mon compte"));
+  // Espace Cleaneur créé (Cleaneur ou administrateur) : « Devenir Cleaneur » devient « Mon espace Cleaneur ».
+  const espace = p?.role === "cleaneur" || p?.role === "admin";
+  document.querySelectorAll('.nav a[href$="#/devenir-cleaneur"], .nav a[data-espace-cleaneur]').forEach(a => {
+    a.dataset.espaceCleaneur = "1";
+    a.setAttribute("href", espace ? "#/compte/cleaneur" : "#/devenir-cleaneur");
+    a.textContent = tr(espace ? "Mon espace Cleaneur" : "Devenir Cleaneur");
+  });
 }
 
 /* ------------------------------------------------------------------ Mon compte */
 
 export async function pageCompte(vue, param) {
+  const ici = location.hash;
   const s = await session();
+  if (location.hash !== ici) return;
   if (param === "mdp" && s) return ecranNouveauMdp(vue);
   if (!s) return ecranConnexion(vue, param === "creer" || param === "cleaneur" ? "creer" : "connexion", "", false, param === "cleaneur" ? "cleaneur" : "client");
   const p = await monProfil().catch(() => null);
+  if (location.hash !== ici) return;
   if (!p) { vue.innerHTML = `<section class="bloc"><div class="etroit">${titre("Mon compte")}<p class="erreur">${tr("Le service est momentanément indisponible. Réessayez dans quelques minutes.")}</p></div></section>`; traduire(vue); return; }
   memoriserCoordonnees(p);
   const cleaneur = p.role === "cleaneur" || p.role === "admin";
   const docs = cleaneur ? await mesDocuments().catch(() => []) : [];
+  if (location.hash !== ici) return;
   vue.innerHTML = `<section class="bloc"><div class="etroit">
     ${titre(`Bonjour ${esc(p.prenom || "")}`.trim())}
     <p><span class="tampon">${ROLES[p.role]}</span> <span class="petit">${esc(p.email)}</span></p>
@@ -173,6 +184,8 @@ function formulaireProfil(p, cleaneur) {
     ${cleaneur ? `<div class="grille-2"><label class="champ">Numéro SIRET (14 chiffres)<input name="siret" inputmode="numeric" maxlength="17" value="${esc(p.siret)}"></label>
       <label class="champ">Périmètre d'intervention<select name="zone_km">${[...new Set([...REGLES.ZONES_KM, p.zone_km || REGLES.ZONE_KM_DEFAUT])].sort((a, b) => a - b)
         .map(km => `<option value="${km}" ${km === (p.zone_km || REGLES.ZONE_KM_DEFAUT) ? "selected" : ""}>${km} km autour de chez moi</option>`).join("")}</select></label></div>
+      <div class="carte-perimetre" id="carte-perimetre" aria-label="Carte de votre zone d'intervention"></div>
+      <p class="petit" id="legende-perimetre" style="margin:6px 0 12px"></p>
       <p style="margin:6px 0 4px;font-weight:600;font-size:14px">Prestations que je propose</p>
       ${RUBRIQUES.map(r => `<label class="case"><input type="checkbox" name="prestation" value="${r.id}" ${p.prestations?.includes(r.id) ? "checked" : ""}> <span>${icone(r.icone)} ${r.nom}</span></label>`).join("")}` : ""}
     <p class="erreur" id="erreur-profil" style="margin:8px 0 0"></p>
@@ -180,8 +193,64 @@ function formulaireProfil(p, cleaneur) {
   </form>`;
 }
 
+/* Carte du périmètre : cercle de N km autour de la commune du Cleaneur (OpenStreetMap + Base Adresse Nationale). */
+let leaflet = null;
+function chargerLeaflet() {
+  if (leaflet) return leaflet;
+  leaflet = new Promise((ok, ko) => {
+    const css = document.createElement("link");
+    css.rel = "stylesheet"; css.href = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css";
+    document.head.appendChild(css);
+    const js = document.createElement("script");
+    js.src = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js";
+    js.onload = () => ok(window.L); js.onerror = ko;
+    document.head.appendChild(js);
+  });
+  return leaflet;
+}
+/** Position de la commune (code postal, et ville si connue). null si introuvable. */
+async function positionCommune(cp, ville) {
+  const q = encodeURIComponent(ville || cp);
+  const r = await fetch(`https://data.geopf.fr/geocodage/search?q=${q}&postcode=${cp}&type=municipality&limit=1`);
+  const f = (await r.json()).features?.[0];
+  return f ? { lat: f.geometry.coordinates[1], lon: f.geometry.coordinates[0], nom: f.properties.city || f.properties.label } : null;
+}
+function brancherCarte(f) {
+  const boite = document.getElementById("carte-perimetre"), legende = document.getElementById("legende-perimetre");
+  if (!boite) return;
+  let carte = null, couche = null, point = null, derniere = "";
+  const maj = async () => {
+    const cp = f.code_postal.value.trim(), ville = f.ville.value.trim(), km = Number(f.zone_km.value) || REGLES.ZONE_KM_DEFAUT;
+    if (!/^[0-9]{5}$/.test(cp)) { boite.hidden = true; legende.textContent = tr("Indiquez votre code postal pour voir votre zone sur la carte."); return; }
+    try {
+      const cle = cp + "|" + ville.toLowerCase();
+      if (cle !== derniere || !point) { point = await positionCommune(cp, ville); derniere = cle; }
+      if (!point) { boite.hidden = true; legende.textContent = tr("Code postal introuvable : vérifiez-le pour voir votre zone."); return; }
+      const L = await chargerLeaflet();
+      boite.hidden = false;
+      if (!carte) {
+        carte = L.map(boite, { scrollWheelZoom: false, attributionControl: true });
+        L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 18, attribution: "© OpenStreetMap" }).addTo(carte);
+      }
+      const centre = [point.lat, point.lon];
+      carte.fitBounds(L.latLng(centre).toBounds(km * 2000), { padding: [12, 12] });
+      if (couche) couche.remove();
+      const cercle = L.circle(centre, { radius: km * 1000, color: "#1F8A80", weight: 2, fillColor: "#2EC4B6", fillOpacity: 0.18 });
+      couche = L.layerGroup([cercle, L.circleMarker(centre, { radius: 5, color: "#fff", weight: 2, fillColor: "#F27D5B", fillOpacity: 1 })]).addTo(carte);
+      setTimeout(() => carte.invalidateSize(), 50);
+      legende.textContent = `${km} km autour de ${point.nom}`;
+      traduire(legende);
+    } catch { boite.hidden = true; legende.textContent = ""; }
+  };
+  f.zone_km.addEventListener("change", maj);
+  f.code_postal.addEventListener("change", maj);
+  f.ville.addEventListener("change", maj);
+  maj();
+}
+
 function brancherProfil(vue, p, cleaneur) {
   const f = vue.querySelector("#form-profil");
+  if (cleaneur) brancherCarte(f);
   f.onsubmit = async e => {
     e.preventDefault();
     const err = vue.querySelector("#erreur-profil");
@@ -280,6 +349,7 @@ export async function afficherAccesCleaneur(racine) {
 const FINIES = ["TERMINEE", "ANNULEE"];
 
 export async function pageMesPrestations(vue) {
+  const ici = location.hash;
   const s = await session();
   const [compte, locales, biens] = await Promise.all([
     s ? demandesDuCompte().catch(() => []) : [], mesDemandes().catch(() => []), synchroniserBiens().catch(() => []),
@@ -299,6 +369,7 @@ export async function pageMesPrestations(vue) {
       <p class="petit" style="margin:4px 0 0">Réf. ${esc(d.reference)} · ${d.sur_devis ? "Sur devis" : `estimé ${euros(d.estimation_c)}`}</p></a>`;
   };
   const vide = t => `<p class="muet">${t}</p>`;
+  if (location.hash !== ici) return;
   vue.innerHTML = `<section class="bloc"><div class="etroit">
     ${titre("Mes prestations")}
     <a class="bouton plein" href="#/reserver" style="margin-bottom:10px">＋ Ajouter une prestation</a>

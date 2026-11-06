@@ -153,6 +153,10 @@ const T = [
   ["Cleaneroo — [raison sociale, adresse et numéro SIRET à compléter].", "Cleaneroo — [company name, address and SIRET number to be completed].", "Cleaneroo — [ragione sociale, indirizzo e numero SIRET da completare].", "Cleaneroo — [razón social, dirección y número SIRET por completar]."],
 
   // Comptes : Mon compte, dossier Cleaneur, Mes prestations (compte.js)
+  ["Dans l'espace Cleaneur, la carte du périmètre d'intervention utilise OpenStreetMap, et la position de la commune est recherchée dans la Base Adresse Nationale (Géoplateforme de l'IGN) : seuls le code postal et la ville leur sont envoyés.", "In the Cleaneur area, the service-area map uses OpenStreetMap, and the town's location is looked up in the French National Address Base (IGN Géoplateforme): only the postcode and town are sent to them.", "Nello spazio Cleaneur, la mappa della zona di intervento usa OpenStreetMap e la posizione del comune è cercata nella Base Adresse Nationale (Géoplateforme dell'IGN): vengono inviati solo il CAP e la città.", "En el espacio de Cleaneur, el mapa de la zona de intervención usa OpenStreetMap y la ubicación del municipio se busca en la Base Adresse Nationale (Géoplateforme del IGN): solo se envían el código postal y la ciudad."],
+  ["Indiquez votre code postal pour voir votre zone sur la carte.", "Enter your postcode to see your area on the map.", "Inserisci il CAP per vedere la tua zona sulla mappa.", "Indica tu código postal para ver tu zona en el mapa."],
+  ["Code postal introuvable : vérifiez-le pour voir votre zone.", "Postcode not found: check it to see your area.", "CAP non trovato: verificalo per vedere la tua zona.", "Código postal no encontrado: compruébalo para ver tu zona."],
+  ["Carte de votre zone d'intervention", "Map of your service area", "Mappa della tua zona di intervento", "Mapa de tu zona de intervención"],
   ["Périmètre d'intervention", "Service area", "Zona di intervento", "Zona de intervención"],
   ["Créez votre compte Cleaneur", "Create your Cleaneur account", "Crea il tuo account Cleaneur", "Crea tu cuenta de Cleaneur"],
   ["Préparez dès maintenant votre profil et votre dossier : tout sera prêt pour vos premières missions le 1er janvier 2027.", "Prepare your profile and file now: everything will be ready for your first jobs on 1 January 2027.", "Prepara subito profilo e pratica: tutto sarà pronto per le prime missioni il 1° gennaio 2027.", "Prepara ya tu perfil y tu expediente: todo estará listo para tus primeras misiones el 1 de enero de 2027."],
@@ -1218,6 +1222,7 @@ const MOTIFS = IDX === undefined ? [] : [
   [/^Surface\ totale\ :\ (.+?)\ m²\ \((.+?)\ m²\ ×\ (.+?)\ paliers\)\.$/, (m, a0, a1, a2) => [`Total area: ${traduireTexte(a0)} m² (${traduireTexte(a1)} m² × ${traduireTexte(a2)} landings).`, `Superficie totale: ${traduireTexte(a0)} m² (${traduireTexte(a1)} m² × ${traduireTexte(a2)} pianerottoli).`, `Superficie total: ${traduireTexte(a0)} m² (${traduireTexte(a1)} m² × ${traduireTexte(a2)} rellanos).`][IDX]],
   // </rubriques-motifs>
   [/^(Studio|Appartement|Maison|Duplex \/ loft|Adresse) · (.+)$/, (m, t, v) => `${traduireTexte(t)} · ${v}`],
+  [/^(\d+) km autour de (?!chez moi$)(.+)$/, (m, n, v) => [`${n} km around ${v}`, `${n} km intorno a ${v}`, `${n} km alrededor de ${v}`][IDX]],
   [/^(\d+) km autour de chez moi$/, (m, n) => [`${n} km around my home`, `${n} km intorno a casa mia`, `${n} km alrededor de mi casa`][IDX]],
   [/^Bonjour (.+)$/, (m, n) => [`Hello ${n}`, `Ciao ${n}`, `Hola ${n}`][IDX]],
   [/^Bonjour$/, () => ["Hello", "Ciao", "Hola"][IDX]],

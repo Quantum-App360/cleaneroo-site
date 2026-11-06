@@ -761,3 +761,5 @@ label.champ input:focus, label.champ select:focus, label.champ textarea:focus, i
 }
 @media (min-width: 861px) and (max-width: 1360px) { .marque .nom { display: none; } }
 @media (min-width: 861px) and (max-width: 1120px) { .nav a:not(.bouton) { padding: 10px 6px; font-size: 13px; } .nav a:not(.bouton)::after { left: 6px; right: 6px; } }
+/* Carte du périmètre d'intervention (profil Cleaneur) */
+.carte-perimetre { height: 260px; border-radius: 14px; overflow: hidden; border: 1px solid var(--separateur); margin-top: 4px; z-index: 0; }
