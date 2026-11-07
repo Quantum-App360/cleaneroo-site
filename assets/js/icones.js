@@ -109,7 +109,7 @@ export const ICONES = {
 export const TEINTES = {
   logement: "turquoise", location: "corail", demenagement: "soleil", vehicule: "ciel", canape: "lilas", chantier: "soleil",
   cuisine: "corail", bureaux: "ciel", commerce: "lilas", "parties-communes": "menthe", vitres: "ciel", exterieurs: "menthe",
-  evenement: "rose", specialise: "rose", cleaneurs: "corail", position: "turquoise", photo: "lilas", calendrier: "ciel",
+  evenement: "rose", specialise: "rose", cleaneurs: "lilas", position: "turquoise", photo: "lilas", calendrier: "ciel",
   paiement: "soleil", garantie: "menthe", "credit-impot": "soleil", avis: "rose", valide: "menthe",
 };
 export const teinte = nom => TEINTES[nom] || "turquoise";
