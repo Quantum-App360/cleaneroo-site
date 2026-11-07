@@ -181,7 +181,7 @@ function blocRecommander() {
 const ESPACES_ACCUEIL = [
   ["logement", "Particuliers", "Ménage régulier ou ponctuel, vitres, canapés et textiles, avec 50 % de crédit d'impôt déduit tout de suite.", "#/reserver", "Estimer mon prix"],
   ["location", "Conciergeries et multi-biens", "Agenda relié à Airbnb et Booking, ménages entre deux voyageurs, photo de la boîte à clés et carte de tous vos biens.", "#/compte/pro", "Créer mon espace Pro"],
-  ["cleaneurs", "Cleaneurs", "Missions près de chez vous, itinéraire, déroulé guidé et paiement sécurisé. Abonnement offert 12 mois aux 500 premiers.", "#/devenir-cleaneur", "Devenir Cleaneur"],
+  ["cleaneurs", "Cleaneurs", "Missions près de chez vous, itinéraire, déroulé guidé et paiement sécurisé. Formule Pro offerte 12 mois aux 500 premiers.", "#/devenir-cleaneur", "Devenir Cleaneur"],
 ];
 const FONCTIONS_DIGITALES = [
   ["position", "Suivi en direct", "Votre Cleaneur sur la carte, comme une livraison, avec son heure d'arrivée."],
@@ -389,7 +389,7 @@ function pageConditions() {
     <p>Cleaneroo met en relation des clients et des Cleaneurs indépendants vérifiés. Rien n'est ajouté à votre commande sans votre accord ; vous n'êtes débité qu'après avoir validé le compte rendu de l'intervention.</p>
     <p>Annulation gratuite jusqu'à 48 h avant l'intervention, puis 25 % du prix accepté. Un litige ou une déclaration de dommage (Garantie Cleaneroo) peut être ouvert dans les 48 h suivant l'intervention.</p>
     <p>Le prix affiché est une estimation : le montant final ne peut pas la dépasser sans votre accord.</p>
-    <p><b>Cleaneurs :</b> les ${REGLES.OFFRE_LANCEMENT_PLACES} premiers inscrits et validés ne paient aucun abonnement pendant ${REGLES.OFFRE_LANCEMENT_MOIS} mois ; ensuite, l'abonnement est de ${euros(REGLES.ABONNEMENT_CLEANEUR_C)} par mois. En cas d'impayé, ${REGLES.PREAVIS_BLOCAGE_JOURS} jours après la date de facturation prévue, le compte est bloqué et les missions réservées sont redistribuées à d'autres Cleaneurs.</p>`);
+    <p><b>Cleaneurs :</b> deux formules au choix : Gratuit (sans abonnement, commission de ${REGLES.COMMISSION_GRATUIT_PB / 100} %) ou Pro (${euros(REGLES.ABONNEMENT_CLEANEUR_C)} par mois, commission de ${REGLES.COMMISSION_PRO_PB / 100} %). Les ${REGLES.OFFRE_LANCEMENT_PLACES} premiers dossiers validés ont la formule Pro offerte pendant ${REGLES.OFFRE_LANCEMENT_MOIS} mois. En cas d'impayé de l'abonnement Pro, ${REGLES.PREAVIS_BLOCAGE_JOURS} jours après la date de facturation prévue, le compte est bloqué et les missions réservées sont redistribuées.</p>`);
 }
 function pageMentions() {
   return pageTexte("Mentions légales", `

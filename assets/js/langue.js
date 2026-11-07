@@ -788,6 +788,8 @@ const T = [
   ["Débuter ma prestation", "Start my service", "Inizia il mio servizio", "Empezar mi servicio"],
   ["Choisir une prestation", "Choose a service", "Scegli un servizio", "Elige un servicio"],
   ["Commencer", "Start", "Inizia", "Empezar"],
+  ["Formule Pro offerte 12 mois aux 500 premiers.", "Pro plan free for 12 months for the first 500.", "Formula Pro offerta 12 mesi ai primi 500.", "Fórmula Pro gratis 12 meses para los 500 primeros."],
+  ["Missions près de chez vous, itinéraire, déroulé guidé et paiement sécurisé. Formule Pro offerte 12 mois aux 500 premiers.", "Jobs near you, directions, guided steps and secure payment. Pro plan free for 12 months for the first 500.", "Missioni vicino a te, itinerario, procedura guidata e pagamento sicuro. Formula Pro offerta 12 mesi ai primi 500.", "Misiones cerca de ti, itinerario, pasos guiados y pago seguro. Fórmula Pro gratis 12 meses para los 500 primeros."],
   ["Rentabilisé dès", "Pays for itself from", "Si ripaga da", "Rentable a partir de"],
   ["de missions par mois", "of jobs a month", "di missioni al mese", "de misiones al mes"],
   ["Moins intéressant sous", "Less worthwhile under", "Meno conveniente sotto i", "Menos interesante por debajo de"],
@@ -1686,6 +1688,12 @@ let PHRASES = null;
 /* ------------------------------------------------------------------ Textes avec une partie variable */
 export const LOCALE = { fr: "fr-FR", en: "en-GB", it: "it-IT", es: "es-ES" }[langue];
 const MOTIFS = IDX === undefined ? [] : [
+  // Conditions d'utilisation : formules des Cleaneurs (chiffres lus dans REGLES)
+  [/^deux formules au choix : Gratuit \(sans abonnement, commission de (.+?) %\) ou Pro \((.+?) par mois, commission de (.+?) %\)\. Les (.+?) premiers dossiers validés ont la formule Pro offerte pendant (.+?) mois\. En cas d'impayé de l'abonnement Pro, (.+?) jours après la date de facturation prévue, le compte est bloqué et les missions réservées sont redistribuées\.$/,
+    (m, a, b, c, d, e, f) => [
+      `two plans to choose from: Free (no subscription, ${a}% commission) or Pro (${b} per month, ${c}% commission). The first ${d} approved files get the Pro plan free for ${e} months. If the Pro subscription is unpaid, ${f} days after the scheduled billing date, the account is blocked and booked jobs are reassigned.`,
+      `due formule a scelta: Gratuito (senza abbonamento, commissione del ${a}%) o Pro (${b} al mese, commissione del ${c}%). I primi ${d} fascicoli convalidati hanno la formula Pro offerta per ${e} mesi. In caso di mancato pagamento dell'abbonamento Pro, ${f} giorni dopo la data di fatturazione prevista, l'account viene bloccato e le missioni prenotate vengono riassegnate.`,
+      `dos fórmulas a elegir: Gratis (sin suscripción, comisión del ${a} %) o Pro (${b} al mes, comisión del ${c} %). Los ${d} primeros expedientes validados tienen la fórmula Pro gratis durante ${e} meses. En caso de impago de la suscripción Pro, ${f} días después de la fecha de facturación prevista, la cuenta se bloquea y las misiones reservadas se reasignan.`][IDX]],
   [/^(\d+) missions?$/, (m, n) => [`${n} job${n > 1 ? "s" : ""}`, `${n} mission${n > 1 ? "i" : "e"}`, `${n} misi${n > 1 ? "ones" : "ón"}`][IDX]],
   [/^(\d+) adresses? enregistrées?$/, (m, n) => [`${n} saved address${n > 1 ? "es" : ""}`, `${n} indirizz${n > 1 ? "i" : "o"} salvat${n > 1 ? "i" : "o"}`, `${n} direcci${n > 1 ? "ones" : "ón"} guardada${n > 1 ? "s" : ""}`][IDX]],
   [/^Départs sur (\d+) jours$/, (m, n) => [`Check-outs in ${n} days`, `Partenze in ${n} giorni`, `Salidas en ${n} días`][IDX]],
