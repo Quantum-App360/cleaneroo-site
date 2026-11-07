@@ -1673,3 +1673,30 @@ details.piece.complete .pastille-piece { background: #23955A; border-color: #239
 .liste-filleuls .positif { color: var(--succes); }
 .saisie-code { display: grid; gap: 8px; }
 .ligne-montant.remise span:last-child { color: var(--succes); font-weight: 700; }
+
+/* Inscription inspirante (accueil, visiteur) */
+.inscription-inspirante { position: relative; overflow: hidden; padding: 72px 0; color: #fff;
+  background: radial-gradient(circle at 12% 18%, rgba(94, 214, 203, .55), transparent 45%), radial-gradient(circle at 88% 85%, rgba(107, 91, 214, .65), transparent 50%),
+    linear-gradient(135deg, #0B5F5A, #0F8A82 45%, #4D57C8); }
+.inscription-inspirante::after { content: ""; position: absolute; width: 420px; height: 420px; right: -120px; top: -160px; border-radius: 50%;
+  background: rgba(255, 255, 255, .08); pointer-events: none; }
+.tete-inspirante { text-align: center; max-width: 720px; margin: 0 auto 36px; }
+.tete-inspirante h2 { color: #fff; font-size: clamp(30px, 4.4vw, 48px); line-height: 1.08; margin: 16px 0 10px; letter-spacing: -.02em; }
+.tete-inspirante p { color: rgba(255, 255, 255, .88); font-size: 18px; margin: 0; }
+.cartes-inspirantes { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.carte-inspirante { position: relative; display: flex; flex-direction: column; gap: 10px; padding: 26px 22px 22px; border-radius: 24px; text-decoration: none;
+  color: var(--texte); background: rgba(255, 255, 255, .96); box-shadow: 0 24px 50px -24px rgba(10, 30, 60, .55);
+  transition: transform .25s ease, box-shadow .25s ease; transition-delay: var(--retard, 0ms); }
+.carte-inspirante:hover { transform: translateY(-6px); box-shadow: 0 32px 60px -24px rgba(10, 30, 60, .65); }
+.carte-inspirante h3 { margin: 6px 0 0; font-size: 22px; }
+.carte-inspirante .accroche { margin: 0; color: var(--primaire); font-weight: 700; }
+.carte-inspirante ul { list-style: none; margin: 4px 0 8px; padding: 0; display: grid; gap: 8px; color: var(--texte-doux, #4A5A66); }
+.carte-inspirante li { display: flex; align-items: center; gap: 8px; }
+.carte-inspirante li .ico { width: 18px; height: 18px; color: var(--succes); flex: none; }
+.carte-inspirante .bouton { margin-top: auto; text-align: center; }
+.cadeau-espace { align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px;
+  background: linear-gradient(135deg, #FFF1D6, #FFE0CC); color: #9A4A12; font-weight: 800; font-size: 13px; }
+.cadeau-espace .ico { width: 16px; height: 16px; }
+.pied-inspirant { position: relative; z-index: 1; text-align: center; margin: 26px 0 0; color: rgba(255, 255, 255, .85); }
+.pied-inspirant a { color: #fff; font-weight: 700; }
+@media (max-width: 860px) { .cartes-inspirantes { grid-template-columns: 1fr; } .inscription-inspirante { padding: 52px 0; } }

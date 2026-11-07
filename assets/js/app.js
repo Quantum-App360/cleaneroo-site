@@ -11,7 +11,7 @@ import { suivre, annuler, memoriser, inscrire } from "./donnees.js";
 import { compterPage } from "./compteur.js";
 import { suivreEnDirect, demoSuivi } from "./suivi-live.js";
 import { pageCompte, pageMesPrestations, arreterEcouteDemandes, retourEmail, majLienCompte, afficherAccesCleaneur } from "./compte.js";
-import { marquerActif } from "./entete.js";
+import { marquerActif, profilMemorise } from "./entete.js";
 import { icone, teinte, ICONES_RUBRIQUES, ICONES_INTERFACE } from "./icones.js";
 import { pageTableau, arreterTableau } from "./tableau.js";
 import { compteRenduPieces } from "./controle-ecran.js";
@@ -186,6 +186,35 @@ const ESPACES_ACCUEIL = [
   ["location", "Conciergeries et multi-biens", "Agenda relié à Airbnb et Booking, ménages entre deux voyageurs, photo de la boîte à clés et carte de tous vos biens.", "#/compte/pro", "Créer mon espace Pro"],
   ["cleaneurs", "Cleaneurs", "Missions près de chez vous, itinéraire, déroulé guidé et paiement sécurisé. 3 mois de formule Pro offerts aux inscrits jusqu'au 31 janvier 2027.", "#/devenir-cleaneur", "Devenir Cleaneur"],
 ];
+/* Inscription inspirante (visiteur) : un espace par profil, chacun avec son avantage offert. Même bloc dans l'appli (Vitrine.kt). */
+const INSCRIPTION_ESPACES = () => [
+  ["logement", "Particulier", "Votre ménage, sans y penser.", ["Prix affiché tout de suite", "Suivi du Cleaneur en direct", "−50 % de crédit d'impôt"],
+    `${euros(REGLES.PARRAINAGE_FILLEUL_C)} ${tr("offerts avec un code de parrainage")}`, "#/compte/creer"],
+  ["location", "Conciergerie ou plusieurs biens", "Vos locations, toujours prêtes.", ["Agenda relié à Airbnb et Booking", "Ménages entre deux voyageurs", "Compte rendu photo de chaque logement"],
+    `${REGLES.ABONNEMENT_PRO_MOIS_OFFERTS} ${tr("mois d'abonnement offert")}`, "#/compte/pro"],
+  ["cleaneurs", "Cleaneur", "Vos missions, votre liberté.", ["Missions près de chez vous", "Paiement sécurisé après chaque mission", "Itinéraire et déroulé guidé"],
+    `${REGLES.OFFRE_LANCEMENT_MOIS} ${tr("mois de formule Pro offerts")}`, "#/compte/cleaneur"],
+];
+function blocInscriptionInspirante() {
+  return `<section class="inscription-inspirante"><div class="conteneur">
+    <div class="tete-inspirante revele">
+      <span class="pastille-lancement sombre"><i></i>${estPrelancement() ? `J-${joursAvantLancement()} · ` : ""}${tr("Gratuit · sans engagement · 1 minute")}</span>
+      <h2>${tr("Votre espace Cleaneroo vous attend.")}</h2>
+      <p>${tr("Créez-le dès maintenant : tout sera prêt pour le 31 décembre 2026, et vos avantages de lancement sont gardés.")}</p>
+    </div>
+    <div class="cartes-inspirantes">${INSCRIPTION_ESPACES().map(([ico, titre, accroche, points, cadeau, lien], i) => `
+      <a class="carte-inspirante revele" href="${lien}" style="--retard:${i * 90}ms">
+        <span class="cadeau-espace">${icone("cadeau")}${cadeau}</span>
+        ${icone(ico, { tuile: true })}
+        <h3>${tr(titre)}</h3>
+        <p class="accroche">${tr(accroche)}</p>
+        <ul>${points.map(x => `<li>${icone("valide")}${tr(x)}</li>`).join("")}</ul>
+        <span class="bouton plein">${tr("Créer mon espace")}</span>
+      </a>`).join("")}</div>
+    <p class="pied-inspirant">${tr("Déjà inscrit ?")} <a href="#/compte">${tr("Se connecter")}</a> · ${tr("Juste être prévenu du lancement ?")} <a href="#/inscription/client">${tr("Laisser mon e-mail")}</a></p>
+  </div></section>`;
+}
+
 const FONCTIONS_DIGITALES = [
   ["position", "Suivi en direct", "Votre Cleaneur sur la carte, comme une livraison, avec son heure d'arrivée."],
   ["photo", "Compte rendu photo", "Chaque pièce photographiée avant et après, horodatée, dans votre espace."],
@@ -241,11 +270,11 @@ function pageAccueil() {
     </div>
   </section>
   <section class="bandeau-chiffres"><div class="conteneur">${CHIFFRES.map(([n, l], i) => `<div data-teinte="${["turquoise", "corail", "soleil", "lilas"][i]}"><b>${n}</b><span>${l}</span></div>`).join("")}</div></section>
-  <section class="bloc"><div class="conteneur">
+  ${profilMemorise() ? `<section class="bloc"><div class="conteneur">
     ${titreSection("Un espace pour chacun", "Particuliers, conciergeries et Cleaneurs : chacun a son espace, pensé pour son usage.", "Pour qui ?")}
     <div class="grille-3 espaces-accueil">${ESPACES_ACCUEIL.map(([ico, titre, texte, lien, action]) => `
       <a class="carte espace-carte revele" data-teinte="${teinte(ico)}" href="${lien}">${icone(ico, { tuile: true })}<h3>${titre}</h3><p class="muet">${texte}</p><span class="aller">${action} ›</span></a>`).join("")}</div>
-  </div></section>
+  </div></section>` : blocInscriptionInspirante()}
   <section class="bloc bloc-doux"><div class="conteneur">
     ${titreSection("Nos prestations", "Le prix s'affiche dès que vous décrivez votre besoin.", "Prestations")}
     <div class="grille-3">${RACCOURCIS_VITRINE.map(([id, nom, sous]) => `
@@ -557,7 +586,8 @@ async function afficherPage() {
     return;
   }
   // Compte connecté (Particulier, Pro, administrateur) : l'accueil devient son tableau de bord vivant (prochaine prestation, « À faire »).
-  if (route === "" && !document.body.classList.contains("acces-cleaneur")) {
+  // Tableau de bord vivant du compte (prochaine prestation, « À faire ») ; cleaneroo.fr ouvre toujours la page d'accueil.
+  if (route === "tableau" && !document.body.classList.contains("acces-cleaneur")) {
     if (await pageTableau(vue)) { window.scrollTo(0, 0); return; }
   }
   const page = ROUTES[route] || pageAccueil;
