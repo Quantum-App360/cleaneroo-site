@@ -41,7 +41,9 @@ export const REGLES = {
   IMMEUBLE_MIN_PAR_PALIER: 15,
   // Formules des Cleaneurs (modèle économique du 7 novembre 2026) : Gratuit (0 €, commission 20 %, missions des particuliers,
   // visibles 30 min après les Pro) ou Pro (19,99 €/mois, commission 12 %, toutes les missions, 30 min d'avance, badge Pro).
-  // Offre de lancement : les 500 premiers dossiers validés ont la formule Pro offerte 12 mois (base : pro_offert_jusqu).
+  // Offre de lancement (décision du 7 novembre 2026, pour attirer un maximum de Cleaneurs) : 3 mois de formule Pro offerts à TOUS les
+  // Cleaneurs inscrits jusqu'au 31 janvier 2027 inclus, sans limite de places ; les 3 mois partent de la première mission prise
+  // (avant : Pro sans limite de durée) (base : pro_offert_jusqu, posé par prendre_mission).
   // Impayé (abonnement Pro) : blocage et redistribution des missions réservées 3 jours après la date de facturation prévue.
   COMMISSION_GRATUIT_PB: 2000, COMMISSION_PRO_PB: 1200, PRIORITE_PRO_MIN: 30,
   // Frais de service côté client (modèle économique) : particulier 5 % ; conciergerie ou entreprise sans abonnement 8 % ; abonnée 0 %.
@@ -55,8 +57,8 @@ export const REGLES = {
     { id: "t4", max: 100, parLogementC: 300, inclus: ["0 % de frais de service", "Vue par logement", "Cleaneur attitré", "Facturation mensuelle groupée"] },
   ],
   ABONNEMENT_PRO_SUR_DEVIS_LOGEMENTS: 100, ABONNEMENT_PRO_MOIS_OFFERTS: 1,
-  OFFRE_LANCEMENT_PLACES: 500,
-  OFFRE_LANCEMENT_MOIS: 12,
+  OFFRE_LANCEMENT_MOIS: 3,
+  OFFRE_LANCEMENT_FIN_INSCRIPTION: "2027-01-31",
   ABONNEMENT_CLEANEUR_C: 1999,
   PREAVIS_BLOCAGE_JOURS: 3,
   // Périmètre d'intervention d'un Cleaneur (menu déroulant du profil), en km ; défaut 15 km.
@@ -210,3 +212,8 @@ export const tranchePour = n => REGLES.ABONNEMENTS_PRO.find(t => Math.max(1, n) 
 export const prixAbonnementProC = (t, n) => (t.parLogementC ? t.parLogementC * Math.max(41, n) : t.prixC);
 /** Volume de ménages mensuel (centimes) à partir duquel l'abonnement coûte moins que les 8 % de frais (arrondi à l'euro supérieur). */
 export const seuilAbonnementProC = (t, n) => Math.ceil(prixAbonnementProC(t, n) * 100 / REGLES.FRAIS_SERVICE_PRO_PCT / 100) * 100;
+
+/** Dernier jour d'inscription pour l'offre de lancement (31 janvier 2027 inclus). */
+export const finOffreLancement = () => { const [a, m, j] = REGLES.OFFRE_LANCEMENT_FIN_INSCRIPTION.split("-").map(Number); return new Date(a, m - 1, j, 23, 59, 59); };
+/** Jours restants pour s'inscrire et profiter de l'offre (0 = terminée). */
+export const joursOffreLancement = (maintenant = new Date()) => Math.max(0, Math.ceil((finOffreLancement() - maintenant) / 86400000));

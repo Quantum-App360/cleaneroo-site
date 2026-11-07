@@ -73,3 +73,22 @@ begin
   get diagnostics n = row_count;
   return case when n = 1 then 'ok' else 'deja_prise' end;
 end $$;
+
+-- 7 novembre 2026 (soir) : nouvelle offre de lancement — 3 mois de formule Pro offerts à TOUS les Cleaneurs inscrits jusqu'au
+-- 31 janvier 2027 inclus (sans limite de places). Avant la première mission : Pro sans limite de durée ; les 3 mois partent de la
+-- première mission prise (prendre_mission pose pro_offert_jusqu). L'ancienne attribution à la validation (500 premiers, 12 mois) est retirée.
+create or replace function public.offre_lancement(p public.profils) returns boolean
+language sql stable set search_path = '' as $$
+  select p.cree_le < timestamptz '2027-02-01 00:00 Europe/Paris';
+$$;
+create or replace function public.formule_effective(p_id uuid) returns text
+language sql stable security definer set search_path = '' as $$
+  select case when p.role = 'admin' or p.formule_cleaneur = 'pro'
+    or (public.offre_lancement(p) and (p.pro_offert_jusqu is null or p.pro_offert_jusqu > now())) then 'pro' else 'gratuit' end
+  from public.profils p where p.id = p_id;
+$$;
+drop trigger if exists profils_offrir_pro on public.profils;
+drop function if exists public.offrir_pro_a_la_validation();
+-- prendre_mission : après une prise réussie,
+--   update public.profils p set pro_offert_jusqu = now() + interval '3 months'
+--    where p.id = auth.uid() and p.pro_offert_jusqu is null and public.offre_lancement(p);

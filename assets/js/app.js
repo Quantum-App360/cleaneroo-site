@@ -6,7 +6,7 @@ import { euros, duree, dateLongue, dateHeure, heure, estPrelancement, joursAvant
 // Langue : catalogue traduit avant tout affichage.
 traduireCatalogue(RUBRIQUES, TYPES_LIEU);
 import { ouvrirReservation, modeles, logements, nomLogement } from "./reserver.js";
-import { suivre, annuler, memoriser, inscrire, placesRestantes } from "./donnees.js";
+import { suivre, annuler, memoriser, inscrire } from "./donnees.js";
 import { compterPage } from "./compteur.js";
 import { suivreEnDirect, demoSuivi } from "./suivi-live.js";
 import { pageCompte, pageMesPrestations, arreterEcouteDemandes, retourEmail, majLienCompte, afficherAccesCleaneur } from "./compte.js";
@@ -181,7 +181,7 @@ function blocRecommander() {
 const ESPACES_ACCUEIL = [
   ["logement", "Particuliers", "Ménage régulier ou ponctuel, vitres, canapés et textiles, avec 50 % de crédit d'impôt déduit tout de suite.", "#/reserver", "Estimer mon prix"],
   ["location", "Conciergeries et multi-biens", "Agenda relié à Airbnb et Booking, ménages entre deux voyageurs, photo de la boîte à clés et carte de tous vos biens.", "#/compte/pro", "Créer mon espace Pro"],
-  ["cleaneurs", "Cleaneurs", "Missions près de chez vous, itinéraire, déroulé guidé et paiement sécurisé. Formule Pro offerte 12 mois aux 500 premiers.", "#/devenir-cleaneur", "Devenir Cleaneur"],
+  ["cleaneurs", "Cleaneurs", "Missions près de chez vous, itinéraire, déroulé guidé et paiement sécurisé. 3 mois de formule Pro offerts aux inscrits jusqu'au 31 janvier 2027.", "#/devenir-cleaneur", "Devenir Cleaneur"],
 ];
 const FONCTIONS_DIGITALES = [
   ["position", "Suivi en direct", "Votre Cleaneur sur la carte, comme une livraison, avec son heure d'arrivée."],
@@ -341,17 +341,6 @@ function pageComment() {
 }
 
 /** Compteur de l'offre de lancement : lu dans la base (dossiers validés), masqué si elle ne répond pas. */
-async function afficherPlaces(racine) {
-  const bloc = racine.querySelector("[data-places]");
-  if (!bloc) return;
-  const n = await placesRestantes().catch(() => null);
-  if (n === null) return;
-  const total = REGLES.OFFRE_LANCEMENT_PLACES;
-  bloc.querySelector("[data-places-nombre]").textContent = n;
-  bloc.querySelector("[data-places-jauge]").style.width = `${Math.round(n * 100 / total)}%`;
-  if (n === 0) bloc.querySelector(".chiffre span").textContent = tr("Offre complète : toutes les places sont attribuées.");
-  bloc.hidden = false;
-}
 
 /* Offre de lancement des Cleaneurs (mêmes valeurs que Regles.kt) */
 /** « Devenir Cleaneur » : les deux formules (Gratuit / Pro), avantages, inconvénients et offre de lancement. */
@@ -389,7 +378,7 @@ function pageConditions() {
     <p>Cleaneroo met en relation des clients et des Cleaneurs indépendants vérifiés. Rien n'est ajouté à votre commande sans votre accord ; vous n'êtes débité qu'après avoir validé le compte rendu de l'intervention.</p>
     <p>Annulation gratuite jusqu'à 48 h avant l'intervention, puis 25 % du prix accepté. Un litige ou une déclaration de dommage (Garantie Cleaneroo) peut être ouvert dans les 48 h suivant l'intervention.</p>
     <p>Le prix affiché est une estimation : le montant final ne peut pas la dépasser sans votre accord.</p>
-    <p><b>Cleaneurs :</b> deux formules au choix : Gratuit (sans abonnement, commission de ${REGLES.COMMISSION_GRATUIT_PB / 100} %) ou Pro (${euros(REGLES.ABONNEMENT_CLEANEUR_C)} par mois, commission de ${REGLES.COMMISSION_PRO_PB / 100} %). Les ${REGLES.OFFRE_LANCEMENT_PLACES} premiers dossiers validés ont la formule Pro offerte pendant ${REGLES.OFFRE_LANCEMENT_MOIS} mois. En cas d'impayé de l'abonnement Pro, ${REGLES.PREAVIS_BLOCAGE_JOURS} jours après la date de facturation prévue, le compte est bloqué et les missions réservées sont redistribuées.</p>`);
+    <p><b>Cleaneurs :</b> deux formules au choix : Gratuit (sans abonnement, commission de ${REGLES.COMMISSION_GRATUIT_PB / 100} %) ou Pro (${euros(REGLES.ABONNEMENT_CLEANEUR_C)} par mois, commission de ${REGLES.COMMISSION_PRO_PB / 100} %). Les Cleaneurs inscrits jusqu'au 31 janvier 2027 ont la formule Pro offerte pendant ${REGLES.OFFRE_LANCEMENT_MOIS} mois, à partir de leur première mission. En cas d'impayé de l'abonnement Pro, ${REGLES.PREAVIS_BLOCAGE_JOURS} jours après la date de facturation prévue, le compte est bloqué et les missions réservées sont redistribuées.</p>`);
 }
 function pageMentions() {
   return pageTexte("Mentions légales", `
@@ -575,7 +564,6 @@ async function afficherPage() {
   traduire(vue);
   reveler(vue);
   animerNotifs(vue);
-  afficherPlaces(vue);
   afficherAccesCleaneur(vue);
   brancherFormulesCleaneur(vue);
   window.scrollTo(0, 0);

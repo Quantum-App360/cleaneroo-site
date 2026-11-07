@@ -31,7 +31,7 @@ async function reduirePhoto(fichier, taille = 1280, qualite = 0.6) {
   return new Promise(ok => c.toBlob(ok, "image/jpeg", qualite));
 }
 
-/** Offre de lancement : places restantes (500 moins les dossiers Cleaneurs validés). null si la base ne répond pas. */
+/** Ancienne offre (500 places) : compteur conservé pour l'historique, plus affiché depuis l'offre « 3 mois offerts » du 7 novembre 2026. */
 export async function placesRestantes() {
   const { data, error } = await supabase.rpc("places_offre_restantes");
   return error || typeof data !== "number" ? null : data;

@@ -75,7 +75,7 @@ async function listeInscriptions() {
   };
   vue.innerHTML = `<h1>Tableau de bord</h1><div class="trait-corail"></div>${ongletsHtml()}
     <p class="muet">${data.length} inscrits · ${n("client")} clients · ${n("cleaneur")} Cleaneurs · ${n("conciergerie")} conciergeries · ${n("rappel")} à rappeler</p>
-    <p class="note">Offre de lancement : <b>${data.filter(i => i.type === "cleaneur" && i.valide_le).length}</b> dossier(s) Cleaneur validé(s) · <b>${Math.max(0, 500 - data.filter(i => i.type === "cleaneur" && i.valide_le).length)}</b> places restantes sur 500 (compteur affiché sur le site et dans l'appli).</p>
+    <p class="note">Offre de lancement : <b>${data.filter(i => i.type === "cleaneur" && i.valide_le).length}</b> dossier(s) Cleaneur validé(s) · 3 mois de formule Pro offerts aux Cleaneurs inscrits jusqu'au 31 janvier 2027 (sans limite de places).</p>
     <button class="bouton secondaire" id="export">Télécharger la liste (Excel)</button>
     <div style="margin-top:14px">${data.map(i => `<div class="carte" style="margin-bottom:10px">
       <b>${esc(i.prenom)} ${esc(i.nom)}</b> <span class="tampon">${TYPES_INSCRIPTION[i.type]}</span>

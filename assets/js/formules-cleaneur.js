@@ -1,8 +1,8 @@
 // Formules des Cleaneurs (modèle économique du 7 novembre 2026) : Gratuit ou Pro, avantages et inconvénients,
-// calcul « combien je touche », offre de lancement (Pro offert 12 mois aux 500 premiers). Même écran dans l'appli (FormulesCleaneur.kt).
-import { REGLES, euros, dateLongue, revenuCleaneurC, seuilRentabiliteProC } from "./regles.js";
-import { traduire, tr } from "./langue.js";
-import { supabase, placesRestantes } from "./donnees.js";
+// calcul « combien je touche », offre de lancement (3 mois de Pro offerts aux inscrits jusqu'au 31 janvier 2027). Même écran dans l'appli (FormulesCleaneur.kt).
+import { REGLES, euros, dateLongue, revenuCleaneurC, seuilRentabiliteProC, finOffreLancement, joursOffreLancement } from "./regles.js";
+import { traduire, tr, LOCALE } from "./langue.js";
+import { supabase } from "./donnees.js";
 
 const pct = pb => `${pb / 100} %`;
 /** Ligne d'avantage ou d'inconvénient : texte, ou [texte, montant, texte] (le montant ne se traduit pas). */
@@ -34,15 +34,20 @@ export function formulesCleaneur() {
   ];
 }
 
+/** Offre de lancement pour ce compte : inscrit jusqu'au 31 janvier 2027 et 3 mois pas encore écoulés depuis la première mission. */
+const proOffert = p => !!p && !!p.cree_le && new Date(p.cree_le) <= finOffreLancement()
+  && (!p.pro_offert_jusqu || new Date(p.pro_offert_jusqu) > new Date());
+
 /** Bloc complet : offre de lancement, deux cartes, calcul. p : profil du Cleaneur connecté (null = visiteur). */
 export function blocFormulesCleaneur(p = null) {
-  const offert = p?.pro_offert_jusqu && new Date(p.pro_offert_jusqu) > new Date();
+  const offert = proOffert(p);
   const actuelle = p ? (p.role === "admin" || offert || p.formule_cleaneur === "pro" ? "pro" : "gratuit") : "";
   return `<div class="formules-cleaneur" id="formules-cleaneur">
-    <div class="offre-pro"><span class="badge-formule">${tr("Offre de lancement")}</span>
-      <b>${tr("Formule Pro offerte")} ${REGLES.OFFRE_LANCEMENT_MOIS} ${tr("mois aux")} ${REGLES.OFFRE_LANCEMENT_PLACES} ${tr("premiers Cleaneurs")}</b>
-      <span class="petit" data-places-formules></span>
-      ${offert ? `<span class="tampon vert">${tr("Votre formule Pro est offerte jusqu'au")} ${dateLongue(new Date(p.pro_offert_jusqu))}</span>` : ""}</div>
+    ${joursOffreLancement() > 0 || offert ? `<div class="offre-pro"><span class="badge-formule">${tr("Offre de lancement")}</span>
+      <b>${REGLES.OFFRE_LANCEMENT_MOIS} ${tr("mois de formule Pro offerts à tous les Cleaneurs inscrits jusqu'au")} ${finOffreLancement().toLocaleDateString(LOCALE, { day: "numeric", month: "long", year: "numeric" })}</b>
+      ${joursOffreLancement() > 0 ? `<span class="petit">${tr("Plus que")} ${joursOffreLancement()} ${tr("jours pour s'inscrire · sans limite de places · les 3 mois commencent à votre première mission")}</span>` : ""}
+      ${offert ? `<span class="tampon vert">${p.pro_offert_jusqu ? `${tr("Votre formule Pro est offerte jusqu'au")} ${dateLongue(new Date(p.pro_offert_jusqu))}`
+        : tr("Votre formule Pro est offerte : les 3 mois commenceront à votre première mission")}</span>` : ""}</div>` : ""}
     <div class="cartes-formules">${formulesCleaneur().map(([id, nom, prix, com, plus, moins]) => `
       <div class="formule-cleaneur${id === "pro" ? " pro" : ""}${actuelle === id ? " actuelle" : ""}">
         ${id === "pro" ? `<span class="badge-formule">${tr("Badge Pro")}</span>` : ""}
@@ -67,7 +72,7 @@ export function blocFormulesCleaneur(p = null) {
 export function brancherFormulesCleaneur(racine, p = null, recharger = () => {}) {
   const bloc = racine.querySelector("#formules-cleaneur");
   if (!bloc) return;
-  const offert = p?.pro_offert_jusqu && new Date(p.pro_offert_jusqu) > new Date();
+  const offert = proOffert(p);
   const ca = bloc.querySelector("[data-ca]"), sortie = bloc.querySelector("[data-calcul]");
   const calculer = () => {
     const c = Number(ca.value) * 100;
@@ -79,7 +84,6 @@ export function brancherFormulesCleaneur(racine, p = null, recharger = () => {})
       <span class="petit">${pr > g ? `${tr("Pro vous rapporte")} ${euros(pr - g)} ${tr("de plus par mois.")}` : tr("À ce niveau, la formule Gratuit vous convient mieux.")}</span>`;
   };
   ca.oninput = calculer; calculer();
-  placesRestantes().then(n => { const e = bloc.querySelector("[data-places-formules]"); if (e && n != null) e.textContent = `${n} ${tr("places restantes sur")} ${REGLES.OFFRE_LANCEMENT_PLACES}`; });
   bloc.querySelectorAll("[data-choisir-formule]").forEach(b => b.onclick = async () => {
     const f = b.dataset.choisirFormule;
     if (!confirm(tr(f === "pro" ? "Passer à la formule Pro ? Commission de 12 % et toutes les missions ; l'abonnement sera prélevé à l'ouverture des paiements en ligne." : "Passer à la formule Gratuit ? Commission de 20 % et missions des particuliers seulement."))) return;
