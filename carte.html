@@ -24,6 +24,7 @@
 </head>
 <body>
 <div id="c"></div>
+<div id="attente" class="chargeur centre" role="status" style="position:fixed;inset:0;display:flex;justify-content:center;z-index:500;background:#e8f0ef"><div class="anim-vitre petite" aria-hidden="true"><i class="vitre"></i><i class="propre"></i><i class="raclette"></i><i class="eclat"></i></div></div>
 <script type="module">
   import { afficherCarte, coordonnees } from "/assets/js/cartes.js";
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -35,10 +36,11 @@
     const pos = Number.isFinite(m.lat) ? { lat: m.lat, lon: m.lon } : m.a ? await coordonnees(m.a.rue || "", m.a.cp || "", m.a.ville || "") : null;
     if (pos) marqueurs.push({ ...m, ...pos, popup: m.popup ? esc(m.popup).replace(/\n/g, "<br>") : "" });
   }
-  afficherCarte(document.getElementById("c"), {
+  await afficherCarte(document.getElementById("c"), {
     marqueurs, cercle: p.c || null, deplacable: !!p.d, zoom: p.z || 16, plein: true,
     onDeplace: (lat, lon) => window.CleanerooCarte?.deplace(lat, lon),
-  });
+  }).catch(() => null);
+  document.getElementById("attente")?.remove();   // animation « vitre » pendant que les adresses sont placées
 </script>
 </body>
 </html>
