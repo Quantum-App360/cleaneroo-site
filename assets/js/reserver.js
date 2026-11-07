@@ -5,9 +5,10 @@ import { PARTIES, partie, partiePour, TARIFS_SPECIAUX, RUBRIQUES, rubrique, form
   FREQUENCES, JOURS_SEMAINE, DERNIERS_NETTOYAGES, packsPour, remisePack,
   TACHES_A_TRAITER, TYPES_CHANTIER, equipementsPour, DELAIS_URGENCE, TYPES_IMMEUBLE, surfaceEffective, SELECTION_CONSEILLEE_VEHICULE, LIEUX_VEHICULE, FREQUENCES_VEHICULE, RUBRIQUES_LOGEMENT, vuesPhotos, vuesCompletes, PIECES_LOCATION, ETAPES_LOCATION, PACK_ETAPES_CONSEILLE, CONSOMMABLES_LOCATION, PACK_CONSOMMABLES_CONSEILLE } from "./catalogue.js";
 import { calculer, entreeEstimation, SALISSURE, disponibilite, meilleurPack, tachesChiffrees, formuleDe, passagesPlanifies, datesPassages,
-  etapesDe, consommablesDe, menageTientEntreVoyageurs, frequenceDe, minutesEquipements, prixIndicatifEquipement, heuresEvenement } from "./estimation.js";
-import { REGLES, euros, duree, heure, dateCourte, dateLongue, estPrelancement, MESSAGE_LANCEMENT, DATE_PREMIERES_INTERVENTIONS } from "./regles.js";
+  etapesDe, consommablesDe, menageTientEntreVoyageurs, frequenceDe, minutesEquipements, prixIndicatifEquipement, heuresEvenement, litsDe } from "./estimation.js";
+import { REGLES, euros, duree, heure, dateCourte, dateLongue, estPrelancement, MESSAGE_LANCEMENT, DATE_PREMIERES_INTERVENTIONS, pctZone, libelleZone } from "./regles.js";
 import { envoyerDemande } from "./donnees.js";
+import { maPosition, adresseDe, chercherAdresse, afficherCarte } from "./cartes.js";
 import { traduire } from "./langue.js";
 import { icone } from "./icones.js";
 import { blocReassurance } from "./commun.js";
@@ -37,7 +38,8 @@ function memoriserCommande(b) {
   const meme = l => l.rue.trim().toLowerCase() === b.rue.trim().toLowerCase() && l.codePostal === b.codePostal;
   const ancien = liste.find(meme);
   const log = { ...(ancien || {}), id: ancien?.id || "l" + Date.now(), typeLogementId: b.typeLogementId, surface: b.surface, chambres: b.chambres, sdb: b.sdb, niveaux: b.niveaux,
-    ...Object.fromEntries(CHAMPS_LOGEMENT.map(k => [k, String(b[k] ?? "").trim()])) };
+    ...Object.fromEntries(CHAMPS_LOGEMENT.map(k => [k, String(b[k] ?? "").trim()])),
+    ...(Number.isFinite(b.lat) ? { lat: b.lat, lon: b.lon } : {}) };
   ecrire(CLE_LOGEMENTS, [log, ...liste.filter(l => !meme(l))].slice(0, REGLES.BIENS_MAX));
   const modele = Object.fromEntries(Object.entries(b).filter(([k]) => !PRIVES.includes(k)));
   // « Mémoriser ces étapes pour ce logement » décoché : les étapes ne sont pas reprises la prochaine fois.
@@ -49,7 +51,8 @@ function memoriserCommande(b) {
 function avecLogement(br, l) {
   if (!l) return br;
   const dims = ["home", "rental"].includes(br.rubriqueId) ? { typeLogementId: l.typeLogementId, surface: l.surface, chambres: l.chambres, sdb: l.sdb, niveaux: l.niveaux } : {};
-  return { ...br, ...dims, ...Object.fromEntries(CHAMPS_LOGEMENT.map(k => [k, l[k] || ""])), logementId: l.id, code: "" };
+  return { ...br, ...dims, ...Object.fromEntries(CHAMPS_LOGEMENT.map(k => [k, l[k] || ""])), logementId: l.id, code: "",
+    lat: Number.isFinite(l.lat) ? l.lat : null, lon: Number.isFinite(l.lon) ? l.lon : null };
 }
 
 /* ------------------------------------------------------------------ Pré-remplissage depuis le calculateur ou une page ville
@@ -104,6 +107,8 @@ let b = null;            // brouillon en cours
 let photos = [];         // fichiers choisis (non sauvegardés dans le brouillon)
 let vuesPrises = {};     // étape 3 : vue → fichier (une photo par vue)
 let photoBoite = null;   // photo de la boîte à clés (accueil « Boîte à clés »), non sauvegardée dans le brouillon
+let messageGeoloc = "";  // « Me géolocaliser » : recherche en cours ou erreur
+let adresseCherchee = ""; // dernière adresse saisie placée sur la carte
 let racine = null;
 let envoi = false;
 
@@ -384,6 +389,8 @@ function etapesLocation() {
     + `<div class="carte">${CONSOMMABLES_LOCATION.map(([id, nom]) => `<label class="case"><input type="checkbox" data-conso="${id}" ${conso.includes(id) ? "checked" : ""}><span>${nom}</span></label>`).join("")}
       <p class="petit">+10 min si la liste n'est pas vide.</p></div>`
     + `<div class="note alerte" style="margin-top:10px">Le Cleaneur n'apporte jamais de consommables : ils doivent être sur place.</div>`
+    + titre("Linge de lit") + `<div class="carte">${caseCocher("Lavage des draps", "lavageDraps", !!b.lavageDraps, `${euros(REGLES.LAVAGE_DRAPS_PAR_LIT_C)} par lit : draps et housses lavés, séchés et pliés.`)}
+      ${b.lavageDraps ? compteur("Nombre de lits", "lits", litsDe(b), { min: 1, max: REGLES.LITS_MAX }) : ""}</div>`
     + titre("Horaires des voyageurs") + `<div class="carte">`
     + compteur("Départ des voyageurs", "departVoyageursH", b.departVoyageursH ?? REGLES.DEPART_VOYAGEURS_DEFAUT_H, { min: REGLES.DEPART_VOYAGEURS_MIN_H, max: REGLES.DEPART_VOYAGEURS_MAX_H, unite: " h" })
     + compteur("Arrivée suivante", "arriveeSuivanteH", b.arriveeSuivanteH ?? REGLES.ARRIVEE_SUIVANTE_DEFAUT_H, { min: REGLES.ARRIVEE_SUIVANTE_MIN_H, max: REGLES.ARRIVEE_SUIVANTE_MAX_H, unite: " h" })
@@ -507,9 +514,16 @@ function etape4() {
   return `<h2>Adresse et créneau</h2>
     ${logements().length ? `${titre("Choisissez un logement déjà renseigné")}${logements().map(l => `<button type="button" class="option ${b.logementId === l.id ? "choisi" : ""}" data-logement="${l.id}">${esc(nomLogement(l))}<span class="detail">${esc(l.rue)}, ${esc(l.codePostal)} ${esc(l.ville)}</span></button>`).join("")}
       <button type="button" class="option ${b.logementId ? "" : "choisi"}" data-logement="">+ Ajouter une nouvelle adresse</button>` : ""}
-    <div class="carte ${b.logementId ? "masque" : ""}" style="margin-top:14px">${champTexte("Rue", "rue", b.rue, "text", 'autocomplete="street-address" maxlength="200"')}
+    <div class="carte ${b.logementId ? "masque" : ""}" style="margin-top:14px">
+      <button type="button" class="bouton secondaire plein bouton-geoloc" data-geoloc>${icone("position")}<span>Me géolocaliser</span></button>
+      <p class="petit centre" style="margin:6px 0 2px">Vous êtes dans le logement ? Touchez « Me géolocaliser » : l'adresse se remplit toute seule. Sinon, saisissez-la.</p>
+      ${messageGeoloc ? `<p class="${messageGeoloc.startsWith("Recherche") ? "petit" : "erreur"}" style="margin:6px 0 0">${messageGeoloc}</p>` : ""}
+      ${champTexte("Rue", "rue", b.rue, "text", 'autocomplete="street-address" maxlength="200"')}
       <div class="grille-2">${champTexte("Code postal", "codePostal", b.codePostal, "text", 'inputmode="numeric" maxlength="5" autocomplete="postal-code"')}${champTexte("Ville", "ville", b.ville, "text", 'autocomplete="address-level2" maxlength="100"')}</div>
       <p class="petit">Elle sert au calcul du déplacement et à l'arrivée du Cleaneur.</p></div>
+    ${Number.isFinite(b.lat) ? `<div class="carte-adresse" id="carte-adresse" role="img" aria-label="Carte de l'adresse"></div>
+      <p class="petit" style="margin:6px 0 0">${b.logementId ? "Position enregistrée du logement." : "Déplacez le repère sur l'entrée du logement si besoin."}</p>` : ""}
+    ${/^[0-9]{5}$/.test(b.codePostal) && pctZone(b.codePostal) ? `<div class="note" style="margin-top:10px"><span><b>${libelleZone(pctZone(b.codePostal))}</b> · <span>prix adaptés à votre ville</span></span></div>` : ""}
     ${estPrelancement() ? "" : titre("Touchez un créneau dans le planning")}
     ${estPrelancement() ? `<div class="note" style="margin-top:14px">Les réservations ouvrent le <b>31 décembre 2026</b>. Envoyez votre pré-réservation dès maintenant : nous vous recontacterons en priorité pour fixer le créneau.</div>` : `
     <div class="carte">${caseCocher("Je suis flexible", "flexible", b.flexible, "Vous recevez des candidatures sur 7 jours")}</div>
@@ -580,6 +594,24 @@ function rendre() {
   // Aperçus des photos
   racine.querySelectorAll("#vignettes img").forEach(img => { img.src = URL.createObjectURL(photos[+img.dataset.i]); });
   racine.querySelectorAll("[data-apercu-boite]").forEach(img => { if (photoBoite) img.src = URL.createObjectURL(photoBoite); });
+  // Étape 4 : carte de l'adresse (repère déplaçable pour une nouvelle adresse) ; adresse saisie placée sur la carte.
+  const boiteCarte = racine.querySelector("#carte-adresse");
+  if (boiteCarte && Number.isFinite(b.lat)) afficherCarte(boiteCarte, {
+    marqueurs: [{ lat: b.lat, lon: b.lon, couleur: "#1F8A80" }], deplacable: !b.logementId,
+    onDeplace: async (lat, lon) => {
+      const a = await adresseDe(lat, lon);
+      maj({ lat, lon, ...(a ? { rue: a.rue || b.rue, codePostal: a.codePostal, ville: a.ville } : {}) });
+    },
+  }).catch(() => {});
+  if (b.etape === 4 && !b.logementId && !Number.isFinite(b.lat) && b.rue.trim().length >= 3 && /^[0-9]{5}$/.test(b.codePostal) && b.ville.trim()) {
+    const cle = `${b.rue}|${b.codePostal}|${b.ville}`;
+    if (cle !== adresseCherchee) {
+      adresseCherchee = cle;
+      chercherAdresse(`${b.rue} ${b.codePostal} ${b.ville}`, b.codePostal).then(a => {
+        if (a && b && `${b.rue}|${b.codePostal}|${b.ville}` === cle) maj({ lat: a.lat, lon: a.lon });
+      });
+    }
+  }
 }
 
 document.addEventListener("click", async e => {
@@ -588,6 +620,7 @@ document.addEventListener("click", async e => {
   if (!t) return;
   const ds = t.dataset;
   if (ds.retirerPhotoBoite !== undefined) { photoBoite = null; return rendre(); }
+  if (ds.geoloc !== undefined) return geolocaliser();
   if (ds.espace) { b = b ? { ...b, espace: ds.espace } : { espace: ds.espace, etape: 1 }; sauver(); return rendre(); }
   if (ds.rubrique) { b = b?.rubriqueId === ds.rubrique ? { ...b, etape: 2 } : nouveauBrouillon(ds.rubrique, b?.espace || "personnel"); sauver(); noterEtape(); rendre(); return window.scrollTo(0, 0); }
   if (ds.retour !== undefined) return retour();
@@ -621,7 +654,7 @@ document.addEventListener("click", async e => {
   }
   if (ds.logement !== undefined) {
     const l = logements().find(x => x.id === ds.logement);
-    return maj(l ? avecLogement(b, l) : { logementId: "", rue: "", codePostal: "", ville: "", accueil: "", tiersNom: "", tiersTel: "", boiteEmplacement: "", code: "" });
+    return maj(l ? avecLogement(b, l) : { logementId: "", rue: "", codePostal: "", ville: "", accueil: "", tiersNom: "", tiersTel: "", boiteEmplacement: "", code: "", lat: null, lon: null });
   }
   if (ds.retirer !== undefined) return maj({ tachesPerso: b.tachesPerso.filter((_, i) => i !== +ds.retirer) });
   if (ds.retirerPanier !== undefined) return maj({ panier: (b.panier || []).filter((_, i) => i !== +ds.retirerPanier) });
@@ -660,6 +693,7 @@ document.addEventListener("change", e => {
   if (!racine || !racine.contains(e.target)) return;
   const ds = e.target.dataset;
   if (ds.texte) { b = { ...b, [ds.texte]: e.target.value }; sauver(); return rendre(); }  // (logementId gardé : seule la saisie d'une nouvelle adresse le vide)
+  if (ds.case === "lavageDraps") return maj({ lavageDraps: e.target.checked, lits: litsDe(b) });
   if (ds.case) return maj({ [ds.case]: e.target.checked });
   if (ds.tache) return maj({ taches: e.target.checked ? [...b.taches, ds.tache] : b.taches.filter(x => x !== ds.tache) });
   if (ds.etape) { const l = etapesDe(b); return maj({ etapesChoisies: e.target.checked ? [...l, ds.etape] : l.filter(x => x !== ds.etape) }); }
@@ -676,10 +710,27 @@ document.addEventListener("change", e => {
   }
   if (e.target.id === "photos" || e.target.id === "photos-appareil") { photos = [...photos, ...e.target.files].filter(f => f.type.startsWith("image/")).slice(0, 12); rendre(); }
 });
+/** « Me géolocaliser » : position de l'appareil → adresse la plus proche (Base Adresse Nationale), placée sur la carte. */
+async function geolocaliser() {
+  messageGeoloc = "Recherche de votre position…"; rendre();
+  try {
+    const p = await maPosition();
+    const a = await adresseDe(p.lat, p.lon);
+    messageGeoloc = a ? "" : "Adresse introuvable à cet endroit : saisissez-la, le repère reste sur la carte.";
+    maj({ logementId: "", lat: p.lat, lon: p.lon, ...(a ? { rue: a.rue || b.rue, codePostal: a.codePostal, ville: a.ville } : {}) });
+  } catch (e) {
+    messageGeoloc = e.message === "refus" ? "Localisation refusée : autorisez-la dans votre navigateur, ou saisissez l'adresse." : "Position introuvable pour le moment : saisissez l'adresse.";
+    rendre();
+  }
+}
+
 // Les champs texte enregistrent aussi pendant la frappe (sans redessiner, pour garder le curseur).
 document.addEventListener("input", e => {
   if (!racine || !racine.contains(e.target) || !e.target.dataset.texte) return;
-  b = { ...b, [e.target.dataset.texte]: e.target.value }; sauver();
+  b = { ...b, [e.target.dataset.texte]: e.target.value };
+  // Adresse modifiée à la main : elle sera replacée sur la carte.
+  if (["rue", "codePostal", "ville"].includes(e.target.dataset.texte) && !b.logementId) b = { ...b, lat: null, lon: null };
+  sauver();
   const bouton = racine.querySelector("#suivant, #envoyer");
   if (bouton && b.etape >= 2) { clearTimeout(window.__rendreTimer); window.__rendreTimer = setTimeout(() => {
     const actif = document.activeElement?.dataset?.texte, pos = document.activeElement?.selectionStart;

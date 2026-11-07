@@ -8,7 +8,7 @@
 #   - les traductions des textes locaux des villes dans assets/js/langue.js (bloc <villes-textes>).
 import io, json, os, re, html
 
-VERSION = "2026110802"          # ← une seule constante à changer à chaque mise en ligne (AAAAMMJJ + numéro du jour)
+VERSION = "2026110806"          # ← une seule constante à changer à chaque mise en ligne (AAAAMMJJ + numéro du jour)
 DATE_PLAN = "2026-11-06"        # date des pages dans sitemap.xml
 SITE = "https://cleaneroo.fr"
 
@@ -65,6 +65,7 @@ def poser_chargement(p, entree, ancien=None):
 poser_chargement("index.html", "app.js", ['  <link rel="stylesheet" href="assets/style.css">\n', '  <script type="module" src="assets/js/app.js"></script>\n'])
 poser_chargement("gestion.html", "gestion.js", ['  <link rel="stylesheet" href="assets/style.css">\n', '  <script type="module" src="assets/js/gestion.js"></script>\n'])
 poser_chargement("tests.html", None)
+poser_chargement("carte.html", None)   # carte affichée par l'application (vue web)
 
 # ------------------------------------------------------------------ Gabarit commun des pages statiques
 MENU = '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M4 7h16M4 12h16M4 17h16"/></svg>'

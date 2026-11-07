@@ -3,8 +3,8 @@
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Tests des prix</title>
 <meta name="robots" content="noindex">
 <style>body{font:15px system-ui;margin:24px}li.ok{color:#2E9E72}li.ko{color:#D0485A;font-weight:700}</style>  <!-- chargement : généré par outils/generer_pages.py, ne pas modifier à la main -->
-  <script type="importmap">{"imports":{"/assets/js/agenda.js":"/assets/js/agenda.js?v=2026110802","/assets/js/app.js":"/assets/js/app.js?v=2026110802","/assets/js/catalogue.js":"/assets/js/catalogue.js?v=2026110802","/assets/js/commun.js":"/assets/js/commun.js?v=2026110802","/assets/js/compte.js":"/assets/js/compte.js?v=2026110802","/assets/js/compteur.js":"/assets/js/compteur.js?v=2026110802","/assets/js/donnees.js":"/assets/js/donnees.js?v=2026110802","/assets/js/espaces.js":"/assets/js/espaces.js?v=2026110802","/assets/js/estimation.js":"/assets/js/estimation.js?v=2026110802","/assets/js/gestion.js":"/assets/js/gestion.js?v=2026110802","/assets/js/icones.js":"/assets/js/icones.js?v=2026110802","/assets/js/langue.js":"/assets/js/langue.js?v=2026110802","/assets/js/missions.js":"/assets/js/missions.js?v=2026110802","/assets/js/page.js":"/assets/js/page.js?v=2026110802","/assets/js/regles.js":"/assets/js/regles.js?v=2026110802","/assets/js/reserver.js":"/assets/js/reserver.js?v=2026110802","/assets/js/suivi-live.js":"/assets/js/suivi-live.js?v=2026110802","/assets/js/villes.js":"/assets/js/villes.js?v=2026110802"}}</script>
-  <link rel="stylesheet" href="/assets/style.css?v=2026110802">
+  <script type="importmap">{"imports":{"/assets/js/agenda.js":"/assets/js/agenda.js?v=2026110806","/assets/js/app.js":"/assets/js/app.js?v=2026110806","/assets/js/cartes.js":"/assets/js/cartes.js?v=2026110806","/assets/js/catalogue.js":"/assets/js/catalogue.js?v=2026110806","/assets/js/commun.js":"/assets/js/commun.js?v=2026110806","/assets/js/compte.js":"/assets/js/compte.js?v=2026110806","/assets/js/compteur.js":"/assets/js/compteur.js?v=2026110806","/assets/js/donnees.js":"/assets/js/donnees.js?v=2026110806","/assets/js/espaces.js":"/assets/js/espaces.js?v=2026110806","/assets/js/estimation.js":"/assets/js/estimation.js?v=2026110806","/assets/js/gestion.js":"/assets/js/gestion.js?v=2026110806","/assets/js/icones.js":"/assets/js/icones.js?v=2026110806","/assets/js/langue.js":"/assets/js/langue.js?v=2026110806","/assets/js/missions.js":"/assets/js/missions.js?v=2026110806","/assets/js/page.js":"/assets/js/page.js?v=2026110806","/assets/js/regles.js":"/assets/js/regles.js?v=2026110806","/assets/js/reserver.js":"/assets/js/reserver.js?v=2026110806","/assets/js/suivi-live.js":"/assets/js/suivi-live.js?v=2026110806","/assets/js/villes.js":"/assets/js/villes.js?v=2026110806"}}</script>
+  <link rel="stylesheet" href="/assets/style.css?v=2026110806">
   <!-- /chargement -->
 </head>
 <body>
@@ -274,6 +274,27 @@ import("./assets/js/catalogue.js").then(() => {});
   egal("export iCal : dates journée entière", ics.includes("DTSTART;VALUE=DATE:20270105\r\nDTEND;VALUE=DATE:20270108"), true);
   egal("export iCal : caractères échappés", ics.includes("SUMMARY:Studio\\, Nice\\; vue mer"), true);
   egal("couleur d'un bien : stable", couleurBien(9), couleurBien(1));
+}
+
+// Prix selon la ville (3 zones) et option « Lavage des draps » (mêmes contrôles que l'appli, ReglesTest)
+{
+  const { zonePrix, pctZone } = await import("./assets/js/regles.js");
+  egal("zone : Monaco Prestige", zonePrix("98000"), "PRESTIGE");
+  egal("zone : Istres Économique", zonePrix("13800"), "ECONOMIQUE");
+  egal("zone : Fréjus Standard", zonePrix("83600"), "STANDARD");
+  egal("zone : code postal inconnu = Standard", pctZone(""), 0);
+  const base = { rubriqueId: "home", surfaceM2: 62, m2ParHeure: 25, minimumMin: 120 };
+  egal("zone Prestige : ménage 62 m² 80,70 €", calculer({ ...base, zonePct: 20 }).totalC, 8070);
+  egal("zone Économique : ménage 62 m² 60,53 €", calculer({ ...base, zonePct: -10 }).totalC, 6053);
+  egal("zone Prestige : tâche arrondie à l'euro (8 € → 10 €)", calculer({ ...base, taches: [t("draps")], zonePct: 20 }).totalC, 8070 + 1000);
+  egal("zone : ligne d'information", calculer({ ...base, zonePct: 20 }).lignes.some(l => l.libelle === "Tarif zone Prestige (+20 %)" && l.montantC === 0), true);
+  egal("zone : reliée au code postal de l'adresse", entreeEstimation({ ...BR, rubriqueId: "home", formuleId: "ponctuel", codePostal: "06400" }, true, null).zonePct, 20);
+  const loc = { rubriqueId: "rental", formuleId: "court" };
+  const sans = parcours(loc), avec = parcours({ ...loc, lavageDraps: true, lits: 2 });
+  egal("draps : 12 € par lit", avec.totalC - sans.totalC, 2 * REGLES.LAVAGE_DRAPS_PAR_LIT_C);
+  egal("draps : 10 min par lit au planning", avec.dureeMin - sans.dureeMin, 2 * REGLES.LAVAGE_DRAPS_MIN_PAR_LIT);
+  egal("draps : même prix en zone Prestige", parcours({ ...loc, lavageDraps: true, lits: 2, codePostal: "98000" }).totalC - parcours({ ...loc, codePostal: "98000" }).totalC, 2400);
+  egal("draps : un lit par chambre par défaut", entreeEstimation({ ...BR, ...loc, lavageDraps: true, chambres: 3 }, true, null).lavageDrapsLits, 3);
 }
 
 const ok = res.filter(r => r[1]).length;

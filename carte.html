@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Carte Cleaneroo</title>
+<!-- Carte affichée par l'application Android (vue web) : même module et même dessin que le site (assets/js/cartes.js).
+     Paramètres dans le fragment de l'adresse (#…) : JSON { m: marqueurs, c: cercle, d: déplaçable, z: zoom }.
+     Marqueur déplacé : window.CleanerooCarte.deplace(lat, lon) (interface fournie par l'appli). -->
+<style>
+  html, body, #c { margin: 0 !important; padding: 0 !important; height: 100%; background: #e8f0ef; font-family: system-ui, sans-serif; }
+  .epingle span { display: block; position: relative; width: 30px; height: 30px; margin: 2px 0 0 1px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg);
+    background: var(--c); border: 3px solid #fff; box-shadow: 0 4px 12px rgba(8, 38, 42, .35); box-sizing: border-box; }
+  .epingle span::after { content: ""; position: absolute; inset: 7px; border-radius: 50%; background: #fff; }
+  .epingle b { position: absolute; inset: 0; z-index: 1; display: flex; align-items: center; justify-content: center; transform: rotate(45deg); font: 800 11px system-ui, sans-serif; color: var(--c); }
+  .leaflet-tile-pane { filter: saturate(.8) contrast(.96); }
+  .leaflet-popup-content { font: 14px/1.4 system-ui, sans-serif; }
+</style>
+  <!-- chargement : généré par outils/generer_pages.py, ne pas modifier à la main -->
+  <script type="importmap">{"imports":{"/assets/js/agenda.js":"/assets/js/agenda.js?v=2026110806","/assets/js/app.js":"/assets/js/app.js?v=2026110806","/assets/js/cartes.js":"/assets/js/cartes.js?v=2026110806","/assets/js/catalogue.js":"/assets/js/catalogue.js?v=2026110806","/assets/js/commun.js":"/assets/js/commun.js?v=2026110806","/assets/js/compte.js":"/assets/js/compte.js?v=2026110806","/assets/js/compteur.js":"/assets/js/compteur.js?v=2026110806","/assets/js/donnees.js":"/assets/js/donnees.js?v=2026110806","/assets/js/espaces.js":"/assets/js/espaces.js?v=2026110806","/assets/js/estimation.js":"/assets/js/estimation.js?v=2026110806","/assets/js/gestion.js":"/assets/js/gestion.js?v=2026110806","/assets/js/icones.js":"/assets/js/icones.js?v=2026110806","/assets/js/langue.js":"/assets/js/langue.js?v=2026110806","/assets/js/missions.js":"/assets/js/missions.js?v=2026110806","/assets/js/page.js":"/assets/js/page.js?v=2026110806","/assets/js/regles.js":"/assets/js/regles.js?v=2026110806","/assets/js/reserver.js":"/assets/js/reserver.js?v=2026110806","/assets/js/suivi-live.js":"/assets/js/suivi-live.js?v=2026110806","/assets/js/villes.js":"/assets/js/villes.js?v=2026110806"}}</script>
+  <link rel="stylesheet" href="/assets/style.css?v=2026110806">
+  <!-- /chargement -->
+</head>
+<body>
+<div id="c"></div>
+<script type="module">
+  import { afficherCarte } from "/assets/js/cartes.js";
+  let p = {};
+  try { p = JSON.parse(decodeURIComponent(location.hash.slice(1)) || "{}"); } catch { /* paramètres illisibles : carte vide */ }
+  afficherCarte(document.getElementById("c"), {
+    marqueurs: p.m || [], cercle: p.c || null, deplacable: !!p.d, zoom: p.z || 16, plein: true,
+    onDeplace: (lat, lon) => window.CleanerooCarte?.deplace(lat, lon),
+  });
+</script>
+</body>
+</html>

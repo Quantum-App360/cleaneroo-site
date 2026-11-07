@@ -1,5 +1,5 @@
 // Calcul de l'estimation : copie EXACTE de Estimation.kt (§ 8 du cahier des charges), dans le même ordre.
-import { REGLES, duree, DATE_PREMIERES_INTERVENTIONS } from "./regles.js";
+import { REGLES, duree, DATE_PREMIERES_INTERVENTIONS, pctZone, libelleZone } from "./regles.js";
 import { prixSpecialC, minutesSpeciales, equipementsPour, surfaceEffective, TYPES_IMMEUBLE, tranchesConvives, minutesEtapesLocation, PACK_ETAPES_CONSEILLE, PACK_CONSOMMABLES_CONSEILLE } from "./catalogue.js";
 import { rubrique, formulesPour, TYPES_LIEU, RUBRIQUES_CREDIT_IMPOT, TYPES_VITRES_ELIGIBLES, prixLigne, minutesLigne, libelleLigne,
   arrondiEuro, tachesPour, tacheChiffree, packsPour, remisePack } from "./catalogue.js";
@@ -20,6 +20,7 @@ const ENTREE_DEFAUT = {
   niveauxSupplementaires: 0, minutesEtapesLocation: 0, consommablesAControler: false, salissure: "NORMAL",
   taches: [], remisePackPct: 0, remisePackC: null, tachesPersonnalisees: 0, dimanche: false, creneauMalin: false,
   engagementMois: 0, espacePersonnel: true, typeLieuId: "", panier: [], minutesEnPlus: 0, minimumApresMin: 0,
+  lavageDrapsLits: 0, zonePct: 0,
 };
 
 export function calculer(entree) {
@@ -31,6 +32,10 @@ export function calculer(entree) {
   const panier = e.panier || [];
   const lignes = [];
   const sal = SALISSURE[e.salissure || "NORMAL"];
+  // Prix selon la ville : main-d'œuvre, forfaits et tâches ajustés à la zone (les minimums ne changent pas).
+  const zp = e.zonePct || 0;
+  const zone = c => (zp ? Math.round(c * (100 + zp) / 100) : c);
+  const zoneEuro = c => (zp ? arrondiEuro(c * (100 + zp) / 100) : c);
 
   // 1. Temps de base (textiles : somme des éléments du panier, pour le planning seulement)
   let dureeBase = 0;
@@ -53,8 +58,8 @@ export function calculer(entree) {
 
   // 2. Prix de base (textiles : une ligne par élément du panier, au prix forfaitaire)
   // Prestations spécialisées : prix fixé à l'avance (forfait + m²), calculé dans entreeEstimation.
-  const prixBase = vehicule ? 0 : forfait ? panier.reduce((s, l) => s + prixLigne(l), 0) : e.prixImposeC > 0 ? e.prixImposeC : Math.round(taux * dureeBase / 60);
-  if (forfait) panier.forEach(l => lignes.push({ libelle: libelleLigne(l), montantC: prixLigne(l) }));
+  const prixBase = vehicule ? 0 : forfait ? panier.reduce((s, l) => s + zone(prixLigne(l)), 0) : e.prixImposeC > 0 ? zone(e.prixImposeC) : zone(Math.round(taux * dureeBase / 60));
+  if (forfait) panier.forEach(l => lignes.push({ libelle: libelleLigne(l), montantC: zone(prixLigne(l)) }));
   else if (!vehicule) lignes.push({ libelle: `${r.nom} · ${duree(dureeBase)}`, montantC: prixBase });
 
   // 3. Salissure en prix
@@ -69,15 +74,22 @@ export function calculer(entree) {
   // 4. Tâches / options
   const taches = e.taches || [];
   // Prix d'une tâche arrondi à l'euro (le prorata de surface est déjà appliqué par entreeEstimation).
-  const prixTache = t => (e.coefPrix === 1 ? t.prixC : arrondiEuro(t.prixC * e.coefPrix));
+  const prixTache = t => zoneEuro(e.coefPrix === 1 ? t.prixC : arrondiEuro(t.prixC * e.coefPrix));
   const tachesC = taches.reduce((s, t) => s + prixTache(t), 0);
   const tachesMin = taches.reduce((s, t) => s + t.minutes, 0);
   taches.forEach(t => lignes.push({ libelle: t.nom, montantC: prixTache(t) }));
   sousTotal += tachesC;
+  // Option « Lavage des draps » (location saisonnière) : prix fixe par lit, le même dans toutes les zones.
+  const lits = e.lavageDrapsLits || 0;
+  if (lits > 0) {
+    const c = lits * REGLES.LAVAGE_DRAPS_PAR_LIT_C;
+    lignes.push({ libelle: `Lavage des draps × ${lits}`, montantC: c });
+    sousTotal += c;
+  }
 
   // 5. Remise de pack (sur le prix des tâches du pack, arrondie à l'euro)
   if (e.remisePackPct > 0) {
-    const rem = e.remisePackC ?? arrondiEuro(tachesC * e.remisePackPct / 100);
+    const rem = e.remisePackC != null ? zoneEuro(e.remisePackC) : arrondiEuro(tachesC * e.remisePackPct / 100);
     lignes.push({ libelle: `Remise pack (−${e.remisePackPct} %)`, montantC: -rem });
     sousTotal -= rem;
   }
@@ -85,13 +97,15 @@ export function calculer(entree) {
   // 6. Tâches particulières (15 min chacune au taux horaire)
   const persoMin = (e.tachesPersonnalisees || 0) * REGLES.TACHE_PERSO_MIN;
   if (e.tachesPersonnalisees > 0) {
-    const c = Math.round(taux * persoMin / 60);
+    const c = zone(Math.round(taux * persoMin / 60));
     lignes.push({ libelle: `Tâches particulières (${e.tachesPersonnalisees})`, montantC: c, note: "à confirmer" });
     sousTotal += c;
   }
 
   // 7. Déplacement (inclus jusqu'à 15 km)
   lignes.push({ libelle: "Déplacement", montantC: 0, note: "inclus" });
+  // Ligne d'information : l'ajustement de la zone est déjà compris dans les prix ci-dessus.
+  if (zp) lignes.push({ libelle: libelleZone(zp), montantC: 0, note: "inclus" });
 
   // 8. Majoration dimanche
   let total = sousTotal;
@@ -121,7 +135,8 @@ export function calculer(entree) {
   }
 
   // Véhicules : durée affichée d'au moins 30 min.
-  const dureeTotale = vehicule ? Math.max(REGLES.DUREE_MIN_VEHICULE_MIN, dureeBase + tachesMin + persoMin) : dureeBase + tachesMin + persoMin;
+  const drapsMin = lits * REGLES.LAVAGE_DRAPS_MIN_PAR_LIT;
+  const dureeTotale = vehicule ? Math.max(REGLES.DUREE_MIN_VEHICULE_MIN, dureeBase + tachesMin + persoMin) : dureeBase + tachesMin + persoMin + drapsMin;
   const deux = dureeTotale > REGLES.SEUIL_DEUX_CLEANEURS_MIN;
   const devis = r.toujoursSurDevis || e.surfaceM2 > REGLES.SEUIL_DEVIS_SURFACE_M2;
   const credit = eligibleCreditImpot(e.rubriqueId, e.espacePersonnel, e.typeLieuId)
@@ -231,6 +246,8 @@ export function disponibilite(maintenant, creneau) {
 /** Location saisonnière : étapes et consommables du brouillon (pack conseillé si rien n'est encore choisi). */
 export const etapesDe = b => b.etapesChoisies ?? PACK_ETAPES_CONSEILLE;
 export const consommablesDe = b => b.consommablesChoisis ?? PACK_CONSOMMABLES_CONSEILLE;
+/** Option « Lavage des draps » : nombre de lits (par défaut un par chambre, un studio compte 1). */
+export const litsDe = b => Math.min(REGLES.LITS_MAX, Math.max(1, b.lits ?? Math.max(1, b.chambres ?? 1)));
 /** Le ménage tient-il entre le départ des voyageurs et l'arrivée suivante ? */
 export const menageTientEntreVoyageurs = (b, dureeMin) => (b.departVoyageursH ?? 10) * 60 + dureeMin <= (b.arriveeSuivanteH ?? 16) * 60;
 
@@ -277,5 +294,7 @@ export function entreeEstimation(b, espacePersonnel, debut) {
     panier: b.rubriqueId === "textiles" ? b.panier || [] : [],
     minutesEnPlus: b.rubriqueId === "construction" ? (b.fenetres || 0) * REGLES.CHANTIER_MIN_PAR_FENETRE : 0,
     minimumApresMin: b.rubriqueId === "construction" ? REGLES.CHANTIER_MINIMUM_MIN : 0,
+    lavageDrapsLits: b.rubriqueId === "rental" && b.lavageDraps ? litsDe(b) : 0,
+    zonePct: pctZone(b.codePostal),
   };
 }

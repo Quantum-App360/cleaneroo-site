@@ -37,7 +37,8 @@ const apresCredit = est => (est.creditImpotC ? `<p class="apres-credit">soit ${e
 
 function blocExemples() {
   return `<div class="grille-3 exemples">${EXEMPLES.map(([id, champs, libelle], i) => {
-    const est = estimer(brouillonExemple(id, champs));
+    // Pages ville : prix de la zone de la ville (code postal de la page).
+    const est = estimer(brouillonExemple(id, lieu ? { ...champs, codePostal: lieu.codePostal } : champs));
     return `<div class="carte exemple">${icone(rubrique(id).icone, { tuile: true })}<h3>${libelle}</h3>
       <p class="prix">${euros(est.totalC)}</p><p class="muet duree">${duree(est.dureeMin)}</p>${apresCredit(est)}
       <button type="button" class="lien-bouton" data-exemple="${i}">Réserver ›</button></div>`;

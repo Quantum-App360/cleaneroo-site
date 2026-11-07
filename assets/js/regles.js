@@ -53,6 +53,17 @@ export const REGLES = {
   AGENDA_CACHE_MIN: 15,          // calendrier relu au plus toutes les 15 min
   SEUIL_ESPACE_PRO_BIENS: 3,     // à partir de 3 biens, le compte s'ouvre sur l'espace Pro
   BIENS_MAX: 200,
+  // Option « Lavage des draps » (location saisonnière) : prix fixe par lit, le même dans toutes les zones.
+  LAVAGE_DRAPS_PAR_LIT_C: 1200,
+  LAVAGE_DRAPS_MIN_PAR_LIT: 10,   // planning : retirer, lancer, étendre et plier, par lit
+  LITS_MAX: 20,
+  // Prix selon la ville (pouvoir d'achat) : 3 zones, d'après le code postal de l'adresse du bien (géolocalisée).
+  // Prestige +20 % (Monaco, Cannes, Saint-Tropez…), Standard (prix de base), Économique −10 % (Istres, Draguignan…).
+  // S'applique à la main-d'œuvre, aux forfaits et aux tâches ; les minimums de commande et l'option draps ne changent pas.
+  ZONE_PRESTIGE_PCT: 20,
+  ZONE_ECONOMIQUE_PCT: -10,
+  ZONE_PRESTIGE_CP: ["98000", "06400", "06150", "06250", "06160", "06230", "06310", "06320", "06360", "06190", "06570", "06590", "83990", "83350", "83580", "83310", "13260", "84220", "20137", "20169", "20260", "75001", "75006", "75007", "75008", "75016", "92200", "74120", "73120", "73150", "64200", "14800", "33970", "62520"],
+  ZONE_ECONOMIQUE_CP: ["13800", "13500", "13140", "13110", "13270", "13700", "13127", "13200", "13150", "83300", "83170", "83340", "83490", "83550", "83500", "06130", "06510", "04100", "04000", "84300", "84200", "84100", "84000"],
   // Agenda sans calendrier iCal : séjours saisis à la main dans l'espace Pro.
   SEJOURS_MAX_PAR_BIEN: 300,     // séjours saisis gardés par bien
   SEJOURS_GARDES_JOURS: 90,      // séjours finis depuis plus de 90 jours oubliés
@@ -133,3 +144,15 @@ export function dateHeure(d) {
   const a = { fr: "à", en: "at", it: "alle", es: "a las" }[langue];
   return `${dateLongue(d)} ${a} ${heure(d.getHours(), d.getMinutes())}`;
 }
+
+/** Zone de prix d'une adresse d'après son code postal : "PRESTIGE", "ECONOMIQUE" ou "STANDARD" (zonePrix de Regles.kt). */
+export function zonePrix(codePostal) {
+  const cp = String(codePostal || "").trim();
+  if (REGLES.ZONE_PRESTIGE_CP.includes(cp)) return "PRESTIGE";
+  if (REGLES.ZONE_ECONOMIQUE_CP.includes(cp)) return "ECONOMIQUE";
+  return "STANDARD";
+}
+/** Ajustement de prix de la zone, en % (+20, 0 ou −10). */
+export const pctZone = codePostal => ({ PRESTIGE: REGLES.ZONE_PRESTIGE_PCT, ECONOMIQUE: REGLES.ZONE_ECONOMIQUE_PCT })[zonePrix(codePostal)] ?? 0;
+/** Libellé de la ligne d'estimation (« Tarif zone Prestige (+20 %) »), vide en zone Standard. */
+export const libelleZone = pct => (pct > 0 ? `Tarif zone Prestige (+${pct} %)` : pct < 0 ? `Tarif zone Économique (−${-pct} %)` : "");

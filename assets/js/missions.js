@@ -6,6 +6,7 @@ import { REGLES, euros, dateLongue, heure, duree } from "./regles.js";
 import { icone } from "./icones.js";
 import { traduire, tr } from "./langue.js";
 import { missionsDisponibles, mesMissions, prendreMission, avancerMission, envoyerPosition, lienPhotoDemande } from "./donnees.js";
+import { afficherCarte, coordonnees } from "./cartes.js";
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const ETAPE = {
@@ -90,6 +91,24 @@ function carteDisponible(m) {
 
 const vide = (t, plus = "") => `<div class="vide-compte"><p class="muet">${t}</p>${plus ? `<p class="petit">${plus}</p>` : ""}</div>`;
 
+/** Carte : mes missions à l'adresse exacte (vert), missions disponibles autour de leur commune (corail, adresse donnée à la prise). */
+async function carteDesMissions(boite, miennes, dispo) {
+  if (!boite) return;
+  const marqueurs = [];
+  for (const m of miennes) {
+    const pos = await coordonnees(m.rue, m.code_postal, m.ville);
+    if (pos) marqueurs.push({ ...pos, couleur: "#1F8A80", titre: rubrique(m.rubrique_id).nom, popup: `<b>${esc(rubrique(m.rubrique_id).nom)}</b><br>${esc(quand(m))}<br>${esc(m.rue)}, ${esc(m.ville)}` });
+  }
+  for (const m of dispo) {
+    const pos = await coordonnees("", m.code_postal, m.ville);
+    if (pos) marqueurs.push({ ...pos, couleur: "#FA8C66", approx: 1500, titre: rubrique(m.rubrique_id).nom,
+      popup: `<b>${esc(rubrique(m.rubrique_id).nom)}</b><br>${esc(quand(m))}<br>${esc(m.code_postal)} ${esc(m.ville)} · ${m.sur_devis ? tr("Sur devis") : euros(m.estimation_c)}` });
+  }
+  if (!boite.isConnected) return;
+  if (!marqueurs.length) { boite.nextElementSibling?.remove(); boite.remove(); return; }
+  afficherCarte(boite, { marqueurs, zoom: 13 }).catch(() => boite.remove());
+}
+
 /** Remplit l'onglet Cleaneur : géolocalisation, aujourd'hui, prochaines missions, missions disponibles. */
 export async function brancherMissions(vue, p) {
   const boite = vue.querySelector("#missions-cleaneur");
@@ -108,6 +127,8 @@ export async function brancherMissions(vue, p) {
       ${duJour.length ? `<h2 style="margin:6px 0 10px">${duJour.length} mission${duJour.length > 1 ? "s" : ""}</h2>` : `<h2 style="margin:6px 0 2px">Aucune mission aujourd'hui</h2>
         <p class="muet" style="margin:0">Les missions commencent le 1er janvier 2027. Elles s'afficheront ici, dans l'ordre de la journée.</p>`}</div>
     ${duJour.map(carteMission).join("")}
+    ${miennes.length || dispo.length ? `<div class="carte-missions" id="carte-missions" role="img" aria-label="Carte des missions"></div>
+      <p class="petit legende-carte"><span><i style="--c:#1F8A80"></i>Mes missions</span><span><i style="--c:#FA8C66"></i>Missions disponibles (zone approximative)</span></p>` : ""}
     <h2 class="titre-section">${icone("calendrier", { tuile: true })}Mes prochaines missions</h2>
     ${plusTard.length ? plusTard.map(carteMission).join("") : vide("Aucune mission pour l'instant.", "Prenez une mission ci-dessous : elle est à vous dès que vous la prenez.")}
     <h2 class="titre-section">${icone("position", { tuile: true })}Missions disponibles</h2>
@@ -118,6 +139,7 @@ export async function brancherMissions(vue, p) {
   boite.querySelectorAll("[data-photo-boite]").forEach(async img => {
     try { img.src = await lienPhotoDemande(img.dataset.photoBoite); } catch { img.remove(); }
   });
+  carteDesMissions(boite.querySelector("#carte-missions"), miennes, dispo);
   const recharger = () => brancherMissions(vue, p);
   boite.querySelector("#autoriser-geoloc")?.addEventListener("click", async () => { await demanderGeoloc(); recharger(); });
   // Trajet en cours (page rouverte) : la position repart toute seule.

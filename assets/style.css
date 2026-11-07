@@ -197,8 +197,8 @@ label.case { display: flex; align-items: center; gap: 12px; padding: 10px 0; bor
 label.case:last-child { border-bottom: 0; }
 label.case input { width: 22px; height: 22px; accent-color: var(--turquoise); flex: none; }
 label.case .info { margin-left: auto; color: var(--texte3); font-size: 13px; white-space: nowrap; }
-.note { display: flex; gap: 10px; padding: 12px 14px; border-radius: 12px; background: color-mix(in srgb, #8DB4D8 16%, transparent); color: var(--texte2); font-size: 14px; }
-.note::before { content: "i"; flex: none; width: 20px; height: 20px; border-radius: 50%; background: var(--canard); color: #fff; font-weight: 700; font-size: 13px; display: grid; place-items: center; }
+.note { display: block; position: relative; min-height: 20px; padding: 12px 14px 12px 44px; border-radius: 12px; background: color-mix(in srgb, #8DB4D8 16%, transparent); color: var(--texte2); font-size: 14px; }
+.note::before { content: "i"; position: absolute; left: 14px; top: 12px; width: 20px; height: 20px; border-radius: 50%; background: var(--canard); color: #fff; font-weight: 700; font-size: 13px; display: grid; place-items: center; }
 .note.alerte { background: color-mix(in srgb, var(--alerte) 14%, transparent); }
 .ligne-montant { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; }
 .ligne-montant .note-ligne { display: block; font-size: 12px; color: var(--texte3); }
@@ -982,3 +982,20 @@ button.carte.ligne-compte:hover { border-color: color-mix(in srgb, var(--turquoi
 .acces-mission { display: flex; gap: 10px; align-items: flex-start; margin-top: 10px; padding: 10px 12px; border-radius: 12px; background: color-mix(in srgb, var(--turquoise) 8%, var(--surface)); border: 1px solid var(--separateur); }
 .acces-mission > .ico { flex: none; width: 22px; height: 22px; color: var(--primaire); margin-top: 2px; }
 .photo-boite-mission { display: block; width: 100%; max-width: 280px; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 12px; margin-top: 8px; }
+
+/* Cartes (Leaflet + OpenStreetMap) : épingle aux couleurs d'un bien, carte d'adresse, carte des biens et des missions */
+.epingle span { display: block; position: relative; width: 30px; height: 30px; margin: 2px 0 0 1px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg);
+  background: var(--c); border: 3px solid #fff; box-shadow: 0 4px 12px rgba(8, 38, 42, .35); box-sizing: border-box; }
+.epingle span::after { content: ""; position: absolute; inset: 7px; border-radius: 50%; background: #fff; }
+.epingle b { position: absolute; inset: 0; z-index: 1; display: flex; align-items: center; justify-content: center; transform: rotate(45deg); font: 800 11px system-ui, sans-serif; color: var(--c); }
+.carte-adresse, .carte-biens, .carte-missions { height: 260px; border-radius: var(--rayon); overflow: hidden; margin-top: 12px; border: 1px solid var(--separateur); box-shadow: var(--ombre); background: var(--creux); z-index: 0; }
+.carte-biens { height: 320px; margin: 4px 0 14px; }
+.carte-missions { height: 280px; margin: 4px 0 14px; }
+.leaflet-container { font: inherit; }
+.leaflet-popup-content { font-size: 14px; line-height: 1.45; }
+.bouton-geoloc .ico { width: 20px; height: 20px; }
+.centre { text-align: center; }
+
+.legende-carte { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: -6px 0 14px; }
+.legende-carte span { display: inline-flex; align-items: center; gap: 6px; }
+.legende-carte i { width: 12px; height: 12px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: var(--c); }

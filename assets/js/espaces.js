@@ -6,6 +6,7 @@ import { icone } from "./icones.js";
 import { traduire, tr, LOCALE } from "./langue.js";
 import { DOCUMENTS_CLEANEUR, enregistrerBien, lireCalendrier } from "./donnees.js";
 import { couleurBien, voies, morceau, erreurSejour, sejoursGardes, nuits, versIcs } from "./agenda.js";
+import { afficherCarte, coordonnees } from "./cartes.js";
 import { preremplir } from "./reserver.js";
 export { brancherMissions, demanderGeoloc } from "./missions.js";
 
@@ -122,6 +123,7 @@ export function ongletPro(p, biens) {
     <p class="petit" style="margin-top:0">Reliez le calendrier de chaque bien, ou ajoutez vos séjours à la main dans l'agenda : les départs de vos voyageurs y apparaissent.</p>
     ${biens.length > 1 ? `<div class="outils-biens"><input type="search" id="cherche-bien" placeholder="${esc(tr("Rechercher un bien, une rue, une ville…"))}" aria-label="Rechercher un bien">
       <select id="tri-biens" aria-label="Trier les biens"><option value="nom">Nom (A → Z)</option><option value="nom-inv">Nom (Z → A)</option><option value="ville">Ville</option><option value="depart">Prochain départ</option></select></div>` : ""}
+    ${biens.length ? `<div class="carte-biens" id="carte-biens" role="img" aria-label="Carte de mes biens"></div>` : ""}
     <div id="liste-biens">${biens.length ? biens.slice().sort((a, b) => nomBien(a).localeCompare(nomBien(b), "fr", { sensitivity: "base", numeric: true })).map(l => {
       const cals = (l.calendriers || []).filter(c => c.url);
       return `<div class="carte bien-pro" data-bien="${esc(l.id)}" data-texte="${esc(`${nomBien(l)} ${l.rue} ${l.codePostal} ${l.ville}`.toLowerCase())}">
@@ -167,7 +169,22 @@ export function brancherPro(vue, p, biens, demandes, { majProfil, recharger }) {
     catch { err.textContent = tr("Le service est momentanément indisponible. Réessayez dans quelques minutes."); }
   });
   remplirAgenda(vue, biens, demandes, recharger).then(prochains => trierBiens(vue, biens, prochains));
+  carteDesBiens(vue.querySelector("#carte-biens"), biens);
   trierBiens(vue, biens, {});
+}
+
+/** Carte du parc : une épingle par bien, à la couleur de l'agenda (les adresses sont placées une fois, puis mémorisées). */
+export async function carteDesBiens(boite, biens) {
+  if (!boite) return;
+  const ordre = biens.slice().sort((a, b) => nomBien(a).localeCompare(nomBien(b), "fr", { sensitivity: "base", numeric: true }));
+  const marqueurs = [];
+  for (const [i, l] of ordre.entries()) {
+    const pos = Number.isFinite(l.lat) ? { lat: l.lat, lon: l.lon } : await coordonnees(l.rue, l.codePostal, l.ville);
+    if (pos) marqueurs.push({ ...pos, couleur: couleurBien(i), titre: nomBien(l), popup: `<b>${esc(nomBien(l))}</b><br>${esc(l.rue)}, ${esc(l.codePostal)} ${esc(l.ville)}` });
+  }
+  if (!boite.isConnected) return;
+  if (!marqueurs.length) { boite.remove(); return; }
+  afficherCarte(boite, { marqueurs, zoom: 15 }).catch(() => boite.remove());
 }
 
 /** Recherche (nom, rue, ville) et tri des biens : nom A → Z par défaut, Z → A, ville ou prochain départ. */
