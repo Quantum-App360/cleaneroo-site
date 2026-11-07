@@ -14,6 +14,7 @@ import { marquerActif } from "./entete.js";
 import { icone, teinte, ICONES_RUBRIQUES, ICONES_INTERFACE } from "./icones.js";
 import { pageTableau, arreterTableau } from "./tableau.js";
 import { compteRenduPieces } from "./controle-ecran.js";
+import { blocFormulesCleaneur, brancherFormulesCleaneur } from "./formules-cleaneur.js";
 import { blocEtapes, blocReassurance, installerRappel, bandeauLancement, pageChargement } from "./commun.js";
 export { bandeauLancement };
 
@@ -353,21 +354,9 @@ async function afficherPlaces(racine) {
 }
 
 /* Offre de lancement des Cleaneurs (mêmes valeurs que Regles.kt) */
+/** « Devenir Cleaneur » : les deux formules (Gratuit / Pro), avantages, inconvénients et offre de lancement. */
 function blocOffreCleaneurs() {
-  const R = REGLES, prix = euros(R.ABONNEMENT_CLEANEUR_C);
-  return `<div class="offre-lancement revele"><div class="aurore" aria-hidden="true"><i></i><i></i></div>
-    <span class="surtitre-heros"><i></i>Offre de lancement</span>
-    <h2>Les ${R.OFFRE_LANCEMENT_PLACES} premiers Cleaneurs : ${R.OFFRE_LANCEMENT_MOIS} mois sans abonnement</h2>
-    <div class="compteur-places" data-places hidden><div class="chiffre"><b data-places-nombre>${R.OFFRE_LANCEMENT_PLACES}</b><span>places restantes sur ${R.OFFRE_LANCEMENT_PLACES}</span></div>
-      <div class="jauge"><span data-places-jauge style="width:100%"></span></div></div>
-    <p>Inscrivez-vous et faites valider votre dossier parmi les ${R.OFFRE_LANCEMENT_PLACES} premiers : vous ne payez aucun abonnement pendant ${R.OFFRE_LANCEMENT_MOIS} mois.</p>
-    <ul>
-      <li>${R.OFFRE_LANCEMENT_PLACES} places, attribuées dans l'ordre de validation des dossiers.</li>
-      <li>${R.OFFRE_LANCEMENT_MOIS} mois sans abonnement à partir de la validation.</li>
-      <li>Ensuite, abonnement de ${prix} par mois.</li>
-      <li>La commission sur chaque mission s'applique normalement, offre comprise.</li>
-      <li>Échéance impayée : ${R.PREAVIS_BLOCAGE_JOURS} jours après la date de facturation prévue, le compte est bloqué et les missions réservées sont redistribuées.</li>
-    </ul></div>`;
+  return `<h2 class="titre-section">${icone("paiement", { tuile: true })}Deux formules, à vous de choisir</h2>${blocFormulesCleaneur(null)}`;
 }
 
 function pageDevenir() {
@@ -588,6 +577,7 @@ async function afficherPage() {
   animerNotifs(vue);
   afficherPlaces(vue);
   afficherAccesCleaneur(vue);
+  brancherFormulesCleaneur(vue);
   window.scrollTo(0, 0);
 }
 

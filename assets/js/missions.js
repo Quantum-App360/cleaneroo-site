@@ -154,7 +154,7 @@ export async function brancherMissions(vue, p) {
     b.disabled = false;
     b.closest(".carte").querySelector("[data-erreur-prendre]").textContent = tr({
       deja_prise: "Un autre Cleaneur a pris cette mission juste avant vous.", ouverture: "Les missions commencent le 1er janvier 2027.",
-      dossier: "Votre dossier doit être validé pour prendre des missions." }[r] || "Le service est momentanément indisponible. Réessayez dans quelques minutes.");
+      dossier: "Votre dossier doit être validé pour prendre des missions.", formule: "Cette mission est réservée aux Cleaneurs Pro pendant ses 30 premières minutes." }[r] || "Le service est momentanément indisponible. Réessayez dans quelques minutes.");
   });
   // Contrôle pièce par pièce : « J'ai terminé » reste grisé tant qu'une pièce n'est pas complète.
   boite.querySelectorAll("[data-controle]").forEach(c => {

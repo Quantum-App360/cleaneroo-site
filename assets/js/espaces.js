@@ -8,6 +8,7 @@ import { DOCUMENTS_CLEANEUR, enregistrerBien, lireCalendrier } from "./donnees.j
 import { couleurBien, voies, morceau, erreurSejour, sejoursGardes, nuits, versIcs } from "./agenda.js";
 import { afficherCarte, coordonnees } from "./cartes.js";
 import { chargeur } from "./commun.js";
+import { blocFormulesCleaneur } from "./formules-cleaneur.js";
 import { preremplir } from "./reserver.js";
 export { brancherMissions, demanderGeoloc } from "./missions.js";
 
@@ -458,12 +459,14 @@ export function ongletCleaneur(p, docs, { dossier, profil }) {
     ${admin ? "" : `<h2 class="titre-section">${icone("valide", { tuile: true })}Ma préparation <span class="tampon${faites === etapes.length ? " vert" : ""}" style="margin:0 0 0 auto">${faites}/${etapes.length}</span></h2>
     <div class="carte"><div class="jauge" role="progressbar" aria-valuemin="0" aria-valuemax="${etapes.length}" aria-valuenow="${faites}"><span style="width:${Math.round(faites / etapes.length * 100)}%"></span></div>
       <ul class="liste-preparation">${etapes.map(([t, ok]) => `<li class="${ok ? "fait" : ""}"><span class="coche" aria-hidden="true">${ok ? "✓" : ""}</span><span>${t}</span></li>`).join("")}</ul></div>`}
+    <h2 class="titre-section">${icone("paiement", { tuile: true })}Ma formule</h2>
+    ${blocFormulesCleaneur(p)}
     <h2 class="titre-section">${icone("termine", { tuile: true })}Le déroulé d'une mission</h2>
     <ol class="deroule-mission">
       <li><b>J'accepte la mission</b><span class="petit">Adresse, horaires, tâches et prix sont connus avant d'accepter.</span></li>
       <li><b>Je suis en route</b><span class="petit">Le client est prévenu automatiquement.</span></li>
       <li><b>Je suis sur place</b><span class="petit">Arrivée confirmée par géolocalisation, photos d'état des lieux.</span></li>
-      <li><b>Je coche mes tâches</b><span class="petit">Pièce par pièce, avec les photos de fin.</span></li>
+      <li><b>Je coche mes tâches</b><span class="petit">Pièce par pièce : photo avant, tâches, photo après, contrôle par IA.</span></li>
       <li><b>Mission terminée</b><span class="petit">Le client valide, le paiement est versé.</span></li>
     </ol>
     ${admin ? `<details class="carte"><summary>Essayer le dépôt de documents (comme un Cleaneur)</summary><div style="margin-top:12px">${dossier}</div></details>`

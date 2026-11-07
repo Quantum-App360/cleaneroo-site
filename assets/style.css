@@ -1608,3 +1608,33 @@ details.piece.complete .pastille-piece { background: #23955A; border-color: #239
 .case.incluse { opacity: .75; }
 .case.incluse .info { color: var(--marque); font-weight: 800; }
 @media (max-width: 720px) { .formules { grid-template-columns: 1fr; } .formule.conseillee { order: -1; } }
+
+/* ================================================================================================
+   Formules des Cleaneurs : Gratuit / Pro (formules-cleaneur.js)
+   ================================================================================================ */
+.formules-cleaneur { display: grid; gap: 14px; margin-bottom: 18px; }
+.offre-pro { position: relative; display: grid; gap: 6px; padding: 18px 18px 16px; border-radius: 22px; color: #fff;
+  background: radial-gradient(320px 200px at 100% 0%, rgba(255, 154, 107, .5), transparent 70%), linear-gradient(130deg, #0B5F5A, #0F8A82 55%, #6B5BD6); box-shadow: var(--ombre-relief); }
+.offre-pro b { font-size: 18px; }
+.offre-pro .petit { color: rgba(255, 255, 255, .85); }
+.offre-pro .badge-formule { position: static; justify-self: start; background: rgba(255, 255, 255, .2); }
+.offre-pro .tampon { justify-self: start; }
+.cartes-formules { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: stretch; }
+.formule-cleaneur { position: relative; display: flex; flex-direction: column; gap: 4px; padding: 20px 16px 16px; border-radius: 22px; background: var(--surface);
+  box-shadow: var(--ombre-relief); border: 2px solid transparent; }
+.formule-cleaneur.pro { background: linear-gradient(var(--surface), var(--surface)) padding-box, linear-gradient(140deg, #25B5BF, #9C8CFF) border-box; }
+.formule-cleaneur.actuelle { box-shadow: var(--ombre-relief), 0 0 0 4px color-mix(in srgb, var(--marque) 16%, transparent); }
+.formule-cleaneur .commission { font-size: 14px; color: var(--texte2); }
+.formule-cleaneur .commission b { font-size: 16px; color: var(--texte); }
+.titre-liste { margin: 10px 0 2px; font-size: 12.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
+.titre-liste.plus { color: #23955A; } .titre-liste.moins { color: #B4502E; }
+.formule-cleaneur ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: 13.5px; color: var(--texte2); }
+.formule-cleaneur ul.plus li::before { content: "✓ "; color: #23955A; font-weight: 800; }
+.formule-cleaneur ul.moins li::before { content: "– "; color: #B4502E; font-weight: 800; }
+.formule-cleaneur .bouton, .formule-cleaneur > .tampon { margin-top: auto; align-self: flex-start; }
+.formule-cleaneur ul.moins { margin-bottom: 12px; }
+.calcul-formules input[type=range] { width: 100%; accent-color: var(--marque); }
+.resultat-calcul { display: grid; gap: 6px; margin: 8px 0 0; }
+.ligne-calcul { display: flex; justify-content: space-between; padding: 8px 12px; border-radius: 12px; background: var(--creux); }
+.ligne-calcul.meilleur { background: color-mix(in srgb, #23955A 14%, var(--surface)); font-weight: 700; }
+@media (max-width: 640px) { .cartes-formules { grid-template-columns: 1fr; } .formule-cleaneur.pro { order: -1; } }

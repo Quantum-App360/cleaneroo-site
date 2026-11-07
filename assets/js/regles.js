@@ -39,8 +39,11 @@ export const REGLES = {
   // Immeubles : hall et entrée + chaque palier compte au moins un quart d'heure (le prix suit toujours le nombre d'étages)
   IMMEUBLE_HALL_MIN: 30,
   IMMEUBLE_MIN_PAR_PALIER: 15,
-  // Offre de lancement Cleaneurs (comme Regles.kt) : 500 premiers validés, 12 mois sans abonnement, puis 19,99 €/mois ;
-  // impayé : blocage et redistribution des missions réservées 3 jours après la date de facturation prévue.
+  // Formules des Cleaneurs (modèle économique du 7 novembre 2026) : Gratuit (0 €, commission 20 %, missions des particuliers,
+  // visibles 30 min après les Pro) ou Pro (19,99 €/mois, commission 12 %, toutes les missions, 30 min d'avance, badge Pro).
+  // Offre de lancement : les 500 premiers dossiers validés ont la formule Pro offerte 12 mois (base : pro_offert_jusqu).
+  // Impayé (abonnement Pro) : blocage et redistribution des missions réservées 3 jours après la date de facturation prévue.
+  COMMISSION_GRATUIT_PB: 2000, COMMISSION_PRO_PB: 1200, PRIORITE_PRO_MIN: 30,
   OFFRE_LANCEMENT_PLACES: 500,
   OFFRE_LANCEMENT_MOIS: 12,
   ABONNEMENT_CLEANEUR_C: 1999,
@@ -179,3 +182,11 @@ export function sirenSiretValide(n) {
   }
   return somme % 10 === 0;
 }
+
+/** Ce que le Cleaneur touche (centimes) pour un chiffre d'affaires mensuel donné, abonnement Pro déduit (offert : pas d'abonnement). */
+export function revenuCleaneurC(caC, formule, offert = false) {
+  if (formule === "pro") return Math.round(caC * (10000 - REGLES.COMMISSION_PRO_PB) / 10000) - (offert ? 0 : REGLES.ABONNEMENT_CLEANEUR_C);
+  return Math.round(caC * (10000 - REGLES.COMMISSION_GRATUIT_PB) / 10000);
+}
+/** Chiffre d'affaires mensuel à partir duquel Pro rapporte plus que Gratuit (centimes, arrondi à l'euro supérieur) : 250 €. */
+export const seuilRentabiliteProC = () => Math.ceil(REGLES.ABONNEMENT_CLEANEUR_C * 10000 / (REGLES.COMMISSION_GRATUIT_PB - REGLES.COMMISSION_PRO_PB) / 100) * 100;

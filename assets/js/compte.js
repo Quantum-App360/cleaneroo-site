@@ -2,6 +2,7 @@
 // Les comptes s'ouvrent avant l'ouverture ; aucune intervention avant le 1er janvier 2027 (DATE_PREMIERES_INTERVENTIONS).
 // Mêmes écrans que l'application (EcranCompte.kt).
 import { surveiller } from "./sons.js";
+import { brancherFormulesCleaneur } from "./formules-cleaneur.js";
 import { RUBRIQUES, rubrique, TYPES_LOGEMENT } from "./catalogue.js";
 import { euros, dateLongue, heure, REGLES, sirenSiretValide } from "./regles.js";
 import { icone } from "./icones.js";
@@ -107,7 +108,7 @@ export async function pageCompte(vue, param) {
   </div></section>`;
   traduire(vue);
   if (vue.querySelector("#form-profil")) brancherProfil(vue, p, onglet === "cleaneur" && cleaneur);
-  if (onglet === "cleaneur" && cleaneur) { brancherDossier(vue, p); brancherMissions(vue, p); }
+  if (onglet === "cleaneur" && cleaneur) { brancherDossier(vue, p); brancherMissions(vue, p); brancherFormulesCleaneur(vue, p, () => pageCompte(vue, "cleaneur")); }
   if (onglet === "pro") brancherPro(vue, p, biens, demandes, { majProfil, recharger: () => pageCompte(vue) });
   // Ajouter un espace : Particulier ou Cleaneur tout de suite ; Pro avec la société (raison sociale + SIRET/SIREN).
   const ajouter = async (statut, bouton) => {
