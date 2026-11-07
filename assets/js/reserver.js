@@ -9,7 +9,7 @@ import { calculer, entreeEstimation, SALISSURE, disponibilite, meilleurPack, tac
 import { REGLES, euros, duree, heure, dateCourte, dateLongue, estPrelancement, MESSAGE_LANCEMENT, DATE_PREMIERES_INTERVENTIONS, pctZone, libelleZone } from "./regles.js";
 import { envoyerDemande } from "./donnees.js";
 import { maPosition, adresseDe, chercherAdresse, afficherCarte } from "./cartes.js";
-import { traduire } from "./langue.js";
+import { traduire, langue } from "./langue.js";
 import { icone } from "./icones.js";
 import { blocReassurance } from "./commun.js";
 
@@ -568,6 +568,9 @@ function etape5() {
     ${titre("Vos coordonnées")}
     <div class="carte"><div class="grille-2">${champTexte("Prénom", "prenom", b.prenom, "text", 'autocomplete="given-name" maxlength="80"')}${champTexte("Nom", "nom", b.nom, "text", 'autocomplete="family-name" maxlength="80"')}</div>
       <div class="grille-2">${champTexte("E-mail", "email", b.email, "email", 'autocomplete="email" maxlength="200"')}${champTexte("Téléphone", "telephone", b.telephone, "tel", 'autocomplete="tel" maxlength="20"')}</div></div>
+    ${titre("Suivi par SMS")}
+    <div class="carte">${caseCocher("Suivi par SMS", "suiviSms", !!b.suiviSms, `${euros(REGLES.OPTION_SMS_C)} : un SMS au nom de Cleaneroo à chaque étape (confirmation, « en route » avec l'heure d'arrivée, arrivée, fin avec le compte rendu), dans la langue de votre réservation.`)}
+      ${b.suiviSms && b.accueil === "TIERS" && b.tiersNom.trim() ? caseCocher(`Envoyer aussi les SMS à ${esc(b.tiersNom.trim())}`, "smsTiers", !!b.smsTiers) : ""}</div>
     <div class="note" style="margin-top:14px">Aucun paiement maintenant : vous ne serez débité qu'après avoir validé la prestation. Annulation gratuite jusqu'à 48 h avant ; ensuite 25 % du prix accepté.</div>
     <div class="carte" style="margin-top:12px">${caseCocher(`J'accepte les <a href="#/conditions" target="_blank">conditions d'utilisation</a> et la <a href="#/confidentialite" target="_blank">politique de confidentialité</a>`, "cgv", b.cgv)}</div>
     ${actions(!manque && !envoi, manque, envoi ? "Envoi en cours…" : estPrelancement() ? "Envoyer ma pré-réservation" : est.devisObligatoire ? "Envoyer ma demande de devis" : "Envoyer ma demande", "envoyer")}`;
@@ -747,6 +750,7 @@ async function envoyer() {
     const acces = { TIERS: { nom: b.tiersNom, telephone: b.tiersTel }, BOITE: { emplacement: b.boiteEmplacement, code: b.code }, AUTONOME: { code: b.code } }[b.accueil] || {};
     const details = { ...b }; ["prenom", "nom", "email", "telephone", "rue", "codePostal", "ville", "code", "tiersNom", "tiersTel", "boiteEmplacement", "cgv", "etape", "logementId"].forEach(k => delete details[k]);
     details.lignes = est.lignes;
+    details.langue = langue;   // langue des SMS et des messages : celle de la réservation
     const nombre = passagesPlanifies(b);
     details.passages = nombre;
     const dates = debut && nombre > 1 && !estPrelancement() ? datesPassages(debut, frequenceDe(b), b.jours || [], nombre) : [debut];

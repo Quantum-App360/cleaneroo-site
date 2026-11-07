@@ -55,6 +55,8 @@ export const REGLES = {
   BIENS_MAX: 200,
   // Option « Lavage des draps » (location saisonnière) : prix fixe par lit, le même dans toutes les zones.
   LAVAGE_DRAPS_PAR_LIT_C: 1200,
+  // Option « Suivi par SMS » : 1 € par prestation, SMS au nom de Cleaneroo dans la langue de la réservation ; hors crédit d'impôt.
+  OPTION_SMS_C: 100,
   LAVAGE_DRAPS_MIN_PAR_LIT: 10,   // planning : retirer, lancer, étendre et plier, par lit
   LITS_MAX: 20,
   // Prix selon la ville (pouvoir d'achat) : 3 zones, d'après le code postal de l'adresse du bien (géolocalisée).

@@ -20,7 +20,7 @@ const ENTREE_DEFAUT = {
   niveauxSupplementaires: 0, minutesEtapesLocation: 0, consommablesAControler: false, salissure: "NORMAL",
   taches: [], remisePackPct: 0, remisePackC: null, tachesPersonnalisees: 0, dimanche: false, creneauMalin: false,
   engagementMois: 0, espacePersonnel: true, typeLieuId: "", panier: [], minutesEnPlus: 0, minimumApresMin: 0,
-  lavageDrapsLits: 0, zonePct: 0,
+  lavageDrapsLits: 0, zonePct: 0, suiviSms: false,
 };
 
 export function calculer(entree) {
@@ -141,6 +141,8 @@ export function calculer(entree) {
   const devis = r.toujoursSurDevis || e.surfaceM2 > REGLES.SEUIL_DEVIS_SURFACE_M2;
   const credit = eligibleCreditImpot(e.rubriqueId, e.espacePersonnel, e.typeLieuId)
     ? Math.min(pct(total, REGLES.CREDIT_IMPOT_PCT), REGLES.CREDIT_IMPOT_PLAFOND_C / 2) : 0;
+  // Option « Suivi par SMS » : ajoutée après le crédit d'impôt (ce n'est pas un service à la personne).
+  if (e.suiviSms) { lignes.push({ libelle: "Suivi par SMS", montantC: REGLES.OPTION_SMS_C }); total += REGLES.OPTION_SMS_C; }
 
   return {
     lignes, totalC: total, dureeMin: deux ? arrondiQuartSup(dureeTotale / 2) : dureeTotale,
@@ -296,5 +298,6 @@ export function entreeEstimation(b, espacePersonnel, debut) {
     minimumApresMin: b.rubriqueId === "construction" ? REGLES.CHANTIER_MINIMUM_MIN : 0,
     lavageDrapsLits: b.rubriqueId === "rental" && b.lavageDraps ? litsDe(b) : 0,
     zonePct: pctZone(b.codePostal),
+    suiviSms: !!b.suiviSms,
   };
 }
