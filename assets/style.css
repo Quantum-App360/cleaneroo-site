@@ -968,3 +968,17 @@ body.acces-cleaneur .nav a[href$="#/reserver"], body.acces-cleaneur .nav a[href$
 .outils-biens { display: flex; gap: 8px; flex-wrap: wrap; margin: 4px 0 12px; }
 .outils-biens input { flex: 1 1 220px; min-height: 44px; border-radius: 12px; border: 1px solid var(--separateur); background: var(--surface); color: var(--texte); padding: 0 14px; font: inherit; }
 .outils-biens select { min-height: 44px; border-radius: 12px; border: 1px solid var(--separateur); background: var(--surface); color: var(--texte); padding: 0 10px; font: inherit; }
+
+/* Espaces distincts : passer de Particulier à Pro, ou devenir Cleaneur (cartes-boutons) */
+.grille-autres-espaces { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin-top: 14px; }
+button.carte.ligne-compte { width: 100%; text-align: left; font: inherit; color: inherit; cursor: pointer; border: 1px solid var(--separateur); }
+button.carte.ligne-compte:hover { border-color: color-mix(in srgb, var(--turquoise) 45%, transparent); }
+.lien-bouton.clair { color: #fff; text-decoration: underline; padding: 0; min-height: 40px; }
+
+/* Photo de la boîte à clés (réservation) et accès au logement (carte de mission du Cleaneur) */
+.photo-boite { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--separateur); }
+.titre-photo-boite { margin: 0 0 8px; font-weight: 700; }
+.apercu-boite { display: block; width: 100%; max-width: 320px; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 14px; margin-bottom: 4px; box-shadow: var(--ombre); }
+.acces-mission { display: flex; gap: 10px; align-items: flex-start; margin-top: 10px; padding: 10px 12px; border-radius: 12px; background: color-mix(in srgb, var(--turquoise) 8%, var(--surface)); border: 1px solid var(--separateur); }
+.acces-mission > .ico { flex: none; width: 22px; height: 22px; color: var(--primaire); margin-top: 2px; }
+.photo-boite-mission { display: block; width: 100%; max-width: 280px; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 12px; margin-top: 8px; }

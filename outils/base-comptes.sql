@@ -170,3 +170,26 @@ revoke execute on function public.dossiers_cleaneurs() from anon;
 revoke execute on function public.decider_dossier_cleaneur(uuid, boolean, text) from anon;
 revoke execute on function public.decider_document(uuid, boolean, text) from anon;
 revoke execute on function public.valider_dossier_cleaneur(uuid, boolean) from anon;
+
+-- ---------------------------------------------------------------- Espaces distincts par type de compte (8 novembre 2026)
+-- Un client est soit « particulier », soit « pro » (conciergerie, plusieurs biens) ; le Cleaneur garde role = 'cleaneur'.
+alter table public.profils add column if not exists espace text not null default 'particulier';
+alter table public.profils drop constraint if exists profils_espace_valide;
+alter table public.profils add constraint profils_espace_valide check (espace in ('particulier', 'pro'));
+update public.profils set espace = 'pro' where coalesce(societe, '') <> '';
+
+create or replace function public.nouveau_profil()
+ returns trigger language plpgsql security definer set search_path to ''
+as $function$
+begin
+  insert into public.profils (id, role, prenom, nom, espace) values (new.id,
+    case when new.raw_user_meta_data->>'role' = 'cleaneur' then 'cleaneur' else 'client' end,
+    left(coalesce(new.raw_user_meta_data->>'prenom', ''), 80), left(coalesce(new.raw_user_meta_data->>'nom', ''), 80),
+    case when new.raw_user_meta_data->>'espace' = 'pro' then 'pro' else 'particulier' end)
+  on conflict do nothing;
+  return new;
+end;
+$function$;
+
+-- Le client peut changer lui-même de type de compte (Particulier ↔ Pro) depuis son espace.
+grant update (espace) on public.profils to authenticated;

@@ -12,12 +12,22 @@ export { brancherMissions, demanderGeoloc } from "./missions.js";
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 export const ONGLETS = [["particulier", "Particulier", "logement"], ["pro", "Pro", "bureaux"], ["cleaneur", "Cleaneur", "cleaneurs"]];
 
-/** Onglet ouvert par défaut : Cleaneur pour un Cleaneur, Pro pour une société ou à partir de 3 biens, sinon Particulier. */
+/**
+ * Espace du compte : chaque type de compte a le sien, sans onglets communs.
+ * Cleaneur → espace Cleaneur ; client → espace Particulier ou espace Pro (conciergeries, plusieurs biens),
+ * choisi à la création du compte (profils.espace). Seul l'administrateur passe d'un espace à l'autre (onglets).
+ */
+export function espaceDu(p) {
+  if (p.role === "cleaneur") return "cleaneur";
+  return p.espace === "pro" ? "pro" : "particulier";
+}
+/** Administrateur : onglet ouvert par défaut. */
 export function ongletParDefaut(p, biens) {
   if (p.role === "cleaneur") return "cleaneur";
-  if (p.societe || biens.length >= REGLES.SEUIL_ESPACE_PRO_BIENS) return "pro";
+  if (p.espace === "pro" || p.societe || biens.length >= REGLES.SEUIL_ESPACE_PRO_BIENS) return "pro";
   return "particulier";
 }
+export const NOMS_ESPACES = { particulier: "Mon espace Particulier", pro: "Mon espace Pro", cleaneur: "Mon espace Cleaneur" };
 
 export function barreOnglets(actif) {
   return `<nav class="onglets-compte" aria-label="Mes espaces">${ONGLETS.map(([id, nom, ico]) =>
@@ -50,8 +60,11 @@ export function ongletParticulier(p, biens, demandes) {
       <a class="carte raccourci" href="#/mes-demandes">${icone("logement", { tuile: true })}<b>Mes biens</b><span class="petit">${biens.length} adresse${biens.length > 1 ? "s" : ""} enregistrée${biens.length > 1 ? "s" : ""}</span></a>
       <a class="carte raccourci" href="#/reserver">${icone("instantane", { tuile: true })}<b>Nouvelle demande</b><span class="petit">Prix immédiat</span></a>
     </div>
-    ${p.role === "client" ? `<a class="carte ligne-compte" href="#/compte/cleaneur">${icone("cleaneurs", { tuile: true })}
-      <div class="corps"><b>Vous êtes auto-entrepreneur ?</b><p class="petit" style="margin:2px 0 0">Devenez Cleaneur : missions près de chez vous, à votre rythme.</p></div><span class="aller" aria-hidden="true">›</span></a>` : ""}`;
+    ${p.role === "client" ? `<div class="grille-autres-espaces">
+      <button type="button" class="carte ligne-compte" data-passer-espace="pro">${icone("location", { tuile: true })}
+        <div class="corps"><b>Vous gérez des locations ?</b><p class="petit" style="margin:2px 0 0">Conciergerie ou plusieurs biens : passez à l'espace Pro, avec l'agenda de vos séjours.</p></div><span class="aller" aria-hidden="true">›</span></button>
+      <button type="button" class="carte ligne-compte" id="devenir-cleaneur-lien">${icone("cleaneurs", { tuile: true })}
+        <div class="corps"><b>Vous êtes auto-entrepreneur ?</b><p class="petit" style="margin:2px 0 0">Devenez Cleaneur : missions près de chez vous, à votre rythme.</p></div><span class="aller" aria-hidden="true">›</span></button></div>` : ""}`;
 }
 
 /* ------------------------------------------------------------------ Pro : conciergeries et multi-propriétaires */
@@ -85,7 +98,13 @@ export function ongletPro(p, biens) {
         <form id="form-societe" novalidate style="margin-top:10px">
           <label class="champ">Raison sociale<input name="societe" maxlength="120" value="${esc(p.societe)}" autocomplete="organization"></label>
           <label class="champ">Numéro SIRET (14 chiffres)<input name="siret" inputmode="numeric" maxlength="17" value="${esc(p.siret)}"></label>
-          <p class="erreur" id="erreur-societe"></p><button class="bouton plein" type="submit">Enregistrer</button></form></details>
+          <p class="erreur" id="erreur-societe"></p><button class="bouton plein" type="submit">Enregistrer</button></form>
+        ${p.role === "client" ? `<p style="margin:10px 0 0"><button type="button" class="lien-bouton clair" data-passer-espace="particulier">Revenir à un compte Particulier</button></p>` : ""}</details>
+    </div>
+    <div class="grille-raccourcis">
+      <a class="carte raccourci" href="#/mes-demandes">${icone("calendrier", { tuile: true })}<b>Mes prestations</b><span class="petit">À venir et passées</span></a>
+      <a class="carte raccourci" href="#/reserver/rental">${icone("location", { tuile: true })}<b>Ménage de location</b><span class="petit">Entre deux voyageurs</span></a>
+      <a class="carte raccourci" href="#/reserver">${icone("instantane", { tuile: true })}<b>Nouvelle demande</b><span class="petit">Prix immédiat</span></a>
     </div>
     <div class="tuiles-chiffres" id="chiffres-pro">
       <div class="tuile-chiffre"><b>${biens.length}</b><span>Biens gérés</span></div>

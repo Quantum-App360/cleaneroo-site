@@ -38,10 +38,16 @@ export async function placesRestantes() {
 }
 
 /** Envoie une demande de nettoyage et ses photos. Renvoie { reference, jeton }. */
-export async function envoyerDemande(demande, photos = []) {
+export async function envoyerDemande(demande, photos = [], photoBoite = null) {
   const reference = nouvelleReference();
   const jeton = crypto.randomUUID();
   const chemins = [];
+  // Photo de la boîte à clés : rangée à part, transmise au Cleaneur avec le code une fois la mission confirmée.
+  if (photoBoite) {
+    const chemin = `${reference}/boite-a-cles.jpg`;
+    const { error } = await supabase.storage.from("photos-demandes").upload(chemin, await reduirePhoto(photoBoite, 1600, 0.7), { contentType: "image/jpeg" });
+    if (!error) demande = { ...demande, acces: { ...(demande.acces || {}), photo: chemin } };
+  }
   for (const [i, f] of photos.slice(0, 12).entries()) {
     const blob = await reduirePhoto(f);
     const chemin = `${reference}/photo-${i + 1}.jpg`;
@@ -70,6 +76,12 @@ export async function mesDemandes() {
 const rpc = async (nom, args = {}) => { const { data, error } = await supabase.rpc(nom, args); if (error) throw new Error(error.message); return data; };
 export const missionsDisponibles = () => rpc("missions_disponibles");
 export const mesMissions = () => rpc("mes_missions");
+/** Photo d'une demande (boîte à clés…) : lien valable 1 heure, réservé au Cleaneur de la mission et à l'administration. */
+export async function lienPhotoDemande(chemin) {
+  const { data, error } = await supabase.storage.from("photos-demandes").createSignedUrl(chemin, 3600);
+  if (error) throw new Error(error.message);
+  return data.signedUrl;
+}
 /** "ok", "deja_prise", "ouverture" (avant le 1er janvier 2027), "dossier" ou "connexion". */
 export const prendreMission = reference => rpc("prendre_mission", { p_reference: reference });
 export const avancerMission = (reference, statut) => rpc("avancer_mission", { p_reference: reference, p_statut: statut });
@@ -123,9 +135,9 @@ export async function session() {
 }
 
 /** Création de compte : role = "client" ou "cleaneur" (jamais administrateur). Un e-mail de confirmation est envoyé. */
-export async function creerCompte({ email, mdp, role, prenom, nom }) {
+export async function creerCompte({ email, mdp, role, prenom, nom, espace = "particulier" }) {
   const { data, error } = await supabase.auth.signUp({ email, password: mdp,
-    options: { data: { role: role === "cleaneur" ? "cleaneur" : "client", prenom, nom }, emailRedirectTo: retour("compte") } });
+    options: { data: { role: role === "cleaneur" ? "cleaneur" : "client", espace: espace === "pro" ? "pro" : "particulier", prenom, nom }, emailRedirectTo: retour("compte") } });
   if (error) throw new Error(error.message);
   return data.session ? "connecte" : "confirmer";
 }
@@ -152,7 +164,7 @@ export async function monProfil() {
   if (error) throw new Error(error.message);
   return data ? { ...data, email: s.user.email } : null;
 }
-const CHAMPS_PROFIL = ["prenom", "nom", "telephone", "code_postal", "ville", "siret", "societe", "prestations", "zone_km"];
+const CHAMPS_PROFIL = ["prenom", "nom", "telephone", "code_postal", "ville", "siret", "societe", "prestations", "zone_km", "espace"];
 export async function majProfil(champs) {
   const s = await session();
   const maj = Object.fromEntries(Object.entries(champs).filter(([k]) => CHAMPS_PROFIL.includes(k)));

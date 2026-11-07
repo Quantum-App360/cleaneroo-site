@@ -5,7 +5,7 @@ import { rubrique } from "./catalogue.js";
 import { REGLES, euros, dateLongue, heure, duree } from "./regles.js";
 import { icone } from "./icones.js";
 import { traduire, tr } from "./langue.js";
-import { missionsDisponibles, mesMissions, prendreMission, avancerMission, envoyerPosition } from "./donnees.js";
+import { missionsDisponibles, mesMissions, prendreMission, avancerMission, envoyerPosition, lienPhotoDemande } from "./donnees.js";
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const ETAPE = {
@@ -58,11 +58,25 @@ function carteMission(m) {
     <p style="margin:10px 0 0"><b>${esc(m.rue)}, ${esc(m.code_postal)} ${esc(m.ville)}</b></p>
     <p class="petit" style="margin:2px 0 0">Client : ${esc(m.prenom)}${m.telephone ? ` · <a href="tel:${esc(m.telephone)}">${esc(m.telephone)}</a>` : ""} · ${m.sur_devis ? "Sur devis" : euros(m.estimation_c)}</p>
     ${m.remarque ? `<p class="petit" style="margin:4px 0 0">« ${esc(m.remarque)} »</p>` : ""}
+    ${blocAcces(m)}
     ${m.statut === "EN_ROUTE" ? `<p class="petit partage-actif" style="margin:8px 0 0">📍 Position partagée avec le client pendant le trajet</p>` : ""}
     <div class="boutons" style="margin-top:10px">
       ${bouton ? `<button type="button" class="bouton" data-etape="${esc(m.reference)}">${bouton}</button>` : ""}
       <a class="bouton secondaire" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${m.rue} ${m.code_postal} ${m.ville}`)}">Itinéraire</a>
     </div><p class="erreur" data-erreur-mission style="margin:6px 0 0"></p></div>`;
+}
+
+/** Accès au logement (transmis une fois la mission confirmée) : boîte à clés avec sa photo, personne sur place, accès autonome. */
+function blocAcces(m) {
+  const a = m.acces || {};
+  const ligne = (titre, texte) => `<p class="petit" style="margin:2px 0 0"><b>${titre}</b> ${esc(texte)}</p>`;
+  let corps = "";
+  if (m.accueil === "BOITE") corps = ligne(tr("Boîte à clés :"), a.emplacement || "") + (a.code ? ligne(tr("Code :"), a.code) : "")
+    + (a.photo ? `<img class="photo-boite-mission" alt="${esc(tr("Boîte à clés"))}" data-photo-boite="${esc(a.photo)}">` : "");
+  else if (m.accueil === "TIERS") corps = ligne(tr("Accueil par :"), [a.nom, a.telephone].filter(Boolean).join(" · "));
+  else if (m.accueil === "AUTONOME") corps = ligne(tr("Accès autonome :"), a.code || "");
+  else corps = `<p class="petit" style="margin:2px 0 0">${tr("Le client sera présent.")}</p>`;
+  return `<div class="acces-mission">${icone("cle")}<div>${corps}</div></div>`;
 }
 
 function carteDisponible(m) {
@@ -100,6 +114,10 @@ export async function brancherMissions(vue, p) {
     <p class="petit" style="margin-top:0">Missions en ligne pour les prestations que vous proposez. Le premier Cleaneur qui la prend l'obtient.</p>
     ${dispo.length ? dispo.map(carteDisponible).join("") : vide("Aucune mission disponible pour l'instant.", p.dossier === "VALIDE" || p.role === "admin" ? "" : "Votre dossier doit être validé pour voir et prendre des missions.")}`;
   traduire(boite);
+  // Photo de la boîte à clés : lien temporaire, seulement pour le Cleaneur de la mission.
+  boite.querySelectorAll("[data-photo-boite]").forEach(async img => {
+    try { img.src = await lienPhotoDemande(img.dataset.photoBoite); } catch { img.remove(); }
+  });
   const recharger = () => brancherMissions(vue, p);
   boite.querySelector("#autoriser-geoloc")?.addEventListener("click", async () => { await demanderGeoloc(); recharger(); });
   // Trajet en cours (page rouverte) : la position repart toute seule.

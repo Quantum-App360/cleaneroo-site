@@ -103,6 +103,7 @@ function vierge(rubriqueId, espace, r, lieux) {
 let b = null;            // brouillon en cours
 let photos = [];         // fichiers choisis (non sauvegardés dans le brouillon)
 let vuesPrises = {};     // étape 3 : vue → fichier (une photo par vue)
+let photoBoite = null;   // photo de la boîte à clés (accueil « Boîte à clés »), non sauvegardée dans le brouillon
 let racine = null;
 let envoi = false;
 
@@ -130,6 +131,7 @@ export function ouvrirReservation(conteneur, rubriqueId, option = "") {
   if (pr?.champs && pr.rubriqueId === rubriqueId && rubrique(rubriqueId)) b = { ...nouveauBrouillon(rubriqueId, ancien?.espace || "personnel"), ...pr.champs, etape: 2 };
   photos = [];
   vuesPrises = {};
+  photoBoite = null;
   // Historique : une entrée par étape, pour que la touche retour du téléphone revienne à l'étape précédente.
   const n = b ? b.etape : 1;
   history.replaceState({ ...(history.state || {}), cleanerooEtape: 1 }, "");
@@ -297,7 +299,13 @@ function blocAccueil() {
   if (b.accueil === "TIERS") acces = champTexte("Prénom et nom", "tiersNom", b.tiersNom, "text", 'maxlength="80"') + champTexte("Téléphone", "tiersTel", b.tiersTel, "tel", 'maxlength="20"')
     + (b.tiersTel && !telephoneValide(b.tiersTel) ? `<p class="erreur" style="margin:0">Au moins 10 chiffres.</p>` : "");
   if (b.accueil === "BOITE") acces = champTexte("Emplacement de la boîte", "boiteEmplacement", b.boiteEmplacement, "text", 'maxlength="120"') + champTexte("Code", "code", b.code, "text", 'maxlength="30" autocomplete="off"')
-    + `<p class="petit">Le code n'est transmis au Cleaneur qu'une fois la mission confirmée.</p>`;
+    + `<div class="photo-boite"><p class="titre-photo-boite">Photo de la boîte à clés <span class="petit">(facultatif)</span></p>
+        ${photoBoite ? `<img class="apercu-boite" alt="Boîte à clés" data-apercu-boite>` : ""}
+        <div class="boutons-photo"><label class="bouton secondaire" style="cursor:pointer">${icone("photo")} ${photoBoite ? "Reprendre la photo" : "Prendre une photo"}<input type="file" id="photo-boite-appareil" accept="image/*" capture="environment" hidden></label>
+          <label class="bouton secondaire" style="cursor:pointer">Galerie<input type="file" id="photo-boite-galerie" accept="image/*" hidden></label>
+          ${photoBoite ? `<button type="button" class="lien-bouton" data-retirer-photo-boite>Retirer</button>` : ""}</div>
+        <p class="petit">Elle aide le Cleaneur à trouver la boîte du premier coup.</p></div>`
+    + `<p class="petit">Le code et la photo ne sont transmis au Cleaneur qu'une fois la mission confirmée.</p>`;
   if (b.accueil === "AUTONOME") acces = champTexte("Consignes et code d'arrivée", "code", b.code, "text", 'maxlength="120" autocomplete="off"');
   return titre("Accueil du Cleaneur")
     + (interdit ? `<div class="note" style="margin-bottom:10px">Accueil par une personne sur place, sans accès autonome.</div>` : "")
@@ -571,6 +579,7 @@ function rendre() {
   traduire(racine);
   // Aperçus des photos
   racine.querySelectorAll("#vignettes img").forEach(img => { img.src = URL.createObjectURL(photos[+img.dataset.i]); });
+  racine.querySelectorAll("[data-apercu-boite]").forEach(img => { if (photoBoite) img.src = URL.createObjectURL(photoBoite); });
 }
 
 document.addEventListener("click", async e => {
@@ -578,6 +587,7 @@ document.addEventListener("click", async e => {
   const t = e.target.closest("button, [data-rubrique]");
   if (!t) return;
   const ds = t.dataset;
+  if (ds.retirerPhotoBoite !== undefined) { photoBoite = null; return rendre(); }
   if (ds.espace) { b = b ? { ...b, espace: ds.espace } : { espace: ds.espace, etape: 1 }; sauver(); return rendre(); }
   if (ds.rubrique) { b = b?.rubriqueId === ds.rubrique ? { ...b, etape: 2 } : nouveauBrouillon(ds.rubrique, b?.espace || "personnel"); sauver(); noterEtape(); rendre(); return window.scrollTo(0, 0); }
   if (ds.retour !== undefined) return retour();
@@ -655,6 +665,10 @@ document.addEventListener("change", e => {
   if (ds.etape) { const l = etapesDe(b); return maj({ etapesChoisies: e.target.checked ? [...l, ds.etape] : l.filter(x => x !== ds.etape) }); }
   if (ds.conso) { const l = consommablesDe(b); return maj({ consommablesChoisis: e.target.checked ? [...l, ds.conso] : l.filter(x => x !== ds.conso) }); }
   if (ds.nature) { const n = b.natures || []; return maj({ natures: e.target.checked ? [...n, ds.nature] : n.filter(x => x !== ds.nature) }); }
+  if ((e.target.id === "photo-boite-appareil" || e.target.id === "photo-boite-galerie") && e.target.files?.[0]) {
+    if (e.target.files[0].type.startsWith("image/")) photoBoite = e.target.files[0];
+    return rendre();
+  }
   if (ds.vue !== undefined && e.target.files?.[0]) {
     vuesPrises = { ...vuesPrises, [ds.vue]: e.target.files[0] };
     photos = Object.values(vuesPrises).slice(0, 12);
@@ -693,13 +707,13 @@ async function envoyer() {
       choix_cleaneur: estPrelancement() ? "candidatures" : b.choixCleaneur, espace: b.espace, prenom: b.prenom.trim(), nom: b.nom.trim(), email: b.email.trim(), telephone: b.telephone.trim(),
       rue: b.rue.trim(), code_postal: b.codePostal.trim(), ville: b.ville.trim(), accueil: b.accueil || "PRESENT", acces,
       remarque: (dates.length > 1 ? `Passage ${n + 1}/${dates.length}. ` : "") + b.remarque.trim(),
-    }, n === 0 ? photos : []);
+    }, n === 0 ? photos : [], b.accueil === "BOITE" ? photoBoite : null);
     premiere = premiere || envoi1;
     }
     const { reference, jeton } = premiere;
     memoriserCommande(b);
     try { localStorage.removeItem(CLE_BROUILLON); } catch { /* rien */ }
-    envoi = false; b = null; photos = [];
+    envoi = false; b = null; photos = []; photoBoite = null;
     location.hash = `#/demande/${reference}/${jeton}`;
   } catch (err) {
     envoi = false; rendre();
