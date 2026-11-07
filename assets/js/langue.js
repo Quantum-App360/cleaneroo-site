@@ -245,6 +245,8 @@ const T = [
   ["Calendriers reliés", "Linked calendars", "Calendari collegati", "Calendarios vinculados"],
   ["Ménages à programmer", "Cleans to schedule", "Pulizie da programmare", "Limpiezas por programar"],
   ["Agenda des locations", "Rental calendar", "Agenda degli affitti", "Agenda de alquileres"],
+  ["Estimer", "Estimate", "Stima", "Estimar"],
+  ["ÉTAPE {0}", "STEP {0}", "PASSO {0}", "PASO {0}"],
   ["Administration", "Administration", "Amministrazione", "Administración"],
   ["Agenda", "Calendar", "Agenda", "Agenda"],
   ["Gestion", "Management", "Gestione", "Gestión"],
