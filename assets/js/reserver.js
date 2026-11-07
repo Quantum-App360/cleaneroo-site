@@ -9,7 +9,7 @@ import { calculer, entreeEstimation, SALISSURE, disponibilite, meilleurPack, tac
 import { REGLES, euros, duree, heure, dateCourte, dateLongue, estPrelancement, MESSAGE_LANCEMENT, DATE_PREMIERES_INTERVENTIONS, pctZone, libelleZone } from "./regles.js";
 import { envoyerDemande } from "./donnees.js";
 import { maPosition, adresseDe, chercherAdresse, afficherCarte } from "./cartes.js";
-import { traduire, langue } from "./langue.js";
+import { traduire, langue, tr } from "./langue.js";
 import { icone } from "./icones.js";
 import { blocReassurance } from "./commun.js";
 
@@ -247,30 +247,44 @@ function etape2() {
   const chiffrees = tachesChiffrees(b), packs = packsPour(r, b.typeLieuId);
   if (chiffrees.length) {
     h += titre("Tâches complémentaires");
-    if (packs.length) {
-      h += `<p class="petit"><b>Nos formules</b></p>` + packs.map(p => {
-        const tp = chiffrees.filter(t => p.tacheIds.includes(t.id));
-        const brut = tp.reduce((s, t) => s + t.prixC, 0), net = brut - remisePack(p, chiffrees);
-        const actif = meilleurPack(packs, b.taches, chiffrees)?.id === p.id; // une seule formule en vert : celle dont la remise s'applique
-        return `<button type="button" class="option ${actif ? "choisi" : ""}" data-pack="${p.id}" style="display:flex;gap:12px;align-items:center">
-          <span style="flex:1">${p.nom} <span class="tampon">−${p.remisePct} %</span><span class="detail">${tp.map(t => t.nom.toLowerCase()).join(", ")}</span></span>
-          <span style="text-align:right">${euros(net)}<span class="detail" style="text-decoration:line-through">${euros(brut)}</span></span></button>`;
-      }).join("") + `<p class="petit">La remise s'applique tant que toutes les tâches de la formule restent cochées. Une seule formule remisée par demande.</p>`;
+    // Trois formules (Standard · Confort · Premium) : prix total de chaque formule, ce qu'elle ajoute, puis les options en plus.
+    const confort = packs.find(p => p.id === "confort"), premium = packs.find(p => p.id === "prestige");
+    const formules = confort && premium ? [{ id: "standard", nom: "Standard", tacheIds: [] }, { ...confort, nom: "Confort" }, { ...premium, nom: "Premium" }] : [];
+    const dansPacks = new Set(packs.flatMap(p => p.tacheIds));
+    const actif = formuleActive(b, packs, chiffrees);
+    const incluses = new Set((formules.find(f => f.id === actif)?.tacheIds) || []);
+    if (formules.length) {
+      const prixFormule = f => calculer(entreeEstimation({ ...b, taches: f.tacheIds.filter(id => chiffrees.some(t => t.id === id)) }, b.espace === "personnel", debutChoisi())).totalC;
+      h += titre("Votre formule") + `<div class="formules">${formules.map((f, i) => {
+        const avant = i ? formules[i - 1].tacheIds : [];
+        const ajouts = chiffrees.filter(t => f.tacheIds.includes(t.id) && !avant.includes(t.id));
+        return `<button type="button" class="formule${f.id === actif ? " choisie" : ""}${f.id === "confort" ? " conseillee" : ""}" data-formule="${f.id}">
+          ${f.id === "confort" ? `<span class="badge-formule">${tr("La plus choisie")}</span>` : ""}
+          <b class="nom-formule">${tr(f.nom)}</b>
+          <span class="prix-formule">${euros(prixFormule(f))}</span>
+          ${f.remisePct ? `<span class="remise-formule">−${f.remisePct} % ${tr("sur les tâches incluses")}</span>` : `<span class="remise-formule">${tr("Le ménage de base")}</span>`}
+          <ul>${i === 0 ? `<li>${esc(r.inclus || tr("Ménage complet"))}</li>`
+            : `<li class="tout">${tr(i === 1 ? "Tout Standard, plus :" : "Tout Confort, plus :")}</li>${ajouts.map(t => `<li>${esc(t.nom)}</li>`).join("")}`}</ul>
+        </button>`; }).join("")}</div>`;
     }
-    // Une carte par groupe, avec son intertitre
+    // Options en plus : celles de la formule sont cochées et incluses ; les autres s'ajoutent à l'unité.
+    h += titre(formules.length ? "Options en plus" : "Tâches complémentaires");
     const groupes = [...new Set(chiffrees.map(t => t.groupe))];
     h += groupes.map(g => (g ? `<p class="petit" style="margin:12px 0 4px"><b>${esc(g)}</b></p>` : "")
-      + `<div class="carte">${chiffrees.filter(t => t.groupe === g).map(t => `<label class="case"><input type="checkbox" data-tache="${t.id}" ${b.taches.includes(t.id) ? "checked" : ""}>
-      <span>${t.nom}</span><span class="info">${euros(t.prixC)} · ${duree(t.minutes)}</span></label>`).join("")}</div>`).join("");
+      + `<div class="carte">${chiffrees.filter(t => t.groupe === g).map(t => incluses.has(t.id)
+        ? `<label class="case incluse"><input type="checkbox" checked disabled><span>${t.nom}</span><span class="info">${tr("Inclus")}</span></label>`
+        : `<label class="case"><input type="checkbox" data-tache="${t.id}" ${b.taches.includes(t.id) ? "checked" : ""}>
+      <span>${t.nom}</span><span class="info"><b>+${euros(t.prixC)}</b><small>${duree(t.minutes)}</small></span></label>`).join("")}</div>`).join("");
+    if (formules.length) h += `<p class="petit">${tr("Les tâches de la formule bénéficient de sa remise ; les options en plus sont au prix indiqué.")}</p>`;
     if (r.noteTaches) h += `<div class="note alerte" style="margin-top:10px">${esc(r.noteTaches)}</div>`;
     if (r.surfaceReferenceM2 > 0 && chiffrees.some(t => t.parSurface)) h += `<p class="petit">Tâches marquées à la surface : prix pour ${r.surfaceReferenceM2} m², au prorata au-delà.</p>`;
   }
   if (!r.toujoursSurDevis && b.rubriqueId !== "special") {
-    h += titre("Une autre demande ?") + `<div class="carte">${b.tachesPerso.map((t, i) => `<div style="display:flex;align-items:center"><span style="flex:1">• ${esc(t)}</span>
+    h += titre("Une demande spécifique ?") + `<div class="carte">${b.tachesPerso.map((t, i) => `<div style="display:flex;align-items:center"><span style="flex:1">• ${esc(t)}</span>
       <button type="button" class="lien-bouton" style="color:var(--erreur)" data-retirer="${i}">Retirer</button></div>`).join("")}
       <div style="display:flex;gap:8px;align-items:center"><input class="texte" id="saisie-perso" maxlength="120" placeholder="Ex. : nettoyer l'intérieur du lave-linge" style="margin:0">
       <button type="button" class="lien-bouton" id="ajouter-perso">Ajouter</button></div>
-      <p class="petit">Chaque tâche particulière compte 15 min dans l'estimation ; le Cleaneur la confirme.</p></div>`;
+      <p class="petit">Pour un besoin vraiment particulier : chaque demande compte 15 min dans l'estimation et le Cleaneur la confirme.</p></div>`;
   }
   if (b.rubriqueId === "home") h += `<div class="carte" style="margin-top:14px">${caseCocher("Des animaux vivent dans le logement", "animaux", b.animaux)}</div>`;
   if (b.rubriqueId === "office" || b.rubriqueId === "commerce") h += `<div class="carte" style="margin-top:14px">${caseCocher("Les lieux seront vides pendant l'intervention", "lieuxVides", !!b.lieuxVides)}</div>`;
@@ -371,6 +385,13 @@ function questionsVehicule() {
 /** Location saisonnière : étapes par pièce, étapes personnalisées, consommables, horaires, mémoire (EtapesLocation dans l'appli). */
 const titreAction = (t, id, action) => `<div style="display:flex;align-items:baseline;gap:10px;margin:26px 0 10px"><h3 style="margin:0;flex:1">${t}</h3>`
   + `<button type="button" class="lien-bouton" id="${id}">${action}</button></div>`;
+/** Formule en cours : Premium ou Confort quand toutes ses tâches sont cochées (la plus complète d'abord), sinon Standard. */
+function formuleActive(b, packs, chiffrees) {
+  const complet = id => { const p = packs.find(x => x.id === id); const ids = p ? p.tacheIds.filter(t => chiffrees.some(c => c.id === t)) : [];
+    return ids.length > 0 && ids.every(t => b.taches.includes(t)); };
+  return complet("prestige") ? "prestige" : complet("confort") ? "confort" : "standard";
+}
+
 function etapesLocation() {
   const etapes = etapesDe(b), perso = b.etapesPerso || [], conso = consommablesDe(b);
   return titreAction("Étapes à valider en photo", "pack-etapes", "Pack conseillé")
@@ -646,6 +667,13 @@ document.addEventListener("click", async e => {
   }
   if (ds.moins) return maj({ [ds.moins]: Math.max(+ds.min, (b[ds.moins] ?? 1) - +ds.pas) });
   if (ds.plus) return maj({ [ds.plus]: Math.min(+ds.max, (b[ds.plus] ?? 1) + +ds.pas) });
+  if (ds.formule) {
+    const r = rubrique(b.rubriqueId), packs = packsPour(r, b.typeLieuId), chiffrees = tachesChiffrees(b);
+    const dansPacks = new Set(packs.flatMap(p => p.tacheIds));
+    const f = packs.find(p => p.id === ds.formule);
+    const ids = (f ? f.tacheIds : []).filter(id => chiffrees.some(t => t.id === id));
+    return maj({ taches: [...new Set([...ids, ...b.taches.filter(id => !dansPacks.has(id))])] });
+  }
   if (ds.pack) {
     const packs = packsPour(rubrique(b.rubriqueId), b.typeLieuId);
     const p = packs.find(x => x.id === ds.pack);

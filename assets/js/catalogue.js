@@ -40,7 +40,7 @@ const prestige = [...confort, "four", "hotte", "placards_cuisine", "placards_arm
 const packsLogement = [
   { id: "essentiel", nom: "Essentiel", remisePct: 5, tacheIds: essentiel },
   { id: "confort", nom: "Confort", remisePct: 10, tacheIds: confort },
-  { id: "prestige", nom: "Prestige", remisePct: 15, tacheIds: prestige },
+  { id: "prestige", nom: "Premium", remisePct: 15, tacheIds: prestige },
 ];
 
 /* ---- Location saisonnière : étapes et consommables (généré) ---- */
@@ -166,7 +166,7 @@ export const RUBRIQUES = [
     packs: [
       { id: "essentiel", nom: "Essentiel", remisePct: 5, tacheIds: ["sanitaires", "detartrage", "frigo", "adhesif"] },
       { id: "confort", nom: "Confort", remisePct: 10, tacheIds: ["sanitaires", "detartrage", "frigo", "adhesif", "four", "vitres", "penderies"] },
-      { id: "prestige", nom: "Prestige", remisePct: 15, tacheIds: ["sanitaires", "detartrage", "frigo", "adhesif", "four", "vitres", "penderies",
+      { id: "prestige", nom: "Premium", remisePct: 15, tacheIds: ["sanitaires", "detartrage", "frigo", "adhesif", "four", "vitres", "penderies",
         "hotte", "placards_cuisine", "volets", "murs", "balcon", "cave"] },
     ],
     surfaceReferenceM2: 60,
@@ -199,7 +199,7 @@ export const RUBRIQUES = [
     packs: [
       { id: "essentiel", nom: "Essentiel", remisePct: 5, tacheIds: ["aspiration", "tableau", "vitres_int", "coffre"] },
       { id: "confort", nom: "Confort", remisePct: 10, tacheIds: ["aspiration", "tableau", "vitres_int", "coffre", "lavage_main", "vitres_ext", "jantes"] },
-      { id: "prestige", nom: "Prestige", remisePct: 15, tacheIds: ["aspiration", "tableau", "vitres_int", "coffre", "lavage_main", "vitres_ext", "jantes", "plastiques_protection", "moquettes", "anti_odeurs", "bas_caisse", "cire"] },
+      { id: "prestige", nom: "Premium", remisePct: 15, tacheIds: ["aspiration", "tableau", "vitres_int", "coffre", "lavage_main", "vitres_ext", "jantes", "plastiques_protection", "moquettes", "anti_odeurs", "bas_caisse", "cire"] },
     ] },
   { id: "textiles", nom: "Canapés et textiles", sousTitre: "Canapés, matelas et tapis", icone: "canape", tauxHoraireC: 3000, salissureSurTemps: false, affichagePrix: "PAR_ELEMENT",
     inclus: "Aspiration en profondeur · Shampoing par injection-extraction · Traitement des taches courantes",
@@ -210,7 +210,7 @@ export const RUBRIQUES = [
     packs: [
       { id: "essentiel", nom: "Essentiel", remisePct: 5, tacheIds: ["detachage"] },
       { id: "confort", nom: "Confort", remisePct: 10, tacheIds: ["detachage", "desodorisation", "acariens"] },
-      { id: "prestige", nom: "Prestige", remisePct: 15, tacheIds: ["detachage", "desodorisation", "acariens", "protection", "sechage"] },
+      { id: "prestige", nom: "Premium", remisePct: 15, tacheIds: ["detachage", "desodorisation", "acariens", "protection", "sechage"] },
     ] },
   { id: "construction", nom: "Fin de chantier", sousTitre: "Éliminer la poussière après les travaux", icone: "chantier", tauxHoraireC: 3800, salissureSurTemps: true,
     inclus: "Aspiration des poussières de chantier (filtre HEPA) · Sols lavés selon leur nature · Vitres et menuiseries intérieures · Sanitaires et cuisine · Retrait des traces et étiquettes courantes",
@@ -239,10 +239,10 @@ export const RUBRIQUES = [
     packs: [
     { id: "essentiel", nom: "Essentiel", remisePct: 5, tacheIds: ["surfaces", "eviers", "siphons", "poubelles"], types: PROS_CUISINE },
     { id: "confort", nom: "Confort", remisePct: 10, tacheIds: ["surfaces", "eviers", "siphons", "poubelles", "murs", "aerations", "poignees", "reserve"], types: PROS_CUISINE },
-    { id: "prestige", nom: "Prestige", remisePct: 15, tacheIds: ["surfaces", "eviers", "siphons", "poubelles", "murs", "aerations", "poignees", "reserve", "plafond", "plinthes", "vestiaires", "haccp"], types: PROS_CUISINE },
+    { id: "prestige", nom: "Premium", remisePct: 15, tacheIds: ["surfaces", "eviers", "siphons", "poubelles", "murs", "aerations", "poignees", "reserve", "plafond", "plinthes", "vestiaires", "haccp"], types: PROS_CUISINE },
     { id: "essentiel", nom: "Essentiel", remisePct: 5, tacheIds: ["eviers", "surfaces"], types: ["particulier"] },
     { id: "confort", nom: "Confort", remisePct: 10, tacheIds: ["eviers", "surfaces", "murs", "poignees"], types: ["particulier"] },
-    { id: "prestige", nom: "Prestige", remisePct: 15, tacheIds: ["eviers", "surfaces", "murs", "poignees", "vitres", "aerations", "congelateur"], types: ["particulier"] },
+    { id: "prestige", nom: "Premium", remisePct: 15, tacheIds: ["eviers", "surfaces", "murs", "poignees", "vitres", "aerations", "congelateur"], types: ["particulier"] },
     ],
     surfaceReferenceM2: 30, frequences: [["jour", "Chaque jour (après le service)"], ["plusieurs", "Plusieurs fois par semaine"], ["semaine", "Chaque semaine"], ["deux_semaines", "Toutes les 2 semaines"]], moments: [["midi", "Après le service du midi"], ["soir", "Après le service du soir"], ["avant", "Avant l'ouverture"], ["fermeture", "Jour de fermeture"]],
     naturesSalissure: ["Graisse incrustée", "Carbone et calamine", "Calcaire", "Odeurs", "Moisissures"] },
@@ -270,7 +270,7 @@ export const RUBRIQUES = [
     packs: [
       { id: "essentiel", nom: "Essentiel", remisePct: 5, tacheIds: ["contact", "conteneurs", "paillasson", "reassort"] },
       { id: "confort", nom: "Confort", remisePct: 10, tacheIds: ["contact", "conteneurs", "paillasson", "reassort", "claviers", "kitchenette", "vitrine", "comptoir", "attente"] },
-      { id: "prestige", nom: "Prestige", remisePct: 15, tacheIds: ["contact", "conteneurs", "paillasson", "reassort", "claviers", "kitchenette", "vitrine", "comptoir", "attente", "cloisons", "reunion", "ecrans", "moquette", "cabinets"] },
+      { id: "prestige", nom: "Premium", remisePct: 15, tacheIds: ["contact", "conteneurs", "paillasson", "reassort", "claviers", "kitchenette", "vitrine", "comptoir", "attente", "cloisons", "reunion", "ecrans", "moquette", "cabinets"] },
     ],
     surfaceReferenceM2: 100,
     frequences: [["plusieurs", "Plusieurs fois par semaine"], ["semaine", "Chaque semaine"], ["deux_semaines", "Toutes les 2 semaines"], ["mois", "Chaque mois"]],
@@ -307,7 +307,7 @@ export const RUBRIQUES = [
     packs: [
       { id: "essentiel", nom: "Essentiel", remisePct: 5, tacheIds: ["contact", "conteneurs", "paillasson", "reassort"] },
       { id: "confort", nom: "Confort", remisePct: 10, tacheIds: ["contact", "conteneurs", "paillasson", "reassort", "kitchenette", "vitrine", "comptoir", "vestiaires", "etablis", "cartons", "araignees"] },
-      { id: "prestige", nom: "Prestige", remisePct: 15, tacheIds: ["contact", "conteneurs", "paillasson", "reassort", "kitchenette", "vitrine", "comptoir", "vestiaires", "etablis", "cartons", "araignees", "cloisons", "presentoirs", "miroirs", "reserve", "autolaveuse", "appareils", "rayonnages", "quais"] },
+      { id: "prestige", nom: "Premium", remisePct: 15, tacheIds: ["contact", "conteneurs", "paillasson", "reassort", "kitchenette", "vitrine", "comptoir", "vestiaires", "etablis", "cartons", "araignees", "cloisons", "presentoirs", "miroirs", "reserve", "autolaveuse", "appareils", "rayonnages", "quais"] },
     ],
     surfaceReferenceM2: 100,
     frequences: [["plusieurs", "Plusieurs fois par semaine"], ["semaine", "Chaque semaine"], ["deux_semaines", "Toutes les 2 semaines"], ["mois", "Chaque mois"]],
@@ -339,7 +339,7 @@ export const RUBRIQUES = [
     packs: [
       { id: "essentiel", nom: "Essentiel", remisePct: 5, tacheIds: ["boites", "paillasson", "conteneurs", "rampes", "araignees"] },
       { id: "confort", nom: "Confort", remisePct: 10, tacheIds: ["boites", "paillasson", "conteneurs", "rampes", "araignees", "vitrerie", "ascenseur", "local_poubelles", "huile"] },
-      { id: "prestige", nom: "Prestige", remisePct: 15, tacheIds: ["boites", "paillasson", "conteneurs", "rampes", "araignees", "vitrerie", "ascenseur", "local_poubelles", "huile", "escaliers", "portes", "velos", "caves", "balayage", "rampes_acces"] },
+      { id: "prestige", nom: "Premium", remisePct: 15, tacheIds: ["boites", "paillasson", "conteneurs", "rampes", "araignees", "vitrerie", "ascenseur", "local_poubelles", "huile", "escaliers", "portes", "velos", "caves", "balayage", "rampes_acces"] },
     ],
     surfaceReferenceM2: 200, noteTaches: "Le hall et chaque annexe (local poubelles, caves, parking, cour…) ont leur propre prix, ajouté au total.",
     occasions: [{ id: "ag", nom: "Assemblée générale", packId: "confort" }, { id: "vente_lot", nom: "Visite ou vente d'un lot", packId: "confort" }, { id: "demenagement", nom: "Après un déménagement dans l'immeuble", packId: "confort" }, { id: "autre", nom: "Autre", packId: "" }] },
@@ -361,7 +361,7 @@ export const RUBRIQUES = [
     packs: [
       { id: "essentiel", nom: "Essentiel", remisePct: 5, tacheIds: ["encadrements"] },
       { id: "confort", nom: "Confort", remisePct: 10, tacheIds: ["encadrements", "rails", "moustiquaires", "stores", "enseigne", "rideau"] },
-      { id: "prestige", nom: "Prestige", remisePct: 15, tacheIds: ["encadrements", "rails", "moustiquaires", "stores", "enseigne", "rideau", "volets", "etiquettes", "hauteur", "toiture"] },
+      { id: "prestige", nom: "Premium", remisePct: 15, tacheIds: ["encadrements", "rails", "moustiquaires", "stores", "enseigne", "rideau", "volets", "etiquettes", "hauteur", "toiture"] },
     ],
     surfaceReferenceM2: 20,
     frequences: [["mois", "Chaque mois"], ["deux_mois", "Tous les 2 mois"], ["trimestre", "Chaque trimestre"]],
@@ -389,7 +389,7 @@ export const RUBRIQUES = [
     packs: [
       { id: "essentiel", nom: "Essentiel", remisePct: 5, tacheIds: ["feuilles", "mobilier", "recoins", "huile"] },
       { id: "confort", nom: "Confort", remisePct: 10, tacheIds: ["feuilles", "mobilier", "recoins", "huile", "haute_pression", "barbecue", "garde_corps", "dechets_verts", "encombrants"] },
-      { id: "prestige", nom: "Prestige", remisePct: 15, tacheIds: ["feuilles", "mobilier", "recoins", "huile", "haute_pression", "barbecue", "garde_corps", "dechets_verts", "encombrants", "demoussage", "joints", "gouttieres", "rangement"] },
+      { id: "prestige", nom: "Premium", remisePct: 15, tacheIds: ["feuilles", "mobilier", "recoins", "huile", "haute_pression", "barbecue", "garde_corps", "dechets_verts", "encombrants", "demoussage", "joints", "gouttieres", "rangement"] },
     ],
     surfaceReferenceM2: 30,
     frequences: [["saison", "Chaque saison (4 fois par an)"], ["semestre", "Deux fois par an"]],
@@ -414,7 +414,7 @@ export const RUBRIQUES = [
     packs: [
       { id: "essentiel", nom: "Essentiel", remisePct: 5, tacheIds: ["tri", "evacuation", "tables"] },
       { id: "confort", nom: "Confort", remisePct: 10, tacheIds: ["tri", "evacuation", "tables", "sols", "traiteur", "cuisine_maison", "desodorisation"] },
-      { id: "prestige", nom: "Prestige", remisePct: 15, tacheIds: ["tri", "evacuation", "tables", "sols", "traiteur", "cuisine_maison", "desodorisation", "vaisselle", "exterieurs", "sanitaires"] },
+      { id: "prestige", nom: "Premium", remisePct: 15, tacheIds: ["tri", "evacuation", "tables", "sols", "traiteur", "cuisine_maison", "desodorisation", "vaisselle", "exterieurs", "sanitaires"] },
     ],
     surfaceReferenceM2: 100 },
   { id: "special", nom: "Prestations spécialisées", sousTitre: "Nuisibles, sinistres et désinfection", icone: "specialise", tauxHoraireC: null, salissureSurTemps: false,

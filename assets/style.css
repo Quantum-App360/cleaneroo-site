@@ -1588,3 +1588,23 @@ details.piece.complete .pastille-piece { background: #23955A; border-color: #239
 .taches-rendu li.fait { color: var(--texte); }
 .justif-rendu { font-size: 14px; margin: 10px 0 0; padding: 10px 12px; border-radius: 12px; background: var(--creux); }
 .tampon.corail { background: #FFE6DC; color: #B4502E; }
+
+/* ---------------------------------------------------------------- Formules Standard · Confort · Premium */
+.formules { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; align-items: stretch; }
+.formule { position: relative; display: flex; flex-direction: column; gap: 4px; text-align: left; padding: 18px 16px 16px; border-radius: 22px; border: 2px solid transparent;
+  background: var(--surface); box-shadow: var(--ombre-relief); cursor: pointer; font: inherit; color: var(--texte); transition: transform .15s, border-color .2s, box-shadow .2s; }
+.formule:hover { transform: translateY(-3px); }
+.formule.conseillee { background: linear-gradient(var(--surface), var(--surface)) padding-box, linear-gradient(140deg, #25B5BF, #9C8CFF) border-box; }
+.formule.choisie { border-color: var(--marque); box-shadow: var(--ombre-relief), 0 0 0 4px color-mix(in srgb, var(--marque) 14%, transparent); }
+.formule.choisie::after { content: "✓"; position: absolute; top: 12px; right: 14px; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; background: var(--marque); color: #fff; font-weight: 800; font-size: 13px; }
+.badge-formule { position: absolute; top: -11px; left: 14px; padding: 3px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 800; color: #fff; background: linear-gradient(120deg, #6B5BD6, #25B5BF); }
+.nom-formule { font-size: 18px; }
+.prix-formule { font-size: 26px; font-weight: 800; letter-spacing: -.03em; background: linear-gradient(120deg, #0F8A82, #25B5BF); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.remise-formule { font-size: 12.5px; color: var(--texte3); font-weight: 700; }
+.formule ul { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 4px; font-size: 13px; color: var(--texte2); }
+.formule li::before { content: "✓ "; color: var(--marque); font-weight: 800; }
+.formule li.tout { font-weight: 700; color: var(--texte); }
+.formule li.tout::before { content: ""; }
+.case.incluse { opacity: .75; }
+.case.incluse .info { color: var(--marque); font-weight: 800; }
+@media (max-width: 720px) { .formules { grid-template-columns: 1fr; } .formule.conseillee { order: -1; } }
