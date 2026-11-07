@@ -13,6 +13,7 @@ import { pageCompte, pageMesPrestations, arreterEcouteDemandes, retourEmail, maj
 import { marquerActif } from "./entete.js";
 import { icone, teinte, ICONES_RUBRIQUES, ICONES_INTERFACE } from "./icones.js";
 import { pageTableau, arreterTableau } from "./tableau.js";
+import { compteRenduPieces } from "./controle-ecran.js";
 import { blocEtapes, blocReassurance, installerRappel, bandeauLancement, pageChargement } from "./commun.js";
 export { bandeauLancement };
 
@@ -483,6 +484,7 @@ async function pageDemande(ref, jeton) {
       <a class="bouton secondaire" href="${mailAssurance(d, lien)}">Préparer l'e-mail à mon assureur</a></div>` : ""}
     ${annulable ? `<button type="button" class="bouton danger plein" id="annuler-demande">Annuler la demande</button>
       <p class="petit">Annulation gratuite : aucun Cleaneur n'est encore confirmé.</p>` : ""}
+    ${["EN_COURS", "A_VALIDER", "TERMINEE"].includes(d.statut) ? `<div id="compte-rendu-pieces"></div>` : ""}
   </div></section>`;
 }
 
@@ -560,6 +562,9 @@ async function afficherPage() {
     vue.innerHTML = await pageDemande(decodeURIComponent(ref || ""), decodeURIComponent(jeton || ""));
     traduire(vue);
     window.scrollTo(0, 0);
+    // Compte rendu pièce par pièce (photos avant / après, tâches, avis de l'IA) pour le client connecté.
+    const rendu = document.getElementById("compte-rendu-pieces");
+    if (rendu) compteRenduPieces(rendu, decodeURIComponent(ref || ""));
     const boite = document.getElementById("suivi-live");
     if (boite && demandeAffichee) suivreEnDirect(boite, demandeAffichee).then(f => { if (document.body.contains(boite)) arreterSuivi = f; else f(); });
     document.getElementById("annuler-demande")?.addEventListener("click", async e => {

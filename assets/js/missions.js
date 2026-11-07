@@ -7,6 +7,7 @@ import { icone } from "./icones.js";
 import { traduire, tr } from "./langue.js";
 import { missionsDisponibles, mesMissions, prendreMission, avancerMission, envoyerPosition, lienPhotoDemande } from "./donnees.js";
 import { afficherCarte, coordonnees } from "./cartes.js";
+import { brancherControle } from "./controle-ecran.js";
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const ETAPE = {
@@ -61,6 +62,7 @@ function carteMission(m) {
     ${m.remarque ? `<p class="petit" style="margin:4px 0 0">« ${esc(m.remarque)} »</p>` : ""}
     ${blocAcces(m)}
     ${m.statut === "EN_ROUTE" ? `<p class="petit partage-actif" style="margin:8px 0 0">📍 Position partagée avec le client pendant le trajet</p>` : ""}
+    ${["SUR_PLACE", "EN_COURS"].includes(m.statut) ? `<div class="controle-mission" data-controle="${esc(m.reference)}"></div>` : ""}
     <div class="boutons" style="margin-top:10px">
       ${bouton ? `<button type="button" class="bouton" data-etape="${esc(m.reference)}">${bouton}</button>` : ""}
       <a class="bouton secondaire" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${m.rue} ${m.code_postal} ${m.ville}`)}">Itinéraire</a>
@@ -154,13 +156,19 @@ export async function brancherMissions(vue, p) {
       deja_prise: "Un autre Cleaneur a pris cette mission juste avant vous.", ouverture: "Les missions commencent le 1er janvier 2027.",
       dossier: "Votre dossier doit être validé pour prendre des missions." }[r] || "Le service est momentanément indisponible. Réessayez dans quelques minutes.");
   });
+  // Contrôle pièce par pièce : « J'ai terminé » reste grisé tant qu'une pièce n'est pas complète.
+  boite.querySelectorAll("[data-controle]").forEach(c => {
+    const m = miennes.find(x => x.reference === c.dataset.controle);
+    const fin = c.closest(".carte").querySelector(`[data-etape="${CSS.escape(m.reference)}"]`);
+    brancherControle(c, m, complet => { if (fin && m.statut === "EN_COURS") { fin.disabled = !complet; fin.title = complet ? "" : tr("Terminez le contrôle de chaque pièce."); } });
+  });
   boite.querySelectorAll("[data-etape]").forEach(b => b.onclick = async () => {
     const ref = b.dataset.etape, m = miennes.find(x => x.reference === ref), suivant = ETAPE[m.statut][1];
     const err = b.closest(".carte").querySelector("[data-erreur-mission]");
     if (suivant === "EN_ROUTE" && !(await demanderGeoloc())) { err.textContent = tr("Autorisez la géolocalisation pour partir : le client suit votre trajet."); return; }
     b.disabled = true;
     const r = await avancerMission(ref, suivant).catch(() => "erreur");
-    if (r !== "ok") { b.disabled = false; err.textContent = tr("Le service est momentanément indisponible. Réessayez dans quelques minutes."); return; }
+    if (r !== "ok") { b.disabled = false; err.textContent = tr(r === "controle" ? "Terminez le contrôle de chaque pièce : photos, tâches cochées, avis de l'IA ou justification." : "Le service est momentanément indisponible. Réessayez dans quelques minutes."); return; }
     if (suivant === "EN_ROUTE") partagerPosition(ref);
     if (suivant === "SUR_PLACE") {
       // Dernière position envoyée à l'arrivée, puis plus rien.

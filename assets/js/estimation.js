@@ -1,6 +1,6 @@
 // Calcul de l'estimation : copie EXACTE de Estimation.kt (§ 8 du cahier des charges), dans le même ordre.
 import { REGLES, duree, DATE_PREMIERES_INTERVENTIONS, pctZone, libelleZone } from "./regles.js";
-import { prixSpecialC, minutesSpeciales, equipementsPour, surfaceEffective, TYPES_IMMEUBLE, tranchesConvives, minutesEtapesLocation, PACK_ETAPES_CONSEILLE, PACK_CONSOMMABLES_CONSEILLE } from "./catalogue.js";
+import { prixSpecialC, minutesSpeciales, equipementsPour, surfaceEffective, TYPES_IMMEUBLE, tranchesConvives, minutesEtapesLocation, prixOptionsLocationC, PACK_ETAPES_CONSEILLE, PACK_CONSOMMABLES_CONSEILLE } from "./catalogue.js";
 import { rubrique, formulesPour, TYPES_LIEU, RUBRIQUES_CREDIT_IMPOT, TYPES_VITRES_ELIGIBLES, prixLigne, minutesLigne, libelleLigne,
   arrondiEuro, tachesPour, tacheChiffree, packsPour, remisePack } from "./catalogue.js";
 
@@ -20,7 +20,7 @@ const ENTREE_DEFAUT = {
   niveauxSupplementaires: 0, minutesEtapesLocation: 0, consommablesAControler: false, salissure: "NORMAL",
   taches: [], remisePackPct: 0, remisePackC: null, tachesPersonnalisees: 0, dimanche: false, creneauMalin: false,
   engagementMois: 0, espacePersonnel: true, typeLieuId: "", panier: [], minutesEnPlus: 0, minimumApresMin: 0,
-  lavageDrapsLits: 0, zonePct: 0, suiviSms: false,
+  lavageDrapsLits: 0, zonePct: 0, suiviSms: false, optionsLocationC: 0,
 };
 
 export function calculer(entree) {
@@ -38,7 +38,7 @@ export function calculer(entree) {
   const zoneEuro = c => (zp ? arrondiEuro(c * (100 + zp) / 100) : c);
 
   // 1. Temps de base (textiles : somme des éléments du panier, pour le planning seulement)
-  let dureeBase = 0;
+  let dureeBase = 0, dureePrix = 0, tSansOptions = null;
   if (forfait) {
     dureeBase = arrondiQuartSup(Math.max(REGLES.DUREE_MIN_TEXTILES_MIN, panier.reduce((s, l) => s + minutesLigne(l), 0)));
   } else if (!vehicule) {
@@ -48,17 +48,20 @@ export function calculer(entree) {
     if (r.salissureSurTemps) t *= (100 + sal.tempsPct) / 100;
     t += (e.niveauxSupplementaires || 0) * REGLES.DUREE_PAR_NIVEAU_SUPP_MIN;
     if (e.rubriqueId === "rental") {
+      // Étapes en plus : comptées dans le temps (planning) mais facturées au forfait, pas au temps.
+      tSansOptions = t + (e.consommablesAControler ? REGLES.CONSOMMABLES_MIN : 0);
       t += e.minutesEtapesLocation || 0;
       if (e.consommablesAControler) t += REGLES.CONSOMMABLES_MIN;
     }
     t += e.minutesEnPlus || 0;           // ex. 15 min par fenêtre en fin de chantier
     t = Math.max(t, e.minimumApresMin || 0); // ex. minimum 2 h en fin de chantier
     dureeBase = arrondiQuartSup(t);
+    dureePrix = tSansOptions == null ? dureeBase : arrondiQuartSup(tSansOptions);
   }
 
   // 2. Prix de base (textiles : une ligne par élément du panier, au prix forfaitaire)
   // Prestations spécialisées : prix fixé à l'avance (forfait + m²), calculé dans entreeEstimation.
-  const prixBase = vehicule ? 0 : forfait ? panier.reduce((s, l) => s + zone(prixLigne(l)), 0) : e.prixImposeC > 0 ? zone(e.prixImposeC) : zone(Math.round(taux * dureeBase / 60));
+  const prixBase = vehicule ? 0 : forfait ? panier.reduce((s, l) => s + zone(prixLigne(l)), 0) : e.prixImposeC > 0 ? zone(e.prixImposeC) : zone(Math.round(taux * (dureePrix || dureeBase) / 60));
   if (forfait) panier.forEach(l => lignes.push({ libelle: libelleLigne(l), montantC: zone(prixLigne(l)) }));
   else if (!vehicule) lignes.push({ libelle: `${r.nom} · ${duree(dureeBase)}`, montantC: prixBase });
 
@@ -79,6 +82,8 @@ export function calculer(entree) {
   const tachesMin = taches.reduce((s, t) => s + t.minutes, 0);
   taches.forEach(t => lignes.push({ libelle: t.nom, montantC: prixTache(t) }));
   sousTotal += tachesC;
+  // Étapes en plus de la location : petits forfaits (2, 4 ou 6 €), les mêmes dans toutes les zones.
+  if (e.optionsLocationC > 0) { lignes.push({ libelle: "Étapes en plus", montantC: e.optionsLocationC }); sousTotal += e.optionsLocationC; }
   // Option « Lavage des draps » (location saisonnière) : prix fixe par lit, le même dans toutes les zones.
   const lits = e.lavageDrapsLits || 0;
   if (lits > 0) {
@@ -287,6 +292,7 @@ export function entreeEstimation(b, espacePersonnel, debut) {
     dureeBaseImposeeMin: dureeImposee,
     niveauxSupplementaires: ["home", "moving"].includes(b.rubriqueId) ? Math.max(0, b.niveaux - 1) : 0,
     minutesEtapesLocation: b.rubriqueId === "rental" ? minutesEtapesLocation(etapesDe(b), (b.etapesPerso || []).length, b.chambres, b.sdb) : 0,
+    optionsLocationC: b.rubriqueId === "rental" ? prixOptionsLocationC(etapesDe(b), (b.etapesPerso || []).length, b.chambres, b.sdb) : 0,
     consommablesAControler: b.rubriqueId === "rental" && consommablesDe(b).length > 0,
     salissure: b.salissure, taches: tachesChoisies, remisePackPct: pack ? pack.remisePct : 0, remisePackC: pack ? remisePack(pack, chiffrees) * n : null,
     tachesPersonnalisees: b.tachesPerso.length,

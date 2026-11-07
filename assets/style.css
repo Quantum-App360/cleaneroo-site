@@ -1536,3 +1536,55 @@ p.direct i { width: 8px; height: 8px; border-radius: 50%; background: #23955A; b
 /* Étapes de location : supplément en euros, durée en petit dessous */
 .case .info b { display: block; color: var(--texte); font-weight: 800; text-align: right; }
 .case .info small { display: block; font-size: 11.5px; color: var(--texte3); text-align: right; }
+
+/* ================================================================================================
+   Contrôle de fin de mission, pièce par pièce (controle-ecran.js)
+   ================================================================================================ */
+.controle { margin-top: 14px; padding: 14px; border-radius: 20px; background: var(--creux); }
+.controle-tete { display: flex; justify-content: space-between; align-items: baseline; }
+.controle-tete span { font-weight: 800; color: var(--marque); }
+.jauge { height: 8px; border-radius: 4px; background: var(--surface); overflow: hidden; margin-top: 8px; }
+.jauge i { display: block; height: 100%; border-radius: 4px; background: linear-gradient(90deg, #25B5BF, #23955A); transition: width .4s; }
+details.piece { background: var(--surface); border-radius: 16px; margin-bottom: 8px; box-shadow: var(--ombre); }
+details.piece summary { display: flex; align-items: center; gap: 10px; padding: 12px 14px; cursor: pointer; list-style: none; }
+details.piece summary::-webkit-details-marker { display: none; }
+details.piece summary b { flex: 1; }
+details.piece summary small { color: var(--texte3); font-weight: 700; }
+.pastille-piece { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; border: 2px solid var(--separateur); color: #fff; font-weight: 800; font-size: 13px; flex: none; }
+details.piece.complete .pastille-piece { background: #23955A; border-color: #23955A; }
+.piece-corps { padding: 0 14px 14px; }
+.photos-piece { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+.photo-piece { position: relative; display: grid; place-items: center; gap: 6px; aspect-ratio: 4 / 3; border-radius: 14px; border: 2px dashed var(--separateur); cursor: pointer; overflow: hidden;
+  color: var(--texte2); font-weight: 700; font-size: 13px; text-align: center; background: var(--creux); }
+.photo-piece .ico { width: 30px; height: 30px; color: var(--marque); }
+.photo-piece img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.photo-piece span { position: relative; z-index: 1; }
+.photo-piece.prise { border-style: solid; border-color: transparent; }
+.photo-piece.prise span { position: absolute; left: 6px; right: 6px; bottom: 6px; padding: 4px 8px; border-radius: 10px; background: rgba(11, 47, 51, .7); color: #fff; }
+.photo-piece.bloquee { opacity: .45; cursor: not-allowed; }
+.photo-piece.envoi::after { content: ""; position: absolute; inset: 0; background: rgba(255, 255, 255, .6); animation: respire 1s infinite; }
+.photo-piece input { position: absolute; opacity: 0; pointer-events: none; }
+.taches-piece .case { padding: 8px 0; }
+.ia { display: flex; gap: 10px; align-items: flex-start; padding: 12px; border-radius: 14px; margin-top: 10px; }
+.ia .ico { width: 22px; height: 22px; flex: none; margin-top: 2px; }
+.ia p { margin: 4px 0 0; font-size: 14px; }
+.ia ul { margin: 6px 0 0; padding-left: 0; list-style: none; display: grid; gap: 6px; font-size: 14px; }
+.ia-ok { background: color-mix(in srgb, #23955A 12%, var(--surface)); color: var(--texte); }
+.ia-ok .ico { color: #23955A; }
+.ia-ecart { background: color-mix(in srgb, #E5603A 12%, var(--surface)); }
+.ia-ecart .ico, .ia-erreur .ico { color: #E5603A; }
+.ia-erreur { background: var(--creux); }
+.ia-cours { padding: 0; }
+.gravite { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 800; margin-right: 4px; }
+.g-faible { background: var(--creux); color: var(--texte2); } .g-moyenne { background: #FFF2CF; color: #8A5916; } .g-forte { background: #FFE6DC; color: #B4502E; }
+.justif { margin-top: 10px; display: grid; gap: 8px; }
+.justif textarea { width: 100%; }
+.piece-rendu .haut { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.photos-rendu { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0; }
+.photos-rendu figure { margin: 0; }
+.photos-rendu img, .photos-rendu .sans-photo { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 12px; display: grid; place-items: center; background: var(--creux); }
+.photos-rendu figcaption { font-size: 12.5px; color: var(--texte3); margin-top: 4px; font-weight: 700; }
+.taches-rendu { list-style: none; padding: 0; margin: 0; display: grid; gap: 2px; font-size: 14px; color: var(--texte3); }
+.taches-rendu li.fait { color: var(--texte); }
+.justif-rendu { font-size: 14px; margin: 10px 0 0; padding: 10px 12px; border-radius: 12px; background: var(--creux); }
+.tampon.corail { background: #FFE6DC; color: #B4502E; }

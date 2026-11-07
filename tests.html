@@ -3,8 +3,8 @@
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Tests des prix</title>
 <meta name="robots" content="noindex">
 <style>body{font:15px system-ui;margin:24px}li.ok{color:#2E9E72}li.ko{color:#D0485A;font-weight:700}</style>  <!-- chargement : généré par outils/generer_pages.py, ne pas modifier à la main -->
-  <script type="importmap">{"imports":{"/assets/js/agenda.js":"/assets/js/agenda.js?v=2026110722","/assets/js/app.js":"/assets/js/app.js?v=2026110722","/assets/js/cartes.js":"/assets/js/cartes.js?v=2026110722","/assets/js/catalogue.js":"/assets/js/catalogue.js?v=2026110722","/assets/js/commun.js":"/assets/js/commun.js?v=2026110722","/assets/js/compte.js":"/assets/js/compte.js?v=2026110722","/assets/js/controle.js":"/assets/js/controle.js?v=2026110722","/assets/js/compteur.js":"/assets/js/compteur.js?v=2026110722","/assets/js/donnees.js":"/assets/js/donnees.js?v=2026110722","/assets/js/entete.js":"/assets/js/entete.js?v=2026110722","/assets/js/espaces.js":"/assets/js/espaces.js?v=2026110722","/assets/js/estimation.js":"/assets/js/estimation.js?v=2026110722","/assets/js/gestion.js":"/assets/js/gestion.js?v=2026110722","/assets/js/icones.js":"/assets/js/icones.js?v=2026110722","/assets/js/langue.js":"/assets/js/langue.js?v=2026110722","/assets/js/missions.js":"/assets/js/missions.js?v=2026110722","/assets/js/page.js":"/assets/js/page.js?v=2026110722","/assets/js/regles.js":"/assets/js/regles.js?v=2026110722","/assets/js/reserver.js":"/assets/js/reserver.js?v=2026110722","/assets/js/sons.js":"/assets/js/sons.js?v=2026110722","/assets/js/suivi-live.js":"/assets/js/suivi-live.js?v=2026110722","/assets/js/tableau.js":"/assets/js/tableau.js?v=2026110722","/assets/js/villes.js":"/assets/js/villes.js?v=2026110722"}}</script>
-  <link rel="stylesheet" href="/assets/style.css?v=2026110722">
+  <script type="importmap">{"imports":{"/assets/js/agenda.js":"/assets/js/agenda.js?v=2026110724","/assets/js/app.js":"/assets/js/app.js?v=2026110724","/assets/js/cartes.js":"/assets/js/cartes.js?v=2026110724","/assets/js/catalogue.js":"/assets/js/catalogue.js?v=2026110724","/assets/js/commun.js":"/assets/js/commun.js?v=2026110724","/assets/js/compte.js":"/assets/js/compte.js?v=2026110724","/assets/js/controle.js":"/assets/js/controle.js?v=2026110724","/assets/js/controle-ecran.js":"/assets/js/controle-ecran.js?v=2026110724","/assets/js/compteur.js":"/assets/js/compteur.js?v=2026110724","/assets/js/donnees.js":"/assets/js/donnees.js?v=2026110724","/assets/js/entete.js":"/assets/js/entete.js?v=2026110724","/assets/js/espaces.js":"/assets/js/espaces.js?v=2026110724","/assets/js/estimation.js":"/assets/js/estimation.js?v=2026110724","/assets/js/gestion.js":"/assets/js/gestion.js?v=2026110724","/assets/js/icones.js":"/assets/js/icones.js?v=2026110724","/assets/js/langue.js":"/assets/js/langue.js?v=2026110724","/assets/js/missions.js":"/assets/js/missions.js?v=2026110724","/assets/js/page.js":"/assets/js/page.js?v=2026110724","/assets/js/regles.js":"/assets/js/regles.js?v=2026110724","/assets/js/reserver.js":"/assets/js/reserver.js?v=2026110724","/assets/js/sons.js":"/assets/js/sons.js?v=2026110724","/assets/js/suivi-live.js":"/assets/js/suivi-live.js?v=2026110724","/assets/js/tableau.js":"/assets/js/tableau.js?v=2026110724","/assets/js/villes.js":"/assets/js/villes.js?v=2026110724"}}</script>
+  <link rel="stylesheet" href="/assets/style.css?v=2026110724">
   <!-- /chargement -->
 </head>
 <body>
@@ -165,7 +165,7 @@ egal("bureaux : vues suggérées seulement", vuesCompletes({ rubriqueId: "office
 e = parcours({ rubriqueId: "rental", formuleId: "court", etapesChoisies: [...PACK_ETAPES_CONSEILLE], consommablesChoisis: [...PACK_CONSOMMABLES_CONSEILLE] });
 egal("location T2 + packs conseillés : 2 h", e.dureeMin, 120); egal("location T2 + packs conseillés : 60,00 €", e.totalC, 6000);
 e = parcours({ rubriqueId: "rental", formuleId: "court", etapesChoisies: [...PACK_ETAPES_CONSEILLE, "plaques"] });
-egal("location T2 + plaques, four, micro-ondes : 2 h 15", e.dureeMin, 135); egal("location T2 + plaques : 67,50 €", e.totalC, 6750);
+egal("location T2 + plaques, four, micro-ondes : 2 h 15", e.dureeMin, 135); egal("location T2 + plaques : 58,50 € (option au forfait de 6 €)", e.totalC, 5850);
 egal("étape par chambre : 5 min × 2", minutesEtapesLocation(["sous_lit"], 0, 2, 1), 10);
 egal("studio = 1 chambre", minutesEtapesLocation(["sous_lit"], 0, 0, 1), 5);
 egal("2 étapes personnalisées : 20 min", minutesEtapesLocation([], 2, 2, 1), 20);
@@ -305,8 +305,13 @@ import("./assets/js/catalogue.js").then(() => {});
     const { ETAPES_LOCATION, ETAPES_DEPART, prixEtapeLocationC } = await import("./assets/js/catalogue.js");
     egal("étapes : toutes les incluses cochées au départ", ETAPES_LOCATION.filter(e => !e.minutes).every(e => ETAPES_DEPART().includes(e.id)), true);
     egal("étapes : aucune payante cochée au départ", ETAPES_LOCATION.filter(e => e.minutes && ETAPES_DEPART().includes(e.id)).length, 0);
-    egal("étape en plus : 15 min = 7,50 €", prixEtapeLocationC({ minutes: 15, piece: "cuisine" }, 2, 1), 750);
-    egal("étape de chambre : × 2 chambres", prixEtapeLocationC({ minutes: 5, piece: "chambre" }, 2, 1), 500);
+    egal("option petite (5 min) : 2 €", prixEtapeLocationC({ minutes: 5, piece: "cuisine" }, 2, 1), 200);
+    egal("option moyenne (15 min) : 4 €", prixEtapeLocationC({ minutes: 15, piece: "cuisine" }, 2, 1), 400);
+    egal("option grande (20 min) : 6 €", prixEtapeLocationC({ minutes: 20, piece: "cuisine" }, 2, 1), 600);
+    egal("option de chambre : × 2 chambres", prixEtapeLocationC({ minutes: 5, piece: "chambre" }, 2, 1), 400);
+    const locBase = { rubriqueId: "rental", formuleId: "court", chambres: 2, sdb: 1 };
+    const sansOpt = parcours({ ...locBase, etapesChoisies: ETAPES_DEPART() }), avecFour = parcours({ ...locBase, etapesChoisies: [...ETAPES_DEPART(), "four_micro"].filter(Boolean) });
+    egal("location T2 : les 14 options cochées = 64 € (au lieu de 95 € au temps)", ETAPES_LOCATION.reduce((s, e) => s + prixEtapeLocationC(e, 2, 1), 0), 6400);
   }
   // Accueil vivant : prochaine prestation et « À faire » (mêmes règles que l'appli, AccueilVivant.kt)
   const { prochaine, aFaire, compteARebours } = await import("./assets/js/tableau.js");
