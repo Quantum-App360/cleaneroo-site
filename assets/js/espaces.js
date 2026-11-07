@@ -7,6 +7,7 @@ import { traduire, tr, LOCALE } from "./langue.js";
 import { DOCUMENTS_CLEANEUR, enregistrerBien, lireCalendrier } from "./donnees.js";
 import { couleurBien, voies, morceau, erreurSejour, sejoursGardes, nuits, versIcs } from "./agenda.js";
 import { afficherCarte, coordonnees } from "./cartes.js";
+import { chargeur } from "./commun.js";
 import { preremplir } from "./reserver.js";
 export { brancherMissions, demanderGeoloc } from "./missions.js";
 
@@ -115,10 +116,10 @@ export function ongletPro(p, biens) {
     </div>
     <h2 class="titre-section">${icone("calendrier", { tuile: true })}Agenda des locations</h2>
     <p class="petit" style="margin-top:0">Les séjours de vos voyageurs, lus automatiquement dans vos calendriers Airbnb, Booking, Abritel… ou ajoutés à la main si vous n'utilisez pas de calendrier.</p>
-    <div class="carte agenda-carte" id="agenda-pro"><p class="muet">Lecture de vos calendriers…</p></div>
+    <div class="carte agenda-carte" id="agenda-pro">${chargeur("Lecture de vos calendriers…", { variante: "vitre" })}</div>
     <h2 class="titre-section">${icone("termine", { tuile: true })}Ménages à programmer</h2>
     <p class="petit" style="margin-top:0">Chaque départ des ${REGLES.AGENDA_HORIZON_JOURS} prochains jours sans ménage prévu.</p>
-    <div id="a-programmer"><div class="vide-compte"><p class="muet">Lecture de vos calendriers…</p></div></div>
+    <div id="a-programmer">${chargeur("Lecture de vos calendriers…", { petit: true, variante: "eponge" })}</div>
     <h2 class="titre-section">${icone("logement", { tuile: true })}Mon parc de biens</h2>
     <p class="petit" style="margin-top:0">Reliez le calendrier de chaque bien, ou ajoutez vos séjours à la main dans l'agenda : les départs de vos voyageurs y apparaissent.</p>
     ${biens.length > 1 ? `<div class="outils-biens"><input type="search" id="cherche-bien" placeholder="${esc(tr("Rechercher un bien, une rue, une ville…"))}" aria-label="Rechercher un bien">
@@ -457,7 +458,7 @@ export function ongletCleaneur(p, docs, { dossier, profil }) {
   const etapes = preparationCleaneur(p, docs), faites = etapes.filter(e => e[1]).length;
   const admin = p.role === "admin";
   return `${admin ? `<p style="margin:0 0 10px"><span class="tampon">Accès administrateur</span></p>` : ""}
-    <div id="missions-cleaneur"><div class="vide-compte"><p class="muet">Chargement…</p></div></div>
+    <div id="missions-cleaneur">${chargeur("Chargement de vos missions…")}</div>
     ${admin ? "" : `<h2 class="titre-section">${icone("valide", { tuile: true })}Ma préparation <span class="tampon${faites === etapes.length ? " vert" : ""}" style="margin:0 0 0 auto">${faites}/${etapes.length}</span></h2>
     <div class="carte"><div class="jauge" role="progressbar" aria-valuemin="0" aria-valuemax="${etapes.length}" aria-valuenow="${faites}"><span style="width:${Math.round(faites / etapes.length * 100)}%"></span></div>
       <ul class="liste-preparation">${etapes.map(([t, ok]) => `<li class="${ok ? "fait" : ""}"><span class="coche" aria-hidden="true">${ok ? "✓" : ""}</span><span>${t}</span></li>`).join("")}</ul></div>`}

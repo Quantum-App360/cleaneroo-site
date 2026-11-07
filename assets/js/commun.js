@@ -15,8 +15,21 @@ export function bandeauLancement() {
   const j = joursAvantLancement();
   return `<div class="lancement"><div class="conteneur">
     <span class="compte">J-${j}</span>
-    <span><b>Lancement le 31 décembre 2026</b> · ${MESSAGE_LANCEMENT}</span></div></div>`;
+    <span><b>Lancement le 31 décembre 2026</b><span class="message-lancement"> · ${MESSAGE_LANCEMENT}</span></span></div></div>`;
 }
+
+/* ------------------------------------------------------------------ Chargement : animations sur le thème du ménage */
+let tourChargeur = 0;
+/** Vitre essuyée à la raclette ou éponge qui frotte (en alternance), avec un texte ; même animation que l'appli. */
+export function chargeur(texte = "Chargement…", { petit = false, variante = null } = {}) {
+  const v = variante || (tourChargeur++ % 2 ? "eponge" : "vitre");
+  const anim = v === "vitre"
+    ? `<div class="anim-vitre${petit ? " petite" : ""}" aria-hidden="true"><i class="vitre"></i><i class="propre"></i><i class="raclette"></i><i class="eclat"></i></div>`
+    : `<div class="anim-eponge" aria-hidden="true"><span class="surface"></span><span class="eponge"></span><i></i><i></i><i></i></div>`;
+  return `<div class="chargeur${petit ? "" : " centre"}" role="status">${anim}<span>${texte}</span></div>`;
+}
+/** Page entière en attente de données (compte, prestations, suivi d'une demande). */
+export const pageChargement = (texte = "Chargement…") => `<div class="chargement-page">${chargeur(texte)}</div>`;
 
 /* ------------------------------------------------------------------ Comment ça marche */
 export const ETAPES = [
@@ -75,8 +88,7 @@ function fenetreRappel() {
 /** Installe le bouton d'en-tête (ordinateur), la barre du bas (mobile) et la fenêtre. À appeler une fois par page. */
 export function installerRappel(villeParDefaut = "") {
   if (document.getElementById("fenetre-rappel")) return;
-  const nav = document.querySelector(".entete .nav");
-  (nav?.querySelector(".bouton.clair") || nav)?.insertAdjacentHTML(nav?.querySelector(".bouton.clair") ? "beforebegin" : "beforeend", boutonRappel("rappel-entete", villeParDefaut));
+  document.querySelector(".entete .actions-entete")?.insertAdjacentHTML("afterbegin", boutonRappel("rappel-entete", villeParDefaut));
   document.body.insertAdjacentHTML("beforeend", `<div class="rappel-mobile">${boutonRappel("", villeParDefaut)}</div>${fenetreRappel()}`);
   const d = document.getElementById("fenetre-rappel"), f = d.querySelector("form"), erreur = f.querySelector(".erreur");
   traduire(d); traduire(document.querySelector(".rappel-mobile")); traduire(document.querySelector(".rappel-entete") || document.createElement("i"));

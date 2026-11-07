@@ -10,8 +10,9 @@ import { suivre, annuler, memoriser, inscrire, placesRestantes } from "./donnees
 import { compterPage } from "./compteur.js";
 import { suivreEnDirect, demoSuivi } from "./suivi-live.js";
 import { pageCompte, pageMesPrestations, retourEmail, majLienCompte, afficherAccesCleaneur } from "./compte.js";
+import { marquerActif } from "./entete.js";
 import { icone, ICONES_RUBRIQUES, ICONES_INTERFACE } from "./icones.js";
-import { blocEtapes, blocReassurance, installerRappel, bandeauLancement } from "./commun.js";
+import { blocEtapes, blocReassurance, installerRappel, bandeauLancement, pageChargement } from "./commun.js";
 export { bandeauLancement };
 
 const vue = document.getElementById("vue");
@@ -173,58 +174,94 @@ function blocRecommander() {
     <span class="fleche">Recommander ›</span></a>`;
 }
 
+/* ------------------------------------------------------------------ Accueil 2026 : clair, structuré, un espace pour chacun */
+const ESPACES_ACCUEIL = [
+  ["logement", "Particuliers", "Ménage régulier ou ponctuel, vitres, canapés et textiles, avec 50 % de crédit d'impôt déduit tout de suite.", "#/reserver", "Estimer mon prix"],
+  ["location", "Conciergeries et multi-biens", "Agenda relié à Airbnb et Booking, ménages entre deux voyageurs, photo de la boîte à clés et carte de tous vos biens.", "#/compte/pro", "Créer mon espace Pro"],
+  ["cleaneurs", "Cleaneurs", "Missions près de chez vous, itinéraire, déroulé guidé et paiement sécurisé. Abonnement offert 12 mois aux 500 premiers.", "#/devenir-cleaneur", "Devenir Cleaneur"],
+];
+const FONCTIONS_DIGITALES = [
+  ["position", "Suivi en direct", "Votre Cleaneur sur la carte, comme une livraison, avec son heure d'arrivée."],
+  ["photo", "Compte rendu photo", "Chaque pièce photographiée avant et après, horodatée, dans votre espace."],
+  ["calendrier", "Agenda connecté", "Calendriers Airbnb et Booking reliés : les ménages se programment en un geste."],
+  ["paiement", "Payé après validation", "Vous validez le travail, puis le paiement part. Jamais avant."],
+];
+
+/** Maquette de l'application : carte du trajet, statut qui change, compte rendu photo et paiement (aucune image). */
+function maquetteAppli(m) {
+  return `<div class="telephone">
+    <div class="telephone-ecran">
+      <div class="tel-haut"><span class="tel-marque"><img src="assets/img/logo-marque.svg" alt="" width="22" height="22"><b>Cleaneroo</b></span><span class="tel-avatar">L</span></div>
+      <div class="tel-carte">
+        <svg viewBox="0 0 300 170" preserveAspectRatio="xMidYMid slice">
+          <rect width="300" height="170" fill="var(--carte-fond)"/>
+          <path d="M-10 120 C60 100 90 140 160 118 S260 70 320 84" class="tel-route-grande"/>
+          <path d="M40 -10 C60 50 30 90 70 180" class="tel-route"/><path d="M200 -10 C190 60 230 110 210 180" class="tel-route"/>
+          <path d="M-10 40 C80 52 150 20 320 36" class="tel-route"/>
+          <rect x="226" y="98" width="46" height="34" rx="6" class="tel-parc"/><rect x="18" y="12" width="40" height="26" rx="6" class="tel-parc"/>
+          <path d="M52 132 C90 126 108 92 150 96 S214 74 236 58" class="tel-trajet"/>
+          <circle cx="236" cy="58" r="9" class="tel-maison"/><path d="M231.5 59.5 236 55.5l4.5 4v4h-9z" fill="#fff"/>
+          <g class="tel-cleaneur"><circle cx="150" cy="96" r="13" class="tel-halo"/><circle cx="150" cy="96" r="9"/><text x="150" y="99.5" text-anchor="middle">L</text></g>
+        </svg>
+        <span class="tel-eta"><b>8 min</b> · arrivée vers 14 h 12</span>
+      </div>
+      ${m.map((liste, i) => `<div class="notif tel-notif n${i + 1}" data-notif="${i}">${contenuNotif(liste[0])}</div>`).join("")}
+    </div>
+  </div>`;
+}
+
 function pageAccueil() {
   const m = messagesNotif();
   return `
-  <section class="fond-cleaneroo heros">
-    <div class="aurore" aria-hidden="true"><i></i><i></i><i></i></div>${bullesMontantes()}
-    <div class="conteneur grille">
-      <div class="revele">
-        <span class="surtitre-heros"><i></i>Plateforme de ménage 100 % digitalisée</span>
-        <h1 class="titre-heros"><span>Le ménage passe</span> <span class="brille">au digital.</span></h1>
-        <p class="sous">Réservez en deux minutes, suivez votre Cleaneur en temps réel et recevez un compte rendu photo. Vous ne payez qu'une fois le travail validé.</p>
-        <form class="express" id="express">
+  <section class="heros-2026">
+    <div class="conteneur heros-grille">
+      <div class="heros-texte">
+        <span class="pastille-lancement"><i></i>Lancement le 31 décembre 2026</span>
+        <h1><span>Le ménage</span><span class="ponct">,</span> <span class="degrade-texte"><span>100 % digitalisé</span><span class="ponct">.</span></span></h1>
+        <p class="heros-sous">Réservez en deux minutes, suivez votre Cleaneur en direct et recevez un compte rendu photo. Vous ne payez qu'une fois le travail validé.</p>
+        <form class="recherche-heros" id="express">
           <label><span>Quelle prestation ?</span><select name="rubrique">${RUBRIQUES.map(r => `<option value="${r.id}">${r.nom}</option>`).join("")}</select></label>
           <label><span>Code postal</span><input name="cp" inputmode="numeric" maxlength="5" pattern="[0-9]{5}" placeholder="83600" autocomplete="postal-code"></label>
           <button class="bouton" type="submit">Voir mon prix</button>
         </form>
         ${blocRecommander()}
-        <ul class="confiance"><li>${icone("garantie")}Cleaneurs vérifiés</li><li>${icone("paiement")}Payé après validation</li><li>${icone("credit-impot")}−50 % de crédit d'impôt</li></ul>
+        <ul class="preuves"><li>${icone("garantie")}Cleaneurs vérifiés</li><li>${icone("paiement")}Payé après validation</li><li>${icone("credit-impot")}−50 % de crédit d'impôt</li></ul>
       </div>
-      <div class="scene revele" aria-label="Aperçu de l'application">
-        <span class="halo"></span><span class="orbite"></span><span class="orbite o2"></span>
-        <img class="eponge-grande" src="assets/img/eponge_seule.webp" alt="Éponge Cleaneroo" width="480" height="421">
-        ${etoiles()}
-        ${m.map((liste, i) => `<div class="notif n${i + 1}" data-notif="${i}">${contenuNotif(liste[0])}</div>`).join("")}
-      </div>
+      <div class="heros-visuel" aria-hidden="true">${maquetteAppli(m)}</div>
     </div>
-    <svg class="courbe" viewBox="0 0 1440 80" preserveAspectRatio="none" aria-hidden="true"><path d="M0,48 C320,96 640,0 960,30 C1180,52 1320,44 1440,30 L1440,80 L0,80 Z"/></svg>
   </section>
-  <section class="chiffres"><div class="conteneur"><div class="carte-chiffres">${CHIFFRES.map(([n, l]) => `<div class="revele"><b>${n}</b><span>${l}</span></div>`).join("")}</div></div></section>
+  <section class="bandeau-chiffres"><div class="conteneur">${CHIFFRES.map(([n, l]) => `<div><b>${n}</b><span>${l}</span></div>`).join("")}</div></section>
   <section class="bloc"><div class="conteneur">
+    ${titreSection("Un espace pour chacun", "Particuliers, conciergeries et Cleaneurs : chacun a son espace, pensé pour son usage.", "Pour qui ?")}
+    <div class="grille-3 espaces-accueil">${ESPACES_ACCUEIL.map(([ico, titre, texte, lien, action]) => `
+      <a class="carte espace-carte revele" href="${lien}">${icone(ico, { tuile: true })}<h3>${titre}</h3><p class="muet">${texte}</p><span class="aller">${action} ›</span></a>`).join("")}</div>
+  </div></section>
+  <section class="bloc bloc-doux"><div class="conteneur">
     ${titreSection("Nos prestations", "Le prix s'affiche dès que vous décrivez votre besoin.", "Prestations")}
     <div class="grille-3">${RACCOURCIS_VITRINE.map(([id, nom, sous]) => `
       <a class="carte prestation revele" href="#/reserver/${id}">${icone(rubrique(id).icone, { tuile: true })}<h3>${nom}</h3><p class="muet">${sous}</p><span class="aller">Estimer ›</span></a>`).join("")}</div>
     <p class="centre" style="margin-top:26px"><a class="bouton secondaire" href="#/prestations">Voir toutes les prestations ›</a></p>
+  </div></section>
+  <section class="bloc"><div class="conteneur">
+    ${titreSection("Tout est digitalisé", "De la réservation au paiement, chaque étape se suit sur votre téléphone.", "Le ménage nouvelle génération")}
+    <div class="grille-4 fonctions">${FONCTIONS_DIGITALES.map(([ico, titre, texte]) => `
+      <div class="fonction revele">${icone(ico, { tuile: true })}<h3>${titre}</h3><p class="muet">${texte}</p></div>`).join("")}</div>
+    <div class="comparaison revele" role="table" aria-label="Le ménage nouvelle génération" style="margin-top:34px">
+      <div class="ligne entete-comp" role="row"><span role="columnheader"></span><span role="columnheader">À l'ancienne</span><span role="columnheader">Avec Cleaneroo</span></div>
+      ${COMPARAISON.map(([c, a, n]) => `<div class="ligne" role="row"><b role="rowheader">${c}</b><span class="ancien" role="cell">${a}</span><span class="nouveau" role="cell">${n}</span></div>`).join("")}
+    </div>
+  </div></section>
+  <section class="bloc bloc-doux"><div class="conteneur">
+    ${titreSection("Comment ça marche ?", "Du clic à la validation, tout se passe en ligne.", "En 5 étapes")}
+    ${blocEtapes()}
     <div class="revele" style="margin-top:34px">${blocReassurance()}</div>
     <div class="credit revele">
       <div class="pastille-credit">−50 %</div>
       <div><h3>Le propre, à moitié prix.</h3><p>50 % de crédit d'impôt sur le ménage à domicile, déduit tout de suite avec l'avance immédiate.</p></div>
     </div>
   </div></section>
-  <section class="bloc bloc-doux"><div class="conteneur">
-    ${titreSection("Le ménage nouvelle génération", "Ce qui change quand tout est digitalisé.", "Pourquoi Cleaneroo")}
-    <div class="comparaison revele" role="table" aria-label="Le ménage nouvelle génération">
-      <div class="ligne entete-comp" role="row"><span role="columnheader"></span><span role="columnheader">À l'ancienne</span><span role="columnheader">Avec Cleaneroo</span></div>
-      ${COMPARAISON.map(([c, a, n]) => `<div class="ligne" role="row"><b role="rowheader">${c}</b><span class="ancien" role="cell">${a}</span><span class="nouveau" role="cell">${n}</span></div>`).join("")}
-    </div>
-  </div></section>
-  <section class="bloc"><div class="conteneur">
-    ${titreSection("Comment ça marche ?", "Du clic à la validation, tout se passe en ligne.", "En 5 étapes")}
-    ${blocEtapes()}
-  </div></section>
-  ${estPrelancement() ? `<section class="fond-cleaneroo appel"><div class="aurore" aria-hidden="true"><i></i><i></i></div>
-    <div class="conteneur appel-grille"><div class="revele"><h2>Prêts pour le 31 décembre ?</h2><p>Inscrivez-vous maintenant : les premiers inscrits sont prévenus en priorité.</p>
+  ${estPrelancement() ? `<section class="appel-2026"><div class="conteneur appel-grille"><div class="revele"><span class="pastille-lancement sombre"><i></i>J-${joursAvantLancement()}</span>
+      <h2>Prêts pour le 31 décembre ?</h2><p>Inscrivez-vous maintenant : les premiers inscrits sont prévenus en priorité.</p>
       <div class="boutons"><a class="bouton clair" href="#/reserver">Estimer mon prix</a></div></div>
       <div class="revele" id="inscription">${formulaireInscription()}</div></div></section>` : ""}`;
 }
@@ -477,11 +514,11 @@ async function afficher() {
   // Accès Cleaneur : l'accueil, les prestations, l'estimation et « Mes prestations » mènent à son espace.
   if (document.body.classList.contains("acces-cleaneur") && ["", "prestations", "reserver", "mes-demandes"].includes(route)) { location.replace("#/compte/cleaneur"); return; }
   compterPage(route, param);
-  document.querySelector(".nav")?.classList.remove("ouvert");
+  marquerActif();
   document.body.classList.toggle("sans-rappel", route === "reserver");
-  document.querySelectorAll(".nav a").forEach(a => a.classList.toggle("actif", a.getAttribute("href") === `#/${route}`));
-  if (route === "compte") { window.scrollTo(0, 0); await pageCompte(vue, param); return; }
-  if (route === "mes-demandes") { await pageMesPrestations(vue); window.scrollTo(0, 0); return; }
+  // Pages qui attendent le serveur : animation de chargement pendant l'attente.
+  if (route === "compte") { window.scrollTo(0, 0); vue.innerHTML = pageChargement(); traduire(vue); await pageCompte(vue, param); return; }
+  if (route === "mes-demandes") { vue.innerHTML = pageChargement(); traduire(vue); await pageMesPrestations(vue); window.scrollTo(0, 0); return; }
   if (route === "reserver") { ouvrirReservation(vue, param || null, chemin.split("/")[2] || ""); window.scrollTo(0, 0); return; }
   if (route === "inscription" && param) { vue.innerHTML = pageInscription(param); brancherInscription(vue); traduire(vue); window.scrollTo(0, 0); return; }
   if (route === "suivi-demo") {
@@ -495,6 +532,7 @@ async function afficher() {
   }
   if (route === "demande") {
     const [, ref, jeton] = chemin.split("/");
+    vue.innerHTML = pageChargement("Recherche de votre demande…"); traduire(vue);
     vue.innerHTML = await pageDemande(decodeURIComponent(ref || ""), decodeURIComponent(jeton || ""));
     traduire(vue);
     window.scrollTo(0, 0);
@@ -520,11 +558,6 @@ async function afficher() {
   window.scrollTo(0, 0);
 }
 
-document.querySelector(".burger").addEventListener("click", e => {
-  const nav = document.querySelector(".nav");
-  nav.classList.toggle("ouvert");
-  e.currentTarget.setAttribute("aria-expanded", nav.classList.contains("ouvert"));
-});
 document.getElementById("lancement").innerHTML = bandeauLancement();
 document.getElementById("choix-langue").innerHTML = selecteurLangue();
 traduire(document.querySelector(".entete"));
@@ -534,5 +567,6 @@ document.title = tr(document.title);
 installerRappel();
 window.addEventListener("hashchange", afficher);
 await retourEmail();
-await majLienCompte();
+// La page s'affiche tout de suite ; le compte est relu ensuite (l'en-tête se met à jour tout seul).
 afficher();
+majLienCompte();

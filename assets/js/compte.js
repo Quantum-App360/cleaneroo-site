@@ -11,6 +11,7 @@ import {
   demandesDuCompte, mesDemandes, synchroniserBiens, enregistrerBien, supprimerBien,
 } from "./donnees.js";
 import { oublierMesInformations } from "./reserver.js";
+import { rendreEntete, memoriserProfil } from "./entete.js";
 import { ONGLETS, ongletParDefaut, espaceDu, NOMS_ESPACES, barreOnglets, ongletParticulier, ongletPro, brancherPro, ongletCleaneur, brancherMissions, demanderGeoloc } from "./espaces.js";
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -34,20 +35,12 @@ export async function retourEmail() {
   history.replaceState(null, "", `${location.pathname}#/compte${vers === "mdp" ? "/mdp" : ""}`);
 }
 
-/** Lien du menu : « Mon compte » ou le prénom de la personne connectée. */
+/** En-tête selon le compte : liens de son espace et bouton de compte (prénom, type d'espace), ou liens du visiteur. */
 export async function majLienCompte() {
-  const p = await monProfil().catch(() => null);
-  document.querySelectorAll("[data-lien-compte]").forEach(a => a.textContent = p?.prenom ? p.prenom : tr("Mon compte"));
-  // Espace Cleaneur créé (Cleaneur ou administrateur) : « Devenir Cleaneur » devient « Mon espace Cleaneur ».
-  const espace = p?.role === "cleaneur" || p?.role === "admin";
-  // Cleaneur (hors administration) : le menu ne garde que ce qui le concerne.
-  document.body.classList.toggle("acces-cleaneur", p?.role === "cleaneur");
-  document.querySelectorAll('.nav a[href$="#/devenir-cleaneur"], .nav a[data-espace-cleaneur]').forEach(a => {
-    a.dataset.espaceCleaneur = "1";
-    const avant = a.getAttribute("href").split("#")[0]; // « / » sur les pages fixes (villes, calculateur…)
-    a.setAttribute("href", avant + (espace ? "#/compte/cleaneur" : "#/devenir-cleaneur"));
-    a.textContent = tr(espace ? "Mon espace Cleaneur" : "Devenir Cleaneur");
-  });
+  const p = await monProfil().catch(() => undefined);
+  if (p === undefined) return;   // hors ligne : on garde l'en-tête affiché
+  memoriserProfil(p);
+  rendreEntete(p);
 }
 
 /* ------------------------------------------------------------------ Mon compte */

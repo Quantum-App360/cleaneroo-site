@@ -10,6 +10,7 @@ import { blocEtapes, ETAPES_COURTES, blocReassurance, installerRappel, esc, band
 import { ville } from "./villes.js";
 import { icone } from "./icones.js";
 import { compterStatique, evenement } from "./compteur.js";
+import "./entete.js";
 
 traduireCatalogue(RUBRIQUES, TYPES_LIEU);
 const page = document.getElementById("page");
@@ -125,11 +126,6 @@ function brancherCalcul(zone) {
 /* ------------------------------------------------------------------ Mise en place */
 document.getElementById("choix-langue").innerHTML = selecteurLangue();
 document.getElementById("lancement").innerHTML = bandeauLancement();
-document.querySelector(".burger")?.addEventListener("click", e => {
-  const nav = document.querySelector(".nav");
-  nav.classList.toggle("ouvert");
-  e.currentTarget.setAttribute("aria-expanded", nav.classList.contains("ouvert"));
-});
 document.querySelectorAll("[data-exemples]").forEach(z => { z.innerHTML = blocExemples(); });
 document.querySelectorAll("[data-etapes]").forEach(z => { z.innerHTML = blocEtapes(ETAPES_COURTES); });
 document.querySelectorAll("[data-reassurance]").forEach(z => { z.innerHTML = blocReassurance(); });

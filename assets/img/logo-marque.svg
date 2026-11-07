@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="512" height="512">
+  <!-- Cleaneroo 2026 : tuile turquoise, « C » tracé comme un geste d'essuyage, éclat de propreté dans l'ouverture. -->
+  <defs>
+    <linearGradient id="tuile" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0B6F69"/>
+      <stop offset="0.55" stop-color="#14968E"/>
+      <stop offset="1" stop-color="#25B5BF"/>
+    </linearGradient>
+    <linearGradient id="reflet" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity=".18"/>
+      <stop offset=".5" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="trace" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff"/>
+      <stop offset="1" stop-color="#E6FBF8"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="18" fill="url(#tuile)"/>
+  <rect width="64" height="64" rx="18" fill="url(#reflet)"/>
+  <path d="M41.2 21.4A15 15 0 1 0 41.2 42.6" fill="none" stroke="url(#trace)" stroke-width="7.4" stroke-linecap="round"/>
+  <path d="M46.6 24.2Q47.5 30.9 54.2 31.8Q47.5 32.7 46.6 39.4Q45.7 32.7 39 31.8Q45.7 30.9 46.6 24.2Z" fill="#fff"/>
+  <path d="M52.6 11.6Q53 14.6 56 15Q53 15.4 52.6 18.4Q52.2 15.4 49.2 15Q52.2 14.6 52.6 11.6Z" fill="#FFD27A"/>
+</svg>

@@ -8,7 +8,7 @@
 #   - les traductions des textes locaux des villes dans assets/js/langue.js (bloc <villes-textes>).
 import io, json, os, re, html
 
-VERSION = "2026110806"          # ← une seule constante à changer à chaque mise en ligne (AAAAMMJJ + numéro du jour)
+VERSION = "2026110812"          # ← une seule constante à changer à chaque mise en ligne (AAAAMMJJ + numéro du jour)
 DATE_PLAN = "2026-11-06"        # date des pages dans sitemap.xml
 SITE = "https://cleaneroo.fr"
 
@@ -81,7 +81,7 @@ def gabarit(chemin, titre, description, corps, attrs="", indexer=True, og_type="
   <title>{e(titre)}</title>
   <meta name="description" content="{e(description)}">
   {'' if indexer else '<meta name="robots" content="noindex">'}
-  <meta name="theme-color" content="#0E3B40">
+  <meta name="theme-color" content="#FFFFFF">
   <link rel="canonical" href="{url}">
   <meta property="og:title" content="{e(titre)}">
   <meta property="og:description" content="{e(description)}">
@@ -91,7 +91,8 @@ def gabarit(chemin, titre, description, corps, attrs="", indexer=True, og_type="
   <meta property="og:locale" content="fr_FR">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="/favicon.png">
-  <link rel="apple-touch-icon" href="/assets/img/icone-192.png">
+  <link rel="apple-touch-icon" href="/assets/img/icone-apple-180.png">
+  <link rel="icon" type="image/svg+xml" href="/assets/img/logo-marque.svg">
   <link rel="preload" href="/assets/polices/plus-jakarta-sans.woff2" as="font" type="font/woff2" crossorigin>
   {chargement("page.js")}
 </head>
@@ -99,20 +100,20 @@ def gabarit(chemin, titre, description, corps, attrs="", indexer=True, og_type="
   <header class="entete">
     <div class="conteneur">
       <a class="marque" href="/" aria-label="Cleaneroo, accueil">
-        <img class="eponge" src="/assets/img/logo_eponge_petit.webp" alt="">
-        <img class="nom" src="/assets/img/logo_nom_blanc_petit.webp" alt="Cleaneroo">
+        <img class="marque-tuile" src="/assets/img/logo-marque.svg" alt="" width="34" height="34">
+        <span class="marque-nom">Cleaneroo</span>
       </a>
-      <div id="choix-langue"></div>
-      <button class="burger" aria-label="Menu" aria-expanded="false">{MENU}</button>
       <nav class="nav" aria-label="Navigation principale">
         <a href="/#/prestations">Prestations</a>
-        <a href="/#/devenir-cleaneur">Devenir Cleaneur</a>
-        <a href="/#/mes-demandes">Mes prestations</a>
-        <a href="/#/compte" data-lien-compte>Mon compte</a>
-        <a href="/calculateur/">Estimer mon prix</a>
+        <a href="/#/reserver">Estimer mon prix</a>
         <a href="/#/comment-ca-marche">Comment ça marche</a>
-        <a href="/#/inscription" class="bouton clair" style="min-height:44px;padding:0 18px">Je m'inscris</a>
+        <a href="/#/devenir-cleaneur">Devenir Cleaneur</a>
       </nav>
+      <div class="actions-entete">
+        <div id="choix-langue"></div>
+        <div class="actions-compte"><a class="lien-connexion" href="/#/compte">Se connecter</a><a class="bouton bouton-entete" href="/#/inscription">Je m'inscris</a></div>
+      </div>
+      <button class="burger" aria-label="Menu" aria-expanded="false"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
     </div>
   </header>
   <div id="lancement"></div>
@@ -123,7 +124,7 @@ def gabarit(chemin, titre, description, corps, attrs="", indexer=True, og_type="
 
   <footer class="fond-cleaneroo pied">
     <div class="conteneur">
-      <img src="/assets/img/logo_nom_blanc_petit.webp" alt="Cleaneroo" style="height:30px;width:auto">
+      <span class="marque marque-pied"><img class="marque-tuile" src="/assets/img/logo-marque.svg" alt="" width="34" height="34"><span class="marque-nom">Cleaneroo</span></span>
       <div class="trait-corail"></div>
       <p style="margin:0 0 6px">Vos interventions de ménage, 100 % digitalisées.</p>
       <p class="titre-villes">Cleaneroo dans d'autres villes</p>
