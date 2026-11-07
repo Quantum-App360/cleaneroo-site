@@ -1239,3 +1239,124 @@ div.titre-section .surtitre { margin: 0; }
 .fond-cleaneroo::before, .fond-cleaneroo::after, .fond-cleaneroo .aurore, .fond-cleaneroo .bulle, .fond-cleaneroo .bulles, .fond-cleaneroo .vagues, .fond-cleaneroo .decor { display: none !important; }
 .fond-cleaneroo .bouton:not(.clair):not(.secondaire):not(.danger) { background: #fff; color: var(--encre, #0B2F33); box-shadow: 0 10px 26px rgba(0, 0, 0, .22); }
 .fond-cleaneroo .bouton.clair { background: rgba(255, 255, 255, .1); color: #fff; border: 1px solid rgba(255, 255, 255, .3); box-shadow: none; }
+
+/* ================================================================================================
+   Direction B « Lumineux et coloré » (7 novembre 2026) : dégradés pastel, formes arrondies,
+   cartes flottantes en relief, une couleur par prestation (data-teinte, voir TEINTES dans icones.js).
+   ================================================================================================ */
+:root {
+  --pastel-1: #DDF7F2; --pastel-2: #FFE8DC; --pastel-3: #ECE8FF;
+  --ombre-relief: 0 2px 4px rgba(11, 47, 51, .04), 0 18px 40px -12px rgba(11, 47, 51, .18);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --pastel-1: #11302E; --pastel-2: #33221C; --pastel-3: #221F38;
+    --ombre-relief: 0 2px 4px rgba(0, 0, 0, .3), 0 18px 40px -12px rgba(0, 0, 0, .6); }
+}
+[data-teinte="turquoise"] { --t: #0F8A82; --t2: #25B5BF; --tc: #DDF5F1; }
+[data-teinte="corail"]    { --t: #E5603A; --t2: #FF9A6B; --tc: #FFE6DC; }
+[data-teinte="lilas"]     { --t: #6B5BD6; --t2: #9C8CFF; --tc: #ECE9FF; }
+[data-teinte="soleil"]    { --t: #D08A00; --t2: #FFC23D; --tc: #FFF2CF; }
+[data-teinte="ciel"]      { --t: #2A7FD4; --t2: #5DB4FF; --tc: #E0EEFD; }
+[data-teinte="rose"]      { --t: #D04F86; --t2: #FF85B5; --tc: #FDE3EE; }
+[data-teinte="menthe"]    { --t: #23955A; --t2: #4DD08A; --tc: #DEF5E7; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) [data-teinte] { --tc: color-mix(in srgb, var(--t) 22%, #142224); }
+}
+
+/* Fond général : voile pastel très léger */
+body { background:
+  radial-gradient(1100px 700px at 100% 0%, color-mix(in srgb, var(--pastel-3) 55%, transparent), transparent 70%),
+  radial-gradient(900px 600px at 0% 30%, color-mix(in srgb, var(--pastel-1) 60%, transparent), transparent 70%),
+  var(--fond); background-attachment: fixed; }
+
+/* Icônes en tuile : dégradé de leur couleur */
+.tuile-ico[data-teinte], .tuile-rubrique[data-teinte], .espace-carte .tuile-ico[data-teinte], .fonction .tuile-ico[data-teinte] {
+  background: linear-gradient(140deg, var(--t2), var(--t)); color: #fff; --ico-aplat: rgba(255, 255, 255, .22); --ico-accent: #FFF3B0;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), 0 10px 22px -6px color-mix(in srgb, var(--t) 60%, transparent); }
+
+/* ---------------------------------------------------------------- Haut de page */
+.heros-2026 { background:
+  radial-gradient(620px 460px at 92% 8%, var(--pastel-1), transparent 70%),
+  radial-gradient(560px 420px at 70% 100%, var(--pastel-2), transparent 70%),
+  radial-gradient(520px 380px at 0% 0%, var(--pastel-3), transparent 70%), transparent; padding-bottom: 90px; }
+.heros-2026 h1 .degrade-texte { background: linear-gradient(100deg, #0F8A82, #25B5BF 45%, #6B5BD6 100%); -webkit-background-clip: text; background-clip: text; }
+.pastille-lancement { background: var(--surface); box-shadow: var(--ombre-relief); border-color: transparent; color: #B4502E; }
+.recherche-heros { border: 0; box-shadow: var(--ombre-relief), 0 0 0 1px color-mix(in srgb, var(--marque) 10%, transparent); }
+.recherche-heros .bouton { background: linear-gradient(120deg, #0B6F69, #14968E 50%, #25B5BF); box-shadow: 0 12px 24px -8px rgba(15, 138, 130, .6); }
+.preuves .ico { color: #E5603A; }
+.heros-visuel { position: relative; }
+.forme { position: absolute; z-index: 0; pointer-events: none; }
+.forme-1 { width: 300px; height: 300px; right: -40px; top: 10px; background: linear-gradient(140deg, #5ED6CB, #0F8A82);
+  border-radius: 42% 58% 63% 37% / 45% 40% 60% 55%; opacity: .9; animation: forme 14s ease-in-out infinite; }
+.forme-2 { width: 120px; height: 120px; left: 0; bottom: 60px; border-radius: 50%; background: linear-gradient(140deg, #FFB08F, #FA8C66); animation: forme 10s ease-in-out infinite reverse; }
+.forme-3 { width: 70px; height: 70px; left: 40px; top: 30px; border-radius: 22px; background: linear-gradient(140deg, #B9AEFF, #7D6CF0); rotate: 18deg; animation: flotte-forme 8s ease-in-out infinite; }
+.heros-visuel .telephone { position: relative; z-index: 1; }
+.flottant { position: absolute; z-index: 2; display: flex; align-items: center; gap: 10px; padding: 10px 16px 10px 10px; border-radius: 18px; background: var(--surface);
+  box-shadow: var(--ombre-relief); font-size: 14px; color: var(--texte); white-space: nowrap; animation: flotte-forme 6s ease-in-out infinite; }
+.flottant .tuile-ico { width: 38px; height: 38px; border-radius: 12px; }
+.flottant .tuile-ico .ico { width: 21px; height: 21px; }
+.flottant-1 { left: -10px; top: 46%; }
+.flottant-2 { right: -6px; bottom: 70px; animation-delay: -3s; }
+.flottant-2 b { font-size: 18px; color: var(--t); }
+@keyframes forme { 0%, 100% { border-radius: 42% 58% 63% 37% / 45% 40% 60% 55%; transform: rotate(0); } 50% { border-radius: 58% 42% 40% 60% / 55% 60% 40% 45%; transform: rotate(8deg); } }
+@keyframes flotte-forme { 0%, 100% { translate: 0 0; } 50% { translate: 0 -10px; } }
+
+/* Chiffres : une carte flottante colorée */
+.bandeau-chiffres { background: none; border: 0; margin-top: -54px; position: relative; z-index: 3; }
+.bandeau-chiffres .conteneur { background: var(--surface); border-radius: 26px; box-shadow: var(--ombre-relief); overflow: hidden; }
+.bandeau-chiffres b { background: linear-gradient(120deg, var(--t, #0F8A82), var(--t2, #25B5BF)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+/* ---------------------------------------------------------------- Sections */
+.bloc-doux { background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--pastel-1) 70%, transparent) 30%, color-mix(in srgb, var(--pastel-3) 50%, transparent) 80%, transparent); }
+.titre-section .surtitre { display: inline-block; padding: 5px 14px; border-radius: 999px; background: color-mix(in srgb, #FA8C66 14%, var(--surface)); color: #B4502E; letter-spacing: .08em; }
+div.titre-section h2::after { content: ""; display: block; width: 72px; height: 6px; margin: 16px auto 0; border-radius: 3px; background: linear-gradient(90deg, #25B5BF, #9C8CFF, #FA8C66); }
+
+/* Cartes colorées (espaces, prestations, fonctions) */
+.carte[data-teinte], .fonction[data-teinte] { position: relative; overflow: hidden; border: 0; background: var(--surface); box-shadow: var(--ombre-relief); isolation: isolate; }
+.carte[data-teinte]::before, .fonction[data-teinte]::before { content: ""; position: absolute; z-index: -1; width: 190px; height: 190px; right: -70px; top: -80px; border-radius: 50%;
+  background: radial-gradient(circle, var(--tc) 0 60%, transparent 61%); transition: transform .4s ease; }
+.carte[data-teinte]:hover::before, .fonction[data-teinte]:hover::before { transform: scale(1.25); }
+.carte[data-teinte]:hover { transform: translateY(-6px); box-shadow: 0 30px 60px -20px color-mix(in srgb, var(--t) 45%, transparent); }
+.carte[data-teinte] .aller { color: var(--t); }
+.espace-carte[data-teinte] { border-top: 5px solid var(--t); }
+.fonction[data-teinte] { border-radius: 24px; transition: transform .2s; }
+.fonction[data-teinte]:hover { transform: translateY(-4px); }
+
+/* Comparaison et étapes */
+.comparaison { border: 0 !important; box-shadow: var(--ombre-relief); border-radius: 24px; overflow: hidden; }
+.etape .pastille .tuile-ico { background: linear-gradient(140deg, #25B5BF, #0F8A82); color: #fff; --ico-aplat: rgba(255, 255, 255, .22); }
+.etape:nth-child(3n+2) .pastille .tuile-ico { background: linear-gradient(140deg, #FF9A6B, #E5603A); }
+.etape:nth-child(3n) .pastille .tuile-ico { background: linear-gradient(140deg, #9C8CFF, #6B5BD6); }
+
+/* Appel final : dégradé vif avec formes */
+.appel-2026 { position: relative; overflow: hidden; background:
+  radial-gradient(420px 320px at 95% 10%, rgba(255, 154, 107, .55), transparent 70%),
+  radial-gradient(520px 380px at 0% 100%, rgba(156, 140, 255, .45), transparent 70%),
+  linear-gradient(130deg, #0B5F5A, #0F8A82 50%, #1FA9B3); }
+.appel-2026 .pastille-lancement.sombre { background: rgba(255, 255, 255, .18); color: #fff; box-shadow: none; }
+
+/* Apparition au défilement : plus rapide, jamais de zone vide prolongée */
+.revele, .etape { transition-duration: .45s; }
+
+@media (max-width: 960px) {
+  .forme-1 { width: 220px; height: 220px; right: -30px; }
+  .flottant-1 { left: 0; top: 40%; }
+  .flottant-2 { right: 0; bottom: 40px; }
+  .bandeau-chiffres { margin-top: -30px; }
+}
+@media (max-width: 620px) {
+  .flottant { font-size: 13px; padding: 8px 12px 8px 8px; }
+  .flottant .tuile-ico { width: 32px; height: 32px; }
+  .forme-3 { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .forme, .flottant { animation: none; } }
+
+/* Haut de page : « Débuter ma prestation » (menu de toutes les prestations, sans code postal : l'adresse est géolocalisée) */
+.recherche-heros { grid-template-columns: 1fr auto; }
+.recherche-heros select { cursor: pointer; }
+.recherche-heros .bouton { padding-inline: 28px; }
+@media (max-width: 620px) { .recherche-heros { grid-template-columns: 1fr; } }
+/* Pastilles flottantes : posées sur la carte et le haut du téléphone, jamais sur les notifications */
+.flottant-1 { left: -24px; top: 150px; }
+.flottant-2 { right: -14px; top: 64px; bottom: auto; }
+@media (max-width: 960px) { .flottant-1 { left: 0; top: 120px; } .flottant-2 { right: 0; top: 50px; } }

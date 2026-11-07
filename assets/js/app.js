@@ -11,7 +11,7 @@ import { compterPage } from "./compteur.js";
 import { suivreEnDirect, demoSuivi } from "./suivi-live.js";
 import { pageCompte, pageMesPrestations, retourEmail, majLienCompte, afficherAccesCleaneur } from "./compte.js";
 import { marquerActif } from "./entete.js";
-import { icone, ICONES_RUBRIQUES, ICONES_INTERFACE } from "./icones.js";
+import { icone, teinte, ICONES_RUBRIQUES, ICONES_INTERFACE } from "./icones.js";
 import { blocEtapes, blocReassurance, installerRappel, bandeauLancement, pageChargement } from "./commun.js";
 export { bandeauLancement };
 
@@ -220,32 +220,36 @@ function pageAccueil() {
         <h1><span>Le ménage</span><span class="ponct">,</span> <span class="degrade-texte"><span>100 % digitalisé</span><span class="ponct">.</span></span></h1>
         <p class="heros-sous">Réservez en deux minutes, suivez votre Cleaneur en direct et recevez un compte rendu photo. Vous ne payez qu'une fois le travail validé.</p>
         <form class="recherche-heros" id="express">
-          <label><span>Quelle prestation ?</span><select name="rubrique">${RUBRIQUES.map(r => `<option value="${r.id}">${r.nom}</option>`).join("")}</select></label>
-          <label><span>Code postal</span><input name="cp" inputmode="numeric" maxlength="5" pattern="[0-9]{5}" placeholder="83600" autocomplete="postal-code"></label>
-          <button class="bouton" type="submit">Voir mon prix</button>
+          <label><span>Débuter ma prestation</span><select name="rubrique" required><option value="" disabled selected>Choisir une prestation</option>${RUBRIQUES.map(r => `<option value="${r.id}">${r.nom}</option>`).join("")}</select></label>
+          <button class="bouton" type="submit">Commencer</button>
         </form>
         ${blocRecommander()}
         <ul class="preuves"><li>${icone("garantie")}Cleaneurs vérifiés</li><li>${icone("paiement")}Payé après validation</li><li>${icone("credit-impot")}−50 % de crédit d'impôt</li></ul>
       </div>
-      <div class="heros-visuel" aria-hidden="true">${maquetteAppli(m)}</div>
+      <div class="heros-visuel" aria-hidden="true">
+        <span class="forme forme-1"></span><span class="forme forme-2"></span><span class="forme forme-3"></span>
+        ${maquetteAppli(m)}
+        <div class="flottant flottant-1" data-teinte="menthe">${icone("garantie", { tuile: true })}<b>Cleaneurs vérifiés</b></div>
+        <div class="flottant flottant-2" data-teinte="soleil">${icone("credit-impot", { tuile: true })}<b>−50 %</b></div>
+      </div>
     </div>
   </section>
-  <section class="bandeau-chiffres"><div class="conteneur">${CHIFFRES.map(([n, l]) => `<div><b>${n}</b><span>${l}</span></div>`).join("")}</div></section>
+  <section class="bandeau-chiffres"><div class="conteneur">${CHIFFRES.map(([n, l], i) => `<div data-teinte="${["turquoise", "corail", "soleil", "lilas"][i]}"><b>${n}</b><span>${l}</span></div>`).join("")}</div></section>
   <section class="bloc"><div class="conteneur">
     ${titreSection("Un espace pour chacun", "Particuliers, conciergeries et Cleaneurs : chacun a son espace, pensé pour son usage.", "Pour qui ?")}
     <div class="grille-3 espaces-accueil">${ESPACES_ACCUEIL.map(([ico, titre, texte, lien, action]) => `
-      <a class="carte espace-carte revele" href="${lien}">${icone(ico, { tuile: true })}<h3>${titre}</h3><p class="muet">${texte}</p><span class="aller">${action} ›</span></a>`).join("")}</div>
+      <a class="carte espace-carte revele" data-teinte="${teinte(ico)}" href="${lien}">${icone(ico, { tuile: true })}<h3>${titre}</h3><p class="muet">${texte}</p><span class="aller">${action} ›</span></a>`).join("")}</div>
   </div></section>
   <section class="bloc bloc-doux"><div class="conteneur">
     ${titreSection("Nos prestations", "Le prix s'affiche dès que vous décrivez votre besoin.", "Prestations")}
     <div class="grille-3">${RACCOURCIS_VITRINE.map(([id, nom, sous]) => `
-      <a class="carte prestation revele" href="#/reserver/${id}">${icone(rubrique(id).icone, { tuile: true })}<h3>${nom}</h3><p class="muet">${sous}</p><span class="aller">Estimer ›</span></a>`).join("")}</div>
+      <a class="carte prestation revele" data-teinte="${teinte(rubrique(id).icone)}" href="#/reserver/${id}">${icone(rubrique(id).icone, { tuile: true })}<h3>${nom}</h3><p class="muet">${sous}</p><span class="aller">Estimer ›</span></a>`).join("")}</div>
     <p class="centre" style="margin-top:26px"><a class="bouton secondaire" href="#/prestations">Voir toutes les prestations ›</a></p>
   </div></section>
   <section class="bloc"><div class="conteneur">
     ${titreSection("Tout est digitalisé", "De la réservation au paiement, chaque étape se suit sur votre téléphone.", "Le ménage nouvelle génération")}
     <div class="grille-4 fonctions">${FONCTIONS_DIGITALES.map(([ico, titre, texte]) => `
-      <div class="fonction revele">${icone(ico, { tuile: true })}<h3>${titre}</h3><p class="muet">${texte}</p></div>`).join("")}</div>
+      <div class="fonction revele" data-teinte="${teinte(ico)}">${icone(ico, { tuile: true })}<h3>${titre}</h3><p class="muet">${texte}</p></div>`).join("")}</div>
     <div class="comparaison revele" role="table" aria-label="Le ménage nouvelle génération" style="margin-top:34px">
       <div class="ligne entete-comp" role="row"><span role="columnheader"></span><span role="columnheader">À l'ancienne</span><span role="columnheader">Avec Cleaneroo</span></div>
       ${COMPARAISON.map(([c, a, n]) => `<div class="ligne" role="row"><b role="rowheader">${c}</b><span class="ancien" role="cell">${a}</span><span class="nouveau" role="cell">${n}</span></div>`).join("")}
@@ -272,21 +276,32 @@ function brancherExpress(racine) {
   if (!f) return;
   f.onsubmit = e => {
     e.preventDefault();
-    const cp = /^[0-9]{5}$/.test(f.cp.value.trim()) ? `/cp-${f.cp.value.trim()}` : "";
-    location.hash = `#/reserver/${f.rubrique.value}${cp}`;
+    location.hash = f.rubrique.value ? `#/reserver/${f.rubrique.value}` : "#/reserver";
   };
 }
 
 /** Apparition douce des blocs au défilement (désactivée si l'utilisateur limite les animations). */
 const observateur = "IntersectionObserver" in window && !matchMedia("(prefers-reduced-motion: reduce)").matches
-  ? new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add("visible"); observateur.unobserve(e.target); } }), { rootMargin: "0px 0px -8% 0px" })
+  ? new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add("visible"); observateur.unobserve(e.target); } }), { rootMargin: "0px 0px 120px 0px" })
   : null;
 function reveler(racine) {
-  racine.querySelectorAll(".revele, .etape").forEach((el, i) => {
+  const enAttente = [...racine.querySelectorAll(".revele, .etape")];
+  enAttente.forEach((el, i) => {
     if (!observateur) return el.classList.add("visible");
-    el.style.transitionDelay = `${Math.min(i % 4, 3) * 70}ms`;
+    el.style.transitionDelay = `${Math.min(i % 4, 3) * 60}ms`;
     observateur.observe(el);
   });
+  if (!observateur) return;
+  /* Filet de sécurité : au défilement (même un saut direct à une section), tout bloc arrivé à l'écran s'affiche aussitôt. */
+  const verifier = () => {
+    const bas = innerHeight + 160;
+    for (const el of enAttente) if (!el.classList.contains("visible") && el.getBoundingClientRect().top < bas) { el.classList.add("visible"); observateur.unobserve(el); }
+    if (enAttente.every(el => el.classList.contains("visible"))) removeEventListener("scroll", auDefilement);
+  };
+  let dernier = 0;
+  const auDefilement = () => { const t = Date.now(); if (t - dernier > 80) { dernier = t; verifier(); } };
+  addEventListener("scroll", auDefilement, { passive: true });
+  setTimeout(verifier, 300);
 }
 
 function pageInscription(type = "client") {

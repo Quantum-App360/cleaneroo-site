@@ -105,11 +105,20 @@ export const ICONES = {
   ...INTERFACE,
 };
 
+/** Couleur propre à chaque icône (direction « lumineux et coloré ») : turquoise, corail, lilas, soleil, ciel, rose, menthe. */
+export const TEINTES = {
+  logement: "turquoise", location: "corail", demenagement: "soleil", vehicule: "ciel", canape: "lilas", chantier: "soleil",
+  cuisine: "corail", bureaux: "ciel", commerce: "lilas", "parties-communes": "menthe", vitres: "ciel", exterieurs: "menthe",
+  evenement: "rose", specialise: "rose", cleaneurs: "corail", position: "turquoise", photo: "lilas", calendrier: "ciel",
+  paiement: "soleil", garantie: "menthe", "credit-impot": "soleil", avis: "rose", valide: "menthe",
+};
+export const teinte = nom => TEINTES[nom] || "turquoise";
+
 /** SVG complet d'une icône. tuile : dans un carré arrondi (cartes). Nom inconnu : chaîne vide, jamais un emoji. */
 export function icone(nom, { tuile = false, classe = "" } = {}) {
   const contenu = ICONES[nom];
   if (!contenu) return "";
   const svg = `<svg class="ico${classe ? " " + classe : ""}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" `
     + `stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${contenu}</svg>`;
-  return tuile ? `<span class="tuile-ico${RUBRIQUES[nom] ? " tuile-rubrique" : ""}">${svg}</span>` : svg;
+  return tuile ? `<span class="tuile-ico${RUBRIQUES[nom] ? " tuile-rubrique" : ""}" data-teinte="${teinte(nom)}">${svg}</span>` : svg;
 }
