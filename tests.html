@@ -3,8 +3,8 @@
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Tests des prix</title>
 <meta name="robots" content="noindex">
 <style>body{font:15px system-ui;margin:24px}li.ok{color:#2E9E72}li.ko{color:#D0485A;font-weight:700}</style>  <!-- chargement : généré par outils/generer_pages.py, ne pas modifier à la main -->
-  <script type="importmap">{"imports":{"/assets/js/agenda.js":"/assets/js/agenda.js?v=2026110725","/assets/js/app.js":"/assets/js/app.js?v=2026110725","/assets/js/cartes.js":"/assets/js/cartes.js?v=2026110725","/assets/js/catalogue.js":"/assets/js/catalogue.js?v=2026110725","/assets/js/commun.js":"/assets/js/commun.js?v=2026110725","/assets/js/compte.js":"/assets/js/compte.js?v=2026110725","/assets/js/controle.js":"/assets/js/controle.js?v=2026110725","/assets/js/controle-ecran.js":"/assets/js/controle-ecran.js?v=2026110725","/assets/js/compteur.js":"/assets/js/compteur.js?v=2026110725","/assets/js/donnees.js":"/assets/js/donnees.js?v=2026110725","/assets/js/entete.js":"/assets/js/entete.js?v=2026110725","/assets/js/espaces.js":"/assets/js/espaces.js?v=2026110725","/assets/js/estimation.js":"/assets/js/estimation.js?v=2026110725","/assets/js/gestion.js":"/assets/js/gestion.js?v=2026110725","/assets/js/icones.js":"/assets/js/icones.js?v=2026110725","/assets/js/langue.js":"/assets/js/langue.js?v=2026110725","/assets/js/missions.js":"/assets/js/missions.js?v=2026110725","/assets/js/page.js":"/assets/js/page.js?v=2026110725","/assets/js/regles.js":"/assets/js/regles.js?v=2026110725","/assets/js/reserver.js":"/assets/js/reserver.js?v=2026110725","/assets/js/sons.js":"/assets/js/sons.js?v=2026110725","/assets/js/suivi-live.js":"/assets/js/suivi-live.js?v=2026110725","/assets/js/tableau.js":"/assets/js/tableau.js?v=2026110725","/assets/js/villes.js":"/assets/js/villes.js?v=2026110725"}}</script>
-  <link rel="stylesheet" href="/assets/style.css?v=2026110725">
+  <script type="importmap">{"imports":{"/assets/js/agenda.js":"/assets/js/agenda.js?v=2026110727","/assets/js/app.js":"/assets/js/app.js?v=2026110727","/assets/js/cartes.js":"/assets/js/cartes.js?v=2026110727","/assets/js/catalogue.js":"/assets/js/catalogue.js?v=2026110727","/assets/js/commun.js":"/assets/js/commun.js?v=2026110727","/assets/js/compte.js":"/assets/js/compte.js?v=2026110727","/assets/js/controle.js":"/assets/js/controle.js?v=2026110727","/assets/js/controle-ecran.js":"/assets/js/controle-ecran.js?v=2026110727","/assets/js/compteur.js":"/assets/js/compteur.js?v=2026110727","/assets/js/donnees.js":"/assets/js/donnees.js?v=2026110727","/assets/js/entete.js":"/assets/js/entete.js?v=2026110727","/assets/js/espaces.js":"/assets/js/espaces.js?v=2026110727","/assets/js/estimation.js":"/assets/js/estimation.js?v=2026110727","/assets/js/gestion.js":"/assets/js/gestion.js?v=2026110727","/assets/js/icones.js":"/assets/js/icones.js?v=2026110727","/assets/js/langue.js":"/assets/js/langue.js?v=2026110727","/assets/js/missions.js":"/assets/js/missions.js?v=2026110727","/assets/js/page.js":"/assets/js/page.js?v=2026110727","/assets/js/regles.js":"/assets/js/regles.js?v=2026110727","/assets/js/reserver.js":"/assets/js/reserver.js?v=2026110727","/assets/js/sons.js":"/assets/js/sons.js?v=2026110727","/assets/js/suivi-live.js":"/assets/js/suivi-live.js?v=2026110727","/assets/js/tableau.js":"/assets/js/tableau.js?v=2026110727","/assets/js/villes.js":"/assets/js/villes.js?v=2026110727"}}</script>
+  <link rel="stylesheet" href="/assets/style.css?v=2026110727">
   <!-- /chargement -->
 </head>
 <body>
@@ -312,6 +312,17 @@ import("./assets/js/catalogue.js").then(() => {});
     const locBase = { rubriqueId: "rental", formuleId: "court", chambres: 2, sdb: 1 };
     const sansOpt = parcours({ ...locBase, etapesChoisies: ETAPES_DEPART() }), avecFour = parcours({ ...locBase, etapesChoisies: [...ETAPES_DEPART(), "four_micro"].filter(Boolean) });
     egal("location T2 : les 14 options cochées = 64 € (au lieu de 95 € au temps)", ETAPES_LOCATION.reduce((s, e) => s + prixEtapeLocationC(e, 2, 1), 0), 6400);
+  }
+  // Formules : Confort = Standard + 40 % au plus, Premium = Standard + 90 % au plus (logement 62 m²)
+  {
+    const packsH = rubrique("home").packs, idsDe = id => packsH.find(p => p.id === id).tacheIds;
+    const std = parcours({ rubriqueId: "home", formuleId: "ponctuel" });
+    const cft = parcours({ rubriqueId: "home", formuleId: "ponctuel", taches: idsDe("confort") });
+    const prm = parcours({ rubriqueId: "home", formuleId: "ponctuel", taches: idsDe("prestige") });
+    egal("formule Standard 62 m² : 67,25 €", std.totalC, 6725);
+    egal("formule Confort 62 m² : 94,25 €", cft.totalC, 9425);
+    egal("formule Premium 62 m² : 128,25 €", prm.totalC, 12825);
+    egal("formule : ligne « Remise formule Confort »", cft.lignes.some(l => l.libelle === "Remise formule Confort"), true);
   }
   // Accueil vivant : prochaine prestation et « À faire » (mêmes règles que l'appli, AccueilVivant.kt)
   const { prochaine, aFaire, compteARebours } = await import("./assets/js/tableau.js");

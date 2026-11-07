@@ -20,7 +20,7 @@ const ENTREE_DEFAUT = {
   niveauxSupplementaires: 0, minutesEtapesLocation: 0, consommablesAControler: false, salissure: "NORMAL",
   taches: [], remisePackPct: 0, remisePackC: null, tachesPersonnalisees: 0, dimanche: false, creneauMalin: false,
   engagementMois: 0, espacePersonnel: true, typeLieuId: "", panier: [], minutesEnPlus: 0, minimumApresMin: 0,
-  lavageDrapsLits: 0, zonePct: 0, suiviSms: false, optionsLocationC: 0,
+  lavageDrapsLits: 0, zonePct: 0, suiviSms: false, optionsLocationC: 0, formuleId: "", tachesFormule: [],
 };
 
 export function calculer(entree) {
@@ -81,6 +81,7 @@ export function calculer(entree) {
   const tachesC = taches.reduce((s, t) => s + prixTache(t), 0);
   const tachesMin = taches.reduce((s, t) => s + t.minutes, 0);
   taches.forEach(t => lignes.push({ libelle: t.nom, montantC: prixTache(t) }));
+  const baseFormule = sousTotal;   // prix Standard (avant tâches) : sert de repère aux formules
   sousTotal += tachesC;
   // Étapes en plus de la location : petits forfaits (2, 4 ou 6 €), les mêmes dans toutes les zones.
   if (e.optionsLocationC > 0) { lignes.push({ libelle: "Étapes en plus", montantC: e.optionsLocationC }); sousTotal += e.optionsLocationC; }
@@ -94,8 +95,15 @@ export function calculer(entree) {
 
   // 5. Remise de pack (sur le prix des tâches du pack, arrondie à l'euro)
   if (e.remisePackPct > 0) {
-    const rem = e.remisePackC != null ? zoneEuro(e.remisePackC) : arrondiEuro(tachesC * e.remisePackPct / 100);
-    lignes.push({ libelle: `Remise pack (−${e.remisePackPct} %)`, montantC: -rem });
+    let rem = e.remisePackC != null ? zoneEuro(e.remisePackC) : arrondiEuro(tachesC * e.remisePackPct / 100);
+    // Formules Confort / Premium : leurs tâches coûtent au plus 40 % / 90 % du prix Standard.
+    // (Sans prix de base, comme les véhicules 100 % à la carte : remise classique du pack.)
+    const plusPct = baseFormule > 0 ? { confort: REGLES.FORMULE_CONFORT_PLUS_PCT, prestige: REGLES.FORMULE_PREMIUM_PLUS_PCT }[e.formuleId] : 0;
+    if (plusPct) {
+      const brutFormule = taches.filter(t => (e.tachesFormule || []).includes(t.id)).reduce((s, t) => s + prixTache(t), 0);
+      rem = Math.max(rem, brutFormule - arrondiEuro(baseFormule * plusPct / 100));
+    }
+    lignes.push({ libelle: plusPct ? `Remise formule ${e.formuleId === "confort" ? "Confort" : "Premium"}` : `Remise pack (−${e.remisePackPct} %)`, montantC: -rem });
     sousTotal -= rem;
   }
 
@@ -295,6 +303,7 @@ export function entreeEstimation(b, espacePersonnel, debut) {
     optionsLocationC: b.rubriqueId === "rental" ? prixOptionsLocationC(etapesDe(b), (b.etapesPerso || []).length, b.chambres, b.sdb) : 0,
     consommablesAControler: b.rubriqueId === "rental" && consommablesDe(b).length > 0,
     salissure: b.salissure, taches: tachesChoisies, remisePackPct: pack ? pack.remisePct : 0, remisePackC: pack ? remisePack(pack, chiffrees) * n : null,
+    formuleId: pack && ["confort", "prestige"].includes(pack.id) ? pack.id : "", tachesFormule: pack ? pack.tacheIds : [],
     tachesPersonnalisees: b.tachesPerso.length,
     dimanche: debut ? debut.getDay() === 0 : false,
     creneauMalin: dispo === "MALIN" && !b.flexible,

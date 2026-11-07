@@ -58,6 +58,9 @@ export const REGLES = {
   // Options en plus (7 novembre 2026, décision de l'utilisateur) : petits forfaits selon la taille de l'option, plus de prix au temps.
   // Petite (≤ 5 min) 2 €, moyenne (≤ 15 min) 4 €, grande 6 € ; le temps reste compté pour le planning du Cleaneur.
   OPTION_PETITE_C: 200, OPTION_MOYENNE_C: 400, OPTION_GRANDE_C: 600,
+  // Formules (7 novembre 2026, décision de l'utilisateur) : les tâches de Confort coûtent au plus 40 % du prix Standard,
+  // celles de Premium au plus 90 % ; le prix des formules suit ainsi la taille du lieu (62 m² : ≈ 67 €, 94 €, 128 €).
+  FORMULE_CONFORT_PLUS_PCT: 40, FORMULE_PREMIUM_PLUS_PCT: 90,
   OPTION_PETITE_MAX_MIN: 5, OPTION_MOYENNE_MAX_MIN: 15,
   // Option « Suivi par SMS » : 1 € par prestation, SMS au nom de Cleaneroo dans la langue de la réservation ; hors crédit d'impôt.
   OPTION_SMS_C: 100,
