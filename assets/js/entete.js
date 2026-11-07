@@ -42,7 +42,7 @@ export function rendreEntete(p) {
   const lien = ([href, nom]) => `<a href="${href.startsWith("#") ? b + href : (b ? "/" : "") + href}">${nom}</a>`;
   const initiale = (p?.prenom || "?").trim().charAt(0).toUpperCase() || "?";
   const html = type === "visiteur"
-    ? `<a class="lien-connexion" href="${b}#/compte">Se connecter</a><a class="bouton bouton-entete" href="${b}#/inscription">Je m'inscris</a>`
+    ? `<a class="lien-connexion" href="${b}#/compte">Se connecter</a><a class="bouton bouton-entete" href="${b}#/compte/creer">Créer mon espace</a>`
     : `${["particulier", "pro"].includes(type) ? `<a class="bouton bouton-entete" href="${b}#/reserver${type === "pro" ? "/rental" : ""}">Réserver</a>` : ""}
        <a class="puce-compte" href="${b}#/compte" title="${tr("Mon compte")}"><span class="avatar">${initiale}</span><span class="qui"><b>${p.prenom || tr("Mon compte")}</b><small>${NOM_ESPACE[type]}</small></span></a>`;
   actions.innerHTML = html;

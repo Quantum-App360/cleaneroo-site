@@ -788,6 +788,7 @@ const T = [
   ["Débuter ma prestation", "Start my service", "Inizia il mio servizio", "Empezar mi servicio"],
   ["Choisir une prestation", "Choose a service", "Scegli un servizio", "Elige un servicio"],
   ["Commencer", "Start", "Inizia", "Empezar"],
+  ["Créer mon espace", "Create my space", "Crea il mio spazio", "Crear mi espacio"],
   ["Code de parrainage (facultatif)", "Referral code (optional)", "Codice invito (facoltativo)", "Código de referido (opcional)"],
   ["Parrainage et cagnotte", "Referrals and credit", "Inviti e credito", "Referidos y saldo"],
   ["Ma cagnotte", "My credit", "Il mio credito", "Mi saldo"],
