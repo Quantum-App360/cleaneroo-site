@@ -90,8 +90,13 @@ function surveillerDemandes(surChangement) {
 export function surveiller(profil, surChangement) {
   arreterSurveillance();
   if (!profil) return;
-  const cleaneur = profil.role === "cleaneur" || profil.role === "admin";
-  const tache = cleaneur ? surveillerMissions(surChangement) : surveillerDemandes(surChangement);
+  // Statuts cumulables : un Cleaneur qui est aussi Particulier ou Pro entend les deux alertes.
+  const st = profil.statuts || [profil.role === "cleaneur" ? "cleaneur" : "particulier"];
+  const admin = profil.role === "admin";
+  const taches = [];
+  if (admin || st.includes("cleaneur")) taches.push(surveillerMissions(surChangement));
+  if (admin || st.some(x => x !== "cleaneur")) taches.push(surveillerDemandes(surChangement));
+  const tache = () => taches.forEach(t => t());
   tache();
   minuterie = setInterval(tache, REGLES.SURVEILLANCE_S * 1000);
 }

@@ -49,7 +49,7 @@ export async function majLienCompte() {
   memoriserProfil(p);
   rendreEntete(p);
   // Son à l'arrivée d'une nouvelle mission (Cleaneur) ou à la prise en charge d'une prestation (client).
-  const cle = p ? `${p.id}:${p.role}` : "";
+  const cle = p ? `${p.id}:${p.role}:${(p.statuts || []).join(",")}` : "";
   if (cle !== surveille) {
     surveille = cle;
     surveiller(p, () => { if (/^#\/(compte|mes-prestations)/.test(location.hash)) dispatchEvent(new HashChangeEvent("hashchange")); });
