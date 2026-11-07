@@ -159,3 +159,16 @@ export function zonePrix(codePostal) {
 export const pctZone = codePostal => ({ PRESTIGE: REGLES.ZONE_PRESTIGE_PCT, ECONOMIQUE: REGLES.ZONE_ECONOMIQUE_PCT })[zonePrix(codePostal)] ?? 0;
 /** Libellé de la ligne d'estimation (« Tarif zone Prestige (+20 %) »), vide en zone Standard. */
 export const libelleZone = pct => (pct > 0 ? `Tarif zone Prestige (+${pct} %)` : pct < 0 ? `Tarif zone Économique (−${-pct} %)` : "");
+
+/** SIREN (9 chiffres) ou SIRET (14 chiffres) avec clé de contrôle valable (algorithme de Luhn), comme la base. */
+export function sirenSiretValide(n) {
+  const c = String(n || "").replace(/\D/g, "");
+  if (c.length !== 9 && c.length !== 14) return false;
+  let somme = 0;
+  for (let i = 0; i < c.length; i++) {
+    let d = Number(c[c.length - 1 - i]);
+    if (i % 2 === 1) { d *= 2; if (d > 9) d -= 9; }
+    somme += d;
+  }
+  return somme % 10 === 0;
+}

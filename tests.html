@@ -3,8 +3,8 @@
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Tests des prix</title>
 <meta name="robots" content="noindex">
 <style>body{font:15px system-ui;margin:24px}li.ok{color:#2E9E72}li.ko{color:#D0485A;font-weight:700}</style>  <!-- chargement : généré par outils/generer_pages.py, ne pas modifier à la main -->
-  <script type="importmap">{"imports":{"/assets/js/agenda.js":"/assets/js/agenda.js?v=2026110718","/assets/js/app.js":"/assets/js/app.js?v=2026110718","/assets/js/cartes.js":"/assets/js/cartes.js?v=2026110718","/assets/js/catalogue.js":"/assets/js/catalogue.js?v=2026110718","/assets/js/commun.js":"/assets/js/commun.js?v=2026110718","/assets/js/compte.js":"/assets/js/compte.js?v=2026110718","/assets/js/compteur.js":"/assets/js/compteur.js?v=2026110718","/assets/js/donnees.js":"/assets/js/donnees.js?v=2026110718","/assets/js/entete.js":"/assets/js/entete.js?v=2026110718","/assets/js/espaces.js":"/assets/js/espaces.js?v=2026110718","/assets/js/estimation.js":"/assets/js/estimation.js?v=2026110718","/assets/js/gestion.js":"/assets/js/gestion.js?v=2026110718","/assets/js/icones.js":"/assets/js/icones.js?v=2026110718","/assets/js/langue.js":"/assets/js/langue.js?v=2026110718","/assets/js/missions.js":"/assets/js/missions.js?v=2026110718","/assets/js/page.js":"/assets/js/page.js?v=2026110718","/assets/js/regles.js":"/assets/js/regles.js?v=2026110718","/assets/js/reserver.js":"/assets/js/reserver.js?v=2026110718","/assets/js/sons.js":"/assets/js/sons.js?v=2026110718","/assets/js/suivi-live.js":"/assets/js/suivi-live.js?v=2026110718","/assets/js/villes.js":"/assets/js/villes.js?v=2026110718"}}</script>
-  <link rel="stylesheet" href="/assets/style.css?v=2026110718">
+  <script type="importmap">{"imports":{"/assets/js/agenda.js":"/assets/js/agenda.js?v=2026110719","/assets/js/app.js":"/assets/js/app.js?v=2026110719","/assets/js/cartes.js":"/assets/js/cartes.js?v=2026110719","/assets/js/catalogue.js":"/assets/js/catalogue.js?v=2026110719","/assets/js/commun.js":"/assets/js/commun.js?v=2026110719","/assets/js/compte.js":"/assets/js/compte.js?v=2026110719","/assets/js/compteur.js":"/assets/js/compteur.js?v=2026110719","/assets/js/donnees.js":"/assets/js/donnees.js?v=2026110719","/assets/js/entete.js":"/assets/js/entete.js?v=2026110719","/assets/js/espaces.js":"/assets/js/espaces.js?v=2026110719","/assets/js/estimation.js":"/assets/js/estimation.js?v=2026110719","/assets/js/gestion.js":"/assets/js/gestion.js?v=2026110719","/assets/js/icones.js":"/assets/js/icones.js?v=2026110719","/assets/js/langue.js":"/assets/js/langue.js?v=2026110719","/assets/js/missions.js":"/assets/js/missions.js?v=2026110719","/assets/js/page.js":"/assets/js/page.js?v=2026110719","/assets/js/regles.js":"/assets/js/regles.js?v=2026110719","/assets/js/reserver.js":"/assets/js/reserver.js?v=2026110719","/assets/js/sons.js":"/assets/js/sons.js?v=2026110719","/assets/js/suivi-live.js":"/assets/js/suivi-live.js?v=2026110719","/assets/js/villes.js":"/assets/js/villes.js?v=2026110719"}}</script>
+  <link rel="stylesheet" href="/assets/style.css?v=2026110719">
   <!-- /chargement -->
 </head>
 <body>
@@ -295,6 +295,11 @@ import("./assets/js/catalogue.js").then(() => {});
   const menageSms = parcours({ rubriqueId: "home", formuleId: "ponctuel", suiviSms: true }), menageSans = parcours({ rubriqueId: "home", formuleId: "ponctuel" });
   egal("SMS : 1 € de plus", menageSms.totalC - menageSans.totalC, REGLES.OPTION_SMS_C);
   egal("SMS : hors crédit d'impôt", menageSms.creditImpotC, menageSans.creditImpotC);
+  const { sirenSiretValide } = await import("./assets/js/regles.js");
+  egal("SIREN valable (9 chiffres)", sirenSiretValide("443 061 841"), true);
+  egal("SIRET valable (14 chiffres)", sirenSiretValide("44306184100047"), true);
+  egal("SIREN faux refusé", sirenSiretValide("443061842"), false);
+  egal("longueur fausse refusée", sirenSiretValide("1234567"), false);
   egal("draps : 10 min par lit au planning", avec.dureeMin - sans.dureeMin, 2 * REGLES.LAVAGE_DRAPS_MIN_PAR_LIT);
   egal("draps : même prix en zone Prestige", parcours({ ...loc, lavageDraps: true, lits: 2, codePostal: "98000" }).totalC - parcours({ ...loc, codePostal: "98000" }).totalC, 2400);
   egal("draps : un lit par chambre par défaut", entreeEstimation({ ...BR, ...loc, lavageDraps: true, chambres: 3 }, true, null).lavageDrapsLits, 3);

@@ -9,7 +9,7 @@ import { ouvrirReservation, modeles, logements, nomLogement } from "./reserver.j
 import { suivre, annuler, memoriser, inscrire, placesRestantes } from "./donnees.js";
 import { compterPage } from "./compteur.js";
 import { suivreEnDirect, demoSuivi } from "./suivi-live.js";
-import { pageCompte, pageMesPrestations, retourEmail, majLienCompte, afficherAccesCleaneur } from "./compte.js";
+import { pageCompte, pageMesPrestations, arreterEcouteDemandes, retourEmail, majLienCompte, afficherAccesCleaneur } from "./compte.js";
 import { marquerActif } from "./entete.js";
 import { icone, teinte, ICONES_RUBRIQUES, ICONES_INTERFACE } from "./icones.js";
 import { blocEtapes, blocReassurance, installerRappel, bandeauLancement, pageChargement } from "./commun.js";
@@ -522,18 +522,25 @@ const ROUTES = {
 let arreterSuivi = () => {};
 async function afficherPage() {
   clearInterval(minuterieNotifs);
+  arreterEcouteDemandes();
   arreterSuivi(); arreterSuivi = () => {};
   const chemin = location.hash.replace(/^#\/?/, "");
   const [route, param] = chemin.split("/");
   if (route === "gestion") { location.href = "gestion.html"; return; }
   // Accès Cleaneur : l'accueil, les prestations, l'estimation et « Mes prestations » mènent à son espace.
-  if (document.body.classList.contains("acces-cleaneur") && ["", "prestations", "reserver", "mes-demandes"].includes(route)) { location.replace("#/compte/cleaneur"); return; }
+  if (document.body.classList.contains("acces-cleaneur") && ["", "prestations", "reserver", "mes-demandes", "mes-biens"].includes(route)) { location.replace("#/compte/cleaneur"); return; }
   compterPage(route, param);
   marquerActif();
   document.body.classList.toggle("sans-rappel", route === "reserver");
   // Pages qui attendent le serveur : animation de chargement pendant l'attente.
   if (route === "compte") { window.scrollTo(0, 0); vue.innerHTML = pageChargement(); traduire(vue); await pageCompte(vue, param); return; }
-  if (route === "mes-demandes") { vue.innerHTML = pageChargement(); traduire(vue); await pageMesPrestations(vue); window.scrollTo(0, 0); return; }
+  if (route === "mes-demandes" || route === "mes-biens") {
+    const deja = vue.querySelector(".onglets-demandes") && route === "mes-demandes";
+    if (!deja) { vue.innerHTML = pageChargement(); traduire(vue); }
+    await pageMesPrestations(vue, route === "mes-biens" ? "biens" : "demandes", param);
+    if (!deja) window.scrollTo(0, 0);
+    return;
+  }
   if (route === "reserver") { ouvrirReservation(vue, param || null, chemin.split("/")[2] || ""); window.scrollTo(0, 0); return; }
   if (route === "inscription" && param) { vue.innerHTML = pageInscription(param); brancherInscription(vue); traduire(vue); window.scrollTo(0, 0); return; }
   if (route === "suivi-demo") {

@@ -135,9 +135,15 @@ export async function session() {
 }
 
 /** Création de compte : role = "client" ou "cleaneur" (jamais administrateur). Un e-mail de confirmation est envoyé. */
-export async function creerCompte({ email, mdp, role, prenom, nom, espace = "particulier" }) {
+/**
+ * Création du compte avec ses statuts cochés (cumulables) : "particulier", "pro" (SCI, conciergerie : société + SIRET/SIREN), "cleaneur".
+ * Chaque statut n'ouvre que son espace ; la base vérifie tout (outils/base-statuts.sql).
+ */
+export async function creerCompte({ email, mdp, statuts, prenom, nom, societe = "", siretSociete = "" }) {
+  const st = ["particulier", "pro", "cleaneur"].filter(x => statuts.includes(x));
   const { data, error } = await supabase.auth.signUp({ email, password: mdp,
-    options: { data: { role: role === "cleaneur" ? "cleaneur" : "client", espace: espace === "pro" ? "pro" : "particulier", prenom, nom }, emailRedirectTo: retour("compte") } });
+    options: { data: { statuts: st, prenom, nom, societe, siret_societe: siretSociete.replace(/\D/g, ""),
+      role: st.includes("cleaneur") ? "cleaneur" : "client", espace: st.includes("pro") ? "pro" : "particulier" }, emailRedirectTo: retour("compte") } });
   if (error) throw new Error(error.message);
   return data.session ? "connecte" : "confirmer";
 }
@@ -171,9 +177,23 @@ export async function majProfil(champs) {
   const { error } = await supabase.from("profils").update(maj).eq("id", s.user.id);
   if (error) throw new Error(error.message);
 }
-export async function devenirCleaneur() {
-  const { error } = await supabase.rpc("devenir_cleaneur");
+export async function devenirCleaneur() { return ajouterStatut("cleaneur"); }
+
+/** Ajoute un statut au compte (particulier, pro, cleaneur) et ouvre son espace. Réponses : ok, societe, invalide. */
+export async function ajouterStatut(statut) {
+  const { data, error } = await supabase.rpc("ajouter_statut", { s: statut });
   if (error) throw new Error(error.message);
+  return data;
+}
+
+/** Temps réel : appelle surChangement() à chaque création ou changement d'une demande du compte. Renvoie la fonction d'arrêt. */
+export async function ecouterDemandes(surChangement) {
+  const s = await session();
+  if (!s) return () => {};
+  const canal = supabase.channel(`demandes-${s.user.id}`)
+    .on("postgres_changes", { event: "*", schema: "public", table: "demandes", filter: `client_id=eq.${s.user.id}` }, () => surChangement())
+    .subscribe();
+  return () => supabase.removeChannel(canal);
 }
 
 /** Documents du dossier Cleaneur. Types : identite, siret, rc_pro, urssaf (obligatoires), certibiocide (nuisibles). */

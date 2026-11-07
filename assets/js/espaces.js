@@ -1,7 +1,7 @@
 // Espaces du compte : onglets « Particulier », « Pro » (conciergeries et multi-biens, agenda iCal) et « Cleaneur » (missions).
 // Mêmes écrans que l'application (EspacesCompte.kt). Les valeurs métier sont dans regles.js.
 import { TYPES_LOGEMENT, rubrique } from "./catalogue.js";
-import { REGLES, euros, dateLongue } from "./regles.js";
+import { REGLES, euros, dateLongue, sirenSiretValide } from "./regles.js";
 import { icone } from "./icones.js";
 import { traduire, tr, LOCALE } from "./langue.js";
 import { DOCUMENTS_CLEANEUR, enregistrerBien, lireCalendrier } from "./donnees.js";
@@ -15,13 +15,13 @@ const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": 
 export const ONGLETS = [["particulier", "Particulier", "logement"], ["pro", "Pro", "bureaux"], ["cleaneur", "Cleaneur", "cleaneurs"]];
 
 /**
- * Espace du compte : chaque type de compte a le sien, sans onglets communs.
- * Cleaneur → espace Cleaneur ; client → espace Particulier ou espace Pro (conciergeries, plusieurs biens),
- * choisi à la création du compte (profils.espace). Seul l'administrateur passe d'un espace à l'autre (onglets).
+ * Espaces du compte : un par statut coché (particulier, pro, cleaneur ; cumulables). profils.espace = l'espace ouvert,
+ * toujours parmi les statuts. Un compte à plusieurs statuts passe de l'un à l'autre ; l'administrateur a les trois.
  */
+export const statutsDu = p => (p.statuts && p.statuts.length ? p.statuts : [p.role === "cleaneur" ? "cleaneur" : p.espace === "pro" ? "pro" : "particulier"]);
 export function espaceDu(p) {
-  if (p.role === "cleaneur") return "cleaneur";
-  return p.espace === "pro" ? "pro" : "particulier";
+  const st = statutsDu(p);
+  return st.includes(p.espace) ? p.espace : st[0];
 }
 /** Administrateur : onglet ouvert par défaut. */
 export function ongletParDefaut(p, biens) {
@@ -31,8 +31,8 @@ export function ongletParDefaut(p, biens) {
 }
 export const NOMS_ESPACES = { particulier: "Mon espace Particulier", pro: "Mon espace Pro", cleaneur: "Mon espace Cleaneur" };
 
-export function barreOnglets(actif) {
-  return `<nav class="onglets-compte" aria-label="Mes espaces">${ONGLETS.map(([id, nom, ico]) =>
+export function barreOnglets(actif, ids = ONGLETS.map(o => o[0])) {
+  return `<nav class="onglets-compte" aria-label="Mes espaces">${ONGLETS.filter(o => ids.includes(o[0])).map(([id, nom, ico]) =>
     `<a href="#/compte/${id}" class="${id === actif ? "actif" : ""}" ${id === actif ? 'aria-current="page"' : ""}>${icone(ico)}<span>${nom}</span></a>`).join("")}</nav>`;
 }
 
@@ -62,11 +62,7 @@ export function ongletParticulier(p, biens, demandes) {
       <a class="carte raccourci" href="#/mes-demandes">${icone("logement", { tuile: true })}<b>Mes biens</b><span class="petit">${biens.length} adresse${biens.length > 1 ? "s" : ""} enregistrée${biens.length > 1 ? "s" : ""}</span></a>
       <a class="carte raccourci" href="#/reserver">${icone("instantane", { tuile: true })}<b>Nouvelle demande</b><span class="petit">Prix immédiat</span></a>
     </div>
-    ${p.role === "client" ? `<div class="grille-autres-espaces">
-      <button type="button" class="carte ligne-compte" data-passer-espace="pro">${icone("location", { tuile: true })}
-        <div class="corps"><b>Vous gérez des locations ?</b><p class="petit" style="margin:2px 0 0">Conciergerie ou plusieurs biens : passez à l'espace Pro, avec l'agenda de vos séjours.</p></div><span class="aller" aria-hidden="true">›</span></button>
-      <button type="button" class="carte ligne-compte" id="devenir-cleaneur-lien">${icone("cleaneurs", { tuile: true })}
-        <div class="corps"><b>Vous êtes auto-entrepreneur ?</b><p class="petit" style="margin:2px 0 0">Devenez Cleaneur : missions près de chez vous, à votre rythme.</p></div><span class="aller" aria-hidden="true">›</span></button></div>` : ""}`;
+`;
 }
 
 /* ------------------------------------------------------------------ Pro : conciergeries et multi-propriétaires */
@@ -99,9 +95,9 @@ export function ongletPro(p, biens) {
       <details class="societe"><summary>Ma société</summary>
         <form id="form-societe" novalidate style="margin-top:10px">
           <label class="champ">Raison sociale<input name="societe" maxlength="120" value="${esc(p.societe)}" autocomplete="organization"></label>
-          <label class="champ">Numéro SIRET (14 chiffres)<input name="siret" inputmode="numeric" maxlength="17" value="${esc(p.siret)}"></label>
+          <label class="champ">SIRET (14 chiffres) ou SIREN (9 chiffres)<input name="siret" inputmode="numeric" maxlength="17" value="${esc(p.siret_societe || "")}"></label>
           <p class="erreur" id="erreur-societe"></p><button class="bouton plein" type="submit">Enregistrer</button></form>
-        ${p.role === "client" ? `<p style="margin:10px 0 0"><button type="button" class="lien-bouton clair" data-passer-espace="particulier">Revenir à un compte Particulier</button></p>` : ""}</details>
+</details>
     </div>
     <div class="grille-raccourcis">
       <a class="carte raccourci" href="#/mes-demandes">${icone("calendrier", { tuile: true })}<b>Mes prestations</b><span class="petit">À venir et passées</span></a>
@@ -151,8 +147,8 @@ export function brancherPro(vue, p, biens, demandes, { majProfil, recharger }) {
   fs.onsubmit = async e => {
     e.preventDefault();
     const siret = fs.siret.value.replace(/\D/g, "");
-    if (siret && siret.length !== 14) { vue.querySelector("#erreur-societe").textContent = tr("Le numéro SIRET compte 14 chiffres."); return; }
-    try { await majProfil({ societe: fs.societe.value.trim(), siret }); recharger(); }
+    if (!fs.societe.value.trim() || !sirenSiretValide(siret)) { vue.querySelector("#erreur-societe").textContent = tr("Indiquez la raison sociale et un SIRET (14 chiffres) ou un SIREN (9 chiffres) valable."); return; }
+    try { await majProfil({ societe: fs.societe.value.trim(), siret_societe: siret }); recharger(); }
     catch { vue.querySelector("#erreur-societe").textContent = tr("Le service est momentanément indisponible. Réessayez dans quelques minutes."); }
   };
   vue.querySelectorAll("[data-form-cal]").forEach(f => f.onsubmit = async e => {
@@ -453,8 +449,8 @@ export function ongletCleaneur(p, docs, { dossier, profil }) {
       <p class="muet" style="margin:0 0 6px">Missions près de chez vous, à votre rythme, déroulé guidé et paiement sécurisé.</p>
       <ul class="petit" style="margin:0 0 10px;padding-left:18px"><li>Statut d'auto-entrepreneur (micro-entreprise) avec un numéro SIRET</li>
         <li>Assurance responsabilité civile professionnelle et attestation URSSAF</li>
-        <li>Votre compte devient un compte Cleaneur : il ne sert plus à réserver des ménages.</li></ul>
-      <button type="button" class="bouton" id="devenir-cleaneur">Devenir Cleaneur avec ce compte</button></div>`;
+        <li>Vous gardez vos autres espaces : vos missions restent séparées de vos réservations privées.</li></ul>
+      <button type="button" class="bouton" id="devenir-cleaneur">Ajouter l'espace Cleaneur</button></div>`;
   const etapes = preparationCleaneur(p, docs), faites = etapes.filter(e => e[1]).length;
   const admin = p.role === "admin";
   return `${admin ? `<p style="margin:0 0 10px"><span class="tampon">Accès administrateur</span></p>` : ""}

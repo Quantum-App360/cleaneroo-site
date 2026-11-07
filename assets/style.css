@@ -1435,3 +1435,27 @@ div.titre-section h2::after { content: ""; display: block; width: 72px; height: 
   .scene-attente, .scene-attente *, .texte-attente .points::after, #vue.vue-entree { animation: none !important; }
   .savon, .scintille { display: none; }
 }
+
+/* ---------------------------------------------------------------- Inscription : statuts cumulables (cases à cocher) */
+.statuts-inscription { display: grid; gap: 10px; margin-bottom: 14px; }
+.statut-choix { position: relative; display: flex; align-items: center; gap: 14px; padding: 14px 48px 14px 14px; cursor: pointer; border: 2px solid transparent;
+  transition: border-color .2s, box-shadow .2s, transform .15s; margin: 0; }
+.statut-choix:hover { transform: translateY(-1px); }
+.statut-choix input { position: absolute; opacity: 0; pointer-events: none; }
+.statut-choix .tuile-ico { width: 46px; height: 46px; border-radius: 15px; }
+.statut-choix span b { display: block; font-size: 16px; }
+.statut-choix span small { display: block; color: var(--texte2); font-size: 13.5px; line-height: 1.35; margin-top: 2px; }
+.statut-choix .coche { position: absolute; right: 14px; top: 50%; width: 24px; height: 24px; margin-top: -12px; border-radius: 8px; border: 2px solid var(--separateur); background: var(--surface); transition: all .2s; }
+.statut-choix:has(input:checked) { border-color: var(--marque); box-shadow: var(--ombre-relief), 0 0 0 4px color-mix(in srgb, var(--marque) 12%, transparent); }
+.statut-choix:has(input:checked) .coche { background: var(--marque) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E") center / 16px no-repeat; border-color: var(--marque); }
+.statut-choix:has(input:focus-visible) { outline: 3px solid color-mix(in srgb, var(--marque) 45%, transparent); outline-offset: 2px; }
+
+/* ---------------------------------------------------------------- Mes demandes : 4 onglets avec compteur, temps réel */
+.onglets-demandes { margin: 6px 0 10px; }
+.onglets-demandes a em { font-style: normal; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px; display: inline-grid; place-items: center;
+  background: var(--creux); color: var(--texte2); font-size: 12px; font-weight: 800; margin-left: 4px; }
+.onglets-demandes a.actif em { background: var(--marque); color: #fff; }
+p.direct { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; }
+p.direct i { width: 8px; height: 8px; border-radius: 50%; background: #23955A; box-shadow: 0 0 0 0 rgba(35, 149, 90, .5); animation: direct 2s infinite; }
+@keyframes direct { 0% { box-shadow: 0 0 0 0 rgba(35, 149, 90, .5); } 70% { box-shadow: 0 0 0 8px rgba(35, 149, 90, 0); } 100% { box-shadow: 0 0 0 0 rgba(35, 149, 90, 0); } }
+.ajout-espace summary { cursor: pointer; font-weight: 700; }

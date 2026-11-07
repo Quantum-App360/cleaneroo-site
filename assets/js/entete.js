@@ -12,7 +12,7 @@ export function profilMemorise() {
 }
 export function memoriserProfil(p) {
   try {
-    if (p) localStorage.setItem(CLE, JSON.stringify({ prenom: p.prenom || "", role: p.role || "client", espace: p.espace || "particulier" }));
+    if (p) localStorage.setItem(CLE, JSON.stringify({ prenom: p.prenom || "", role: p.role || "client", espace: p.espace || "particulier", statuts: p.statuts || [] }));
     else localStorage.removeItem(CLE);
   } catch { /* navigation privée */ }
 }
@@ -21,16 +21,16 @@ export function memoriserProfil(p) {
 export function typeEspace(p) {
   if (!p) return "visiteur";
   if (p.role === "admin") return "admin";
-  if (p.role === "cleaneur") return "cleaneur";
-  return p.espace === "pro" ? "pro" : "particulier";
+  return ["particulier", "pro", "cleaneur"].includes(p.espace) ? p.espace : "particulier";
 }
 
 const LIENS = {
   visiteur: [["#/prestations", "Prestations"], ["#/reserver", "Estimer mon prix"], ["#/comment-ca-marche", "Comment ça marche"], ["#/devenir-cleaneur", "Devenir Cleaneur"]],
-  particulier: [["#/prestations", "Prestations"], ["#/mes-demandes", "Mes prestations"], ["#/reserver", "Estimer mon prix"]],
-  pro: [["#/compte/pro", "Agenda"], ["#/mes-demandes", "Mes prestations"], ["#/prestations", "Prestations"]],
+  // L'essentiel, selon l'espace ouvert ; on change d'espace depuis le bouton du compte (à droite).
+  particulier: [["#/reserver", "Réserver"], ["#/mes-demandes", "Mes demandes"], ["#/mes-biens", "Mes biens"]],
+  pro: [["#/compte/pro", "Agenda"], ["#/mes-demandes", "Mes demandes"], ["#/mes-biens", "Mes biens"]],
   cleaneur: [["#/compte/cleaneur", "Mes missions"], ["#/comment-ca-marche", "Comment ça marche"]],
-  admin: [["gestion.html", "Gestion"], ["#/prestations", "Prestations"], ["#/compte", "Espaces"]],
+  admin: [["gestion.html", "Gestion"], ["#/mes-demandes", "Mes demandes"], ["#/mes-biens", "Mes biens"]],
 };
 const NOM_ESPACE = { particulier: "Espace Particulier", pro: "Espace Pro", cleaneur: "Espace Cleaneur", admin: "Administration" };
 
