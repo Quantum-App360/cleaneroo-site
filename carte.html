@@ -25,11 +25,18 @@
 <body>
 <div id="c"></div>
 <script type="module">
-  import { afficherCarte } from "/assets/js/cartes.js";
+  import { afficherCarte, coordonnees } from "/assets/js/cartes.js";
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   let p = {};
   try { p = JSON.parse(decodeURIComponent(location.hash.slice(1)) || "{}"); } catch { /* paramètres illisibles : carte vide */ }
+  // Marqueur donné par son adresse (biens, missions) : placé ici, puis mémorisé sur le téléphone. Bulle en texte simple.
+  const marqueurs = [];
+  for (const m of p.m || []) {
+    const pos = Number.isFinite(m.lat) ? { lat: m.lat, lon: m.lon } : m.a ? await coordonnees(m.a.rue || "", m.a.cp || "", m.a.ville || "") : null;
+    if (pos) marqueurs.push({ ...m, ...pos, popup: m.popup ? esc(m.popup).replace(/\n/g, "<br>") : "" });
+  }
   afficherCarte(document.getElementById("c"), {
-    marqueurs: p.m || [], cercle: p.c || null, deplacable: !!p.d, zoom: p.z || 16, plein: true,
+    marqueurs, cercle: p.c || null, deplacable: !!p.d, zoom: p.z || 16, plein: true,
     onDeplace: (lat, lon) => window.CleanerooCarte?.deplace(lat, lon),
   });
 </script>

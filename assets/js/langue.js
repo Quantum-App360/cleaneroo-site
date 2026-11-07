@@ -245,6 +245,7 @@ const T = [
   ["Calendriers reliés", "Linked calendars", "Calendari collegati", "Calendarios vinculados"],
   ["Ménages à programmer", "Cleans to schedule", "Pulizie da programmare", "Limpiezas por programar"],
   ["Agenda des locations", "Rental calendar", "Agenda degli affitti", "Agenda de alquileres"],
+  ["Localisation refusée : autorisez-la dans les réglages du téléphone, ou saisissez l'adresse.", "Location refused: allow it in your phone settings, or type the address.", "Posizione rifiutata: consentila nelle impostazioni del telefono oppure inserisci l'indirizzo.", "Ubicación denegada: permítela en los ajustes del teléfono o escribe la dirección."],
   ["Vous êtes dans le logement ? Touchez « Me géolocaliser » : l'adresse se remplit toute seule. Sinon, saisissez-la.", "Are you at the property? Tap “Locate me”: the address fills in by itself. Otherwise, type it in.", "Sei nell'alloggio? Tocca «Localizzami»: l'indirizzo si compila da solo. Altrimenti, inseriscilo.", "¿Estás en el alojamiento? Toca «Localizarme»: la dirección se rellena sola. Si no, escríbela."],
   ["Recherche de votre position…", "Finding your location…", "Ricerca della tua posizione…", "Buscando tu ubicación…"],
   ["Adresse introuvable à cet endroit : saisissez-la, le repère reste sur la carte.", "No address found here: type it in, the pin stays on the map.", "Nessun indirizzo trovato qui: inseriscilo, il segnaposto resta sulla mappa.", "No se encuentra ninguna dirección aquí: escríbela, el marcador sigue en el mapa."],
