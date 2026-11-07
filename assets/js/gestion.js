@@ -166,12 +166,12 @@ async function listeVisites() {
   if (error) { vue.innerHTML = `<h1>Tableau de bord</h1><div class="trait-corail"></div>${ongletsHtml()}<p class="erreur">${esc(error.message)}</p>`; brancherOnglets(); return; }
   const [jour, semaine, mois, total] = st.periodes;
   const tuile = (titre, p) => `<div class="carte" style="text-align:center"><div class="petit">${titre}</div>
-    <div style="font-size:30px;font-weight:800;color:var(--primaire)">${p.visites}</div><div class="petit">visites · ${p.pages} pages vues</div>
+    <div style="font-size:30px;font-weight:800;color:var(--primaire)">${p.visites}</div><div class="petit">visiteurs uniques · ${p.pages} pages vues</div>
     <div class="petit">${p.appli} ouverture(s) de l'appli</div></div>`;
   const max = Math.max(1, ...st.par_jour.map(d => d.visites + d.appli));
   const barres = st.par_jour.map(d => {
     const date = new Date(d.jour + "T12:00:00");
-    return `<div title="${date.toLocaleDateString("fr-FR", { day: "numeric", month: "long" })} : ${d.visites} visite(s), ${d.appli} ouverture(s) de l'appli"
+    return `<div title="${date.toLocaleDateString("fr-FR", { day: "numeric", month: "long" })} : ${d.visites} visiteur(s), ${d.appli} appareil(s) sur l’appli de l'appli"
       style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:1px;height:140px">
       <span style="display:block;height:${Math.round(d.appli * 130 / max)}px;background:var(--corail);border-radius:3px 3px 0 0"></span>
       <span style="display:block;height:${Math.round(d.visites * 130 / max)}px;background:var(--turquoise);border-radius:${d.appli ? 0 : "3px 3px"} 0 0"></span></div>`;
@@ -180,7 +180,7 @@ async function listeVisites() {
   const appareils = Object.entries(st.appareils);
   const totalApp = appareils.reduce((a, [, n]) => a + n, 0) || 1;
   vue.innerHTML = `<h1>Tableau de bord</h1><div class="trait-corail"></div>${ongletsHtml()}
-    <p class="muet">Compteur sans cookie ni donnée personnelle. Une visite = une personne qui ouvre le site dans un onglet (les pages vues ensuite ne comptent pas comme nouvelles visites).</p>
+    <p class="muet">Compteur sans cookie ni donnée personnelle. Une même adresse IP compte une seule visite par jour, même avec plusieurs onglets, rechargements ou connexions (l’adresse n’est jamais enregistrée : seule une empreinte qui change chaque jour est gardée).</p>
     <div class="grille-3" style="grid-template-columns:repeat(auto-fit,minmax(170px,1fr))">${tuile("Aujourd'hui", jour)}${tuile("7 derniers jours", semaine)}${tuile("30 derniers jours", mois)}${tuile("Depuis le début", total)}</div>
     <div class="carte" style="margin-top:14px"><b>30 derniers jours</b>
       <div style="display:flex;gap:3px;align-items:flex-end;margin-top:12px">${barres}</div>
