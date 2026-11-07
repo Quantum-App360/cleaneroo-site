@@ -1,5 +1,5 @@
 // Calcul de l'estimation : copie EXACTE de Estimation.kt (§ 8 du cahier des charges), dans le même ordre.
-import { REGLES, duree, DATE_PREMIERES_INTERVENTIONS, pctZone, libelleZone } from "./regles.js";
+import { REGLES, duree, DATE_PREMIERES_INTERVENTIONS, pctZone, libelleZone, fraisServicePct } from "./regles.js";
 import { prixSpecialC, minutesSpeciales, equipementsPour, surfaceEffective, TYPES_IMMEUBLE, tranchesConvives, minutesEtapesLocation, prixOptionsLocationC, PACK_ETAPES_CONSEILLE, PACK_CONSOMMABLES_CONSEILLE } from "./catalogue.js";
 import { rubrique, formulesPour, TYPES_LIEU, RUBRIQUES_CREDIT_IMPOT, TYPES_VITRES_ELIGIBLES, prixLigne, minutesLigne, libelleLigne,
   arrondiEuro, tachesPour, tacheChiffree, packsPour, remisePack } from "./catalogue.js";
@@ -20,7 +20,7 @@ const ENTREE_DEFAUT = {
   niveauxSupplementaires: 0, minutesEtapesLocation: 0, consommablesAControler: false, salissure: "NORMAL",
   taches: [], remisePackPct: 0, remisePackC: null, tachesPersonnalisees: 0, dimanche: false, creneauMalin: false,
   engagementMois: 0, espacePersonnel: true, typeLieuId: "", panier: [], minutesEnPlus: 0, minimumApresMin: 0,
-  lavageDrapsLits: 0, zonePct: 0, suiviSms: false, optionsLocationC: 0, formuleId: "", tachesFormule: [],
+  lavageDrapsLits: 0, zonePct: 0, suiviSms: false, optionsLocationC: 0, formuleId: "", tachesFormule: [], fraisServicePct: 0,
 };
 
 export function calculer(entree) {
@@ -157,9 +157,12 @@ export function calculer(entree) {
   // Option « Suivi par SMS » : ajoutée après le crédit d'impôt (ce n'est pas un service à la personne).
   if (e.suiviSms) { lignes.push({ libelle: "Suivi par SMS", montantC: REGLES.OPTION_SMS_C }); total += REGLES.OPTION_SMS_C; }
 
+  // Frais de service Cleaneroo (hors crédit d'impôt) : affichés à part, en plus du prix de la prestation.
+  const fraisPct = e.fraisServicePct || 0, fraisC = Math.round(total * fraisPct / 100);
   return {
     lignes, totalC: total, dureeMin: deux ? arrondiQuartSup(dureeTotale / 2) : dureeTotale,
-    nombreCleaneurs: deux ? 2 : 1, devisObligatoire: devis, creditImpotC: credit, apresCreditImpotC: total - credit,
+    nombreCleaneurs: deux ? 2 : 1, devisObligatoire: devis, creditImpotC: credit,
+    fraisServicePct: fraisPct, fraisServiceC: fraisC, totalAPayerC: total + fraisC, apresCreditImpotC: total + fraisC - credit,
   };
 }
 
@@ -304,6 +307,7 @@ export function entreeEstimation(b, espacePersonnel, debut) {
     consommablesAControler: b.rubriqueId === "rental" && consommablesDe(b).length > 0,
     salissure: b.salissure, taches: tachesChoisies, remisePackPct: pack ? pack.remisePct : 0, remisePackC: pack ? remisePack(pack, chiffrees) * n : null,
     formuleId: pack && ["confort", "prestige"].includes(pack.id) ? pack.id : "", tachesFormule: pack ? pack.tacheIds : [],
+    fraisServicePct: fraisServicePct(espacePersonnel, !!b.abonnePro),
     tachesPersonnalisees: b.tachesPerso.length,
     dimanche: debut ? debut.getDay() === 0 : false,
     creneauMalin: dispo === "MALIN" && !b.flexible,

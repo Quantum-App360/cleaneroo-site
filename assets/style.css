@@ -1638,3 +1638,21 @@ details.piece.complete .pastille-piece { background: #23955A; border-color: #239
 .ligne-calcul { display: flex; justify-content: space-between; padding: 8px 12px; border-radius: 12px; background: var(--creux); }
 .ligne-calcul.meilleur { background: color-mix(in srgb, #23955A 14%, var(--surface)); font-weight: 700; }
 @media (max-width: 640px) { .cartes-formules { grid-template-columns: 1fr; } .formule-cleaneur.pro { order: -1; } }
+
+/* ---------------------------------------------------------------- Abonnement des conciergeries (abonnement-pro.js) */
+.abonnement-pro { display: grid; gap: 14px; margin-bottom: 14px; }
+.tranches { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; align-items: stretch; }
+.tranche { position: relative; display: flex; flex-direction: column; gap: 4px; padding: 20px 14px 14px; border-radius: 20px; background: var(--surface); box-shadow: var(--ombre-relief); border: 2px solid transparent; }
+.tranche.conseillee { background: linear-gradient(var(--surface), var(--surface)) padding-box, linear-gradient(140deg, #25B5BF, #9C8CFF) border-box; }
+.tranche.actuelle { box-shadow: var(--ombre-relief), 0 0 0 4px color-mix(in srgb, var(--marque) 16%, transparent); }
+.tranche .badge-formule { white-space: nowrap; }
+.tranche .nom-formule { font-size: 15.5px; }
+.tranche .prix-formule { font-size: 22px; }
+.tranche .prix-formule small { font-size: 12px; -webkit-text-fill-color: var(--texte3); color: var(--texte3); font-weight: 700; }
+.tranche ul { list-style: none; margin: 6px 0 10px; padding: 0; display: grid; gap: 3px; font-size: 13px; color: var(--texte2); }
+.tranche ul li::before { content: "✓ "; color: #23955A; font-weight: 800; }
+.tranche .bouton, .tranche > .tampon { margin-top: auto; align-self: flex-start; }
+.tranche .rentable { margin-top: 6px; }
+@media (max-width: 900px) { .tranches { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 520px) { .tranches { grid-template-columns: 1fr; } .tranche.conseillee { order: -1; } }
+.tranche .trop-petit { margin-top: auto; color: var(--texte3); font-style: italic; }

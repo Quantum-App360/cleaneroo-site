@@ -3,6 +3,7 @@
 // Mêmes écrans que l'application (EcranCompte.kt).
 import { surveiller } from "./sons.js";
 import { brancherFormulesCleaneur } from "./formules-cleaneur.js";
+import { blocAbonnementPro, brancherAbonnementPro } from "./abonnement-pro.js";
 import { RUBRIQUES, rubrique, TYPES_LOGEMENT } from "./catalogue.js";
 import { euros, dateLongue, heure, REGLES, sirenSiretValide } from "./regles.js";
 import { icone } from "./icones.js";
@@ -81,7 +82,8 @@ export async function pageCompte(vue, param) {
   if (!admin && onglet !== p.espace) { p.espace = onglet; majProfil({ espace: onglet }).then(() => majLienCompte()).catch(() => null); }
   const docs = cleaneur && onglet === "cleaneur" ? await mesDocuments().catch(() => []) : [];
   if (location.hash !== ici) return;
-  const contenu = onglet === "pro" ? ongletPro(p, biens) + `<details class="carte" style="margin-top:14px"><summary>Mes informations</summary>${formulaireProfil(p, false)}</details>`
+  const contenu = onglet === "pro" ? ongletPro(p, biens) + `<h2 class="titre-section">${icone("paiement", { tuile: true })}${tr("Mon abonnement")}</h2>${blocAbonnementPro(p, biens)}`
+      + `<details class="carte" style="margin-top:14px"><summary>Mes informations</summary>${formulaireProfil(p, false)}</details>`
     : onglet === "cleaneur" ? ongletCleaneur(p, docs, { dossier: cleaneur ? blocDossier(p, docs) : "", profil: cleaneur ? formulaireProfil(p, true) : "" })
     : ongletParticulier(p, biens, demandes) + formulaireProfil(p, false);
   const etiquette = admin ? ROLES.admin : statuts.map(x => NOMS_STATUTS[x][0]).join(" · ");
@@ -109,7 +111,7 @@ export async function pageCompte(vue, param) {
   traduire(vue);
   if (vue.querySelector("#form-profil")) brancherProfil(vue, p, onglet === "cleaneur" && cleaneur);
   if (onglet === "cleaneur" && cleaneur) { brancherDossier(vue, p); brancherMissions(vue, p); brancherFormulesCleaneur(vue, p, () => pageCompte(vue, "cleaneur")); }
-  if (onglet === "pro") brancherPro(vue, p, biens, demandes, { majProfil, recharger: () => pageCompte(vue) });
+  if (onglet === "pro") { brancherPro(vue, p, biens, demandes, { majProfil, recharger: () => pageCompte(vue) }); brancherAbonnementPro(vue, () => { majLienCompte(); pageCompte(vue, "pro"); }); }
   // Ajouter un espace : Particulier ou Cleaneur tout de suite ; Pro avec la société (raison sociale + SIRET/SIREN).
   const ajouter = async (statut, bouton) => {
     if (bouton) bouton.disabled = true;

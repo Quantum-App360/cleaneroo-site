@@ -12,7 +12,7 @@ export function profilMemorise() {
 }
 export function memoriserProfil(p) {
   try {
-    if (p) localStorage.setItem(CLE, JSON.stringify({ prenom: p.prenom || "", role: p.role || "client", espace: p.espace || "particulier", statuts: p.statuts || [] }));
+    if (p) localStorage.setItem(CLE, JSON.stringify({ prenom: p.prenom || "", role: p.role || "client", espace: p.espace || "particulier", statuts: p.statuts || [], abonnePro: !!p.abonnement_pro && p.abonnement_pro !== "aucun" }));
     else localStorage.removeItem(CLE);
   } catch { /* navigation privée */ }
 }

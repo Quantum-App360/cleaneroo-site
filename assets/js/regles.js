@@ -44,6 +44,17 @@ export const REGLES = {
   // Offre de lancement : les 500 premiers dossiers validés ont la formule Pro offerte 12 mois (base : pro_offert_jusqu).
   // Impayé (abonnement Pro) : blocage et redistribution des missions réservées 3 jours après la date de facturation prévue.
   COMMISSION_GRATUIT_PB: 2000, COMMISSION_PRO_PB: 1200, PRIORITE_PRO_MIN: 30,
+  // Frais de service côté client (modèle économique) : particulier 5 % ; conciergerie ou entreprise sans abonnement 8 % ; abonnée 0 %.
+  // Affichés à part dès le devis, hors crédit d'impôt.
+  FRAIS_SERVICE_PARTICULIER_PCT: 5, FRAIS_SERVICE_PRO_PCT: 8,
+  // Abonnement des conciergeries par tranche de logements (prix HT par mois) ; au-delà de 100 logements : sur devis ; 1er mois offert.
+  ABONNEMENTS_PRO: [
+    { id: "t1", max: 5, prixC: 2900, inclus: ["0 % de frais de service"] },
+    { id: "t2", max: 15, prixC: 6900, inclus: ["0 % de frais de service", "Vue par logement", "Cleaneur attitré"] },
+    { id: "t3", max: 40, prixC: 14900, inclus: ["0 % de frais de service", "Vue par logement", "Cleaneur attitré", "Facturation mensuelle groupée"] },
+    { id: "t4", max: 100, parLogementC: 300, inclus: ["0 % de frais de service", "Vue par logement", "Cleaneur attitré", "Facturation mensuelle groupée"] },
+  ],
+  ABONNEMENT_PRO_SUR_DEVIS_LOGEMENTS: 100, ABONNEMENT_PRO_MOIS_OFFERTS: 1,
   OFFRE_LANCEMENT_PLACES: 500,
   OFFRE_LANCEMENT_MOIS: 12,
   ABONNEMENT_CLEANEUR_C: 1999,
@@ -190,3 +201,12 @@ export function revenuCleaneurC(caC, formule, offert = false) {
 }
 /** Chiffre d'affaires mensuel à partir duquel Pro rapporte plus que Gratuit (centimes, arrondi à l'euro supérieur) : 250 €. */
 export const seuilRentabiliteProC = () => Math.ceil(REGLES.ABONNEMENT_CLEANEUR_C * 10000 / (REGLES.COMMISSION_GRATUIT_PB - REGLES.COMMISSION_PRO_PB) / 100) * 100;
+
+/** Frais de service (%) : particulier 5 % ; conciergerie ou entreprise : 8 % sans abonnement, 0 % abonnée. */
+export const fraisServicePct = (particulier, abonne = false) => (particulier ? REGLES.FRAIS_SERVICE_PARTICULIER_PCT : abonne ? 0 : REGLES.FRAIS_SERVICE_PRO_PCT);
+/** Tranche d'abonnement conseillée pour un nombre de logements (null au-delà de 100 : sur devis). */
+export const tranchePour = n => REGLES.ABONNEMENTS_PRO.find(t => Math.max(1, n) <= t.max) || null;
+/** Prix mensuel HT d'une tranche pour n logements (centimes) : forfait, ou 3 € par logement au-delà de 40. */
+export const prixAbonnementProC = (t, n) => (t.parLogementC ? t.parLogementC * Math.max(41, n) : t.prixC);
+/** Volume de ménages mensuel (centimes) à partir duquel l'abonnement coûte moins que les 8 % de frais (arrondi à l'euro supérieur). */
+export const seuilAbonnementProC = (t, n) => Math.ceil(prixAbonnementProC(t, n) * 100 / REGLES.FRAIS_SERVICE_PRO_PCT / 100) * 100;

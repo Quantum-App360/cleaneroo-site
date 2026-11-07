@@ -10,6 +10,7 @@ import { REGLES, euros, duree, heure, dateCourte, dateLongue, estPrelancement, M
 import { envoyerDemande } from "./donnees.js";
 import { maPosition, adresseDe, chercherAdresse, afficherCarte } from "./cartes.js";
 import { traduire, langue, tr } from "./langue.js";
+import { profilMemorise } from "./entete.js";
 import { icone } from "./icones.js";
 import { blocReassurance } from "./commun.js";
 
@@ -122,6 +123,8 @@ export function ouvrirReservation(conteneur, rubriqueId, option = "") {
   if (rubriqueId && rubrique(rubriqueId)) b = !rapide && ancien && ancien.rubriqueId === rubriqueId ? ancien : nouveauBrouillon(rubriqueId, ancien?.espace, rapide);
   else b = ancien && ancien.etape > 1 ? ancien : null;
   if (b?.rubriqueId) b = { ...b, espace: partiePour(b.rubriqueId, b.espace) };
+  // Conciergerie abonnée : 0 % de frais de service (profil mémorisé par l'en-tête).
+  if (b) b = { ...b, abonnePro: !!profilMemorise()?.abonnePro };
   // Code postal saisi sur l'accueil (« Voir mon prix »).
   const cp = option.match(/^cp-(\d{5})$/)?.[1];
   if (b && cp && !b.rue) b = { ...b, codePostal: cp };
@@ -573,6 +576,9 @@ function etape5() {
         : est.lignes.map(l => { const inclus = l.montantC === 0 && l.note === "inclus";
             return `<div class="ligne-montant"><span>${esc(l.libelle)}${l.note && !inclus ? `<span class="note-ligne">${l.note}</span>` : ""}</span><span>${inclus ? "Inclus" : euros(l.montantC)}</span></div>`; }).join("")
           + `<div class="ligne-montant total"><span>Total estimé</span><span>${euros(est.totalC)}</span></div>
+             ${est.fraisServicePct ? `<div class="ligne-montant"><span>${tr("Frais de service Cleaneroo")} (${est.fraisServicePct} %)</span><span>${euros(est.fraisServiceC)}</span></div>
+               <div class="ligne-montant total"><span>${tr("Total à payer")}</span><span>${euros(est.totalAPayerC)}</span></div>`
+               : b.abonnePro ? `<div class="ligne-montant"><span>${tr("Frais de service Cleaneroo")}</span><span>${tr("0 € (abonné)")}</span></div>` : ""}
              ${est.creditImpotC ? `<div class="ligne-montant" style="color:var(--succes);font-weight:700"><span>soit ${euros(est.apresCreditImpotC)} après crédit d'impôt</span></div>` : ""}
              <p class="petit">Prix approximatif : le montant final ne peut pas le dépasser sans votre accord.</p>
              ${est.nombreCleaneurs === 2 ? `<p class="petit">Au-delà de 6 h de travail, la mission est confiée à 2 Cleaneurs.</p>` : ""}
@@ -778,7 +784,8 @@ async function envoyer() {
     const acces = { TIERS: { nom: b.tiersNom, telephone: b.tiersTel }, BOITE: { emplacement: b.boiteEmplacement, code: b.code }, AUTONOME: { code: b.code } }[b.accueil] || {};
     const details = { ...b }; ["prenom", "nom", "email", "telephone", "rue", "codePostal", "ville", "code", "tiersNom", "tiersTel", "boiteEmplacement", "cgv", "etape", "logementId"].forEach(k => delete details[k]);
     details.lignes = est.lignes;
-    details.langue = langue;   // langue des SMS et des messages : celle de la réservation
+    details.langue = langue;
+    details.fraisServicePct = est.fraisServicePct; details.fraisServiceC = est.fraisServiceC;   // frais de service Cleaneroo (à part)   // langue des SMS et des messages : celle de la réservation
     const nombre = passagesPlanifies(b);
     details.passages = nombre;
     const dates = debut && nombre > 1 && !estPrelancement() ? datesPassages(debut, frequenceDe(b), b.jours || [], nombre) : [debut];

@@ -3,8 +3,8 @@
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Tests des prix</title>
 <meta name="robots" content="noindex">
 <style>body{font:15px system-ui;margin:24px}li.ok{color:#2E9E72}li.ko{color:#D0485A;font-weight:700}</style>  <!-- chargement : généré par outils/generer_pages.py, ne pas modifier à la main -->
-  <script type="importmap">{"imports":{"/assets/js/agenda.js":"/assets/js/agenda.js?v=2026110730","/assets/js/app.js":"/assets/js/app.js?v=2026110730","/assets/js/cartes.js":"/assets/js/cartes.js?v=2026110730","/assets/js/catalogue.js":"/assets/js/catalogue.js?v=2026110730","/assets/js/commun.js":"/assets/js/commun.js?v=2026110730","/assets/js/compte.js":"/assets/js/compte.js?v=2026110730","/assets/js/controle.js":"/assets/js/controle.js?v=2026110730","/assets/js/controle-ecran.js":"/assets/js/controle-ecran.js?v=2026110730","/assets/js/compteur.js":"/assets/js/compteur.js?v=2026110730","/assets/js/donnees.js":"/assets/js/donnees.js?v=2026110730","/assets/js/entete.js":"/assets/js/entete.js?v=2026110730","/assets/js/espaces.js":"/assets/js/espaces.js?v=2026110730","/assets/js/estimation.js":"/assets/js/estimation.js?v=2026110730","/assets/js/formules-cleaneur.js":"/assets/js/formules-cleaneur.js?v=2026110730","/assets/js/gestion.js":"/assets/js/gestion.js?v=2026110730","/assets/js/icones.js":"/assets/js/icones.js?v=2026110730","/assets/js/langue.js":"/assets/js/langue.js?v=2026110730","/assets/js/missions.js":"/assets/js/missions.js?v=2026110730","/assets/js/page.js":"/assets/js/page.js?v=2026110730","/assets/js/regles.js":"/assets/js/regles.js?v=2026110730","/assets/js/reserver.js":"/assets/js/reserver.js?v=2026110730","/assets/js/sons.js":"/assets/js/sons.js?v=2026110730","/assets/js/suivi-live.js":"/assets/js/suivi-live.js?v=2026110730","/assets/js/tableau.js":"/assets/js/tableau.js?v=2026110730","/assets/js/villes.js":"/assets/js/villes.js?v=2026110730"}}</script>
-  <link rel="stylesheet" href="/assets/style.css?v=2026110730">
+  <script type="importmap">{"imports":{"/assets/js/abonnement-pro.js":"/assets/js/abonnement-pro.js?v=2026110732","/assets/js/agenda.js":"/assets/js/agenda.js?v=2026110732","/assets/js/app.js":"/assets/js/app.js?v=2026110732","/assets/js/cartes.js":"/assets/js/cartes.js?v=2026110732","/assets/js/catalogue.js":"/assets/js/catalogue.js?v=2026110732","/assets/js/commun.js":"/assets/js/commun.js?v=2026110732","/assets/js/compte.js":"/assets/js/compte.js?v=2026110732","/assets/js/controle.js":"/assets/js/controle.js?v=2026110732","/assets/js/controle-ecran.js":"/assets/js/controle-ecran.js?v=2026110732","/assets/js/compteur.js":"/assets/js/compteur.js?v=2026110732","/assets/js/donnees.js":"/assets/js/donnees.js?v=2026110732","/assets/js/entete.js":"/assets/js/entete.js?v=2026110732","/assets/js/espaces.js":"/assets/js/espaces.js?v=2026110732","/assets/js/estimation.js":"/assets/js/estimation.js?v=2026110732","/assets/js/formules-cleaneur.js":"/assets/js/formules-cleaneur.js?v=2026110732","/assets/js/gestion.js":"/assets/js/gestion.js?v=2026110732","/assets/js/icones.js":"/assets/js/icones.js?v=2026110732","/assets/js/langue.js":"/assets/js/langue.js?v=2026110732","/assets/js/missions.js":"/assets/js/missions.js?v=2026110732","/assets/js/page.js":"/assets/js/page.js?v=2026110732","/assets/js/regles.js":"/assets/js/regles.js?v=2026110732","/assets/js/reserver.js":"/assets/js/reserver.js?v=2026110732","/assets/js/sons.js":"/assets/js/sons.js?v=2026110732","/assets/js/suivi-live.js":"/assets/js/suivi-live.js?v=2026110732","/assets/js/tableau.js":"/assets/js/tableau.js?v=2026110732","/assets/js/villes.js":"/assets/js/villes.js?v=2026110732"}}</script>
+  <link rel="stylesheet" href="/assets/style.css?v=2026110732">
   <!-- /chargement -->
 </head>
 <body>
@@ -95,7 +95,7 @@ egal("immeuble 20 paliers : 154,00 €", parcours({ ...bi, paliers: 20 }).totalC
 { let monte = true; for (const sp of [5, 10, 20, 45]) for (let n = 2; n <= 40; n++) if (parcours({ ...bi, surfacePalier: sp, paliers: n }).totalC <= parcours({ ...bi, surfacePalier: sp, paliers: n - 1 }).totalC) monte = false;
   egal("immeuble : chaque palier en plus augmente le prix", monte, true); }
 const bw = { rubriqueId: "windows", formuleId: "ponctuel", typeLieuId: "fenetres_logement", fenetres: 8 };
-egal("vitres 8 fenêtres : 60,00 €", parcours(bw).totalC, 6000); egal("vitres : 30,00 € après crédit d'impôt", parcours(bw).apresCreditImpotC, 3000);
+egal("vitres 8 fenêtres : 60,00 €", parcours(bw).totalC, 6000); egal("vitres : 33,00 € après crédit d'impôt (frais de service 5 % compris)", parcours(bw).apresCreditImpotC, 3300);
 egal("vitres + Essentiel : 74,00 €", parcours({ ...bw, taches: ["encadrements"] }).totalC, 7400);
 const bx = { rubriqueId: "outdoor", formuleId: "ponctuel", typeLieuId: "terrasse", surface: 30 };
 egal("terrasse 30 m² : 32,00 €", parcours(bx).totalC, 3200); egal("terrasse + haute pression : 72,00 €", parcours({ ...bx, taches: ["haute_pression"] }).totalC, 7200);
@@ -132,7 +132,7 @@ egal("vues de la fin de chantier", vuesPhotos({ ...bc, pieces: 2 }).length, 5);
 
 // Canapés et textiles (prompt 5)
 e = parcours({ rubriqueId: "textiles", formuleId: "canape", panier: [{ elementId: "canape_angle", tailleId: "t25", quantite: 1 }], taches: ["detachage", "desodorisation", "acariens"] });
-egal("canapé d'angle 2 à 2,5 m + Confort : 169,00 €", e.totalC, 16900); egal("84,50 € après crédit d'impôt", e.apresCreditImpotC, 8450);
+egal("canapé d'angle 2 à 2,5 m + Confort : 169,00 €", e.totalC, 16900); egal("92,95 € après crédit d'impôt (frais de service 5 % compris)", e.apresCreditImpotC, 9295);
 egal("Essentiel textiles = détachage", rubrique("textiles").packs.find(p => p.id === "essentiel").tacheIds.join(), "detachage");
 
 // Véhicules (prompt 4)
@@ -178,7 +178,7 @@ egal("grand ménage périodique : dernier nettoyage", rubrique("rental").formule
 e = parcours({ rubriqueId: "home", formuleId: "ponctuel", surface: 60, taches: ["draps", "poubelles", "hauteurs", "plinthes"] });
 egal("logement 60 m² + Essentiel : 108,25 €", e.totalC, 10825);
 egal("logement 60 m² : remise 2 €", e.lignes.find(l => l.libelle.startsWith("Remise pack"))?.montantC, -200);
-egal("logement 60 m² : 54,12 € après crédit d'impôt", e.apresCreditImpotC, 5412);
+egal("logement 60 m² : 59,53 € après crédit d'impôt (frais de service 5 % compris)", e.apresCreditImpotC, 5953);
 e = parcours({ rubriqueId: "home", formuleId: "regulier", typeLogementId: "maison", surface: 110, chambres: 3, sdb: 2, niveaux: 2 });
 egal("maison 110 m², 2 niveaux, régulier : 4 h", e.dureeMin, 240); egal("maison 110 m² : 107,60 €", e.totalC, 10760);
 const rh = rubrique("home");
@@ -331,6 +331,23 @@ import("./assets/js/catalogue.js").then(() => {});
     egal("Cleaneur Pro : 1 000 € de missions → 860,01 €", revenuCleaneurC(100000, "pro"), 86001);
     egal("Cleaneur Pro offert : 1 000 € → 880 €", revenuCleaneurC(100000, "pro", true), 88000);
     egal("Pro rentable dès 250 €", seuilRentabiliteProC(), 25000);
+  }
+  // Frais de service (5 % particulier, 8 % pro sans abonnement, 0 % abonné) et abonnements des conciergeries
+  {
+    const { fraisServicePct, tranchePour, prixAbonnementProC, seuilAbonnementProC } = await import("./assets/js/regles.js");
+    const part = parcours({ rubriqueId: "home", formuleId: "ponctuel" });
+    egal("frais de service particulier : 5 % de 67,25 € = 3,36 €", part.fraisServiceC, 336);
+    egal("total à payer particulier : 70,61 €", part.totalAPayerC, 7061);
+    egal("prix de la prestation inchangé : 67,25 €", part.totalC, 6725);
+    egal("frais pro sans abonnement : 8 %", fraisServicePct(false, false), 8);
+    egal("frais pro abonné : 0 %", fraisServicePct(false, true), 0);
+    egal("tranche 3 logements : t1", tranchePour(3).id, "t1");
+    egal("tranche 15 logements : t2", tranchePour(15).id, "t2");
+    egal("tranche 16 logements : t3", tranchePour(16).id, "t3");
+    egal("tranche 41 logements : t4", tranchePour(41).id, "t4");
+    egal("plus de 100 logements : sur devis", tranchePour(101), null);
+    egal("50 logements : 150 € HT", prixAbonnementProC(tranchePour(50), 50), 15000);
+    egal("abonnement 29 € rentable dès 363 € de ménages", seuilAbonnementProC(tranchePour(3), 3), 36300);
   }
   // Accueil vivant : prochaine prestation et « À faire » (mêmes règles que l'appli, AccueilVivant.kt)
   const { prochaine, aFaire, compteARebours } = await import("./assets/js/tableau.js");
