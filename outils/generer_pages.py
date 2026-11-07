@@ -8,7 +8,7 @@
 #   - les traductions des textes locaux des villes dans assets/js/langue.js (bloc <villes-textes>).
 import io, json, os, re, html
 
-VERSION = "2026110721"          # ← une seule constante à changer à chaque mise en ligne (AAAAMMJJ + numéro du jour)
+VERSION = "2026110722"          # ← une seule constante à changer à chaque mise en ligne (AAAAMMJJ + numéro du jour)
 DATE_PLAN = "2026-11-06"        # date des pages dans sitemap.xml
 SITE = "https://cleaneroo.fr"
 

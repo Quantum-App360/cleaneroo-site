@@ -85,6 +85,39 @@ export async function lienPhotoDemande(chemin) {
 /** "ok", "deja_prise", "ouverture" (avant le 1er janvier 2027), "dossier" ou "connexion". */
 export const prendreMission = reference => rpc("prendre_mission", { p_reference: reference });
 export const avancerMission = (reference, statut) => rpc("avancer_mission", { p_reference: reference, p_statut: statut });
+
+/* ------------------------------------------------------------------ Contrôle de fin de mission, pièce par pièce (outils/base-controle.sql) */
+/** Pièces de la mission avec leurs photos, tâches et résultat du contrôle IA (Cleaneur de la mission, client, administration). */
+export async function controlesDe(reference) {
+  const { data, error } = await supabase.from("controles_pieces").select("*").eq("reference", reference).order("ordre");
+  if (error) throw new Error(error.message);
+  return data || [];
+}
+/** Enregistre une seule fois les pièces de la mission (calculées par controle.js). */
+export const enregistrerPieces = (reference, pieces) => rpc("enregistrer_pieces", { p_reference: reference, p_pieces: pieces });
+/** Met à jour une pièce : tâches cochées ({id: true}), photos, justification. */
+export const majPiece = (reference, piece, champs) => rpc("maj_piece", { p_reference: reference, p_piece: piece,
+  p_taches: champs.taches ?? null, p_photo_avant: champs.photoAvant ?? null, p_photo_apres: champs.photoApres ?? null, p_justification: champs.justification ?? null });
+/** Photo avant / après d'une pièce : réduite (1 600 px), déposée dans le stockage privé ; renvoie son chemin. */
+export async function deposerPhotoControle(reference, piece, moment, fichier) {
+  const photo = await reduirePhoto(fichier, 1600, 0.75);
+  const chemin = `${reference}/${piece}/${moment}-${Date.now()}.jpg`;
+  const { error } = await supabase.storage.from("photos-controles").upload(chemin, photo, { contentType: "image/jpeg", upsert: false });
+  if (error) throw new Error(error.message);
+  return chemin;
+}
+/** Lien temporaire (1 h) vers une photo du contrôle. */
+export async function lienPhotoControle(chemin) {
+  const { data, error } = await supabase.storage.from("photos-controles").createSignedUrl(chemin, 3600);
+  if (error) throw new Error(error.message);
+  return data.signedUrl;
+}
+/** Contrôle IA d'une pièce (comparaison avant / après) : { statut: "ok" | "ecart" | "erreur", resultat }. */
+export async function controleIA(reference, piece) {
+  const { data, error } = await supabase.functions.invoke("controle-ia", { body: { reference, piece } });
+  if (error) return { statut: "erreur", raison: "panne" };
+  return data;
+}
 /** Position du Cleaneur pendant son trajet ("ok", "statut", "interdit"…). */
 export const envoyerPosition = (reference, lat, lon, cap = null) =>
   rpc("envoyer_position", { p_reference: reference, p_lat: lat, p_lon: lon, p_cap: Number.isFinite(cap) ? cap : null });

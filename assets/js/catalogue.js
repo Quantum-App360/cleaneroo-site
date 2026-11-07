@@ -86,6 +86,8 @@ export const ETAPES_LOCATION = [
   { id: "cles", nom: "Déposer les clés / refermer la boîte à clés", piece: "entree", minutes: 0 },
 ];
 export const PACK_ETAPES_CONSEILLE = ["lit_draps", "serviettes_sdb", "wc", "plan_travail", "poubelles", "ranger_sejour", "photo_entree"];
+/** Sélection de départ (7 novembre 2026, demande de l'utilisateur) : toutes les étapes incluses (sans supplément) sont cochées d'office. */
+export const ETAPES_DEPART = () => [...new Set([...ETAPES_LOCATION.filter(e => !e.minutes).map(e => e.id), ...PACK_ETAPES_CONSEILLE])];
 export const CONSOMMABLES_LOCATION = [
   ["cafe_capsules", "Capsules / dosettes de café"],
   ["cafe_moulu", "Café moulu et filtres"],
@@ -108,6 +110,9 @@ export const PACK_CONSOMMABLES_CONSEILLE = ["cafe_capsules", "papier", "savon_ma
 export const NATURES_SALISSURE_LOCATION = ["Calcaire", "Graisse", "Traces et marques", "Odeurs", "Moisissures"];
 /** Nombre de fois qu'une étape est faite : par chambre (un studio compte 1), par salle de bain, sinon une fois. */
 export const repetitionsEtape = (e, chambres, sdb) => (e.piece === "chambre" ? Math.max(1, chambres) : e.piece === "sdb" ? Math.max(1, sdb) : 1);
+/** Prix affiché d'une étape en plus (centimes) : son temps (× chambres ou salles de bain) au taux horaire de la location, ajusté à la zone. */
+export const prixEtapeLocationC = (e, chambres, sdb, zonePct = 0) =>
+  Math.round(e.minutes * repetitionsEtape(e, chambres, sdb) * RUBRIQUES.find(r => r.id === "rental").tauxHoraireC / 60 * (100 + zonePct) / 100);
 /** Temps ajouté par les étapes choisies et les étapes personnalisées (minutes). */
 export const minutesEtapesLocation = (choisies, perso, chambres, sdb) =>
   ETAPES_LOCATION.filter(e => choisies.includes(e.id)).reduce((s, e) => s + e.minutes * repetitionsEtape(e, chambres, sdb), 0) + perso * REGLES.ETAPE_PERSO_LOCATION_MIN;

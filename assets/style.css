@@ -1532,3 +1532,7 @@ p.direct i { width: 8px; height: 8px; border-radius: 50%; background: #23955A; b
   .vivant-corps .tuile-ico { width: 52px; height: 52px; }
 }
 @media (prefers-reduced-motion: reduce) { .frise li.actif span, .pastille-etat i { animation: none; } }
+
+/* Étapes de location : supplément en euros, durée en petit dessous */
+.case .info b { display: block; color: var(--texte); font-weight: 800; text-align: right; }
+.case .info small { display: block; font-size: 11.5px; color: var(--texte3); text-align: right; }
