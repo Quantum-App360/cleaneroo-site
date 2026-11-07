@@ -101,6 +101,7 @@ export const REGLES = {
   VITESSE_MOYENNE_KMH: 35,
   MARGE_TRAJET_MIN: 10,
   SUIVI_INTERVALLE_S: 10,        // suivi en direct : position envoyée et relue toutes les 10 s
+  SURVEILLANCE_S: 30,            // nouvelles missions (Cleaneur) et prises en charge (client) : vérifiées toutes les 30 s, avec un son
 };
 
 // ---- Lancement (copie de Regles.DATE_LANCEMENT dans l'application) : ouverture de l'activité et des réservations.

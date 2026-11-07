@@ -520,7 +520,7 @@ const ROUTES = {
 };
 
 let arreterSuivi = () => {};
-async function afficher() {
+async function afficherPage() {
   clearInterval(minuterieNotifs);
   arreterSuivi(); arreterSuivi = () => {};
   const chemin = location.hash.replace(/^#\/?/, "");
@@ -571,6 +571,26 @@ async function afficher() {
   afficherPlaces(vue);
   afficherAccesCleaneur(vue);
   window.scrollTo(0, 0);
+}
+
+/** Transition entre les pages : barre de progression en dégradé en haut, puis la page apparaît en fondu. */
+const barre = document.createElement("div");
+barre.className = "barre-transition";
+barre.setAttribute("aria-hidden", "true");
+document.body.append(barre);
+let tourPage = 0;
+async function afficher() {
+  const tour = ++tourPage;
+  barre.classList.remove("fini"); void barre.offsetWidth; barre.classList.add("active");
+  vue.classList.remove("vue-entree");
+  try { await afficherPage(); }
+  finally {
+    if (tour === tourPage) {
+      barre.classList.add("fini");
+      setTimeout(() => { if (tour === tourPage) barre.classList.remove("active", "fini"); }, 450);
+      void vue.offsetWidth; vue.classList.add("vue-entree");
+    }
+  }
 }
 
 document.getElementById("lancement").innerHTML = bandeauLancement();

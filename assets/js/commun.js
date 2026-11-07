@@ -26,7 +26,9 @@ export function chargeur(texte = "Chargement…", { petit = false, variante = nu
   const anim = v === "vitre"
     ? `<div class="anim-vitre${petit ? " petite" : ""}" aria-hidden="true"><i class="vitre"></i><i class="propre"></i><i class="raclette"></i><i class="eclat"></i></div>`
     : `<div class="anim-eponge" aria-hidden="true"><span class="surface"></span><span class="eponge"></span><i></i><i></i><i></i></div>`;
-  return `<div class="chargeur${petit ? "" : " centre"}" role="status">${anim}<span>${texte}</span></div>`;
+  // Scène : tuile pastel, bulles de savon qui montent et éclatent, étincelles ; texte avec points animés.
+  const scene = `<div class="scene-attente scene-${v}${petit ? " petite" : ""}" aria-hidden="true">${anim}<b class="savon s1"></b><b class="savon s2"></b><b class="savon s3"></b><b class="savon s4"></b><em class="scintille c1"></em><em class="scintille c2"></em></div>`;
+  return `<div class="chargeur${petit ? "" : " centre"}" role="status">${scene}<span class="texte-attente">${texte.replace(/…$/, "")}<i class="points"></i></span></div>`;
 }
 /** Page entière en attente de données (compte, prestations, suivi d'une demande). */
 export const pageChargement = (texte = "Chargement…") => `<div class="chargement-page">${chargeur(texte)}</div>`;

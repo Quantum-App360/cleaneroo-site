@@ -1360,3 +1360,78 @@ div.titre-section h2::after { content: ""; display: block; width: 72px; height: 
 .flottant-1 { left: -24px; top: 150px; }
 .flottant-2 { right: -14px; top: 64px; bottom: auto; }
 @media (max-width: 960px) { .flottant-1 { left: 0; top: 120px; } .flottant-2 { right: 0; top: 50px; } }
+
+/* Alerte sonore : petit bandeau qui glisse en haut de l'écran (nouvelle mission, prise en charge) */
+.alerte-son { position: fixed; z-index: 80; top: 82px; left: 50%; translate: -50% 0; width: min(420px, calc(100% - 32px)); display: flex; flex-direction: column; gap: 2px;
+  padding: 14px 18px 14px 58px; border-radius: 20px; background: var(--surface); color: var(--texte); text-decoration: none; box-shadow: var(--ombre-relief), 0 0 0 1px var(--separateur);
+  animation: alerte-entree .45s cubic-bezier(.2, .9, .3, 1.2); transition: opacity .5s, translate .5s; }
+.alerte-son::before { content: ""; position: absolute; left: 14px; top: 50%; width: 32px; height: 32px; margin-top: -16px; border-radius: 11px; background: linear-gradient(140deg, #FF9A6B, #E5603A); }
+.alerte-prise-en-charge::before { background: linear-gradient(140deg, #4DD08A, #23955A); }
+.alerte-son b { font-size: 15px; }
+.alerte-son span { font-size: 13.5px; color: var(--texte2); }
+.alerte-son.partie { opacity: 0; translate: -50% -20px; }
+@keyframes alerte-entree { from { opacity: 0; translate: -50% -24px; } to { opacity: 1; translate: -50% 0; } }
+
+/* ================================================================================================
+   Animations d'attente 2 (7 novembre 2026) : scène pastel, bulles de savon, reflet, points animés,
+   barre de progression en dégradé et fondu entre les pages.
+   ================================================================================================ */
+.chargeur { gap: 18px; color: var(--texte2); }
+.chargeur.centre { gap: 20px; }
+.texte-attente { font-weight: 700; font-size: 15.5px; letter-spacing: -.01em; }
+.texte-attente .points::after { content: "…"; display: inline-block; width: 1.1em; text-align: left; animation: points 1.4s steps(4, end) infinite; overflow: hidden; vertical-align: bottom; }
+@keyframes points { 0% { width: 0; } 100% { width: 1.1em; } }
+
+.scene-attente { position: relative; width: 132px; height: 132px; flex: none; display: grid; place-items: center; border-radius: 40px;
+  background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, .9), transparent 45%), linear-gradient(145deg, var(--pastel-1), var(--pastel-3) 60%, var(--pastel-2));
+  box-shadow: var(--ombre-relief), inset 0 0 0 1px rgba(255, 255, 255, .6); animation: respire 2.6s ease-in-out infinite; }
+.scene-attente.petite { width: 76px; height: 76px; border-radius: 24px; }
+@keyframes respire { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.035); } }
+
+/* Vitre : cadre en dégradé, ciel derrière le verre, raclette corail, reflet qui balaie */
+.scene-attente .anim-vitre { width: 78px; height: 62px; border: 0; border-radius: 14px; padding: 4px; background: linear-gradient(140deg, #25B5BF, #0F8A82); box-shadow: 0 10px 20px -6px rgba(15, 138, 130, .55); }
+.scene-attente.petite .anim-vitre { width: 44px; height: 36px; border-radius: 9px; padding: 3px; }
+.scene-attente .anim-vitre::before, .scene-attente .anim-vitre::after { background: rgba(255, 255, 255, .85); }
+.scene-attente .anim-vitre .vitre { inset: 4px; border-radius: 10px; background: linear-gradient(160deg, #B7C6C8, #9DB0B3); }
+.scene-attente .anim-vitre .vitre::after { content: ""; position: absolute; inset: 0; border-radius: inherit; background: repeating-linear-gradient(118deg, rgba(90, 105, 105, .35) 0 4px, transparent 4px 11px); }
+.scene-attente .anim-vitre .propre { inset: 4px; border-radius: 10px; background: linear-gradient(170deg, #8FDCF5 0%, #CDEFFF 50%, #FFF6E8 100%); }
+.scene-attente .anim-vitre .propre::after { content: ""; position: absolute; top: -20%; bottom: -20%; width: 30%; left: -40%; background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .95), transparent);
+  transform: skewX(-18deg); animation: reflet 2s cubic-bezier(.6, .05, .35, 1) infinite; }
+.scene-attente .anim-vitre .raclette { top: -6px; bottom: -6px; width: 8px; border-radius: 5px; background: linear-gradient(#FF9A6B, #E5603A); box-shadow: 0 0 0 2px #fff, 0 4px 10px rgba(229, 96, 58, .45); }
+@keyframes reflet { 0%, 55% { left: -40%; } 85%, 100% { left: 120%; } }
+
+/* Éponge : bicolore, frotte en rond sur une assiette, avec de la mousse */
+.scene-attente .anim-eponge { width: 92px; height: 72px; }
+.scene-attente .anim-eponge .surface { left: 6px; right: 6px; bottom: 10px; height: 14px; border-radius: 50%; background: radial-gradient(ellipse, #fff 40%, #E5EEF0 70%); box-shadow: 0 6px 12px -4px rgba(11, 47, 51, .25); }
+.scene-attente .anim-eponge .eponge { left: 24px; bottom: 18px; width: 44px; height: 28px; border-radius: 10px; background: linear-gradient(#FFC23D 0 36%, #23955A 36% 42%, #4DD08A 42%);
+  box-shadow: 0 8px 16px -4px rgba(35, 149, 90, .5); animation: frotte-rond 1.2s ease-in-out infinite; }
+.scene-attente .anim-eponge i { border-color: #fff; background: radial-gradient(circle at 35% 30%, #fff, rgba(156, 140, 255, .35)); }
+@keyframes frotte-rond { 0% { transform: translate(-14px, 0) rotate(-8deg); } 25% { transform: translate(0, -5px) rotate(0); } 50% { transform: translate(14px, 0) rotate(8deg); } 75% { transform: translate(0, 3px) rotate(0); } 100% { transform: translate(-14px, 0) rotate(-8deg); } }
+
+/* Bulles de savon irisées qui montent puis éclatent */
+.savon { position: absolute; bottom: 14px; width: 16px; height: 16px; border-radius: 50%; opacity: 0; pointer-events: none;
+  background: radial-gradient(circle at 32% 28%, #fff 0 14%, transparent 16%), conic-gradient(from 40deg, rgba(37, 181, 191, .45), rgba(156, 140, 255, .45), rgba(255, 154, 107, .45), rgba(77, 208, 138, .45), rgba(37, 181, 191, .45));
+  box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, .85); animation: savon 2.8s ease-in infinite; }
+.savon.s1 { left: 14px; } .savon.s2 { left: 44px; width: 11px; height: 11px; animation-delay: .7s; } .savon.s3 { right: 30px; width: 20px; height: 20px; animation-delay: 1.4s; } .savon.s4 { right: 12px; width: 10px; height: 10px; animation-delay: 2.1s; }
+@keyframes savon { 0% { opacity: 0; transform: translate(0, 0) scale(.4); } 15% { opacity: 1; } 70% { opacity: 1; transform: translate(6px, -78px) scale(1); } 80% { opacity: 0; transform: translate(6px, -86px) scale(1.5); } 100% { opacity: 0; } }
+.scene-attente.petite .savon { display: none; }
+.scintille { position: absolute; width: 14px; height: 14px; background: #FFC23D; clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%); animation: scintille 2s ease-in-out infinite; }
+.scintille.c1 { top: 14px; right: 16px; } .scintille.c2 { top: 30px; left: 16px; width: 9px; height: 9px; background: #9C8CFF; animation-delay: 1s; }
+.scene-attente.petite .scintille { display: none; }
+@keyframes scintille { 0%, 100% { transform: scale(0) rotate(0); opacity: 0; } 50% { transform: scale(1) rotate(90deg); opacity: 1; } }
+
+/* Barre de progression entre deux pages */
+.barre-transition { position: fixed; z-index: 100; top: 0; left: 0; height: 3px; width: 0; opacity: 0; pointer-events: none;
+  background: linear-gradient(90deg, #25B5BF, #9C8CFF, #FA8C66); box-shadow: 0 0 10px rgba(156, 140, 255, .6); border-radius: 0 3px 3px 0; }
+.barre-transition.active { opacity: 1; animation: barre-avance 2.4s cubic-bezier(.1, .7, .3, 1) forwards; }
+.barre-transition.fini { width: 100% !important; animation: none; opacity: 0; transition: width .25s ease, opacity .3s .2s; }
+@keyframes barre-avance { from { width: 0; } to { width: 85%; } }
+
+/* Fondu de la page qui arrive */
+#vue.vue-entree { animation: vue-entree .4s ease both; }
+@keyframes vue-entree { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .scene-attente, .scene-attente *, .texte-attente .points::after, #vue.vue-entree { animation: none !important; }
+  .savon, .scintille { display: none; }
+}

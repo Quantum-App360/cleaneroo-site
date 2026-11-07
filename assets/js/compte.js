@@ -1,6 +1,7 @@
 // Comptes : « Mon compte » (client, Cleaneur, administration) et « Mes prestations » (biens, prestations à venir et passées).
 // Les comptes s'ouvrent avant l'ouverture ; aucune intervention avant le 1er janvier 2027 (DATE_PREMIERES_INTERVENTIONS).
 // Mêmes écrans que l'application (EcranCompte.kt).
+import { surveiller } from "./sons.js";
 import { RUBRIQUES, rubrique, TYPES_LOGEMENT } from "./catalogue.js";
 import { euros, dateLongue, heure, REGLES } from "./regles.js";
 import { icone } from "./icones.js";
@@ -41,7 +42,14 @@ export async function majLienCompte() {
   if (p === undefined) return;   // hors ligne : on garde l'en-tête affiché
   memoriserProfil(p);
   rendreEntete(p);
+  // Son à l'arrivée d'une nouvelle mission (Cleaneur) ou à la prise en charge d'une prestation (client).
+  const cle = p ? `${p.id}:${p.role}` : "";
+  if (cle !== surveille) {
+    surveille = cle;
+    surveiller(p, () => { if (/^#\/(compte|mes-prestations)/.test(location.hash)) dispatchEvent(new HashChangeEvent("hashchange")); });
+  }
 }
+let surveille = null;
 
 /* ------------------------------------------------------------------ Mon compte */
 
