@@ -18,20 +18,25 @@ export function bandeauLancement() {
     <span><b>Lancement le 31 décembre 2026</b><span class="message-lancement"> · ${MESSAGE_LANCEMENT}</span></span></div></div>`;
 }
 
-/* ------------------------------------------------------------------ Chargement : animations sur le thème du ménage */
-let tourChargeur = 0;
-/** Vitre essuyée à la raclette ou éponge qui frotte (en alternance), avec un texte ; même animation que l'appli. */
-export function chargeur(texte = "Chargement…", { petit = false, variante = null } = {}) {
-  const v = variante || (tourChargeur++ % 2 ? "eponge" : "vitre");
-  const anim = v === "vitre"
-    ? `<div class="anim-vitre${petit ? " petite" : ""}" aria-hidden="true"><i class="vitre"></i><i class="propre"></i><i class="raclette"></i><i class="eclat"></i></div>`
-    : `<div class="anim-eponge" aria-hidden="true"><span class="surface"></span><span class="eponge"></span><i></i><i></i><i></i></div>`;
-  // Scène : tuile pastel, bulles de savon qui montent et éclatent, étincelles ; texte avec points animés.
-  const scene = `<div class="scene-attente scene-${v}${petit ? " petite" : ""}" aria-hidden="true">${anim}<b class="savon s1"></b><b class="savon s2"></b><b class="savon s3"></b><b class="savon s4"></b><em class="scintille c1"></em><em class="scintille c2"></em></div>`;
-  return `<div class="chargeur${petit ? "" : " centre"}" role="status">${scene}<span class="texte-attente">${texte.replace(/…$/, "")}<i class="points"></i></span></div>`;
+/* ------------------------------------------------------------------ Chargement (8 novembre 2026) : logo Cleaneroo + silhouette de la page */
+const LOGO_ATTENTE = (petit = false) => `<span class="logo-attente${petit ? " petit" : ""}" aria-hidden="true"><span class="anneau"></span>
+  <span class="tuile"><img src="/assets/img/logo-marque.svg" alt="" width="64" height="64"><i class="reflet"></i></span></span>`;
+/** Attente : logo de la marque dans un anneau en dégradé qui tourne, reflet d'essuyage qui passe sur le logo, texte avec points animés.
+ *  Même animation que l'appli (Chargement.kt). petit : version en ligne, dans une carte. */
+export function chargeur(texte = "Chargement…", { petit = false } = {}) {
+  const libelle = `<span class="texte-attente">${texte.replace(/…$/, "")}<i class="points"></i></span>`;
+  return petit ? `<div class="chargeur-ligne" role="status">${LOGO_ATTENTE(true)}${libelle}</div>`
+    : `<div class="chargeur-pro" role="status">${LOGO_ATTENTE()}${libelle}</div>`;
 }
+/** Silhouette de la page qui arrive (titre, onglets, cartes), avec un balayage lumineux : la mise en page ne saute pas. */
+const squelette = () => `<div class="squelette" aria-hidden="true">
+  <span class="sq sq-titre"></span><span class="sq sq-ligne" style="width:58%"></span>
+  <div class="sq-onglets"><span class="sq sq-pilule"></span><span class="sq sq-pilule"></span><span class="sq sq-pilule"></span></div>
+  ${[0, 1, 2].map(i => `<div class="sq-carte" style="--i:${i}"><span class="sq sq-rond"></span><div><span class="sq sq-ligne" style="width:${[64, 48, 56][i]}%"></span>
+    <span class="sq sq-ligne fine" style="width:${[86, 72, 80][i]}%"></span></div><span class="sq sq-montant"></span></div>`).join("")}
+</div>`;
 /** Page entière en attente de données (compte, prestations, suivi d'une demande). */
-export const pageChargement = (texte = "Chargement…") => `<div class="chargement-page">${chargeur(texte)}</div>`;
+export const pageChargement = (texte = "Chargement…") => `<div class="chargement-page"><div class="conteneur etroit">${chargeur(texte)}${squelette()}</div></div>`;
 
 /* ------------------------------------------------------------------ Comment ça marche */
 export const ETAPES = [
