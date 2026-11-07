@@ -13,6 +13,8 @@ import { traduire, langue, tr } from "./langue.js";
 import { profilMemorise } from "./entete.js";
 import { icone } from "./icones.js";
 import { blocReassurance } from "./commun.js";
+import { monParrainage } from "./parrainage.js";
+import { session } from "./donnees.js";
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const CLE_BROUILLON = "cleaneroo-brouillon";
@@ -125,6 +127,7 @@ export function ouvrirReservation(conteneur, rubriqueId, option = "") {
   if (b?.rubriqueId) b = { ...b, espace: partiePour(b.rubriqueId, b.espace) };
   // Conciergerie abonnée : 0 % de frais de service (profil mémorisé par l'en-tête).
   if (b) b = { ...b, abonnePro: !!profilMemorise()?.abonnePro };
+  chargerParrainage();
   // Code postal saisi sur l'accueil (« Voir mon prix »).
   const cp = option.match(/^cp-(\d{5})$/)?.[1];
   if (b && cp && !b.rue) b = { ...b, codePostal: cp };
@@ -576,9 +579,13 @@ function etape5() {
         : est.lignes.map(l => { const inclus = l.montantC === 0 && l.note === "inclus";
             return `<div class="ligne-montant"><span>${esc(l.libelle)}${l.note && !inclus ? `<span class="note-ligne">${l.note}</span>` : ""}</span><span>${inclus ? "Inclus" : euros(l.montantC)}</span></div>`; }).join("")
           + `<div class="ligne-montant total"><span>Total estimé</span><span>${euros(est.totalC)}</span></div>
-             ${est.fraisServicePct ? `<div class="ligne-montant"><span>${tr("Frais de service Cleaneroo")} (${est.fraisServicePct} %)</span><span>${euros(est.fraisServiceC)}</span></div>
-               <div class="ligne-montant total"><span>${tr("Total à payer")}</span><span>${euros(est.totalAPayerC)}</span></div>`
+             ${est.fraisServicePct ? `<div class="ligne-montant"><span>${tr("Frais de service Cleaneroo")} (${est.fraisServicePct} %)</span><span>${euros(est.fraisServiceC)}</span></div>`
                : b.abonnePro ? `<div class="ligne-montant"><span>${tr("Frais de service Cleaneroo")}</span><span>${tr("0 € (abonné)")}</span></div>` : ""}
+             ${est.remiseParrainageC ? `<div class="ligne-montant remise"><span>${tr("Remise de parrainage")}</span><span>−${euros(est.remiseParrainageC)}</span></div>` : ""}
+             ${est.cagnotteC ? `<div class="ligne-montant remise"><span>${tr("Ma cagnotte")}</span><span>−${euros(est.cagnotteC)}</span></div>` : ""}
+             ${est.fraisServicePct || est.remiseParrainageC || est.cagnotteC ? `<div class="ligne-montant total"><span>${tr("Total à payer")}</span><span>${euros(est.totalAPayerC)}</span></div>` : ""}
+             ${b.remiseParrainageC && !est.remiseParrainageC ? `<p class="petit">${tr("Votre remise de parrainage de")} ${euros(b.remiseParrainageC)} ${tr("s'applique dès")} ${euros(REGLES.PARRAINAGE_MIN_COMMANDE_C)}.</p>` : ""}
+             ${b.cagnotteDispoC > 0 ? caseCocher(`${tr("Utiliser ma cagnotte")} (${euros(b.cagnotteDispoC)} ${tr("disponibles")})`, "utiliserCagnotte", !!b.utiliserCagnotte) : ""}
              ${est.creditImpotC ? `<div class="ligne-montant" style="color:var(--succes);font-weight:700"><span>soit ${euros(est.apresCreditImpotC)} après crédit d'impôt</span></div>` : ""}
              <p class="petit">Prix approximatif : le montant final ne peut pas le dépasser sans votre accord.</p>
              ${est.nombreCleaneurs === 2 ? `<p class="petit">Au-delà de 6 h de travail, la mission est confiée à 2 Cleaneurs.</p>` : ""}
@@ -610,7 +617,22 @@ function actions(ok, message = "", libelle = "Continuer", id = "suivant") {
 }
 
 /* ------------------------------------------------------------------ Rendu et événements */
+/* Parrainage : remise de bienvenue et cagnotte du compte connecté (la base revérifie tout à l'envoi). */
+let infosParrain = null;
+async function chargerParrainage() {
+  infosParrain = null;
+  if (!(await session().catch(() => null))) return;
+  infosParrain = await monParrainage().catch(() => null);
+  if (infosParrain && b && b.etape === 5 && racine?.isConnected) rendre();
+}
+function appliquerParrainage() {
+  if (!b) return;
+  b.remiseParrainageC = b.espace === "personnel" || b.espace === "conciergerie" || b.espace === "professionnel" ? infosParrain?.remise_bienvenue_c || 0 : 0;
+  b.cagnotteDispoC = infosParrain?.soldes?.[b.espace === "personnel" ? "particulier" : "pro"] || 0;
+}
+
 function rendre() {
+  appliquerParrainage();
   const etape = b ? b.etape : 1;
   let est = null;
   if (b && b.rubriqueId && etape > 1) est = calculer(entreeEstimation(b, b.espace === "personnel", debutChoisi()));
@@ -793,6 +815,7 @@ async function envoyer() {
     for (const [n, d] of dates.entries()) {
     const envoi1 = await envoyerDemande({
       rubrique_id: b.rubriqueId, details, estimation_c: est.totalC, credit_impot_c: est.creditImpotC, duree_min: est.dureeMin,
+      remise_parrainage_c: n === 0 ? est.remiseParrainageC : 0, cagnotte_c: n === 0 ? est.cagnotteC : 0,
       nombre_cleaneurs: est.nombreCleaneurs, sur_devis: est.devisObligatoire, creneau: d ? d.toISOString() : null, flexible: b.flexible || estPrelancement(), prelancement: estPrelancement(),
       choix_cleaneur: estPrelancement() ? "candidatures" : b.choixCleaneur, espace: b.espace, prenom: b.prenom.trim(), nom: b.nom.trim(), email: b.email.trim(), telephone: b.telephone.trim(),
       rue: b.rue.trim(), code_postal: b.codePostal.trim(), ville: b.ville.trim(), accueil: b.accueil || "PRESENT", acces,
@@ -803,7 +826,7 @@ async function envoyer() {
     const { reference, jeton } = premiere;
     memoriserCommande(b);
     try { localStorage.removeItem(CLE_BROUILLON); } catch { /* rien */ }
-    envoi = false; b = null; photos = []; photoBoite = null;
+    envoi = false; b = null; photos = []; photoBoite = null; infosParrain = null;
     location.hash = `#/demande/${reference}/${jeton}`;
   } catch (err) {
     envoi = false; rendre();

@@ -1658,3 +1658,18 @@ details.piece.complete .pastille-piece { background: #23955A; border-color: #239
 .tranche .trop-petit { margin-top: auto; color: var(--texte3); font-style: italic; }
 .offre-pro .phrase-offre { justify-self: start; margin: 4px 0 2px; padding: 8px 14px; border-radius: 14px; background: #fff; color: #0B6F69; font-weight: 800; font-size: 15px; line-height: 1.35;
   box-shadow: 0 8px 20px -8px rgba(0, 0, 0, .35); }
+
+/* Parrainage et cagnotte */
+.parrainage { display: grid; gap: 12px; }
+.cartes-parrainage { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.cartes-parrainage .carte { display: grid; gap: 6px; align-content: start; }
+.cagnotte { background: linear-gradient(135deg, #E6F7F5, #F3EEFF); }
+.cagnotte .solde { font-size: 34px; line-height: 1.1; color: var(--primaire); font-weight: 800; }
+.code-parrain .code { font-size: 24px; letter-spacing: .08em; font-weight: 800; }
+.actions-code { display: flex; flex-wrap: wrap; gap: 8px; }
+.gains-parrainage { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+.liste-filleuls { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px; }
+.liste-filleuls li { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.liste-filleuls .positif { color: var(--succes); }
+.saisie-code { display: grid; gap: 8px; }
+.ligne-montant.remise span:last-child { color: var(--succes); font-weight: 700; }

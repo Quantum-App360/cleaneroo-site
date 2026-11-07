@@ -21,6 +21,7 @@ const ENTREE_DEFAUT = {
   taches: [], remisePackPct: 0, remisePackC: null, tachesPersonnalisees: 0, dimanche: false, creneauMalin: false,
   engagementMois: 0, espacePersonnel: true, typeLieuId: "", panier: [], minutesEnPlus: 0, minimumApresMin: 0,
   lavageDrapsLits: 0, zonePct: 0, suiviSms: false, optionsLocationC: 0, formuleId: "", tachesFormule: [], fraisServicePct: 0,
+  remiseParrainageC: 0, cagnotteC: 0,
 };
 
 export function calculer(entree) {
@@ -152,17 +153,24 @@ export function calculer(entree) {
   const dureeTotale = vehicule ? Math.max(REGLES.DUREE_MIN_VEHICULE_MIN, dureeBase + tachesMin + persoMin) : dureeBase + tachesMin + persoMin + drapsMin;
   const deux = dureeTotale > REGLES.SEUIL_DEUX_CLEANEURS_MIN;
   const devis = r.toujoursSurDevis || e.surfaceM2 > REGLES.SEUIL_DEVIS_SURFACE_M2;
-  const credit = eligibleCreditImpot(e.rubriqueId, e.espacePersonnel, e.typeLieuId)
-    ? Math.min(pct(total, REGLES.CREDIT_IMPOT_PCT), REGLES.CREDIT_IMPOT_PLAFOND_C / 2) : 0;
-  // Option « Suivi par SMS » : ajoutée après le crédit d'impôt (ce n'est pas un service à la personne).
+  const totalPrestation = total;
+  // Option « Suivi par SMS » : hors crédit d'impôt (ce n'est pas un service à la personne).
   if (e.suiviSms) { lignes.push({ libelle: "Suivi par SMS", montantC: REGLES.OPTION_SMS_C }); total += REGLES.OPTION_SMS_C; }
+  // Parrainage : remise de bienvenue (1re prestation, à partir de 40 €) et cagnotte, prises sur la marge de Cleaneroo.
+  const remise = !devis && e.remiseParrainageC > 0 && total >= REGLES.PARRAINAGE_MIN_COMMANDE_C ? Math.min(e.remiseParrainageC, total) : 0;
+  const cagnotte = devis ? 0 : Math.max(0, Math.min(e.cagnotteC || 0, total - remise));
+  // Crédit d'impôt : calculé sur ce que le client paie vraiment (après remise et cagnotte).
+  const credit = eligibleCreditImpot(e.rubriqueId, e.espacePersonnel, e.typeLieuId)
+    ? Math.min(pct(Math.max(0, totalPrestation - remise - cagnotte), REGLES.CREDIT_IMPOT_PCT), REGLES.CREDIT_IMPOT_PLAFOND_C / 2) : 0;
 
   // Frais de service Cleaneroo (hors crédit d'impôt) : affichés à part, en plus du prix de la prestation.
   const fraisPct = e.fraisServicePct || 0, fraisC = Math.round(total * fraisPct / 100);
+  const aPayer = total + fraisC - remise - cagnotte;
   return {
     lignes, totalC: total, dureeMin: deux ? arrondiQuartSup(dureeTotale / 2) : dureeTotale,
     nombreCleaneurs: deux ? 2 : 1, devisObligatoire: devis, creditImpotC: credit,
-    fraisServicePct: fraisPct, fraisServiceC: fraisC, totalAPayerC: total + fraisC, apresCreditImpotC: total + fraisC - credit,
+    fraisServicePct: fraisPct, fraisServiceC: fraisC, remiseParrainageC: remise, cagnotteC: cagnotte,
+    totalAPayerC: aPayer, apresCreditImpotC: aPayer - credit,
   };
 }
 
@@ -318,5 +326,6 @@ export function entreeEstimation(b, espacePersonnel, debut) {
     lavageDrapsLits: b.rubriqueId === "rental" && b.lavageDraps ? litsDe(b) : 0,
     zonePct: pctZone(b.codePostal),
     suiviSms: !!b.suiviSms,
+    remiseParrainageC: b.remiseParrainageC || 0, cagnotteC: b.utiliserCagnotte ? b.cagnotteDispoC || 0 : 0,
   };
 }

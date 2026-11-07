@@ -1,4 +1,5 @@
 // Navigation du site et pages simples. Le parcours de réservation est dans reserver.js.
+import { champCodeParrain, memoriserCodeParrain } from "./parrainage.js";
 import { RUBRIQUES, RACCOURCIS_VITRINE, rubrique, TYPES_LIEU, pastille } from "./catalogue.js";
 import { traduire, traduireCatalogue, selecteurLangue, tr, langue } from "./langue.js";
 import { euros, duree, dateLongue, dateHeure, heure, estPrelancement, joursAvantLancement, MESSAGE_LANCEMENT, REGLES } from "./regles.js";
@@ -49,6 +50,7 @@ function formulaireInscription(typeDefaut = "client", fixe = false) {
       <label class="champ">Téléphone (facultatif)<input name="telephone" type="tel" maxlength="20" autocomplete="tel"></label></div>
     <div class="grille-2"><label class="champ">Code postal<input name="code_postal" required inputmode="numeric" maxlength="5" pattern="[0-9]{5}" autocomplete="postal-code"></label>
       <label class="champ">Ville<input name="ville" maxlength="100" autocomplete="address-level2"></label></div>
+    ${champCodeParrain()}
     <label class="champ">Un message ? (facultatif)<textarea name="message" rows="2" maxlength="1000" placeholder="Ex. : 3 appartements Airbnb à Fréjus"></textarea></label>
     <label class="case"><input type="checkbox" name="consentement"> <span>J'accepte d'être contacté par Cleaneroo pour le lancement. <a href="#/confidentialite">Confidentialité</a></span></label>
     <p class="erreur" id="erreur-inscription" style="margin:8px 0 0"></p>
@@ -76,7 +78,8 @@ export function brancherInscription(racine) {
     bouton.disabled = true; bouton.textContent = tr("Inscription…");
     try {
       const r = await inscrire({ type: v.type, prenom: v.prenom.trim(), nom: v.nom.trim(), email: v.email.trim(), telephone: v.telephone.trim(),
-        code_postal: v.code_postal, ville: v.ville.trim(), message: v.message.trim(), consentement: true });
+        code_postal: v.code_postal, ville: v.ville.trim(), message: v.message.trim(), consentement: true,
+        ...(v.code_parrain?.trim() ? { code_parrain: v.code_parrain.trim().toUpperCase().slice(0, 20) } : {}) });
       f.innerHTML = `<h3>${r === "deja" ? "Vous êtes déjà inscrit ✓" : "Merci, vous êtes inscrit ✓"}</h3>
         <p class="muet" style="margin:6px 0 0">Nous vous préviendrons avant l'ouverture du <b>31 décembre 2026</b>. ${MESSAGE_LANCEMENT}</p>`;
       traduire(f);
@@ -596,6 +599,7 @@ traduire(document.getElementById("lancement"));
 traduire(document.querySelector("footer"));
 document.title = tr(document.title);
 installerRappel();
+memoriserCodeParrain();
 window.addEventListener("hashchange", afficher);
 await retourEmail();
 // La page s'affiche tout de suite ; le compte est relu ensuite (l'en-tête se met à jour tout seul).

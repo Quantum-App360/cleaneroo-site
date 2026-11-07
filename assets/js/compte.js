@@ -1,6 +1,7 @@
 // Comptes : « Mon compte » (client, Cleaneur, administration) et « Mes prestations » (biens, prestations à venir et passées).
 // Les comptes s'ouvrent avant l'ouverture ; aucune intervention avant le 1er janvier 2027 (DATE_PREMIERES_INTERVENTIONS).
 // Mêmes écrans que l'application (EcranCompte.kt).
+import { blocParrainage, brancherParrainage, champCodeParrain, oublierCodeParrain, monParrainage } from "./parrainage.js";
 import { surveiller } from "./sons.js";
 import { brancherFormulesCleaneur } from "./formules-cleaneur.js";
 import { blocAbonnementPro, brancherAbonnementPro } from "./abonnement-pro.js";
@@ -68,7 +69,7 @@ export async function pageCompte(vue, param) {
   if (location.hash !== ici) return;
   if (param === "mdp" && s) return ecranNouveauMdp(vue);
   if (!s) return ecranConnexion(vue, ["creer", "cleaneur", "pro"].includes(param) ? "creer" : "connexion", "", false, param === "cleaneur" || param === "pro" ? param : "client");
-  const [p, biens, demandes] = await Promise.all([monProfil().catch(() => null), synchroniserBiens().catch(() => []), demandesDuCompte().catch(() => [])]);
+  const [p, biens, demandes, parrain] = await Promise.all([monProfil().catch(() => null), synchroniserBiens().catch(() => []), demandesDuCompte().catch(() => []), monParrainage().catch(() => null)]);
   if (location.hash !== ici) return;
   if (!p) { vue.innerHTML = `<section class="bloc"><div class="etroit">${titre("Mon compte")}<p class="erreur">${tr("Le service est momentanément indisponible. Réessayez dans quelques minutes.")}</p></div></section>`; traduire(vue); return; }
   memoriserCoordonnees(p);
@@ -97,7 +98,7 @@ export async function pageCompte(vue, param) {
       <p class="petit" style="margin:4px 0 10px">Demandes, inscriptions et dossiers des Cleaneurs (documents, validation).</p>
       <a class="bouton secondaire" href="gestion.html">Ouvrir le tableau de bord</a></div>` : ""}
     ${statuts.length > 1 ? barreOnglets(onglet, statuts) : ""}
-    <div class="contenu-onglet">${contenu}</div>
+    <div class="contenu-onglet">${contenu}${blocParrainage(parrain, onglet)}</div>
     ${manquants.length ? `<details class="carte ajout-espace" id="ajout-espace" style="margin-top:16px"><summary>Ajouter un espace</summary>
       <p class="petit" style="margin:8px 0 10px">Chaque espace reste séparé : vous passez de l'un à l'autre avec les onglets en haut de votre compte.</p>
       ${manquants.map(x => `<button type="button" class="carte ligne-compte" data-ajouter-statut="${x}">${icone(NOMS_STATUTS[x][2], { tuile: true })}
@@ -110,6 +111,7 @@ export async function pageCompte(vue, param) {
   </div></section>`;
   traduire(vue);
   if (vue.querySelector("#form-profil")) brancherProfil(vue, p, onglet === "cleaneur" && cleaneur);
+  brancherParrainage(vue, parrain, () => pageCompte(vue, onglet));
   if (onglet === "cleaneur" && cleaneur) { brancherDossier(vue, p); brancherMissions(vue, p); brancherFormulesCleaneur(vue, p, () => pageCompte(vue, "cleaneur")); }
   if (onglet === "pro") { brancherPro(vue, p, biens, demandes, { majProfil, recharger: () => pageCompte(vue) }); brancherAbonnementPro(vue, () => { majLienCompte(); pageCompte(vue, "pro"); }); }
   // Ajouter un espace : Particulier ou Cleaneur tout de suite ; Pro avec la société (raison sociale + SIRET/SIREN).
@@ -172,6 +174,7 @@ function ecranConnexion(vue, mode, message = "", ok = false, roleDefaut = "clien
           <label class="champ">Nom<input name="nom" required maxlength="80" autocomplete="family-name"></label></div>` : ""}
       <label class="champ">E-mail<input type="email" name="email" required maxlength="200" autocomplete="username"></label>
       <label class="champ">Mot de passe${creer ? " (10 caractères minimum)" : ""}<input type="password" name="mdp" required minlength="${creer ? 10 : 1}" autocomplete="${creer ? "new-password" : "current-password"}"></label>
+      ${creer ? champCodeParrain() : ""}
       ${creer ? `<label class="case"><input type="checkbox" name="cgu"> <span>J'accepte les <a href="#/conditions">conditions d'utilisation</a> et la <a href="#/confidentialite">politique de confidentialité</a>.</span></label>` : ""}
       ${message ? `<p class="${ok ? "note" : "erreur"}" style="margin:10px 0 0">${message}</p>` : ""}
       <p class="erreur" id="erreur-compte" style="margin:10px 0 0"></p>
@@ -207,7 +210,8 @@ function ecranConnexion(vue, mode, message = "", ok = false, roleDefaut = "clien
     try {
       if (statuts.includes("cleaneur")) demanderGeoloc();   // autorisation de géolocalisation dès l'inscription
       const r = await creerCompte({ email, mdp: f.mdp.value, statuts, prenom: f.prenom.value.trim(), nom: f.nom.value.trim(),
-        societe: statuts.includes("pro") ? f.societe.value.trim() : "", siretSociete: statuts.includes("pro") ? f.siretSociete.value : "" });
+        societe: statuts.includes("pro") ? f.societe.value.trim() : "", siretSociete: statuts.includes("pro") ? f.siretSociete.value : "", codeParrain: f.code_parrain.value });
+      oublierCodeParrain();
       if (r === "connecte") { majLienCompte(); return pageCompte(vue); }
       ecranConnexion(vue, "connexion", tr("Compte créé. Ouvrez l'e-mail de confirmation que nous venons de vous envoyer, cliquez sur le lien, puis connectez-vous."), true);
     } catch (err) {

@@ -59,6 +59,16 @@ export const REGLES = {
   ABONNEMENT_PRO_SUR_DEVIS_LOGEMENTS: 100, ABONNEMENT_PRO_MOIS_OFFERTS: 1,
   OFFRE_LANCEMENT_MOIS: 3,
   OFFRE_LANCEMENT_FIN_INSCRIPTION: "2027-01-31",
+  // Parrainage et cagnottes (7 novembre 2026, copie dans outils/base-parrainage.sql)
+  PARRAINAGE_FILLEUL_C: 1000,          // remise du filleul sur sa 1re prestation
+  PARRAINAGE_MIN_COMMANDE_C: 4000,     // … à partir de 40 €
+  PARRAINAGE_PARRAIN_C: 1000,          // cagnotte du parrain (client, ou client qui fait venir un Cleaneur)
+  PARRAINAGE_PRIME_CLEANEUR_C: 2000,   // prime d'un Cleaneur qui parraine un Cleaneur
+  PARRAINAGE_MISSIONS_CLEANEUR: 3,     // missions terminées du Cleaneur filleul avant la récompense
+  PARRAINAGE_MOIS_CONCIERGERIE: 1,     // mois d'abonnement offert à chaque conciergerie
+  PARRAINAGE_MAX_PAR_AN: 10,
+  PARRAINAGE_DELAI_CODE_JOURS: 30,
+  CAGNOTTE_VALIDITE_MOIS: 12,
   ABONNEMENT_CLEANEUR_C: 1999,
   PREAVIS_BLOCAGE_JOURS: 3,
   // Périmètre d'intervention d'un Cleaneur (menu déroulant du profil), en km ; défaut 15 km.
