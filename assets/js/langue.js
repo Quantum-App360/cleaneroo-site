@@ -469,6 +469,8 @@ const T = [
   ["Espace administrateur", "Administrator area", "Area amministratore", "Espacio de administrador"],
   ["Demandes, inscriptions et dossiers des Cleaneurs (documents, validation).", "Requests, sign-ups and Cleaneur files (documents, approval).", "Richieste, iscrizioni e pratiche dei Cleaneur (documenti, convalida).", "Solicitudes, inscripciones y expedientes de los Cleaneurs (documentos, validación)."],
   ["Ouvrir la gestion", "Open management", "Apri la gestione", "Abrir la gestión"],
+  ["Ouvrir le tableau de bord", "Open the dashboard", "Apri la dashboard", "Abrir el panel"],
+  ["Tableau de bord", "Dashboard", "Dashboard", "Panel"],
   ["Vos biens enregistrés, vos prestations à venir et passées.", "Your saved properties, your upcoming and past services.", "I tuoi immobili salvati, i servizi futuri e passati.", "Tus inmuebles guardados, tus servicios próximos y pasados."],
   ["Voir mes prestations", "See my services", "Vedi i miei servizi", "Ver mis servicios"],
   ["Ajouter une prestation", "Add a service", "Aggiungi un servizio", "Añadir un servicio"],

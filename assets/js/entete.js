@@ -30,7 +30,7 @@ const LIENS = {
   particulier: [["#/", "Accueil"], ["#/mes-demandes", "Mes demandes"], ["#/mes-biens", "Mes biens"]],
   pro: [["#/compte/pro", "Agenda"], ["#/mes-demandes", "Mes demandes"], ["#/mes-biens", "Mes biens"]],
   cleaneur: [["#/compte/cleaneur", "Mes missions"], ["#/comment-ca-marche", "Comment ça marche"]],
-  admin: [["gestion.html", "Gestion"], ["#/compte/cleaneur", "Missions"], ["#/mes-demandes", "Mes demandes"], ["#/mes-biens", "Mes biens"]],
+  admin: [["gestion.html", "Tableau de bord"], ["#/compte/cleaneur", "Missions"], ["#/mes-demandes", "Mes demandes"], ["#/mes-biens", "Mes biens"]],
 };
 const NOM_ESPACE = { particulier: "Espace Particulier", pro: "Espace Pro", cleaneur: "Espace Cleaneur", admin: "Administration" };
 

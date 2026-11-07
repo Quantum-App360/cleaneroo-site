@@ -27,7 +27,7 @@ async function demarrer() {
 }
 
 function ecranConnexion(message = "") {
-  vue.innerHTML = `<h1>Gestion Cleaneroo</h1><div class="trait-corail"></div>
+  vue.innerHTML = `<h1>Tableau de bord</h1><div class="trait-corail"></div>
     <p class="muet">Espace réservé à l'équipe Cleaneroo.</p>
     <form class="carte" id="connexion">
       <label class="champ">E-mail<input type="email" name="email" required autocomplete="username"></label>
@@ -73,7 +73,7 @@ async function listeInscriptions() {
     a.href = URL.createObjectURL(new Blob(["﻿" + texte], { type: "text/csv;charset=utf-8" }));
     a.download = "inscriptions-cleaneroo.csv"; a.click();
   };
-  vue.innerHTML = `<h1>Gestion</h1><div class="trait-corail"></div>${ongletsHtml()}
+  vue.innerHTML = `<h1>Tableau de bord</h1><div class="trait-corail"></div>${ongletsHtml()}
     <p class="muet">${data.length} inscrits · ${n("client")} clients · ${n("cleaneur")} Cleaneurs · ${n("conciergerie")} conciergeries · ${n("rappel")} à rappeler</p>
     <p class="note">Offre de lancement : <b>${data.filter(i => i.type === "cleaneur" && i.valide_le).length}</b> dossier(s) Cleaneur validé(s) · <b>${Math.max(0, 500 - data.filter(i => i.type === "cleaneur" && i.valide_le).length)}</b> places restantes sur 500 (compteur affiché sur le site et dans l'appli).</p>
     <button class="bouton secondaire" id="export">Télécharger la liste (Excel)</button>
@@ -102,9 +102,9 @@ const ETAT_DOSSIER = { BROUILLON: "À compléter", A_VERIFIER: "À vérifier", V
 const NOM_DOC = Object.fromEntries(DOCUMENTS_CLEANEUR.map(d => [d.type, d.nom]));
 async function listeDossiers() {
   let data;
-  try { data = await dossiersCleaneurs(); } catch (e) { vue.innerHTML = `<h1>Gestion</h1><div class="trait-corail"></div>${ongletsHtml()}<p class="erreur">${esc(e.message)}</p>`; brancherOnglets(); return; }
+  try { data = await dossiersCleaneurs(); } catch (e) { vue.innerHTML = `<h1>Tableau de bord</h1><div class="trait-corail"></div>${ongletsHtml()}<p class="erreur">${esc(e.message)}</p>`; brancherOnglets(); return; }
   const n = e => data.filter(d => d.dossier === e).length;
-  vue.innerHTML = `<h1>Gestion</h1><div class="trait-corail"></div>${ongletsHtml()}
+  vue.innerHTML = `<h1>Tableau de bord</h1><div class="trait-corail"></div>${ongletsHtml()}
     <p class="muet">${data.length} compte(s) Cleaneur · ${n("A_VERIFIER")} à vérifier · ${n("VALIDE")} validé(s) · ${n("BROUILLON")} en préparation · ${n("REFUSE")} à corriger</p>
     ${data.map(d => `<div class="carte ligne-demande" data-dossier="${d.id}"><div><b>${esc(d.prenom)} ${esc(d.nom)}</b>
       <div class="petit">${esc(d.email)} · ${esc(d.code_postal)} ${esc(d.ville)}${d.dossier_soumis_le ? ` · envoyé le ${dateLongue(new Date(d.dossier_soumis_le))}` : ""}</div></div>
@@ -163,7 +163,7 @@ async function detailDossier(d) {
 const APPAREILS = { mobile: "Téléphone", tablette: "Tablette", ordinateur: "Ordinateur" };
 async function listeVisites() {
   const { data: st, error } = await supabase.rpc("statistiques_visites");
-  if (error) { vue.innerHTML = `<h1>Gestion</h1><div class="trait-corail"></div>${ongletsHtml()}<p class="erreur">${esc(error.message)}</p>`; brancherOnglets(); return; }
+  if (error) { vue.innerHTML = `<h1>Tableau de bord</h1><div class="trait-corail"></div>${ongletsHtml()}<p class="erreur">${esc(error.message)}</p>`; brancherOnglets(); return; }
   const [jour, semaine, mois, total] = st.periodes;
   const tuile = (titre, p) => `<div class="carte" style="text-align:center"><div class="petit">${titre}</div>
     <div style="font-size:30px;font-weight:800;color:var(--primaire)">${p.visites}</div><div class="petit">visites · ${p.pages} pages vues</div>
@@ -179,7 +179,7 @@ async function listeVisites() {
   const debut = new Date(st.par_jour[0].jour + "T12:00:00"), fin = new Date(st.par_jour.at(-1).jour + "T12:00:00");
   const appareils = Object.entries(st.appareils);
   const totalApp = appareils.reduce((a, [, n]) => a + n, 0) || 1;
-  vue.innerHTML = `<h1>Gestion</h1><div class="trait-corail"></div>${ongletsHtml()}
+  vue.innerHTML = `<h1>Tableau de bord</h1><div class="trait-corail"></div>${ongletsHtml()}
     <p class="muet">Compteur sans cookie ni donnée personnelle. Une visite = une personne qui ouvre le site dans un onglet (les pages vues ensuite ne comptent pas comme nouvelles visites).</p>
     <div class="grille-3" style="grid-template-columns:repeat(auto-fit,minmax(170px,1fr))">${tuile("Aujourd'hui", jour)}${tuile("7 derniers jours", semaine)}${tuile("30 derniers jours", mois)}${tuile("Depuis le début", total)}</div>
     <div class="carte" style="margin-top:14px"><b>30 derniers jours</b>
@@ -202,7 +202,7 @@ async function liste() {
   if (error) { vue.innerHTML = `<p class="erreur">${esc(error.message)}</p>`; return; }
   const compte = s => data.filter(d => d.statut === s).length;
   const affichees = filtre === "TOUTES" ? data : data.filter(d => d.statut === filtre);
-  vue.innerHTML = `<h1>Gestion</h1><div class="trait-corail"></div>${ongletsHtml()}
+  vue.innerHTML = `<h1>Tableau de bord</h1><div class="trait-corail"></div>${ongletsHtml()}
     <div class="filtres">${["VERIFICATION", "PUBLIEE", "CONFIRMEE", "EN_COURS", "A_VALIDER", "TERMINEE", "ANNULEE", "TOUTES"].map(s =>
       `<button type="button" data-filtre="${s}" class="${filtre === s ? "choisi" : ""}">${s === "TOUTES" ? `Toutes (${data.length})` : `${STATUTS[s]} (${compte(s)})`}</button>`).join("")}</div>
     ${affichees.length ? affichees.map(d => {
