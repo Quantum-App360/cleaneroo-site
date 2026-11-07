@@ -1459,3 +1459,76 @@ p.direct { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; }
 p.direct i { width: 8px; height: 8px; border-radius: 50%; background: #23955A; box-shadow: 0 0 0 0 rgba(35, 149, 90, .5); animation: direct 2s infinite; }
 @keyframes direct { 0% { box-shadow: 0 0 0 0 rgba(35, 149, 90, .5); } 70% { box-shadow: 0 0 0 8px rgba(35, 149, 90, 0); } 100% { box-shadow: 0 0 0 0 rgba(35, 149, 90, 0); } }
 .ajout-espace summary { cursor: pointer; font-weight: 700; }
+
+/* ================================================================================================
+   Accueil vivant du compte (tableau.js) : prochaine prestation en direct + boîte « À faire ».
+   ================================================================================================ */
+.tableau { padding: 34px 0 56px; background:
+  radial-gradient(620px 420px at 100% 0%, var(--pastel-1), transparent 70%),
+  radial-gradient(520px 380px at 0% 20%, var(--pastel-3), transparent 70%); }
+.tableau-entete { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+.tableau-entete .surtitre { text-transform: capitalize; }
+.tableau-entete h1 { font-size: clamp(30px, 4vw, 44px); letter-spacing: -.035em; margin: 4px 0 0; }
+.tableau-entete .bouton { background: linear-gradient(120deg, #0B6F69, #14968E 50%, #25B5BF); box-shadow: 0 12px 24px -8px rgba(15, 138, 130, .6); }
+.tableau-grille { display: grid; grid-template-columns: 1.35fr 1fr; gap: 20px; align-items: start; }
+
+/* Prochaine prestation */
+.carte.vivant { padding: 22px; border-radius: 28px; }
+.vivant-haut { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 14px; }
+.pastille-etat { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; background: var(--tc); color: var(--t); font-weight: 800; font-size: 13px; }
+.pastille-etat i { width: 8px; height: 8px; border-radius: 50%; background: var(--t); animation: direct 1.6s infinite; box-shadow: 0 0 0 0 color-mix(in srgb, var(--t) 50%, transparent); }
+.rebours { font-weight: 800; font-size: 15px; color: var(--t); }
+.vivant-corps { display: flex; gap: 16px; align-items: center; }
+.vivant-corps .tuile-ico { width: 64px; height: 64px; border-radius: 20px; flex: none; }
+.vivant-corps .tuile-ico .ico { width: 34px; height: 34px; }
+.vivant-corps h2 { font-size: clamp(21px, 2.4vw, 27px); letter-spacing: -.025em; margin: 0 0 4px; }
+.vivant-corps p { margin: 0; }
+.vivant .boutons { margin-top: 18px; display: flex; flex-wrap: wrap; gap: 10px; }
+.vivant.en-direct { box-shadow: 0 30px 60px -24px color-mix(in srgb, var(--t) 55%, transparent), var(--ombre-relief); }
+
+/* Frise des étapes */
+.frise { list-style: none; display: grid; grid-template-columns: repeat(6, 1fr); gap: 0; padding: 0; margin: 20px 0 0; }
+.frise li { position: relative; display: flex; flex-direction: column; align-items: center; gap: 7px; text-align: center; }
+.frise li::before { content: ""; position: absolute; top: 8px; left: -50%; right: 50%; height: 4px; background: var(--creux); border-radius: 2px; }
+.frise li:first-child::before { display: none; }
+.frise li span { position: relative; z-index: 1; width: 20px; height: 20px; border-radius: 50%; background: var(--surface); border: 3px solid var(--creux); }
+.frise li b { font-size: 11.5px; font-weight: 700; color: var(--texte3); line-height: 1.2; }
+.frise li.fait::before, .frise li.actif::before { background: linear-gradient(90deg, var(--t2), var(--t)); }
+.frise li.fait span { background: var(--t); border-color: var(--t); }
+.frise li.actif span { border-color: var(--t); box-shadow: 0 0 0 5px color-mix(in srgb, var(--t) 22%, transparent); animation: etape-active 1.8s ease-in-out infinite; }
+.frise li.actif b { color: var(--t); }
+@keyframes etape-active { 50% { box-shadow: 0 0 0 9px color-mix(in srgb, var(--t) 10%, transparent); } }
+
+/* À faire */
+.carte.a-faire { padding: 20px; border-radius: 28px; border: 0; box-shadow: var(--ombre-relief); }
+.a-faire-titre { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.a-faire-titre h2 { font-size: 22px; margin: 0; }
+.a-faire-titre em { font-style: normal; min-width: 26px; height: 26px; padding: 0 8px; border-radius: 999px; display: grid; place-items: center; font-weight: 800; font-size: 13px;
+  background: linear-gradient(140deg, #FF9A6B, #E5603A); color: #fff; }
+.a-faire ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.a-faire li a { display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: 18px; text-decoration: none; color: var(--texte); background: var(--creux); transition: transform .15s, background .2s; }
+.a-faire li a:hover { transform: translateX(3px); background: color-mix(in srgb, var(--marque) 8%, var(--creux)); }
+.a-faire li a.urgent { background: color-mix(in srgb, #E5603A 10%, var(--surface)); box-shadow: inset 3px 0 0 #E5603A; }
+.a-faire li .tuile-ico { width: 40px; height: 40px; border-radius: 13px; flex: none; }
+.a-faire li .tuile-ico .ico { width: 22px; height: 22px; }
+.a-faire li span { flex: 1; min-width: 0; }
+.a-faire li b { display: block; font-size: 14.5px; line-height: 1.3; }
+.a-faire li small { display: block; color: var(--texte2); font-size: 12.5px; line-height: 1.35; margin-top: 2px; }
+.a-faire li i { font-style: normal; color: var(--texte3); font-size: 20px; }
+.tout-va-bien { display: flex; align-items: center; gap: 14px; padding: 8px 4px; }
+.tout-va-bien p { margin: 0; }
+.tableau-raccourcis { margin-top: 20px; }
+
+@media (max-width: 860px) {
+  .tableau { padding-top: 22px; }
+  .tableau-grille { grid-template-columns: 1fr; }
+  .tableau-entete { align-items: center; }
+  .tableau-entete .bouton { padding: 0 16px; min-height: 44px; }
+}
+@media (max-width: 520px) {
+  .frise b { display: none; }
+  .frise li.actif b { display: block; position: absolute; top: 26px; white-space: nowrap; }
+  .frise { margin-bottom: 18px; }
+  .vivant-corps .tuile-ico { width: 52px; height: 52px; }
+}
+@media (prefers-reduced-motion: reduce) { .frise li.actif span, .pastille-etat i { animation: none; } }

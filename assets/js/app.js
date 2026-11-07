@@ -12,6 +12,7 @@ import { suivreEnDirect, demoSuivi } from "./suivi-live.js";
 import { pageCompte, pageMesPrestations, arreterEcouteDemandes, retourEmail, majLienCompte, afficherAccesCleaneur } from "./compte.js";
 import { marquerActif } from "./entete.js";
 import { icone, teinte, ICONES_RUBRIQUES, ICONES_INTERFACE } from "./icones.js";
+import { pageTableau, arreterTableau } from "./tableau.js";
 import { blocEtapes, blocReassurance, installerRappel, bandeauLancement, pageChargement } from "./commun.js";
 export { bandeauLancement };
 
@@ -514,7 +515,7 @@ function pageIcones() {
 }
 
 const ROUTES = {
-  "": pageAccueil, "prestations": pagePrestations, "comment-ca-marche": pageComment, "devenir-cleaneur": pageDevenir,
+  "": pageAccueil, "vitrine": pageAccueil, "prestations": pagePrestations, "comment-ca-marche": pageComment, "devenir-cleaneur": pageDevenir,
   "inscription": () => pageInscription(), "confidentialite": pageConfidentialite, "conditions": pageConditions, "mentions-legales": pageMentions,
   "icones": pageIcones,
 };
@@ -523,6 +524,7 @@ let arreterSuivi = () => {};
 async function afficherPage() {
   clearInterval(minuterieNotifs);
   arreterEcouteDemandes();
+  arreterTableau();
   arreterSuivi(); arreterSuivi = () => {};
   const chemin = location.hash.replace(/^#\/?/, "");
   const [route, param] = chemin.split("/");
@@ -567,6 +569,10 @@ async function afficherPage() {
       afficher();
     });
     return;
+  }
+  // Compte connecté (Particulier, Pro, administrateur) : l'accueil devient son tableau de bord vivant (prochaine prestation, « À faire »).
+  if (route === "" && !document.body.classList.contains("acces-cleaneur")) {
+    if (await pageTableau(vue)) { window.scrollTo(0, 0); return; }
   }
   const page = ROUTES[route] || pageAccueil;
   vue.innerHTML = await page();

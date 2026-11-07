@@ -27,10 +27,10 @@ export function typeEspace(p) {
 const LIENS = {
   visiteur: [["#/prestations", "Prestations"], ["#/reserver", "Estimer mon prix"], ["#/comment-ca-marche", "Comment ça marche"], ["#/devenir-cleaneur", "Devenir Cleaneur"]],
   // L'essentiel, selon l'espace ouvert ; on change d'espace depuis le bouton du compte (à droite).
-  particulier: [["#/reserver", "Réserver"], ["#/mes-demandes", "Mes demandes"], ["#/mes-biens", "Mes biens"]],
+  particulier: [["#/", "Accueil"], ["#/mes-demandes", "Mes demandes"], ["#/mes-biens", "Mes biens"]],
   pro: [["#/compte/pro", "Agenda"], ["#/mes-demandes", "Mes demandes"], ["#/mes-biens", "Mes biens"]],
   cleaneur: [["#/compte/cleaneur", "Mes missions"], ["#/comment-ca-marche", "Comment ça marche"]],
-  admin: [["gestion.html", "Gestion"], ["#/mes-demandes", "Mes demandes"], ["#/mes-biens", "Mes biens"]],
+  admin: [["gestion.html", "Gestion"], ["#/compte/cleaneur", "Missions"], ["#/mes-demandes", "Mes demandes"], ["#/mes-biens", "Mes biens"]],
 };
 const NOM_ESPACE = { particulier: "Espace Particulier", pro: "Espace Pro", cleaneur: "Espace Cleaneur", admin: "Administration" };
 
@@ -47,7 +47,9 @@ export function rendreEntete(p) {
        <a class="puce-compte" href="${b}#/compte" title="${tr("Mon compte")}"><span class="avatar">${initiale}</span><span class="qui"><b>${p.prenom || tr("Mon compte")}</b><small>${NOM_ESPACE[type]}</small></span></a>`;
   actions.innerHTML = html;
   // Téléphone : le panneau du menu reprend les liens puis le compte.
-  nav.innerHTML = LIENS[type].map(lien).join("") + `<div class="nav-compte">${html}</div>`;
+  // Plusieurs statuts (ex. Cleaneur et Particulier) : un lien direct vers chaque autre espace.
+  const autres = type === "admin" || type === "visiteur" ? [] : (p.statuts || []).filter(x => x !== type && NOM_ESPACE[x]).map(x => [`#/compte/${x}`, NOM_ESPACE[x]]);
+  nav.innerHTML = [...LIENS[type], ...autres].map(lien).join("") + `<div class="nav-compte">${html}</div>`;
   document.body.dataset.espace = type;
   document.body.classList.toggle("acces-cleaneur", type === "cleaneur");
   traduire(nav); traduire(actions);

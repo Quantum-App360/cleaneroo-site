@@ -3,8 +3,8 @@
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Tests des prix</title>
 <meta name="robots" content="noindex">
 <style>body{font:15px system-ui;margin:24px}li.ok{color:#2E9E72}li.ko{color:#D0485A;font-weight:700}</style>  <!-- chargement : généré par outils/generer_pages.py, ne pas modifier à la main -->
-  <script type="importmap">{"imports":{"/assets/js/agenda.js":"/assets/js/agenda.js?v=2026110719","/assets/js/app.js":"/assets/js/app.js?v=2026110719","/assets/js/cartes.js":"/assets/js/cartes.js?v=2026110719","/assets/js/catalogue.js":"/assets/js/catalogue.js?v=2026110719","/assets/js/commun.js":"/assets/js/commun.js?v=2026110719","/assets/js/compte.js":"/assets/js/compte.js?v=2026110719","/assets/js/compteur.js":"/assets/js/compteur.js?v=2026110719","/assets/js/donnees.js":"/assets/js/donnees.js?v=2026110719","/assets/js/entete.js":"/assets/js/entete.js?v=2026110719","/assets/js/espaces.js":"/assets/js/espaces.js?v=2026110719","/assets/js/estimation.js":"/assets/js/estimation.js?v=2026110719","/assets/js/gestion.js":"/assets/js/gestion.js?v=2026110719","/assets/js/icones.js":"/assets/js/icones.js?v=2026110719","/assets/js/langue.js":"/assets/js/langue.js?v=2026110719","/assets/js/missions.js":"/assets/js/missions.js?v=2026110719","/assets/js/page.js":"/assets/js/page.js?v=2026110719","/assets/js/regles.js":"/assets/js/regles.js?v=2026110719","/assets/js/reserver.js":"/assets/js/reserver.js?v=2026110719","/assets/js/sons.js":"/assets/js/sons.js?v=2026110719","/assets/js/suivi-live.js":"/assets/js/suivi-live.js?v=2026110719","/assets/js/villes.js":"/assets/js/villes.js?v=2026110719"}}</script>
-  <link rel="stylesheet" href="/assets/style.css?v=2026110719">
+  <script type="importmap">{"imports":{"/assets/js/agenda.js":"/assets/js/agenda.js?v=2026110720","/assets/js/app.js":"/assets/js/app.js?v=2026110720","/assets/js/cartes.js":"/assets/js/cartes.js?v=2026110720","/assets/js/catalogue.js":"/assets/js/catalogue.js?v=2026110720","/assets/js/commun.js":"/assets/js/commun.js?v=2026110720","/assets/js/compte.js":"/assets/js/compte.js?v=2026110720","/assets/js/compteur.js":"/assets/js/compteur.js?v=2026110720","/assets/js/donnees.js":"/assets/js/donnees.js?v=2026110720","/assets/js/entete.js":"/assets/js/entete.js?v=2026110720","/assets/js/espaces.js":"/assets/js/espaces.js?v=2026110720","/assets/js/estimation.js":"/assets/js/estimation.js?v=2026110720","/assets/js/gestion.js":"/assets/js/gestion.js?v=2026110720","/assets/js/icones.js":"/assets/js/icones.js?v=2026110720","/assets/js/langue.js":"/assets/js/langue.js?v=2026110720","/assets/js/missions.js":"/assets/js/missions.js?v=2026110720","/assets/js/page.js":"/assets/js/page.js?v=2026110720","/assets/js/regles.js":"/assets/js/regles.js?v=2026110720","/assets/js/reserver.js":"/assets/js/reserver.js?v=2026110720","/assets/js/sons.js":"/assets/js/sons.js?v=2026110720","/assets/js/suivi-live.js":"/assets/js/suivi-live.js?v=2026110720","/assets/js/tableau.js":"/assets/js/tableau.js?v=2026110720","/assets/js/villes.js":"/assets/js/villes.js?v=2026110720"}}</script>
+  <link rel="stylesheet" href="/assets/style.css?v=2026110720">
   <!-- /chargement -->
 </head>
 <body>
@@ -300,6 +300,21 @@ import("./assets/js/catalogue.js").then(() => {});
   egal("SIRET valable (14 chiffres)", sirenSiretValide("44306184100047"), true);
   egal("SIREN faux refusé", sirenSiretValide("443061842"), false);
   egal("longueur fausse refusée", sirenSiretValide("1234567"), false);
+  // Accueil vivant : prochaine prestation et « À faire » (mêmes règles que l'appli, AccueilVivant.kt)
+  const { prochaine, aFaire, compteARebours } = await import("./assets/js/tableau.js");
+  const dem = [
+    { reference: "A", statut: "CONFIRMEE", creneau: "2027-01-05T09:00:00Z", rubrique_id: "home", accueil: "PRESENT" },
+    { reference: "B", statut: "EN_ROUTE", creneau: "2027-01-09T09:00:00Z", rubrique_id: "home", accueil: "PRESENT" },
+    { reference: "C", statut: "A_VALIDER", creneau: "2027-01-02T09:00:00Z", rubrique_id: "windows", accueil: "BOITE", acces: {} },
+    { reference: "D", statut: "TERMINEE", creneau: "2027-01-01T09:00:00Z", rubrique_id: "home" },
+  ];
+  egal("prochaine : celle en route passe d'abord", prochaine(dem).reference, "B");
+  egal("prochaine : rien si tout est fini", prochaine([dem[3]]), null);
+  const af = aFaire({ profil: { statuts: ["particulier"], telephone: "", dossier: "BROUILLON" }, demandes: dem, biens: [] });
+  egal("à faire : valider le ménage en premier", af[0].urgent && af[0].icone, "valide");
+  egal("à faire : 4 éléments (valider, code, téléphone, logement)", af.length, 4);
+  egal("à faire : rien pour un compte complet", aFaire({ profil: { statuts: ["particulier"], telephone: "0600000000" }, demandes: [dem[0]], biens: [{ ville: "Fréjus" }] }).length, 0);
+  egal("compte à rebours : 2 j 3 h", compteARebours(new Date(Date.UTC(2027, 0, 3, 3, 0)).toISOString(), Date.UTC(2027, 0, 1, 0, 0)).replace(/\s+/g, " "), "dans 2 j 3 h");
   egal("draps : 10 min par lit au planning", avec.dureeMin - sans.dureeMin, 2 * REGLES.LAVAGE_DRAPS_MIN_PAR_LIT);
   egal("draps : même prix en zone Prestige", parcours({ ...loc, lavageDraps: true, lits: 2, codePostal: "98000" }).totalC - parcours({ ...loc, codePostal: "98000" }).totalC, 2400);
   egal("draps : un lit par chambre par défaut", entreeEstimation({ ...BR, ...loc, lavageDraps: true, chambres: 3 }, true, null).lavageDrapsLits, 3);

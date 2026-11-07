@@ -95,3 +95,14 @@ $$;
 
 -- Temps réel : « Mes demandes » se met à jour toute seule (chaque compte ne reçoit que ses demandes, règle « lire les siennes ou admin »).
 alter publication supabase_realtime add table public.demandes;
+
+-- Accueil vivant (7 novembre 2026) : le client voit le prénom (seulement) du Cleaneur affecté à ses propres demandes.
+create or replace function public.cleaneurs_de_mes_demandes()
+returns table (reference text, prenom text)
+language sql stable security definer set search_path = '' as $$
+  select d.reference, p.prenom
+  from public.demandes d join public.profils p on p.id = d.cleaneur_id
+  where d.client_id = auth.uid() and d.cleaneur_id is not null and d.statut <> 'ANNULEE';
+$$;
+revoke all on function public.cleaneurs_de_mes_demandes() from public, anon;
+grant execute on function public.cleaneurs_de_mes_demandes() to authenticated;
