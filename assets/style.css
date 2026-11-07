@@ -1656,3 +1656,5 @@ details.piece.complete .pastille-piece { background: #23955A; border-color: #239
 @media (max-width: 900px) { .tranches { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 520px) { .tranches { grid-template-columns: 1fr; } .tranche.conseillee { order: -1; } }
 .tranche .trop-petit { margin-top: auto; color: var(--texte3); font-style: italic; }
+.offre-pro .phrase-offre { justify-self: start; margin: 4px 0 2px; padding: 8px 14px; border-radius: 14px; background: #fff; color: #0B6F69; font-weight: 800; font-size: 15px; line-height: 1.35;
+  box-shadow: 0 8px 20px -8px rgba(0, 0, 0, .35); }

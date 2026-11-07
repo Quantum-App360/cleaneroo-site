@@ -788,6 +788,7 @@ const T = [
   ["Débuter ma prestation", "Start my service", "Inizia il mio servizio", "Empezar mi servicio"],
   ["Choisir une prestation", "Choose a service", "Scegli un servizio", "Elige un servicio"],
   ["Commencer", "Start", "Inizia", "Empezar"],
+  ["jours pour s'inscrire · sans limite de places", "days left to sign up · no limit on places", "giorni per iscriversi · senza limite di posti", "días para inscribirse · sin límite de plazas"],
   ["Votre formule Pro est offerte : les 3 mois commenceront à votre première mission", "Your Pro plan is free: the 3 months will start with your first job", "La tua formula Pro è offerta: i 3 mesi inizieranno con la tua prima missione", "Tu fórmula Pro es gratis: los 3 meses empezarán con tu primera misión"],
   ["mois de formule Pro offerts à tous les Cleaneurs inscrits jusqu'au", "months of the Pro plan free for every Cleaneur who signs up by", "mesi di formula Pro offerti a tutti i Cleaneur iscritti entro il", "meses de fórmula Pro gratis para todos los Cleaneurs inscritos hasta el"],
   ["Plus que", "Only", "Solo", "Solo quedan"],

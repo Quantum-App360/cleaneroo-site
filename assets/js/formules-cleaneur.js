@@ -45,9 +45,9 @@ export function blocFormulesCleaneur(p = null) {
   return `<div class="formules-cleaneur" id="formules-cleaneur">
     ${joursOffreLancement() > 0 || offert ? `<div class="offre-pro"><span class="badge-formule">${tr("Offre de lancement")}</span>
       <b>${REGLES.OFFRE_LANCEMENT_MOIS} ${tr("mois de formule Pro offerts à tous les Cleaneurs inscrits jusqu'au")} ${finOffreLancement().toLocaleDateString(LOCALE, { day: "numeric", month: "long", year: "numeric" })}</b>
-      ${joursOffreLancement() > 0 ? `<span class="petit">${tr("Plus que")} ${joursOffreLancement()} ${tr("jours pour s'inscrire · sans limite de places · les 3 mois commencent à votre première mission")}</span>` : ""}
-      ${offert ? `<span class="tampon vert">${p.pro_offert_jusqu ? `${tr("Votre formule Pro est offerte jusqu'au")} ${dateLongue(new Date(p.pro_offert_jusqu))}`
-        : tr("Votre formule Pro est offerte : les 3 mois commenceront à votre première mission")}</span>` : ""}</div>` : ""}
+      <span class="phrase-offre">${offert && p.pro_offert_jusqu ? `${tr("Votre formule Pro est offerte jusqu'au")} ${dateLongue(new Date(p.pro_offert_jusqu))}`
+        : tr("Votre formule Pro est offerte : les 3 mois commenceront à votre première mission")}</span>
+      ${joursOffreLancement() > 0 ? `<span class="petit">${tr("Plus que")} ${joursOffreLancement()} ${tr("jours pour s'inscrire · sans limite de places")}</span>` : ""}</div>` : ""}
     <div class="cartes-formules">${formulesCleaneur().map(([id, nom, prix, com, plus, moins]) => `
       <div class="formule-cleaneur${id === "pro" ? " pro" : ""}${actuelle === id ? " actuelle" : ""}">
         ${id === "pro" ? `<span class="badge-formule">${tr("Badge Pro")}</span>` : ""}
