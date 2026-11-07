@@ -816,26 +816,85 @@ a.ligne-compte:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba
 .tuile-chiffre.alerte b { color: var(--corail-texte); }
 .tuile-chiffre span { font-size: 13px; color: var(--texte2); font-weight: 600; }
 @media (max-width: 600px) { .tuiles-chiffres { grid-template-columns: 1fr 1fr; } }
-.agenda-haut { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
-.agenda-haut [data-mois] { font-size: 26px; line-height: 1; min-width: 44px; min-height: 44px; }
-.agenda-mois { text-transform: capitalize; font-size: 17px; min-width: 150px; text-align: center; }
-.agenda-haut select { margin-left: auto; max-width: 100%; min-height: 40px; border-radius: 10px; border: 1px solid var(--separateur); background: var(--surface); color: var(--texte); padding: 0 10px; }
+/* Agenda de l'espace Pro : barres de séjour par bien, détail du jour, vue liste (même dessin que l'appli) */
+.agenda-carte { padding: 18px; }
+.agenda-haut { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.agenda-nav { display: flex; align-items: center; gap: 6px; }
+.agenda-fleche { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--separateur); background: var(--surface); color: var(--primaire); font-size: 22px; line-height: 1; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: background .15s; }
+.agenda-fleche:hover { background: color-mix(in srgb, var(--turquoise) 12%, var(--surface)); }
+.agenda-mois { text-transform: capitalize; font-size: 19px; font-weight: 800; min-width: 150px; text-align: center; }
+.puce-agenda { border: 0; border-radius: 999px; padding: 8px 14px; min-height: 36px; font-weight: 700; font-size: 13px; cursor: pointer; background: color-mix(in srgb, var(--turquoise) 14%, transparent); color: var(--primaire); }
+.agenda-vues { display: inline-flex; padding: 4px; border-radius: 999px; background: var(--creux); }
+.agenda-vues button { border: 0; background: none; border-radius: 999px; padding: 7px 16px; min-height: 36px; font-weight: 700; font-size: 14px; color: var(--texte2); cursor: pointer; }
+.agenda-vues button[aria-selected="true"] { background: var(--surface); color: var(--primaire); box-shadow: 0 2px 8px rgba(14,59,64,.12); }
+.agenda-outils { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 14px; }
+.agenda-outils select { flex: 1 1 180px; min-height: 42px; border-radius: 12px; border: 1px solid var(--separateur); background: var(--surface); color: var(--texte); padding: 0 10px; font: inherit; }
+.bouton.petit { min-height: 42px; padding: 0 16px; font-size: 14px; }
+.bouton.petit svg { width: 18px; height: 18px; }
 .agenda-grille { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
-.agenda-grille .jour-sem { text-align: center; font-size: 12px; font-weight: 700; color: var(--texte3); text-transform: uppercase; padding: 4px 0; }
-.agenda-grille .jour { min-height: 54px; border-radius: 10px; background: var(--creux); padding: 5px; display: flex; flex-direction: column; justify-content: space-between; }
-.agenda-grille .jour.hors { background: none; }
-.agenda-grille .jour.occupe { background: color-mix(in srgb, var(--turquoise) 22%, var(--creux)); }
-.agenda-grille .jour.aujourdhui { outline: 2px solid var(--primaire); outline-offset: -2px; }
-.agenda-grille .num { font-size: 13px; font-weight: 700; }
-.marques { display: flex; gap: 3px; flex-wrap: wrap; }
-.marques i, .agenda-legende i { display: inline-flex; align-items: center; justify-content: center; min-width: 12px; height: 12px; border-radius: 6px; font-style: normal; font-size: 9px; font-weight: 800; color: #fff; padding: 0 2px; }
-.m-depart { background: var(--corail); }
-.m-arrivee { background: var(--turquoise); }
-.m-menage { background: var(--succes); }
-.agenda-legende { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 10px; }
+.agenda-grille .jour-sem { text-align: center; font-size: 11px; font-weight: 800; letter-spacing: .06em; color: var(--texte3); text-transform: uppercase; padding: 4px 0 6px; }
+.agenda-grille .jour { position: relative; min-height: 76px; border-radius: 12px; border: 1px solid transparent; background: var(--creux); padding: 6px 7px; text-align: left; font: inherit; color: var(--texte); cursor: pointer; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start; transition: background .15s, border-color .15s; }
+.agenda-grille .jour:hover { border-color: color-mix(in srgb, var(--turquoise) 45%, transparent); }
+.agenda-grille .jour.hors { background: none; cursor: default; }
+.agenda-grille .jour.passe .num { color: var(--texte3); font-weight: 600; }
+.agenda-grille .jour.aujourdhui .num { background: var(--degrade); color: #fff; }
+.agenda-grille .jour.choisi { border-color: var(--primaire); background: color-mix(in srgb, var(--turquoise) 10%, var(--surface)); box-shadow: 0 4px 14px rgba(14,59,64,.12); }
+.agenda-grille .num { display: inline-flex; align-items: center; justify-content: center; min-width: 26px; height: 26px; border-radius: 13px; font-size: 13px; font-weight: 800; }
+/* Barre de séjour : commence au milieu du jour d'arrivée, finit au milieu du jour de départ, continue d'un jour à l'autre. */
+.agenda-grille .barre { position: absolute; height: 8px; top: calc(36px + var(--v) * 11px); background: var(--c); left: -3px; right: -3px; }
+.agenda-grille .barre.debut { left: 52%; border-radius: 6px 0 0 6px; }
+.agenda-grille .barre.fin { right: 52%; border-radius: 0 6px 6px 0; }
+.agenda-grille .jour:nth-child(7n+1) .barre.milieu, .agenda-grille .jour:nth-child(7n+1) .barre.fin { left: 0; }
+.agenda-grille .jour:nth-child(7n) .barre.milieu, .agenda-grille .jour:nth-child(7n) .barre.debut { right: 0; }
+.agenda-grille .badges { position: absolute; top: 6px; right: 6px; display: flex; gap: 3px; }
+.b-menage { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; background: var(--succes); color: #fff; font-style: normal; }
+.b-menage svg { width: 13px; height: 13px; }
+.b-plus { font-style: normal; font-size: 11px; font-weight: 800; color: var(--texte2); background: var(--surface); border-radius: 8px; padding: 1px 5px; }
+.agenda-legende { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 12px; }
 .agenda-legende span { display: inline-flex; align-items: center; gap: 6px; }
-.agenda-legende i.occupe { background: color-mix(in srgb, var(--turquoise) 35%, var(--creux)); }
-@media (max-width: 480px) { .agenda-grille .jour { min-height: 44px; padding: 3px; } .agenda-grille { gap: 3px; } }
+.barre-leg { display: inline-block; width: 18px; height: 8px; border-radius: 4px; background: var(--c); }
+.agenda-detail { margin-top: 14px; padding: 14px; border-radius: var(--rayon); background: color-mix(in srgb, var(--turquoise) 7%, var(--surface)); border: 1px solid var(--separateur); }
+.agenda-detail-haut { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.agenda-detail-haut b { font-size: 16px; }
+.agenda-detail-haut b::first-letter { text-transform: uppercase; }
+.evt { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--separateur); flex-wrap: wrap; }
+.agenda-detail .evt:first-of-type, .liste-evts .evt:first-child { border-top: 0; }
+.evt-pastille { width: 6px; align-self: stretch; min-height: 36px; border-radius: 3px; background: var(--c); flex: none; }
+.evt-menage .evt-pastille { background: var(--succes); }
+.evt-corps { flex: 1 1 200px; min-width: 0; }
+.evt-haut { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.evt-depart .evt-haut b { color: var(--corail-texte); }
+.evt-arrivee .evt-haut b { color: var(--primaire); }
+.evt-menage .evt-haut b { color: var(--succes); }
+.evt-bien { font-weight: 600; }
+.evt-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.evt .tampon { margin-top: 4px; display: inline-block; }
+.liste-jour { display: flex; gap: 14px; padding: 12px 0; border-top: 1px solid var(--separateur); }
+.liste-jour:first-child { border-top: 0; }
+.liste-date { flex: none; width: 54px; text-align: center; border-radius: 14px; background: var(--creux); padding: 6px 0; align-self: flex-start; }
+.liste-date b { display: block; font-size: 22px; line-height: 1.1; }
+.liste-date span { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--texte3); }
+.liste-evts { flex: 1; min-width: 0; }
+.liste-date i { display: block; font-style: normal; font-size: 11px; font-weight: 600; color: var(--texte2); }
+.agenda-titre-liste { font-size: 18px; font-weight: 800; }
+.form-sejour { margin: 0 0 16px; padding: 16px; border-radius: var(--rayon); border: 1px solid color-mix(in srgb, var(--turquoise) 40%, transparent); background: color-mix(in srgb, var(--turquoise) 6%, var(--surface)); }
+.deux-champs { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+@media (max-width: 560px) {
+  .agenda-carte { padding: 12px; }
+  .agenda-grille { gap: 3px; }
+  .agenda-grille .jour { min-height: 58px; padding: 4px; border-radius: 10px; }
+  .agenda-grille .num { min-width: 22px; height: 22px; font-size: 12px; }
+  .agenda-grille .barre { height: 6px; top: calc(30px + var(--v) * 8px); left: -2px; right: -2px; }
+  .agenda-grille .badges { top: auto; bottom: 3px; right: 3px; }
+  .b-menage { width: 16px; height: 16px; }
+  .b-menage svg { width: 11px; height: 11px; }
+  .agenda-mois { font-size: 16px; min-width: 0; flex: 1; white-space: nowrap; }
+  .agenda-nav { width: 100%; }
+  .agenda-vues { width: 100%; }
+  .agenda-vues button { flex: 1; }
+  .agenda-outils .bouton { flex: 1 1 140px; padding: 0 10px; }
+}
+@media (max-width: 400px) { .deux-champs { grid-template-columns: 1fr; } }
 .bien-pro details { margin-top: 10px; border-top: 1px solid var(--separateur); padding-top: 8px; }
 .bien-pro summary, details.carte > summary { cursor: pointer; font-weight: 700; color: var(--primaire); }
 .pastilles { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }

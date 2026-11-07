@@ -53,6 +53,12 @@ export const REGLES = {
   AGENDA_CACHE_MIN: 15,          // calendrier relu au plus toutes les 15 min
   SEUIL_ESPACE_PRO_BIENS: 3,     // à partir de 3 biens, le compte s'ouvre sur l'espace Pro
   BIENS_MAX: 200,
+  // Agenda sans calendrier iCal : séjours saisis à la main dans l'espace Pro.
+  SEJOURS_MAX_PAR_BIEN: 300,     // séjours saisis gardés par bien
+  SEJOURS_GARDES_JOURS: 90,      // séjours finis depuis plus de 90 jours oubliés
+  SEJOUR_DUREE_MAX_JOURS: 365,
+  AGENDA_VOIES_MAX: 3,           // barres de séjour visibles par jour (au-delà : « +N »)
+  AGENDA_LISTE_JOURS: 60,        // vue « Liste » : les 60 prochains jours
   PALIERS_DEFAUT: 5,
   CHANTIER_MINIMUM_MIN: 120,
   CHANTIER_PIECES_MAX: 8,

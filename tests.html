@@ -3,8 +3,8 @@
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Tests des prix</title>
 <meta name="robots" content="noindex">
 <style>body{font:15px system-ui;margin:24px}li.ok{color:#2E9E72}li.ko{color:#D0485A;font-weight:700}</style>  <!-- chargement : généré par outils/generer_pages.py, ne pas modifier à la main -->
-  <script type="importmap">{"imports":{"/assets/js/app.js":"/assets/js/app.js?v=2026110705","/assets/js/catalogue.js":"/assets/js/catalogue.js?v=2026110705","/assets/js/commun.js":"/assets/js/commun.js?v=2026110705","/assets/js/compte.js":"/assets/js/compte.js?v=2026110705","/assets/js/compteur.js":"/assets/js/compteur.js?v=2026110705","/assets/js/donnees.js":"/assets/js/donnees.js?v=2026110705","/assets/js/espaces.js":"/assets/js/espaces.js?v=2026110705","/assets/js/estimation.js":"/assets/js/estimation.js?v=2026110705","/assets/js/gestion.js":"/assets/js/gestion.js?v=2026110705","/assets/js/icones.js":"/assets/js/icones.js?v=2026110705","/assets/js/langue.js":"/assets/js/langue.js?v=2026110705","/assets/js/missions.js":"/assets/js/missions.js?v=2026110705","/assets/js/page.js":"/assets/js/page.js?v=2026110705","/assets/js/regles.js":"/assets/js/regles.js?v=2026110705","/assets/js/reserver.js":"/assets/js/reserver.js?v=2026110705","/assets/js/suivi-live.js":"/assets/js/suivi-live.js?v=2026110705","/assets/js/villes.js":"/assets/js/villes.js?v=2026110705"}}</script>
-  <link rel="stylesheet" href="/assets/style.css?v=2026110705">
+  <script type="importmap">{"imports":{"/assets/js/agenda.js":"/assets/js/agenda.js?v=2026110801","/assets/js/app.js":"/assets/js/app.js?v=2026110801","/assets/js/catalogue.js":"/assets/js/catalogue.js?v=2026110801","/assets/js/commun.js":"/assets/js/commun.js?v=2026110801","/assets/js/compte.js":"/assets/js/compte.js?v=2026110801","/assets/js/compteur.js":"/assets/js/compteur.js?v=2026110801","/assets/js/donnees.js":"/assets/js/donnees.js?v=2026110801","/assets/js/espaces.js":"/assets/js/espaces.js?v=2026110801","/assets/js/estimation.js":"/assets/js/estimation.js?v=2026110801","/assets/js/gestion.js":"/assets/js/gestion.js?v=2026110801","/assets/js/icones.js":"/assets/js/icones.js?v=2026110801","/assets/js/langue.js":"/assets/js/langue.js?v=2026110801","/assets/js/missions.js":"/assets/js/missions.js?v=2026110801","/assets/js/page.js":"/assets/js/page.js?v=2026110801","/assets/js/regles.js":"/assets/js/regles.js?v=2026110801","/assets/js/reserver.js":"/assets/js/reserver.js?v=2026110801","/assets/js/suivi-live.js":"/assets/js/suivi-live.js?v=2026110801","/assets/js/villes.js":"/assets/js/villes.js?v=2026110801"}}</script>
+  <link rel="stylesheet" href="/assets/style.css?v=2026110801">
   <!-- /chargement -->
 </head>
 <body>
@@ -255,6 +255,25 @@ import("./assets/js/catalogue.js").then(() => {});
   egal("escaliers : suivent les étages", tachesChiffrees({ ...im, paliers: 30 }).find(t => t.id === "escaliers").prixC, 9000);
   egal("immeuble + cour + local poubelles : 134,00 €", parcours({ ...im, taches: ["cour", "local_poubelles"] }).totalC, 13400);
   egal("balayage à la surface : parking seul", tc.some(t => t.id === "balayage"), false);
+}
+
+// Agenda de l'espace Pro : séjours saisis à la main, barres, export iCal (mêmes contrôles que l'appli, AgendaTest)
+{
+  const { voies, morceau, erreurSejour, sejoursGardes, nuits, versIcs, couleurBien } = await import("./assets/js/agenda.js");
+  const v = voies([{ debut: "2027-01-05", fin: "2027-01-08" }, { debut: "2027-01-08", fin: "2027-01-10" }, { debut: "2027-01-06", fin: "2027-01-07" }]);
+  egal("agenda : rotation sur la même voie", v.map(s => `${s.debut}:${s.voie}`).join(" "), "2027-01-05:0 2027-01-06:1 2027-01-08:0");
+  const s = { debut: "2027-01-05", fin: "2027-01-08" };
+  egal("agenda : morceaux de barre", ["2027-01-04", "2027-01-05", "2027-01-06", "2027-01-08", "2027-01-09"].map(j => morceau(s, j)).join(","), ",debut,milieu,fin,");
+  egal("agenda : 3 nuits", nuits(s), 3);
+  egal("agenda : séjour valable", erreurSejour(s, [{ debut: "2027-01-08", fin: "2027-01-09" }]), null);
+  egal("agenda : départ avant l'arrivée", erreurSejour({ debut: "2027-01-08", fin: "2027-01-08" }, []), "Le départ doit être après l'arrivée.");
+  egal("agenda : chevauchement refusé", erreurSejour(s, [{ debut: "2027-01-07", fin: "2027-01-09" }]), "Ce bien est déjà occupé à ces dates.");
+  egal("agenda : 366 nuits refusées", erreurSejour({ debut: "2027-01-01", fin: "2028-01-02" }, []), `Un séjour dure au plus ${REGLES.SEJOUR_DUREE_MAX_JOURS} nuits.`);
+  egal("agenda : vieux séjours oubliés", sejoursGardes([{ debut: "2026-06-01", fin: "2026-06-05" }, { debut: "2026-10-01", fin: "2026-10-05" }], "2026-11-07").length, 1);
+  const ics = versIcs([{ uid: "a", debut: "2027-01-05", fin: "2027-01-08", titre: "Studio, Nice; vue mer", lieu: "1 rue A" }], new Date(Date.UTC(2026, 10, 7, 10)));
+  egal("export iCal : dates journée entière", ics.includes("DTSTART;VALUE=DATE:20270105\r\nDTEND;VALUE=DATE:20270108"), true);
+  egal("export iCal : caractères échappés", ics.includes("SUMMARY:Studio\\, Nice\\; vue mer"), true);
+  egal("couleur d'un bien : stable", couleurBien(9), couleurBien(1));
 }
 
 const ok = res.filter(r => r[1]).length;

@@ -5,6 +5,7 @@ import { REGLES, euros, dateLongue } from "./regles.js";
 import { icone } from "./icones.js";
 import { traduire, tr, LOCALE } from "./langue.js";
 import { DOCUMENTS_CLEANEUR, enregistrerBien, lireCalendrier } from "./donnees.js";
+import { couleurBien, voies, morceau, erreurSejour, sejoursGardes, nuits, versIcs } from "./agenda.js";
 import { preremplir } from "./reserver.js";
 export { brancherMissions, demanderGeoloc } from "./missions.js";
 
@@ -58,10 +59,13 @@ export function ongletParticulier(p, biens, demandes) {
 const SOURCES = [["airbnb", "Airbnb"], ["booking", "Booking.com"], ["autre", "Autre calendrier"]];
 let moisAffiche = null;      // premier jour du mois de l'agenda
 let filtreBien = "";         // agenda : un seul bien ou tous
+let vueAgenda = "mois";      // « mois » ou « liste »
+let jourChoisi = null;       // jour touché dans le calendrier (détail affiché dessous)
 
-/** Lit les calendriers de tous les biens : séjours [{ bienId, source, debut, fin }] et erreurs par lien. */
+/** Séjours de tous les biens : ceux des calendriers iCal et ceux saisis à la main ; erreurs par lien. */
 async function sejoursDes(biens) {
   const sejours = [], erreurs = {};
+  biens.forEach(l => (l.sejours || []).forEach(s => sejours.push({ ...s, bienId: l.id, source: "manuel" })));
   await Promise.all(biens.flatMap(l => (l.calendriers || []).filter(c => c.url).map(async c => {
     const r = await lireCalendrier(c.url).catch(() => ({ erreur: "inaccessible" }));
     if (r.erreur) { erreurs[c.url] = r.erreur; return; }
@@ -90,13 +94,13 @@ export function ongletPro(p, biens) {
       <div class="tuile-chiffre alerte"><b data-chiffre="aprogrammer">…</b><span>Ménages à programmer</span></div>
     </div>
     <h2 class="titre-section">${icone("calendrier", { tuile: true })}Agenda des locations</h2>
-    <p class="petit" style="margin-top:0">Les arrivées et départs de vos voyageurs, lus automatiquement dans vos calendriers Airbnb, Booking, Abritel…</p>
-    <div class="carte" id="agenda-pro"><p class="muet">Lecture de vos calendriers…</p></div>
+    <p class="petit" style="margin-top:0">Les séjours de vos voyageurs, lus automatiquement dans vos calendriers Airbnb, Booking, Abritel… ou ajoutés à la main si vous n'utilisez pas de calendrier.</p>
+    <div class="carte agenda-carte" id="agenda-pro"><p class="muet">Lecture de vos calendriers…</p></div>
     <h2 class="titre-section">${icone("termine", { tuile: true })}Ménages à programmer</h2>
     <p class="petit" style="margin-top:0">Chaque départ des ${REGLES.AGENDA_HORIZON_JOURS} prochains jours sans ménage prévu.</p>
     <div id="a-programmer"><div class="vide-compte"><p class="muet">Lecture de vos calendriers…</p></div></div>
     <h2 class="titre-section">${icone("logement", { tuile: true })}Mon parc de biens</h2>
-    <p class="petit" style="margin-top:0">Reliez le calendrier de chaque bien : les départs de vos voyageurs apparaissent dans l'agenda.</p>
+    <p class="petit" style="margin-top:0">Reliez le calendrier de chaque bien, ou ajoutez vos séjours à la main dans l'agenda : les départs de vos voyageurs y apparaissent.</p>
     ${biens.length > 1 ? `<div class="outils-biens"><input type="search" id="cherche-bien" placeholder="${esc(tr("Rechercher un bien, une rue, une ville…"))}" aria-label="Rechercher un bien">
       <select id="tri-biens" aria-label="Trier les biens"><option value="nom">Nom (A → Z)</option><option value="nom-inv">Nom (Z → A)</option><option value="ville">Ville</option><option value="depart">Prochain départ</option></select></div>` : ""}
     <div id="liste-biens">${biens.length ? biens.slice().sort((a, b) => nomBien(a).localeCompare(nomBien(b), "fr", { sensitivity: "base", numeric: true })).map(l => {
@@ -143,7 +147,7 @@ export function brancherPro(vue, p, biens, demandes, { majProfil, recharger }) {
     try { await enregistrerBien({ ...l, nom: f.nom.value.trim(), calendriers }); recharger(); }
     catch { err.textContent = tr("Le service est momentanément indisponible. Réessayez dans quelques minutes."); }
   });
-  remplirAgenda(vue, biens, demandes).then(prochains => trierBiens(vue, biens, prochains));
+  remplirAgenda(vue, biens, demandes, recharger).then(prochains => trierBiens(vue, biens, prochains));
   trierBiens(vue, biens, {});
 }
 
@@ -171,71 +175,221 @@ function trierBiens(vue, biens, prochains) {
   appliquer();
 }
 
-async function remplirAgenda(vue, biens, demandes) {
+async function remplirAgenda(vue, biens, demandes, recharger) {
   const { sejours, erreurs } = await sejoursDes(biens);
   if (!vue.querySelector("#agenda-pro")) return {};   // page quittée entre-temps
   // Calendriers injoignables : pastille rouge sur le bien.
   vue.querySelectorAll("[data-etat-cal]").forEach(s => { if (erreurs[s.dataset.etatCal]) { s.classList.add("ko"); s.title = tr("Calendrier injoignable"); } });
   const auj = new Date(); auj.setHours(0, 0, 0, 0);
   const fin = iso(plusJours(auj, REGLES.AGENDA_HORIZON_JOURS)), debut = iso(auj);
+  const bienDe = id => biens.find(x => x.id === id);
   const menagePrevu = (bienId, jour) => {
-    const l = biens.find(x => x.id === bienId);
+    const l = bienDe(bienId);
     return demandes.some(d => d.statut !== "ANNULEE" && l && memeAdresse(d, l) && d.creneau && iso(new Date(d.creneau)) === jour);
   };
-  const departs = sejours.filter(s => s.fin >= debut && s.fin <= fin).sort((a, b) => a.fin.localeCompare(b.fin));
+  // Même séjour lu sur deux calendriers (ou saisi aussi à la main) : gardé une seule fois.
+  const uniques = sejours.filter((s, i, t) => t.findIndex(x => x.bienId === s.bienId && x.debut === s.debut && x.fin === s.fin) === i);
+  const departs = uniques.filter(s => s.fin >= debut && s.fin <= fin).sort((a, b) => a.fin.localeCompare(b.fin));
   // Prochain départ de chaque bien (tri « Prochain départ »).
   const prochains = {};
-  sejours.filter(s => s.fin >= debut).forEach(s => { if (!prochains[s.bienId] || s.fin < prochains[s.bienId]) prochains[s.bienId] = s.fin; });
-  const rotation = s => sejours.some(x => x.bienId === s.bienId && x.debut === s.fin);
+  uniques.filter(s => s.fin >= debut).forEach(s => { if (!prochains[s.bienId] || s.fin < prochains[s.bienId]) prochains[s.bienId] = s.fin; });
+  const rotation = s => uniques.some(x => x.bienId === s.bienId && x.debut === s.fin);
   const aProgrammer = departs.filter(s => !menagePrevu(s.bienId, s.fin))
-    .filter((s, i, t) => t.findIndex(x => x.bienId === s.bienId && x.fin === s.fin) === i);   // même départ sur deux calendriers
+    .filter((s, i, t) => t.findIndex(x => x.bienId === s.bienId && x.fin === s.fin) === i);
   vue.querySelector('[data-chiffre="departs"]').textContent = new Set(departs.map(s => s.bienId + s.fin)).size;
   vue.querySelector('[data-chiffre="aprogrammer"]').textContent = aProgrammer.length;
+  const programmer = b => b.onclick = () => { preremplir({ bienId: b.dataset.programmer, jour: b.dataset.jour }); location.hash = "#/reserver/rental"; };
 
   const liste = vue.querySelector("#a-programmer");
-  const relies = biens.some(l => (l.calendriers || []).some(c => c.url));
+  const aDesSejours = uniques.length > 0 || biens.some(l => (l.calendriers || []).some(c => c.url));
   liste.innerHTML = aProgrammer.length ? aProgrammer.map(s => {
-    const l = biens.find(x => x.id === s.bienId);
+    const l = bienDe(s.bienId);
     return `<div class="carte ligne-compte">${icone("location", { tuile: true })}
       <div class="corps"><div class="haut"><h3>${esc(nomBien(l))}</h3>${rotation(s) ? `<span class="tampon">Rotation le jour même</span>` : ""}</div>
       <p class="muet">Départ le ${dateLongue(jourDe(s.fin))}</p></div>
       <button type="button" class="bouton" data-programmer="${esc(s.bienId)}" data-jour="${s.fin}">Programmer le ménage</button></div>`;
-  }).join("") : `<div class="vide-compte"><p class="muet">${tr(relies ? "Tous les départs à venir ont leur ménage." : "Reliez un calendrier à vos biens pour voir les départs ici.")}</p></div>`;
-  liste.querySelectorAll("[data-programmer]").forEach(b => b.onclick = () => {
-    preremplir({ bienId: b.dataset.programmer, jour: b.dataset.jour });
-    location.hash = "#/reserver/rental";
-  });
+  }).join("") : `<div class="vide-compte"><p class="muet">${tr(aDesSejours ? "Tous les départs à venir ont leur ménage." : "Reliez un calendrier ou ajoutez vos séjours à la main pour voir les départs ici.")}</p></div>`;
+  liste.querySelectorAll("[data-programmer]").forEach(programmer);
   traduire(liste);
 
+  // Couleur de chaque bien : rang dans l'ordre alphabétique (la même dans l'appli).
+  const ordre = biens.slice().sort((a, b) => nomBien(a).localeCompare(nomBien(b), "fr", { sensitivity: "base", numeric: true }));
+  const couleur = id => couleurBien(ordre.findIndex(l => l.id === id));
+  const menagesDu = j => biens.filter(l => (!filtreBien || l.id === filtreBien) && demandes.some(x => x.statut !== "ANNULEE" && memeAdresse(x, l) && x.creneau && iso(new Date(x.creneau)) === j));
+  const nomSource = s => s.source === "manuel" ? tr("Saisi à la main") : (SOURCES.find(x => x[0] === s.source)?.[1] || tr("Calendrier"));
+  const qui = s => [s.voyageur, s.personnes ? `${s.personnes} ${tr(s.personnes > 1 ? "personnes" : "personne")}` : ""].filter(Boolean).join(" · ");
+  const duree = s => `${nuits(s)} ${tr(nuits(s) > 1 ? "nuits" : "nuit")}`;
+
   moisAffiche = moisAffiche || new Date(auj.getFullYear(), auj.getMonth(), 1);
+  let edition = null;   // séjour saisi en cours d'ajout ou de modification
+
+  /** Une ligne d'événement (arrivée, départ, séjour en cours, ménage) dans le détail d'un jour ou la liste. */
+  const ligne = (type, s, l) => {
+    const libelle = { arrivee: "Arrivée", depart: "Départ", encours: "Séjour en cours", menage: "Ménage prévu" }[type];
+    const sansMenage = type === "depart" && !menagePrevu(s.bienId, s.fin);
+    return `<div class="evt evt-${type}" style="--c:${couleur(l.id)}">
+      <span class="evt-pastille" aria-hidden="true"></span>
+      <div class="evt-corps"><div class="evt-haut"><b>${libelle}</b><span class="evt-bien">${esc(nomBien(l))}</span></div>
+        ${s ? `<div class="petit muet">${qui(s) ? `<span>${esc(qui(s))}</span> · ` : ""}<span>${duree(s)}</span> · <span>${nomSource(s)}</span>${s.note ? ` · <span>${esc(s.note)}</span>` : ""}</div>` : ""}
+        ${type === "depart" && rotation(s) ? `<span class="tampon">Rotation le jour même</span>` : ""}</div>
+      <div class="evt-actions">${s && s.source === "manuel" ? `<button type="button" class="lien-bouton" data-modifier="${esc(s.id)}">Modifier</button>` : ""}
+        ${sansMenage ? `<button type="button" class="bouton petit" data-programmer="${esc(s.bienId)}" data-jour="${s.fin}">Programmer le ménage</button>` : ""}</div></div>`;
+  };
+  const evenementsDu = (j, sel, avecEnCours) => {
+    const r = [];
+    sel.filter(s => s.fin === j).forEach(s => r.push(ligne("depart", s, bienDe(s.bienId))));
+    sel.filter(s => s.debut === j).forEach(s => r.push(ligne("arrivee", s, bienDe(s.bienId))));
+    if (avecEnCours) sel.filter(s => s.debut < j && j < s.fin).forEach(s => r.push(ligne("encours", s, bienDe(s.bienId))));
+    menagesDu(j).forEach(l => r.push(ligne("menage", null, l)));
+    return r;
+  };
+
+  const formulaire = () => {
+    const s = edition;
+    return `<form id="form-sejour" class="form-sejour" novalidate>
+      <h3 style="margin:0 0 8px">${s.id ? tr("Modifier le séjour") : tr("Ajouter un séjour")}</h3>
+      ${biens.length > 1 ? `<label class="champ">Bien<select name="bien">${ordre.map(l => `<option value="${esc(l.id)}" ${l.id === s.bienId ? "selected" : ""}>${esc(nomBien(l))}</option>`).join("")}</select></label>` : ""}
+      <div class="deux-champs"><label class="champ">Arrivée<input type="date" name="debut" required value="${esc(s.debut)}"></label>
+        <label class="champ">Départ<input type="date" name="fin" required value="${esc(s.fin)}"></label></div>
+      <div class="deux-champs"><label class="champ">Voyageur (facultatif)<input name="voyageur" maxlength="60" value="${esc(s.voyageur)}" autocomplete="off"></label>
+        <label class="champ">Personnes<input type="number" name="personnes" min="1" max="30" inputmode="numeric" value="${esc(s.personnes || "")}"></label></div>
+      <label class="champ">Note (facultatif)<input name="note" maxlength="120" value="${esc(s.note)}" placeholder="${esc(tr("Ex. : arrivée tardive, lit bébé…"))}"></label>
+      <p class="erreur" id="erreur-sejour"></p>
+      <div class="boutons"><button class="bouton plein" type="submit">Enregistrer</button><button class="bouton secondaire" type="button" data-annuler>Annuler</button>
+        ${s.id ? `<button class="bouton danger" type="button" data-supprimer>Supprimer</button>` : ""}</div></form>`;
+  };
+
+  const enregistrerSejours = async (bienId, sejoursDuBien) => {
+    const l = bienDe(bienId);
+    await enregistrerBien({ ...l, sejours: sejoursGardes(sejoursDuBien, debut) });
+    recharger();
+  };
+
+  const brancherFormulaire = boite => {
+    const f = boite.querySelector("#form-sejour");
+    if (!f) return;
+    const err = f.querySelector("#erreur-sejour");
+    f.querySelector("[data-annuler]").onclick = () => { edition = null; dessiner(); };
+    f.querySelector("[data-supprimer]")?.addEventListener("click", async () => {
+      if (!confirm(tr("Supprimer ce séjour ?"))) return;
+      const l = bienDe(edition.bienId);
+      try { await enregistrerSejours(l.id, (l.sejours || []).filter(x => x.id !== edition.id)); }
+      catch { err.textContent = tr("Le service est momentanément indisponible. Réessayez dans quelques minutes."); }
+    });
+    f.debut.onchange = () => { if (f.debut.value && (!f.fin.value || f.fin.value <= f.debut.value)) f.fin.value = iso(plusJours(jourDe(f.debut.value), 1)); };
+    f.onsubmit = async e => {
+      e.preventDefault();
+      const bienId = f.bien ? f.bien.value : biens[0].id;
+      const s = { id: edition.id || `s${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`, debut: f.debut.value, fin: f.fin.value,
+        voyageur: f.voyageur.value.trim(), personnes: Number(f.personnes.value) || null, note: f.note.value.trim() };
+      const autres = uniques.filter(x => x.bienId === bienId && !(x.source === "manuel" && x.id === s.id));
+      const m = erreurSejour(s, autres);
+      if (m) { err.textContent = tr(m); return; }
+      const l = bienDe(bienId);
+      // Changement de bien : le séjour quitte l'ancien bien.
+      const ancien = edition.id && edition.bienId !== bienId ? bienDe(edition.bienId) : null;
+      err.textContent = tr("Enregistrement…");
+      try {
+        if (ancien) await enregistrerBien({ ...ancien, sejours: (ancien.sejours || []).filter(x => x.id !== s.id) });
+        await enregistrerSejours(bienId, [...(l.sejours || []).filter(x => x.id !== s.id), s]);
+        jourChoisi = s.debut;
+      } catch { err.textContent = tr("Le service est momentanément indisponible. Réessayez dans quelques minutes."); }
+    };
+    f.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+
+  const exporter = sel => {
+    const evts = sel.map(s => {
+      const l = bienDe(s.bienId);
+      return { uid: `${s.bienId}-${s.debut}-${s.fin}`, debut: s.debut, fin: s.fin, titre: `${nomBien(l)} · ${qui(s) || tr("Séjour")}`,
+        lieu: `${l.rue}, ${l.codePostal} ${l.ville}`, note: [nomSource(s), s.note].filter(Boolean).join(" · ") };
+    });
+    demandes.filter(d => d.statut !== "ANNULEE" && d.creneau).forEach(d => {
+      const l = biens.find(x => memeAdresse(d, x) && (!filtreBien || x.id === filtreBien));
+      if (!l) return;
+      const j = iso(new Date(d.creneau));
+      evts.push({ uid: `menage-${d.reference}`, debut: j, fin: iso(plusJours(jourDe(j), 1)), titre: `${tr("Ménage Cleaneroo")} · ${nomBien(l)}`, lieu: `${l.rue}, ${l.codePostal} ${l.ville}`, note: d.reference });
+    });
+    const url = URL.createObjectURL(new Blob([versIcs(evts, new Date())], { type: "text/calendar" }));
+    const a = Object.assign(document.createElement("a"), { href: url, download: "cleaneroo-agenda.ics" });
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  };
+
   const dessiner = () => {
     const boite = vue.querySelector("#agenda-pro");
     if (!boite) return;
-    const sel = filtreBien ? sejours.filter(s => s.bienId === filtreBien) : sejours;
+    const sel = filtreBien ? uniques.filter(s => s.bienId === filtreBien) : uniques;
     const premier = new Date(moisAffiche), decal = (premier.getDay() + 6) % 7;
     const nbJours = new Date(premier.getFullYear(), premier.getMonth() + 1, 0).getDate();
     const nomMois = premier.toLocaleDateString(LOCALE, { month: "long", year: "numeric" });
-    const jours = [...Array(7)].map((_, i) => plusJours(new Date(2024, 0, 1), i).toLocaleDateString(LOCALE, { weekday: "narrow" }));
-    let cases = "";
-    for (let i = 0; i < decal; i++) cases += `<div class="jour hors"></div>`;
-    for (let j = 1; j <= nbJours; j++) {
-      const d = iso(new Date(premier.getFullYear(), premier.getMonth(), j));
-      const occupe = sel.some(s => s.debut <= d && d < s.fin);
-      const dep = sel.filter(s => s.fin === d), arr = sel.filter(s => s.debut === d);
-      const menage = biens.some(l => (!filtreBien || l.id === filtreBien) && demandes.some(x => x.statut !== "ANNULEE" && memeAdresse(x, l) && x.creneau && iso(new Date(x.creneau)) === d));
-      cases += `<div class="jour${occupe ? " occupe" : ""}${d === debut ? " aujourdhui" : ""}">
-        <span class="num">${j}</span><span class="marques">${dep.length ? `<i class="m-depart">${dep.length > 1 ? dep.length : ""}</i>` : ""}${arr.length ? `<i class="m-arrivee">${arr.length > 1 ? arr.length : ""}</i>` : ""}${menage ? `<i class="m-menage"></i>` : ""}</span></div>`;
+    const jours = [...Array(7)].map((_, i) => plusJours(new Date(2024, 0, 1), i).toLocaleDateString(LOCALE, { weekday: "short" }).replace(".", ""));
+    const ranges = voies(sel);
+    let corps = "";
+    if (vueAgenda === "mois") {
+      let cases = "";
+      for (let i = 0; i < decal; i++) cases += `<div class="jour hors" aria-hidden="true"></div>`;
+      for (let j = 1; j <= nbJours; j++) {
+        const d = iso(new Date(premier.getFullYear(), premier.getMonth(), j));
+        const ici = ranges.map(s => ({ s, m: morceau(s, d) })).filter(x => x.m);
+        const visibles = ici.filter(x => x.s.voie < REGLES.AGENDA_VOIES_MAX), caches = ici.length - visibles.length;
+        const menages = menagesDu(d).length;
+        const dep = sel.filter(s => s.fin === d).length, arr = sel.filter(s => s.debut === d).length;
+        const resume = [dep && `${dep} ${tr("Départ")}`, arr && `${arr} ${tr("Arrivée")}`, menages && tr("Ménage prévu")].filter(Boolean).join(", ");
+        cases += `<button type="button" class="jour${d === debut ? " aujourdhui" : ""}${d === jourChoisi ? " choisi" : ""}${d < debut ? " passe" : ""}" data-jour="${d}" aria-label="${esc(dateLongue(jourDe(d)))}${resume ? ` · ${esc(resume)}` : ""}">
+          <span class="num">${j}</span>
+          ${visibles.map(({ s, m }) => `<i class="barre ${m}" style="--c:${couleur(s.bienId)};--v:${s.voie}" title="${esc(nomBien(bienDe(s.bienId)))}"></i>`).join("")}
+          <span class="badges">${menages ? `<i class="b-menage" title="${esc(tr("Ménage prévu"))}">${icone("termine")}</i>` : ""}${caches > 0 ? `<i class="b-plus">+${caches}</i>` : ""}</span></button>`;
+      }
+      const sj = jourChoisi && jourChoisi.slice(0, 7) === iso(premier).slice(0, 7) ? jourChoisi : null;
+      const detail = sj ? evenementsDu(sj, sel, true) : [];
+      corps = `<div class="agenda-grille" role="grid">${jours.map(j => `<div class="jour-sem">${j}</div>`).join("")}${cases}</div>
+        <div class="agenda-legende petit">${(filtreBien ? ordre.filter(l => l.id === filtreBien) : ordre).slice(0, 8).map(l => `<span><i class="barre-leg" style="--c:${couleur(l.id)}"></i>${esc(nomBien(l))}</span>`).join("")}
+          <span><i class="b-menage">${icone("termine")}</i>Ménage prévu</span></div>
+        ${sj ? `<div class="agenda-detail"><div class="agenda-detail-haut"><b>${dateLongue(jourDe(sj))}</b>
+            ${biens.length ? `<button type="button" class="lien-bouton" data-ajout="${sj}">＋ Ajouter un séjour</button>` : ""}</div>
+          ${detail.length ? detail.join("") : `<p class="muet petit" style="margin:4px 0 0">Rien de prévu ce jour.</p>`}</div>`
+        : `<p class="petit muet" style="margin:10px 0 0">Touchez un jour pour voir le détail.</p>`}`;
+    } else {
+      const jusqua = iso(plusJours(auj, REGLES.AGENDA_LISTE_JOURS));
+      const parJour = [];
+      for (let d = debut; d <= jusqua; d = iso(plusJours(jourDe(d), 1))) {
+        const e = evenementsDu(d, sel, false);
+        if (e.length) parJour.push(`<div class="liste-jour"><div class="liste-date"><b>${jourDe(d).getDate()}</b><span>${jourDe(d).toLocaleDateString(LOCALE, { month: "short" }).replace(".", "")}</span><i>${jourDe(d).toLocaleDateString(LOCALE, { weekday: "short" }).replace(".", "")}</i></div><div class="liste-evts">${e.join("")}</div></div>`);
+      }
+      corps = parJour.length ? parJour.join("") : `<div class="vide-compte"><p class="muet">${tr(`Aucun séjour ni ménage dans les ${REGLES.AGENDA_LISTE_JOURS} prochains jours.`)}</p></div>`;
     }
     boite.innerHTML = `<div class="agenda-haut">
-        <button type="button" class="lien-bouton" data-mois="-1" aria-label="Mois précédent">‹</button><b class="agenda-mois">${nomMois}</b><button type="button" class="lien-bouton" data-mois="1" aria-label="Mois suivant">›</button>
-        ${biens.length > 1 ? `<select id="filtre-bien" aria-label="Bien affiché"><option value="">Tous les biens</option>${biens.map(l => `<option value="${esc(l.id)}" ${l.id === filtreBien ? "selected" : ""}>${esc(nomBien(l))}</option>`).join("")}</select>` : ""}</div>
-      <div class="agenda-grille">${jours.map(j => `<div class="jour-sem">${j}</div>`).join("")}${cases}</div>
-      <div class="agenda-legende petit"><span><i class="m-depart"></i>Départ</span><span><i class="m-arrivee"></i>Arrivée</span><span><i class="m-menage"></i>Ménage prévu</span><span><i class="occupe"></i>Logement occupé</span></div>
+        <div class="agenda-nav">${vueAgenda === "mois" ? `<button type="button" class="agenda-fleche" data-mois="-1" aria-label="Mois précédent">‹</button><b class="agenda-mois">${nomMois}</b><button type="button" class="agenda-fleche" data-mois="1" aria-label="Mois suivant">›</button>
+          <button type="button" class="puce-agenda" data-auj>Aujourd'hui</button>` : `<b class="agenda-titre-liste">${tr(`Les ${REGLES.AGENDA_LISTE_JOURS} prochains jours`)}</b>`}</div>
+        <div class="agenda-vues" role="tablist" aria-label="Affichage"><button type="button" role="tab" data-vue="mois" aria-selected="${vueAgenda === "mois"}">Mois</button><button type="button" role="tab" data-vue="liste" aria-selected="${vueAgenda === "liste"}">Liste</button></div></div>
+      <div class="agenda-outils">${biens.length > 1 ? `<select id="filtre-bien" aria-label="Bien affiché"><option value="">Tous les biens</option>${ordre.map(l => `<option value="${esc(l.id)}" ${l.id === filtreBien ? "selected" : ""}>${esc(nomBien(l))}</option>`).join("")}</select>` : ""}
+        ${biens.length ? `<button type="button" class="bouton petit" data-ajout="">＋ Ajouter un séjour</button>` : ""}
+        ${sel.length ? `<button type="button" class="bouton secondaire petit" data-export>${icone("calendrier")}Exporter vers mon agenda</button>` : ""}</div>
+      ${edition ? formulaire() : ""}
+      ${corps}
       ${Object.keys(erreurs).length ? `<p class="erreur petit" style="margin:8px 0 0">${tr("Un calendrier est injoignable : vérifiez son lien dans « Mon parc de biens ».")}</p>` : ""}
-      ${!relies ? `<p class="petit" style="margin:8px 0 0">${tr("Aucun calendrier relié : ajoutez le lien Airbnb ou Booking de vos biens ci-dessous.")}</p>` : ""}`;
+      ${!biens.length ? `<p class="petit" style="margin:8px 0 0">${tr("Ajoutez d'abord un bien pour remplir votre agenda.")}</p>`
+        : !aDesSejours ? `<p class="petit" style="margin:8px 0 0">${tr("Pas de calendrier Airbnb ou Booking ? Ajoutez vos séjours à la main avec « ＋ Ajouter un séjour » : ils comptent comme les autres.")}</p>` : ""}
+      ${sel.length ? `<p class="petit muet" style="margin:8px 0 0">${tr("« Exporter vers mon agenda » crée un fichier .ics à ouvrir avec Google Agenda, le calendrier de l'iPhone ou Outlook.")}</p>` : ""}`;
     traduire(boite);
     boite.querySelectorAll("[data-mois]").forEach(b => b.onclick = () => { moisAffiche = new Date(moisAffiche.getFullYear(), moisAffiche.getMonth() + Number(b.dataset.mois), 1); dessiner(); });
+    boite.querySelector("[data-auj]")?.addEventListener("click", () => { moisAffiche = new Date(auj.getFullYear(), auj.getMonth(), 1); jourChoisi = debut; dessiner(); });
+    boite.querySelectorAll("[data-vue]").forEach(b => b.onclick = () => { vueAgenda = b.dataset.vue; dessiner(); });
+    boite.querySelectorAll(".agenda-grille [data-jour]").forEach(b => b.onclick = () => { jourChoisi = jourChoisi === b.dataset.jour ? null : b.dataset.jour; dessiner(); });
     boite.querySelector("#filtre-bien")?.addEventListener("change", e => { filtreBien = e.target.value; dessiner(); });
+    boite.querySelectorAll("[data-ajout]").forEach(b => b.onclick = () => {
+      const d = b.dataset.ajout || (jourChoisi && jourChoisi >= debut ? jourChoisi : debut);
+      edition = { bienId: filtreBien || ordre[0].id, debut: d, fin: iso(plusJours(jourDe(d), 1)) };
+      dessiner();
+    });
+    boite.querySelectorAll("[data-modifier]").forEach(b => b.onclick = () => {
+      const s = uniques.find(x => x.source === "manuel" && x.id === b.dataset.modifier);
+      edition = { ...s }; dessiner();
+    });
+    boite.querySelector("[data-export]")?.addEventListener("click", () => exporter(sel));
+    boite.querySelectorAll("[data-programmer]").forEach(programmer);
+    brancherFormulaire(boite);
   };
   dessiner();
   return prochains;
