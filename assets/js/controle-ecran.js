@@ -1,15 +1,27 @@
 // Écrans du contrôle de fin de mission, pièce par pièce (même déroulé dans l'appli : ControlePieces.kt) :
-// Cleaneur : photo avant › tâches cochées › photo après › contrôle IA (écart → reprendre la photo ou justifier) ;
-// client : compte rendu (photos avant / après, tâches, avis de l'IA, justification).
+// Cleaneur : tâches cochées › photo après › contrôle IA (écart → reprendre la photo ou justifier). Photo avant seulement si la
+// réservation coche « Photos avant exigées » ; sinon « Signaler un problème à l'arrivée » (dégât, saleté, casse) avec photo au besoin.
+// Client : compte rendu (signalements d'arrivée, photos, tâches, avis de l'IA, justification).
 import { icone } from "./icones.js";
 import { traduire, tr, langue } from "./langue.js";
 import { piecesDe, pieceComplete } from "./controle.js";
-import { controlesDe, enregistrerPieces, majPiece, deposerPhotoControle, lienPhotoControle, controleIA } from "./donnees.js";
+import { controlesDe, enregistrerPieces, majPiece, deposerPhotoControle, lienPhotoControle, controleIA, signalerArrivee, signalementsDe } from "./donnees.js";
 import { chargeur } from "./commun.js";
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const L = langue in { fr: 1, en: 1, it: 1, es: 1 } ? langue : "fr";
 const GRAVITE = { faible: "Faible", moyenne: "Moyenne", forte: "Forte" };
+const TYPES_SIGNAL = [["degat", "Dégât"], ["salete", "Saleté exceptionnelle"], ["casse", "Objet cassé"], ["autre", "Autre"]];
+
+/** Signalements d'arrivée (Cleaneur et client) : type, texte, photo. */
+async function listeSignalements(reference) {
+  const liste = await signalementsDe(reference).catch(() => []);
+  const liens = {};
+  await Promise.all(liste.filter(s => s.photo).map(async s => { liens[s.photo] = await lienPhotoControle(s.photo).catch(() => ""); }));
+  return liste.length ? `<div class="signalements">${liste.map(s => `<div class="signalement">${s.photo && liens[s.photo] ? `<a href="${esc(liens[s.photo])}" target="_blank" rel="noopener"><img src="${esc(liens[s.photo])}" alt=""></a>` : ""}
+    <div><b>⚠️ ${tr((TYPES_SIGNAL.find(t => t[0] === s.type) || [, "Autre"])[1])}</b><p class="petit" style="margin:2px 0 0">${esc(s.texte)}</p>
+      <span class="petit">${new Date(s.cree_le).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}</span></div></div>`).join("")}</div>` : "";
+}
 
 /** Avis de l'IA dans la langue de l'écran. */
 function avisIA(c) {
@@ -35,28 +47,41 @@ export async function brancherControle(boite, m, surFin) {
   if (!liste) { boite.innerHTML = `<p class="erreur">${tr("Le service est momentanément indisponible. Réessayez dans quelques minutes.")}</p>`; return; }
   const photos = {};
   await Promise.all(liste.flatMap(c => [c.photo_avant, c.photo_apres].filter(Boolean).map(async p => { photos[p] = await lienPhotoControle(p).catch(() => ""); })));
-  const faites = liste.filter(pieceComplete).length;
-  const ouverte = liste.find(c => !pieceComplete(c))?.piece_id;
+  const avantExigee = !!(m.details || {}).photosAvantExigees;
+  const complete = c => pieceComplete(c, avantExigee);
+  const faites = liste.filter(complete).length;
+  const ouverte = liste.find(c => !complete(c))?.piece_id;
+  const signalements = await listeSignalements(m.reference);
   boite.innerHTML = `<div class="controle">
+    <details class="signaler-arrivee"><summary>⚠️ ${tr("Signaler un problème à l'arrivée")}</summary>
+      <p class="petit" style="margin:6px 0">${tr("Dégât, saleté exceptionnelle, objet cassé : signalez-le avant de commencer. Le client le voit dans le compte rendu.")}</p>
+      <div class="choix-signal">${TYPES_SIGNAL.map(([id, nom], i) => `<label class="case"><input type="radio" name="type-signal" value="${id}" ${i === 0 ? "checked" : ""}><span>${tr(nom)}</span></label>`).join("")}</div>
+      <label class="champ">${tr("Ce que vous constatez")}<textarea maxlength="600" rows="2" data-texte-signal></textarea></label>
+      <label class="bouton secondaire">📷 ${tr("Ajouter une photo")}<input type="file" accept="image/*" capture="environment" hidden data-photo-signal></label>
+      <span class="petit" data-nom-photo-signal></span>
+      <button type="button" class="bouton" data-envoyer-signal style="margin-top:8px">${tr("Envoyer le signalement")}</button>
+      <p class="erreur" data-erreur-signal></p></details>
+    ${signalements}
     <div class="controle-tete"><b>${tr("Contrôle pièce par pièce")}</b><span>${faites} / ${liste.length}</span></div>
     <div class="jauge"><i style="width:${Math.round(faites / liste.length * 100)}%"></i></div>
-    <p class="petit" style="margin:6px 0 10px">${tr("Pour chaque pièce : photo avant, tâches cochées, photo après au même endroit. L'IA compare les deux photos.")}</p>
+    <p class="petit" style="margin:6px 0 10px">${tr(avantExigee ? "Photos avant exigées par le client : pour chaque pièce, photo avant, tâches cochées, photo après au même endroit. L'IA compare les deux photos."
+      : "Pour chaque pièce : cochez les tâches, puis prenez une photo après. L'IA vérifie que la pièce est propre.")}</p>
     ${liste.map(c => {
-      const ok = pieceComplete(c), toutes = (c.taches || []).every(t => t.fait);
+      const ok = complete(c), toutes = (c.taches || []).every(t => t.fait), pret = !avantExigee || !!c.photo_avant;
       return `<details class="piece${ok ? " complete" : ""}" ${c.piece_id === ouverte ? "open" : ""} data-piece="${esc(c.piece_id)}">
         <summary><span class="pastille-piece">${ok ? "✓" : ""}</span><b>${esc(tr(c.nom))}</b><small>${(c.taches || []).filter(t => t.fait).length}/${(c.taches || []).length}</small></summary>
         <div class="piece-corps">
           <div class="photos-piece">
-            ${["avant", "apres"].map(moment => { const chemin = moment === "avant" ? c.photo_avant : c.photo_apres;
-              const bloque = moment === "apres" && (!c.photo_avant || !toutes);
+            ${(avantExigee ? ["avant", "apres"] : ["apres"]).map(moment => { const chemin = moment === "avant" ? c.photo_avant : c.photo_apres;
+              const bloque = moment === "apres" && (!pret || !toutes);
               return `<label class="photo-piece${chemin ? " prise" : ""}${bloque ? " bloquee" : ""}">
                 ${chemin && photos[chemin] ? `<img src="${esc(photos[chemin])}" alt="">` : icone("photo")}
                 <span>${tr(moment === "avant" ? "Photo avant" : "Photo après")}${chemin ? ` · ${tr("reprendre")}` : ""}</span>
                 <input type="file" accept="image/*" capture="environment" data-photo="${moment}" ${bloque ? "disabled" : ""}></label>`; }).join("")}
           </div>
-          ${!c.photo_avant ? `<p class="petit">${tr("Commencez par la photo avant.")}</p>` : ""}
-          <div class="taches-piece">${(c.taches || []).map(t => `<label class="case"><input type="checkbox" data-tache="${esc(t.id)}" ${t.fait ? "checked" : ""} ${c.photo_avant ? "" : "disabled"}><span>${esc(tr(t.nom))}</span></label>`).join("")}</div>
-          ${c.photo_avant && !toutes ? `<p class="petit">${tr("Cochez toutes les tâches, puis prenez la photo après.")}</p>` : ""}
+          ${!pret ? `<p class="petit">${tr("Commencez par la photo avant.")}</p>` : ""}
+          <div class="taches-piece">${(c.taches || []).map(t => `<label class="case"><input type="checkbox" data-tache="${esc(t.id)}" ${t.fait ? "checked" : ""} ${pret ? "" : "disabled"}><span>${esc(tr(t.nom))}</span></label>`).join("")}</div>
+          ${pret && !toutes ? `<p class="petit">${tr("Cochez toutes les tâches, puis prenez la photo après.")}</p>` : ""}
           ${avisIA(c)}
           ${["ecart", "erreur"].includes(c.ia_statut) ? `<div class="justif"><label class="champ">${tr("Justification (visible par le client)")}
               <textarea maxlength="600" rows="2" data-justif placeholder="${esc(tr("Ex. tache incrustée, impossible à retirer sans abîmer le tissu."))}">${esc(c.justification)}</textarea></label>
@@ -68,6 +93,17 @@ export async function brancherControle(boite, m, surFin) {
   traduire(boite);
   surFin(faites === liste.length);
   const recharger = () => brancherControle(boite, m, surFin);
+  // Signalement d'arrivée : type, texte, photo facultative.
+  const photoSignal = boite.querySelector("[data-photo-signal]");
+  photoSignal.onchange = () => { boite.querySelector("[data-nom-photo-signal]").textContent = photoSignal.files?.[0] ? "✓ " + tr("Photo ajoutée") : ""; };
+  boite.querySelector("[data-envoyer-signal]").onclick = async e => {
+    const texte = boite.querySelector("[data-texte-signal]").value.trim(), err = boite.querySelector("[data-erreur-signal]");
+    if (texte.length < 3 && !photoSignal.files?.[0]) { err.textContent = tr("Décrivez le problème ou ajoutez une photo."); return; }
+    e.target.disabled = true;
+    const r = await signalerArrivee(m.reference, boite.querySelector("[name=type-signal]:checked").value, texte, photoSignal.files?.[0] || null).catch(() => "erreur");
+    if (r !== "ok") { e.target.disabled = false; err.textContent = tr("Le service est momentanément indisponible. Réessayez dans quelques minutes."); return; }
+    recharger();
+  };
   boite.querySelectorAll("details.piece").forEach(d => {
     const piece = d.dataset.piece, err = d.querySelector("[data-erreur-piece]");
     const echec = () => { err.textContent = tr("Le service est momentanément indisponible. Réessayez dans quelques minutes."); };
@@ -100,14 +136,16 @@ export async function brancherControle(boite, m, surFin) {
 export async function compteRenduPieces(boite, reference) {
   const liste = await controlesDe(reference).catch(() => []);
   if (!liste.length) { boite.innerHTML = ""; return; }
+  const signalements = await listeSignalements(reference);
   const photos = {};
   await Promise.all(liste.flatMap(c => [c.photo_avant, c.photo_apres].filter(Boolean).map(async p => { photos[p] = await lienPhotoControle(p).catch(() => ""); })));
   const ecarts = liste.filter(c => c.ia_statut === "ecart").length;
   boite.innerHTML = `<h2 class="titre-section">${icone("photo", { tuile: true })}${tr("Compte rendu pièce par pièce")}</h2>
-    <p class="petit">${liste.filter(pieceComplete).length} / ${liste.length} ${tr("pièces terminées")}${ecarts ? ` · ${ecarts} ${tr("écart(s) signalé(s) par l'IA")}` : ""}</p>
+    ${signalements ? `<p style="margin:8px 0 4px"><b>${tr("Signalé par le Cleaneur à son arrivée")}</b></p>${signalements}` : ""}
+    <p class="petit">${liste.filter(c => pieceComplete(c, !!c.photo_avant)).length} / ${liste.length} ${tr("pièces terminées")}${ecarts ? ` · ${ecarts} ${tr("écart(s) signalé(s) par l'IA")}` : ""}</p>
     ${liste.map(c => `<div class="carte piece-rendu">
       <div class="haut"><b>${esc(tr(c.nom))}</b>${c.ia_statut === "ok" ? `<span class="tampon vert">${tr("IA : rien à signaler")}</span>` : c.ia_statut === "ecart" ? `<span class="tampon corail">${tr("IA : écart")}</span>` : ""}</div>
-      <div class="photos-rendu">${["avant", "apres"].map(mo => { const ch = mo === "avant" ? c.photo_avant : c.photo_apres;
+      <div class="photos-rendu">${(c.photo_avant ? ["avant", "apres"] : ["apres"]).map(mo => { const ch = mo === "avant" ? c.photo_avant : c.photo_apres;
         return `<figure>${ch && photos[ch] ? `<a href="${esc(photos[ch])}" target="_blank" rel="noopener"><img src="${esc(photos[ch])}" alt=""></a>` : `<div class="sans-photo">${icone("photo")}</div>`}
           <figcaption>${tr(mo === "avant" ? "Avant" : "Après")}${(mo === "avant" ? c.photo_avant_le : c.photo_apres_le) ? ` · ${new Date(mo === "avant" ? c.photo_avant_le : c.photo_apres_le).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}` : ""}</figcaption></figure>`; }).join("")}</div>
       <ul class="taches-rendu">${(c.taches || []).map(t => `<li class="${t.fait ? "fait" : ""}">${t.fait ? "✓" : "○"} ${esc(tr(t.nom))}</li>`).join("")}</ul>
@@ -116,3 +154,16 @@ export async function compteRenduPieces(boite, reference) {
     </div>`).join("")}`;
   traduire(boite);
 }
+
+(() => {
+  if (document.getElementById("style-signalements")) return;
+  const st = document.createElement("style");
+  st.id = "style-signalements";
+  st.textContent = `.signaler-arrivee { border: 1px dashed var(--alerte); border-radius: 14px; padding: 10px 14px; margin-bottom: 12px; }
+  .signaler-arrivee summary { cursor: pointer; font-weight: 700; color: var(--corail-texte); }
+  .choix-signal { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 6px 0; }
+  .signalements { display: grid; gap: 8px; margin-bottom: 12px; }
+  .signalement { display: flex; gap: 10px; align-items: flex-start; background: color-mix(in srgb, var(--alerte) 10%, var(--surface)); border-radius: 12px; padding: 10px; }
+  .signalement img { width: 72px; height: 72px; object-fit: cover; border-radius: 10px; }`;
+  document.head.appendChild(st);
+})();

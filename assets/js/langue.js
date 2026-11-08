@@ -174,6 +174,23 @@ const T = [
   ["Prochain départ", "Next check-out", "Prossima partenza", "Próxima salida"],
   ["Aucun bien ne correspond à votre recherche.", "No property matches your search.", "Nessun immobile corrisponde alla ricerca.", "Ningún inmueble coincide con tu búsqueda."],
   // Missions du Cleaneur (missions.js)
+  // Photos simplifiées et signalements d'arrivée
+  ["Dégât", "Damage", "Danno", "Daño"],
+  ["Saleté exceptionnelle", "Exceptional dirt", "Sporco eccezionale", "Suciedad excepcional"],
+  ["Objet cassé", "Broken item", "Oggetto rotto", "Objeto roto"],
+  ["Signaler un problème à l'arrivée", "Report a problem on arrival", "Segnala un problema all'arrivo", "Señalar un problema a la llegada"],
+  ["Dégât, saleté exceptionnelle, objet cassé : signalez-le avant de commencer. Le client le voit dans le compte rendu.", "Damage, exceptional dirt, broken item: report it before you start. The client sees it in the report.", "Danno, sporco eccezionale, oggetto rotto: segnalalo prima di iniziare. Il cliente lo vede nel resoconto.", "Daño, suciedad excepcional, objeto roto: señálalo antes de empezar. El cliente lo ve en el informe."],
+  ["Ce que vous constatez", "What you see", "Cosa constati", "Lo que constatas"],
+  ["Ajouter une photo", "Add a photo", "Aggiungi una foto", "Añadir una foto"],
+  ["Envoyer le signalement", "Send the report", "Invia la segnalazione", "Enviar el aviso"],
+  ["Photo ajoutée", "Photo added", "Foto aggiunta", "Foto añadida"],
+  ["Décrivez le problème ou ajoutez une photo.", "Describe the problem or add a photo.", "Descrivi il problema o aggiungi una foto.", "Describe el problema o añade una foto."],
+  ["Photos avant exigées par le client : pour chaque pièce, photo avant, tâches cochées, photo après au même endroit. L'IA compare les deux photos.", "Before photos required by the client: for each room, before photo, ticked tasks, after photo from the same spot. The AI compares both photos.", "Foto prima richieste dal cliente: per ogni stanza, foto prima, compiti spuntati, foto dopo dallo stesso punto. L'IA confronta le due foto.", "Fotos de antes exigidas por el cliente: en cada estancia, foto de antes, tareas marcadas, foto de después desde el mismo sitio. La IA compara las dos fotos."],
+  ["Pour chaque pièce : cochez les tâches, puis prenez une photo après. L'IA vérifie que la pièce est propre.", "For each room: tick the tasks, then take an after photo. The AI checks the room is clean.", "Per ogni stanza: spunta i compiti, poi scatta una foto dopo. L'IA verifica che la stanza sia pulita.", "En cada estancia: marca las tareas y haz una foto de después. La IA comprueba que la estancia está limpia."],
+  ["Signalé par le Cleaneur à son arrivée", "Reported by the Cleaneur on arrival", "Segnalato dal Cleaneur all'arrivo", "Señalado por el Cleaneur a su llegada"],
+  ["Photos avant le ménage", "Photos before cleaning", "Foto prima della pulizia", "Fotos antes de la limpieza"],
+  ["Photos avant exigées", "Before photos required", "Foto prima richieste", "Fotos de antes exigidas"],
+  ["Le Cleaneur photographie chaque pièce avant et après le ménage. Conseillé pour les locations saisonnières et les états des lieux. Sinon, il photographie chaque pièce après le ménage et signale tout problème constaté à son arrivée.", "The Cleaneur photographs each room before and after cleaning. Recommended for holiday rentals and check-in/out inspections. Otherwise, they photograph each room after cleaning and report any problem found on arrival.", "Il Cleaneur fotografa ogni stanza prima e dopo la pulizia. Consigliato per affitti brevi e verbali di consegna. Altrimenti fotografa ogni stanza dopo la pulizia e segnala ogni problema constatato all'arrivo.", "El Cleaneur fotografía cada estancia antes y después de la limpieza. Recomendado para alquileres vacacionales e inventarios. Si no, fotografía cada estancia después y señala cualquier problema detectado a su llegada."],
   // Factures (factures.js)
   ["Mes factures", "My invoices", "Le mie fatture", "Mis facturas"],
   ["Les factures de vos prestations (établies pour votre compte) et les commissions Cleaneroo. Utile pour votre déclaration URSSAF.", "Invoices for your jobs (issued on your behalf) and Cleaneroo commissions. Useful for your URSSAF return.", "Le fatture delle tue prestazioni (emesse per tuo conto) e le commissioni Cleaneroo. Utile per la dichiarazione URSSAF.", "Las facturas de tus servicios (emitidas en tu nombre) y las comisiones de Cleaneroo. Útil para tu declaración URSSAF."],

@@ -70,5 +70,6 @@ export function piecesDe(rubriqueId, details = {}) {
 }
 
 /** Pièce complète (même règle que la base, piece_complete) : photos, tâches cochées, IA d'accord ou écart justifié. */
-export const pieceComplete = c => !!c.photo_avant && !!c.photo_apres && (c.taches || []).every(t => t.fait)
+/** Pièce terminée : photo après, toutes les tâches cochées, avis de l'IA ou justification ; photo avant seulement si la réservation l'exige. */
+export const pieceComplete = (c, avantExigee = false) => (!avantExigee || !!c.photo_avant) && !!c.photo_apres && (c.taches || []).every(t => t.fait)
   && (c.ia_statut === "ok" || (["ecart", "erreur"].includes(c.ia_statut) && (c.justification || "").trim().length >= 5));

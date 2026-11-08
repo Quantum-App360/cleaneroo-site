@@ -106,6 +106,16 @@ export async function deposerPhotoControle(reference, piece, moment, fichier) {
   if (error) throw new Error(error.message);
   return chemin;
 }
+/** « Signaler un problème à l'arrivée » (dégât, saleté exceptionnelle, objet cassé), avec une photo facultative. */
+export async function signalerArrivee(reference, type, texte, fichier = null) {
+  const photo = fichier ? await deposerPhotoControle(reference, "arrivee", "signal", fichier) : "";
+  return rpc("signaler_arrivee", { p_reference: reference, p_type: type, p_texte: texte, p_photo: photo });
+}
+export async function signalementsDe(reference) {
+  const { data, error } = await supabase.from("signalements_arrivee").select("*").eq("reference", reference).order("cree_le");
+  if (error) throw new Error(error.message);
+  return data;
+}
 /** Lien temporaire (1 h) vers une photo du contrôle. */
 export async function lienPhotoControle(chemin) {
   const { data, error } = await supabase.storage.from("photos-controles").createSignedUrl(chemin, 3600);
