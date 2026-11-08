@@ -144,6 +144,7 @@ export function tableauDeBord(p, docs, miennes, dispo, t) {
     <p class="petit muet" style="margin:0">${esc(dateLongue(new Date()))}</p>
     <p style="margin:2px 0 8px">Voici votre activité du jour.</p>
     <span class="badge-niveau">★ ${tr("Niveau")} ${tr(niveauDe(t?.missions_terminees || 0))} · ${tr("commission")} ${commission} %</span>
+    ${t?.nb_avis ? `<p class="petit" style="margin:0">⭐ ${String(t.note_moyenne).replace(".", ",")} / 5 · ${t.nb_avis} ${tr(t.nb_avis > 1 ? "avis" : "avis")}${t.pourboires_c ? ` · ${tr("pourboires :")} ${euros(t.pourboires_c)}` : ""}</p>` : ""}
     ${p.role === "admin" ? "" : `<details class="carte profil-a-completer"${faites < etapes.length ? "" : ""}><summary><span>👤 <b>${faites === etapes.length ? tr("Profil complet") : tr("Complétez votre profil")}</b></span><b class="compte">${faites}/${etapes.length}</b></summary>
       <div class="jauge"><span style="width:${Math.round(faites / etapes.length * 100)}%"></span></div>
       ${prochaine ? `<p class="petit" style="margin:4px 0 0">${tr("Prochaine étape :")} ${tr(prochaine[0])}</p>` : ""}

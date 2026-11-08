@@ -174,6 +174,23 @@ const T = [
   ["Prochain départ", "Next check-out", "Prossima partenza", "Próxima salida"],
   ["Aucun bien ne correspond à votre recherche.", "No property matches your search.", "Nessun immobile corrisponde alla ricerca.", "Ningún inmueble coincide con tu búsqueda."],
   // Missions du Cleaneur (missions.js)
+  // Validation, étoiles et pourboire (avis.js)
+  ["Merci pour votre avis !", "Thank you for your review!", "Grazie per la tua recensione!", "¡Gracias por tu opinión!"],
+  ["Pourboire pour votre Cleaneur :", "Tip for your Cleaneur:", "Mancia per il tuo Cleaneur:", "Propina para tu Cleaneur:"],
+  ["Votre ménage est terminé : validez-le", "Your clean is finished: approve it", "La tua pulizia è terminata: convalidala", "Tu limpieza ha terminado: valídala"],
+  ["Notez votre ménage", "Rate your clean", "Valuta la tua pulizia", "Valora tu limpieza"],
+  ["Sans réponse, la prestation est validée automatiquement", "Without a reply, the service is approved automatically", "Senza risposta, il servizio viene convalidato automaticamente", "Sin respuesta, el servicio se valida automáticamente"],
+  ["après la fin du ménage.", "after the cleaning ends.", "dopo la fine della pulizia.", "después de terminar la limpieza."],
+  ["Note", "Rating", "Voto", "Nota"],
+  ["Un mot pour votre Cleaneur (facultatif)", "A word for your Cleaneur (optional)", "Una parola per il tuo Cleaneur (facoltativa)", "Unas palabras para tu Cleaneur (opcional)"],
+  ["Laisser un pourboire ?", "Leave a tip?", "Lasciare una mancia?", "¿Dejar una propina?"],
+  ["100 % pour votre Cleaneur", "100% for your Cleaneur", "100% al tuo Cleaneur", "100 % para tu Cleaneur"],
+  ["Non merci", "No thanks", "No grazie", "No, gracias"],
+  ["Valider la prestation", "Approve the service", "Convalida il servizio", "Validar el servicio"],
+  ["Envoyer mon avis", "Send my review", "Invia la mia recensione", "Enviar mi opinión"],
+  ["Choisissez une note de 1 à 5 étoiles.", "Choose a rating from 1 to 5 stars.", "Scegli un voto da 1 a 5 stelle.", "Elige una nota de 1 a 5 estrellas."],
+  ["avis", "reviews", "recensioni", "opiniones"],
+  ["pourboires :", "tips:", "mance:", "propinas:"],
   // Photos simplifiées et signalements d'arrivée
   ["Dégât", "Damage", "Danno", "Daño"],
   ["Saleté exceptionnelle", "Exceptional dirt", "Sporco eccezionale", "Suciedad excepcional"],

@@ -7,6 +7,8 @@ import { traduire, tr, langue } from "./langue.js";
 import { piecesDe, pieceComplete } from "./controle.js";
 import { controlesDe, enregistrerPieces, majPiece, deposerPhotoControle, lienPhotoControle, controleIA, signalerArrivee, signalementsDe } from "./donnees.js";
 import { chargeur } from "./commun.js";
+import { blocAvis } from "./avis.js";
+import { suivre } from "./donnees.js";
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const L = langue in { fr: 1, en: 1, it: 1, es: 1 } ? langue : "fr";
@@ -134,6 +136,12 @@ export async function brancherControle(boite, m, surFin) {
 /* ------------------------------------------------------------------ Client : compte rendu */
 /** Compte rendu pièce par pièce (client connecté de la demande, administration) ; rien si aucune pièce. */
 export async function compteRenduPieces(boite, reference) {
+  // Validation, note en étoiles et pourboire (au-dessus du compte rendu), avec le lien de suivi de la page.
+  const jeton = decodeURIComponent(location.hash.split("/")[3] || "");
+  if (jeton && !boite.previousElementSibling?.matches?.("[data-avis]")) {
+    const zone = document.createElement("div"); zone.dataset.avis = "1"; boite.before(zone);
+    suivre(reference, jeton).then(d => d && blocAvis(zone, reference, jeton, d.statut)).catch(() => null);
+  }
   const liste = await controlesDe(reference).catch(() => []);
   if (!liste.length) { boite.innerHTML = ""; return; }
   const signalements = await listeSignalements(reference);
