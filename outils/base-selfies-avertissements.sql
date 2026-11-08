@@ -1,0 +1,10 @@
+-- Déjà appliqué sur la base (migrations « selfie_du_jour_et_etapes_mission » et « avertissements_cleaneurs »). Gardé pour mémoire.
+-- 1. Selfie du jour : stockage privé « selfies-cleaneurs » (dossier = id du Cleaneur), table selfies_cleaneur (un par jour, heure de Paris),
+--    enregistrer_selfie(chemin), selfie_du_jour() → aucun | A_VERIFIER | VALIDE | REFUSE ; avancer_mission refuse « EN_ROUTE » ('selfie')
+--    sans selfie du jour accepté. Administration : selfies_a_verifier() (avec la pièce d'identité), decider_selfie(id, valide, motif).
+-- 2. Frise de la mission : demandes.etapes (jsonb) = heures en_route, sur_place, debut, fin (posées par avancer_mission) et depart
+--    (quitter_logement(ref), après la fin). mes_missions() renvoie etapes et masque les missions dont le Cleaneur est parti.
+--    « J'ai terminé » reste refusé tant qu'une pièce n'est pas complète (photos, toutes les tâches cochées, contrôle IA ou justification).
+-- 3. Avertissements : table avertissements_cleaneur, profils.banni_le ; avertir_cleaneur(id, motif) (au 3e : banni),
+--    lever_bannissement(id), mes_avertissements() (tableau de bord), avertissements_cleaneurs() (administration) ;
+--    cleaneur_actif() faux pour un Cleaneur banni (plus de missions disponibles ni de prise de mission).

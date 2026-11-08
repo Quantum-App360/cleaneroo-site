@@ -122,6 +122,34 @@ export async function controleIA(reference, piece) {
 export const envoyerPosition = (reference, lat, lon, cap = null) =>
   rpc("envoyer_position", { p_reference: reference, p_lat: lat, p_lon: lon, p_cap: Number.isFinite(cap) ? cap : null });
 
+/* Selfie du jour : identité du Cleaneur avant sa première mission de la journée (relu par l'administration). */
+/** "aucun", "A_VERIFIER", "VALIDE" ou "REFUSE". */
+export const selfieDuJour = () => rpc("selfie_du_jour");
+export async function deposerSelfie(fichier) {
+  const s = await session();
+  const contenu = await reduirePhoto(fichier, REGLES.SELFIE_MAX_PX, 0.8);
+  const chemin = `${s.user.id}/${new Date().toISOString().slice(0, 10)}-${Date.now()}.jpg`;
+  const { error } = await supabase.storage.from("selfies-cleaneurs").upload(chemin, contenu, { contentType: "image/jpeg" });
+  if (error) throw new Error(error.message);
+  const r = await rpc("enregistrer_selfie", { p_chemin: chemin });
+  if (r !== "ok") throw new Error(r);
+}
+/** Administration : selfies des 7 derniers jours, avec la pièce d'identité à côté. */
+export const selfiesAVerifier = () => rpc("selfies_a_verifier");
+export const deciderSelfie = (id, valide, motif = "") => rpc("decider_selfie", { p_id: id, p_valide: valide, p_motif: motif });
+export async function lienSelfie(chemin) {
+  const { data, error } = await supabase.storage.from("selfies-cleaneurs").createSignedUrl(chemin, 600);
+  if (error) throw new Error(error.message);
+  return data.signedUrl;
+}
+/* Avertissements des Cleaneurs : 2 autorisés, banni au suivant. */
+export const mesAvertissements = () => rpc("mes_avertissements");
+export const avertissementsCleaneurs = () => rpc("avertissements_cleaneurs");
+export const avertirCleaneur = (id, motif) => rpc("avertir_cleaneur", { p_cleaneur: id, p_motif: motif });
+export const leverBannissement = id => rpc("lever_bannissement", { p_cleaneur: id });
+/** Dernière étape de la mission : le Cleaneur quitte le logement. */
+export const quitterLogement = reference => rpc("quitter_logement", { p_reference: reference });
+
 /** Suivi en direct : dernière position du Cleaneur (en route ou sur place), ou null. */
 export async function suivrePosition(reference, jeton) {
   const { data, error } = await supabase.rpc("position_suivi", { p_reference: reference, p_jeton: jeton });

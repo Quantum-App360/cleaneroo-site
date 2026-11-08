@@ -135,7 +135,9 @@ export const REGLES = {
   RAYON_ARRIVEE_KM: 1.0,
   VITESSE_MOYENNE_KMH: 35,
   MARGE_TRAJET_MIN: 10,
-  SUIVI_INTERVALLE_S: 10,        // suivi en direct : position envoyée et relue toutes les 10 s
+  SUIVI_INTERVALLE_S: 10,
+  SELFIE_MAX_PX: 600,
+  AVERTISSEMENTS_MAX: 2,         // avertissements autorisés ; au suivant, le Cleaneur est banni            // selfie du jour : plus grand côté de la photo envoyée        // suivi en direct : position envoyée et relue toutes les 10 s
   SURVEILLANCE_S: 30,            // nouvelles missions (Cleaneur) et prises en charge (client) : vérifiées toutes les 30 s, avec un son
 };
 

@@ -174,6 +174,40 @@ const T = [
   ["Prochain départ", "Next check-out", "Prossima partenza", "Próxima salida"],
   ["Aucun bien ne correspond à votre recherche.", "No property matches your search.", "Nessun immobile corrisponde alla ricerca.", "Ningún inmueble coincide con tu búsqueda."],
   // Missions du Cleaneur (missions.js)
+  // Avertissements des Cleaneurs
+  ["Compte suspendu", "Account suspended", "Account sospeso", "Cuenta suspendida"],
+  ["Avertissements des Cleaneurs", "Cleaneur warnings", "Avvisi dei Cleaneur", "Avisos de los Cleaneurs"],
+  ["2 avertissements autorisés : au 3e, le Cleaneur est banni et ne peut plus prendre de missions.", "2 warnings allowed: at the 3rd, the Cleaneur is banned and can no longer take jobs.", "2 avvisi consentiti: al 3°, il Cleaneur viene bandito e non può più prendere missioni.", "2 avisos permitidos: al 3.º, el Cleaneur queda expulsado y ya no puede aceptar misiones."],
+  ["Banni", "Banned", "Bandito", "Expulsado"],
+  ["Lever le bannissement", "Lift the ban", "Revoca il bando", "Levantar la expulsión"],
+  ["Donner un avertissement", "Give a warning", "Dai un avviso", "Dar un aviso"],
+  ["Aucun Cleaneur inscrit pour l'instant.", "No Cleaneur registered yet.", "Nessun Cleaneur iscritto per ora.", "Ningún Cleaneur inscrito por ahora."],
+  ["Motif de l'avertissement (visible par le Cleaneur) :", "Reason for the warning (shown to the Cleaneur):", "Motivo dell'avviso (visibile al Cleaneur):", "Motivo del aviso (visible para el Cleaneur):"],
+  ["Lever le bannissement et effacer les avertissements de ce Cleaneur ?", "Lift the ban and clear this Cleaneur's warnings?", "Revocare il bando e cancellare gli avvisi di questo Cleaneur?", "¿Levantar la expulsión y borrar los avisos de este Cleaneur?"],
+  // Selfie du jour et frise des étapes de la mission
+  ["Étapes de la mission", "Job steps", "Fasi della missione", "Etapas de la misión"],
+  ["Arrivé sur place", "Arrived on site", "Arrivato sul posto", "Llegada al lugar"],
+  ["Début du ménage", "Cleaning started", "Inizio pulizia", "Inicio de la limpieza"],
+  ["Fin du ménage", "Cleaning finished", "Fine pulizia", "Fin de la limpieza"],
+  ["Départ du logement", "Left the property", "Partenza dall'alloggio", "Salida de la vivienda"],
+  ["Étape en cours depuis {n} min", "Current step for {n} min", "Fase in corso da {n} min", "Etapa en curso desde hace {n} min"],
+  ["🚪 Je quitte le logement", "🚪 I'm leaving the property", "🚪 Lascio l'alloggio", "🚪 Salgo de la vivienda"],
+  ["Selfie du jour envoyé", "Today's selfie sent", "Selfie del giorno inviato", "Selfie del día enviado"],
+  ["Identité vérifiée par Cleaneroo.", "Identity checked by Cleaneroo.", "Identità verificata da Cleaneroo.", "Identidad verificada por Cleaneroo."],
+  ["Votre identité est confirmée pour la journée.", "Your identity is confirmed for the day.", "La tua identità è confermata per la giornata.", "Tu identidad está confirmada para el día."],
+  ["Selfie du jour", "Today's selfie", "Selfie del giorno", "Selfie del día"],
+  ["Votre selfie n'a pas été accepté : reprenez-en un, visage bien visible.", "Your selfie wasn't accepted: take another one with your face clearly visible.", "Il tuo selfie non è stato accettato: rifallo con il viso ben visibile.", "Tu selfie no ha sido aceptado: hazte otro con la cara bien visible."],
+  ["Avant votre première mission de la journée, prenez-vous en photo : le client sait que c'est bien vous qui venez.", "Before your first job of the day, take a photo of yourself: the client knows it's really you coming.", "Prima della prima missione della giornata, scattati una foto: il cliente sa che sei proprio tu.", "Antes de tu primera misión del día, hazte una foto: el cliente sabe que eres tú quien va."],
+  ["📷 Prendre mon selfie", "📷 Take my selfie", "📷 Scatta il mio selfie", "📷 Hacerme el selfie"],
+  ["Le selfie n'a pas pu être envoyé. Réessayez.", "The selfie couldn't be sent. Try again.", "Non è stato possibile inviare il selfie. Riprova.", "No se ha podido enviar el selfie. Inténtalo de nuevo."],
+  ["Selfies des Cleaneurs (7 derniers jours)", "Cleaneurs' selfies (last 7 days)", "Selfie dei Cleaneur (ultimi 7 giorni)", "Selfies de los Cleaneurs (últimos 7 días)"],
+  ["À vérifier", "To check", "Da verificare", "Por verificar"],
+  ["C'est bien la même personne", "It's the same person", "È la stessa persona", "Es la misma persona"],
+  ["Refuser", "Reject", "Rifiuta", "Rechazar"],
+  ["Aucun selfie pour l'instant.", "No selfies yet.", "Nessun selfie per ora.", "Ningún selfie por ahora."],
+  ["Motif du refus (visible par le Cleaneur) :", "Reason for rejection (shown to the Cleaneur):", "Motivo del rifiuto (visibile al Cleaneur):", "Motivo del rechazo (visible para el Cleaneur):"],
+  ["Prenez d'abord votre selfie du jour (en haut de la page) : il confirme votre identité au client.", "First take today's selfie (top of the page): it confirms your identity to the client.", "Scatta prima il selfie del giorno (in cima alla pagina): conferma la tua identità al cliente.", "Hazte primero el selfie del día (arriba de la página): confirma tu identidad al cliente."],
+  ["Cochez toutes les tâches de chaque pièce avant de terminer : photos avant et après, tâches, avis de l'IA ou justification.", "Tick every task in each room before finishing: before and after photos, tasks, AI check or explanation.", "Spunta tutti i compiti di ogni stanza prima di finire: foto prima e dopo, compiti, parere dell'IA o giustificazione.", "Marca todas las tareas de cada estancia antes de terminar: fotos antes y después, tareas, revisión de la IA o justificación."],
   ["🚗 Je pars", "🚗 I'm leaving", "🚗 Parto", "🚗 Salgo"],
   ["📍 Je suis arrivé", "📍 I've arrived", "📍 Sono arrivato", "📍 He llegado"],
   ["🧽 Je commence", "🧽 I'm starting", "🧽 Inizio", "🧽 Empiezo"],
@@ -1804,6 +1838,11 @@ let PHRASES = null;
 /* ------------------------------------------------------------------ Textes avec une partie variable */
 export const LOCALE = { fr: "fr-FR", en: "en-GB", it: "it-IT", es: "es-ES" }[langue];
 const MOTIFS = IDX === undefined ? [] : [
+  [/^(⚠️|🛡️) Avertissements : (\d+) \/ (\d+)$/, (m, e, n, x) => [`${e} Warnings: ${n} / ${x}`, `${e} Avvisi: ${n} / ${x}`, `${e} Avisos: ${n} / ${x}`][IDX]],
+  [/^Aucun avertissement\. Vous avez droit à (\d+) avertissements : au suivant, votre compte est banni\.$/, (m, x) => [`No warnings. You are allowed ${x} warnings: at the next one, your account is banned.`, `Nessun avviso. Hai diritto a ${x} avvisi: al successivo, il tuo account viene bandito.`, `Ningún aviso. Tienes derecho a ${x} avisos: al siguiente, tu cuenta queda expulsada.`][IDX]],
+  [/^Encore (\d+) avertissement possible : au-delà de (\d+), votre compte est banni\.$/, (m, r, x) => [`${r} more warning allowed: beyond ${x}, your account is banned.`, `Ancora ${r} avviso possibile: oltre ${x}, il tuo account viene bandito.`, `Queda ${r} aviso posible: más allá de ${x}, tu cuenta queda expulsada.`][IDX]],
+  [/^Dernier avertissement : au prochain manquement, votre compte sera banni\.$/, () => [`Last warning: at the next breach, your account will be banned.`, `Ultimo avviso: alla prossima mancanza, il tuo account verrà bandito.`, `Último aviso: en el próximo incumplimiento, tu cuenta será expulsada.`][IDX]],
+  [/^Vous avez dépassé les (\d+) avertissements autorisés : vous ne pouvez plus prendre de missions\. Écrivez à contact@cleaneroo\.fr pour en parler\.$/, (m, x) => [`You've gone beyond the ${x} warnings allowed: you can no longer take jobs. Write to contact@cleaneroo.fr to discuss it.`, `Hai superato i ${x} avvisi consentiti: non puoi più prendere missioni. Scrivi a contact@cleaneroo.fr per parlarne.`, `Has superado los ${x} avisos permitidos: ya no puedes aceptar misiones. Escribe a contact@cleaneroo.fr para hablarlo.`][IDX]],
   // Conditions d'utilisation : formules des Cleaneurs (chiffres lus dans REGLES)
   [/^deux formules au choix : Gratuit \(sans abonnement, commission de (.+?) %\) ou Pro \((.+?) par mois, commission de (.+?) %\)\. Les Cleaneurs inscrits jusqu'au 31 janvier 2027 ont la formule Pro offerte pendant (.+?) mois, à partir de leur première mission\. En cas d'impayé de l'abonnement Pro, (.+?) jours après la date de facturation prévue, le compte est bloqué et les missions réservées sont redistribuées\.$/,
     (m, a, b, c, e, f) => [
