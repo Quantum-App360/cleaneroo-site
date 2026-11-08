@@ -435,10 +435,14 @@ async function remplirAgenda(vue, biens, demandes, recharger) {
 export function preparationCleaneur(p, docs) {
   const docOk = t => docs.some(x => x.type === t && x.statut !== "REFUSE");
   return [
-    ["Profil complet (téléphone, code postal, ville)", !!(p.telephone && p.code_postal && p.ville)],
-    ["Numéro SIRET renseigné", (p.siret || "").length === 14],
-    ["Prestations proposées choisies", (p.prestations || []).length > 0],
-    [`${DOCUMENTS_CLEANEUR.filter(d => d.obligatoire).length} documents obligatoires ajoutés`, DOCUMENTS_CLEANEUR.filter(d => d.obligatoire).every(d => docOk(d.type))],
+    ["Téléphone", !!p.telephone],
+    ["Adresse (code postal et ville)", !!(p.code_postal && p.ville)],
+    ["Numéro SIRET", (p.siret || "").length === 14],
+    ["Prestations proposées", (p.prestations || []).length > 0],
+    ["Pièce d'identité", docOk("identite")],
+    ["Justificatif SIRET", docOk("siret")],
+    ["Assurance RC Pro", docOk("rc_pro")],
+    ["Attestation de vigilance URSSAF", docOk("urssaf")],
     ["Dossier envoyé", ["A_VERIFIER", "VALIDE"].includes(p.dossier)],
     ["Dossier validé par Cleaneroo", p.dossier === "VALIDE"],
   ];
@@ -452,13 +456,9 @@ export function ongletCleaneur(p, docs, { dossier, profil }) {
         <li>Assurance responsabilité civile professionnelle et attestation URSSAF</li>
         <li>Vous gardez vos autres espaces : vos missions restent séparées de vos réservations privées.</li></ul>
       <button type="button" class="bouton" id="devenir-cleaneur">Ajouter l'espace Cleaneur</button></div>`;
-  const etapes = preparationCleaneur(p, docs), faites = etapes.filter(e => e[1]).length;
   const admin = p.role === "admin";
   return `${admin ? `<p style="margin:0 0 10px"><span class="tampon">Accès administrateur</span></p>` : ""}
     <div id="missions-cleaneur">${chargeur("Chargement de vos missions…")}</div>
-    ${admin ? "" : `<h2 class="titre-section">${icone("valide", { tuile: true })}Ma préparation <span class="tampon${faites === etapes.length ? " vert" : ""}" style="margin:0 0 0 auto">${faites}/${etapes.length}</span></h2>
-    <div class="carte"><div class="jauge" role="progressbar" aria-valuemin="0" aria-valuemax="${etapes.length}" aria-valuenow="${faites}"><span style="width:${Math.round(faites / etapes.length * 100)}%"></span></div>
-      <ul class="liste-preparation">${etapes.map(([t, ok]) => `<li class="${ok ? "fait" : ""}"><span class="coche" aria-hidden="true">${ok ? "✓" : ""}</span><span>${t}</span></li>`).join("")}</ul></div>`}
     <h2 class="titre-section">${icone("paiement", { tuile: true })}Ma formule</h2>
     ${blocFormulesCleaneur(p)}
     <h2 class="titre-section">${icone("termine", { tuile: true })}Le déroulé d'une mission</h2>

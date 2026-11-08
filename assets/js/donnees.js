@@ -152,6 +152,10 @@ export const confirmerMission = reference => rpc("confirmer_mission", { p_refere
 export const coutAnnulation = reference => rpc("cout_annulation", { p_reference: reference });
 export const annulerMissionCleaneur = reference => rpc("annuler_mission_cleaneur", { p_reference: reference });
 export const mesPenalites = () => rpc("mes_penalites");
+/* Tableau de bord du Cleaneur (comme l'appli iOS) : niveau, formule, disponibilité urgence. */
+export const tableauCleaneur = () => rpc("tableau_cleaneur");
+/** Disponible pour une urgence pendant Regles.URGENCE_DISPO_H heures (true) ou plus (false). Renvoie la fin, ou null. */
+export const dispoUrgence = actif => rpc("dispo_urgence", { p_actif: actif });
 /** Dernière étape de la mission : le Cleaneur quitte le logement. */
 export const quitterLogement = reference => rpc("quitter_logement", { p_reference: reference });
 

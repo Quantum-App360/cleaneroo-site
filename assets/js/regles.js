@@ -88,8 +88,8 @@ export const REGLES = {
   // celles de Premium au plus 90 % ; le prix des formules suit ainsi la taille du lieu (62 m² : ≈ 67 €, 94 €, 128 €).
   FORMULE_CONFORT_PLUS_PCT: 40, FORMULE_PREMIUM_PLUS_PCT: 90,
   OPTION_PETITE_MAX_MIN: 5, OPTION_MOYENNE_MAX_MIN: 15,
-  // Option « Suivi par SMS » : 1 € par prestation, SMS au nom de Cleaneroo dans la langue de la réservation ; hors crédit d'impôt.
-  OPTION_SMS_C: 100,
+  // Option « Suivi par SMS » : 0,49 € par prestation, SMS au nom de Cleaneroo dans la langue de la réservation ; hors crédit d'impôt.
+  OPTION_SMS_C: 49,
   LAVAGE_DRAPS_MIN_PAR_LIT: 10,   // planning : retirer, lancer, étendre et plier, par lit
   LITS_MAX: 20,
   // Prix selon la ville (pouvoir d'achat) : 3 zones, d'après le code postal de l'adresse du bien (géolocalisée).
@@ -135,9 +135,9 @@ export const REGLES = {
   RAYON_ARRIVEE_KM: 1.0,
   VITESSE_MOYENNE_KMH: 35,
   MARGE_TRAJET_MIN: 10,
-  SUIVI_INTERVALLE_S: 10,
-  SELFIE_MAX_PX: 600,
-  AVERTISSEMENTS_MAX: 2,
+  SUIVI_INTERVALLE_S: 10,        // suivi en direct : position envoyée et relue toutes les 10 s
+  SELFIE_MAX_PX: 600,            // selfie du jour : plus grand côté de la photo envoyée
+  AVERTISSEMENTS_MAX: 2,         // avertissements autorisés ; au suivant, le Cleaneur est banni
   // Plan d'urgence (copie des valeurs de la base : remettre_en_urgence, verifier_missions_urgence)
   URGENCE_CONTROLE_AVANT_MIN: 120,   // confirmation demandée 2 h avant le début
   URGENCE_APPEL_APRES_MIN: 15,       // appel automatique 15 min après le rappel sans réponse
@@ -147,7 +147,9 @@ export const REGLES = {
   PENALITE_2H_PCT: 25,               // … ou 25 % du prix si c'est plus
   URGENCE_PRIME_PCT: [[2, 50], [4, 35], [24, 20]],   // [moins de N heures, prime en % du prix]
   URGENCE_FRAIS_C: 200,              // frais d'appels et de SMS gardés par Cleaneroo
-           // avertissements autorisés ; au suivant, le Cleaneur est banni            // selfie du jour : plus grand côté de la photo envoyée        // suivi en direct : position envoyée et relue toutes les 10 s
+  URGENCE_DISPO_H: 3,                // « Disponible pour une urgence » : prioritaire pendant 3 h
+  // Niveaux des Cleaneurs (missions terminées) : copie de NiveauCleaneur (ReglesMetier.kt)
+  NIVEAUX_CLEANEUR: [["Cleaneur", 0], ["Confirmé", 10], ["Expert", 30], ["Élite", 60]],
   SURVEILLANCE_S: 30,            // nouvelles missions (Cleaneur) et prises en charge (client) : vérifiées toutes les 30 s, avec un son
 };
 

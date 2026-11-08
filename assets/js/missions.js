@@ -2,13 +2,14 @@
 // automatique), étapes Je pars › Je suis arrivé › Je commence › J'ai terminé, et partage de la position pendant le trajet.
 // Mêmes écrans que l'application (EspacesCompte.kt / ServiceTrajet.kt).
 import { rubrique } from "./catalogue.js";
-import { REGLES, euros, dateLongue, heure, duree } from "./regles.js";
+import { REGLES, euros, dateLongue, heure, duree, finOffreLancement } from "./regles.js";
+import { preparationCleaneur } from "./espaces.js";
 import { icone } from "./icones.js";
 import { traduire, tr } from "./langue.js";
 import { missionsDisponibles, mesMissions, prendreMission, avancerMission, envoyerPosition, lienPhotoDemande,
   selfieDuJour, deposerSelfie, quitterLogement, selfiesAVerifier, deciderSelfie, lienSelfie, lienDocument,
   mesAvertissements, avertissementsCleaneurs, avertirCleaneur, leverBannissement,
-  confirmerMission, coutAnnulation, annulerMissionCleaneur, mesPenalites } from "./donnees.js";
+  confirmerMission, coutAnnulation, annulerMissionCleaneur, mesPenalites, mesDocuments, tableauCleaneur, dispoUrgence } from "./donnees.js";
 import { afficherCarte, coordonnees } from "./cartes.js";
 import { brancherControle } from "./controle-ecran.js";
 
@@ -77,9 +78,111 @@ export function styles() {
   .jauge-avert i { width: 14px; height: 14px; border-radius: 50%; background: var(--creux); border: 2px solid var(--separateur); }
   .jauge-avert i.pris { background: var(--alerte); border-color: var(--alerte); }
   .jauge-avert i.dernier { border-color: var(--erreur); }
+  .tableau-cleaneur { display: grid; gap: 10px; margin-bottom: 14px; }
+  .badge-niveau { justify-self: start; padding: 5px 12px; border-radius: 999px; font-size: 13px; font-weight: 700; background: color-mix(in srgb, var(--or) 22%, transparent); color: var(--corail-texte); }
+  .profil-a-completer summary { display: flex; justify-content: space-between; align-items: center; cursor: pointer; list-style: none; }
+  .profil-a-completer summary::-webkit-details-marker { display: none; }
+  .profil-a-completer .compte { color: var(--corail-texte); }
+  .profil-a-completer .jauge { margin: 10px 0 0; }
+  .offre-tdb { background: color-mix(in srgb, var(--succes) 10%, var(--surface)); font-size: 22px; }
+  .dispo-urgence { cursor: pointer; align-items: center; }
+  .point-dispo { width: 12px; height: 12px; border-radius: 50%; background: var(--texte3); flex: none; }
+  .point-dispo.actif { background: var(--succes); box-shadow: 0 0 0 5px color-mix(in srgb, var(--succes) 25%, transparent); }
+  .interrupteur { appearance: none; width: 50px; height: 30px; border-radius: 15px; background: var(--creux); position: relative; cursor: pointer; flex: none; transition: background .2s; }
+  .interrupteur::after { content: ""; position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.25); transition: left .2s; }
+  .interrupteur:checked { background: var(--succes); } .interrupteur:checked::after { left: 23px; }
+  .recherche-mission { display: flex; align-items: center; gap: 12px; padding: 16px; border-radius: 20px; background: var(--degrade); color: #fff; text-decoration: none; font-size: 24px; box-shadow: var(--ombre); }
+  .recherche-mission div { flex: 1; display: flex; flex-direction: column; } .recherche-mission b { font-size: 18px; } .recherche-mission div span { font-size: 13px; opacity: .88; }
+  .tuiles-tdb { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .tuile-tdb { display: flex; flex-direction: column; gap: 2px; padding: 14px; border-radius: 16px; background: var(--creux); text-decoration: none; color: var(--texte2); font-size: 13px; }
+  .tuile-tdb b { font-size: 24px; color: var(--primaire); } .tuile-tdb.ok b { color: var(--succes); } .tuile-tdb.alerte b { color: var(--corail-texte); }
+  .ma-journee { background: var(--surface); border-radius: var(--rayon); box-shadow: var(--ombre); padding: 14px; }
+  .ma-journee .segments { margin: 8px 0; }
+  .nav-journee { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .nav-journee .lien-bouton { font-size: 24px; min-width: 44px; min-height: 40px; }
+  .ligne-journee { display: grid; grid-template-columns: 56px 1fr auto; gap: 8px; align-items: center; padding: 8px 0; border-top: 1px solid var(--separateur); font-size: 14px; }
   .selfies-admin .paire { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
   .selfies-admin img { width: 120px; height: 120px; object-fit: cover; border-radius: 12px; background: var(--creux); }`;
   document.head.appendChild(st);
+}
+
+/* ------------------------------------------------------------------ Tableau de bord du Cleaneur (comme l'appli iOS)
+   Date, niveau et commission, « Complétez votre profil n/10 », offre Pro, « Disponible pour une urgence ? », « Rechercher une mission »,
+   compteurs, « Ma journée » en Jour / Semaine / Mois. */
+const niveauDe = n => REGLES.NIVEAUX_CLEANEUR.filter(([, min]) => n >= min).pop()[0];
+let vueJournee = "jour", decalage = 0;   // « Ma journée » : période affichée et décalage (‹ ›)
+
+function periode() {
+  const d = new Date(); d.setHours(0, 0, 0, 0);
+  if (vueJournee === "jour") { d.setDate(d.getDate() + decalage); const f = new Date(d); f.setDate(f.getDate() + 1); return [d, f]; }
+  if (vueJournee === "semaine") { d.setDate(d.getDate() - ((d.getDay() + 6) % 7) + 7 * decalage); const f = new Date(d); f.setDate(f.getDate() + 7); return [d, f]; }
+  d.setDate(1); d.setMonth(d.getMonth() + decalage); const f = new Date(d); f.setMonth(f.getMonth() + 1); return [d, f];
+}
+function libellePeriode([d, f]) {
+  if (vueJournee === "jour") return `${decalage === 0 ? tr("Aujourd'hui") + " · " : ""}${dateLongue(d)}`;
+  if (vueJournee === "semaine") { const fin = new Date(f); fin.setDate(fin.getDate() - 1); return `${tr("Semaine du")} ${d.getDate()} ${tr("au")} ${dateLongue(fin)}`; }
+  return d.toLocaleDateString(document.documentElement.lang || "fr", { month: "long", year: "numeric" });
+}
+function blocJournee(miennes) {
+  const [d, f] = periode();
+  const liste = miennes.filter(m => m.creneau && new Date(m.creneau) >= d && new Date(m.creneau) < f).sort((a, b) => new Date(a.creneau) - new Date(b.creneau));
+  return `<div class="ma-journee" id="ma-journee"><div class="haut-journee"><span class="surtitre">Ma journée</span></div>
+    <div class="segments trois">${[["jour", "Jour"], ["semaine", "Semaine"], ["mois", "Mois"]].map(([id, nom]) => `<button type="button" data-vue-journee="${id}" class="${vueJournee === id ? "choisi" : ""}">${nom}</button>`).join("")}</div>
+    <div class="nav-journee"><button type="button" class="lien-bouton" data-decaler="-1" aria-label="${esc(tr("Précédent"))}">‹</button><b>${esc(libellePeriode([d, f]))}</b><button type="button" class="lien-bouton" data-decaler="1" aria-label="${esc(tr("Suivant"))}">›</button></div>
+    ${liste.length ? liste.map(m => `<div class="ligne-journee"><b>${heure(new Date(m.creneau).getHours(), new Date(m.creneau).getMinutes())}</b>
+        <span>${rubrique(m.rubrique_id).nom} · ${esc(m.ville)}</span><span class="tampon${m.statut === "CONFIRMEE" ? "" : " vert"}">${tr((ETAPE[m.statut] || [])[2] || m.statut)}</span></div>`).join("")
+      : `<p class="petit muet" style="margin:8px 0 0">${tr("Aucune mission sur cette période.")}</p>`}
+    ${liste.length ? `<p class="petit" style="margin:8px 0 0">${tr("Total estimé :")} <b>${euros(liste.reduce((s, m) => s + (m.estimation_c || 0), 0))}</b> · ${duree(liste.reduce((s, m) => s + (m.duree_min || 0), 0))}</p>` : ""}</div>`;
+}
+export function tableauDeBord(p, docs, miennes, dispo, t) {
+  const etapes = preparationCleaneur(p, docs), faites = etapes.filter(e => e[1]).length, prochaine = etapes.find(e => !e[1]);
+  const commission = (t?.formule === "pro" ? REGLES.COMMISSION_PRO_PB : REGLES.COMMISSION_GRATUIT_PB) / 100;
+  const offre = new Date() <= finOffreLancement() || (t?.pro_offert_jusqu && new Date(t.pro_offert_jusqu) > new Date());
+  const dispoJusqu = t?.dispo_urgence_jusqu ? new Date(t.dispo_urgence_jusqu) : null;
+  const conforme = p.dossier === "VALIDE";
+  return `<div class="tableau-cleaneur">
+    <p class="petit muet" style="margin:0">${esc(dateLongue(new Date()))}</p>
+    <p style="margin:2px 0 8px">Voici votre activité du jour.</p>
+    <span class="badge-niveau">★ ${tr("Niveau")} ${tr(niveauDe(t?.missions_terminees || 0))} · ${tr("commission")} ${commission} %</span>
+    ${p.role === "admin" ? "" : `<details class="carte profil-a-completer"${faites < etapes.length ? "" : ""}><summary><span>👤 <b>${faites === etapes.length ? tr("Profil complet") : tr("Complétez votre profil")}</b></span><b class="compte">${faites}/${etapes.length}</b></summary>
+      <div class="jauge"><span style="width:${Math.round(faites / etapes.length * 100)}%"></span></div>
+      ${prochaine ? `<p class="petit" style="margin:4px 0 0">${tr("Prochaine étape :")} ${tr(prochaine[0])}</p>` : ""}
+      <ul class="liste-preparation" style="margin-top:10px">${etapes.map(([e, ok]) => `<li class="${ok ? "fait" : ""}"><span class="coche" aria-hidden="true">${ok ? "✓" : ""}</span><span>${e}</span></li>`).join("")}</ul></details>`}
+    ${offre ? `<a class="carte ligne-compte offre-tdb" href="#formules-cleaneur" data-aller="formules-cleaneur">🎁
+      <div class="corps"><b>${REGLES.OFFRE_LANCEMENT_MOIS} ${tr("mois Cleaneur Pro offerts")}</b><p class="petit" style="margin:2px 0 0">${tr("Pour tous les Cleaneurs inscrits jusqu'au")} ${esc(dateLongue(finOffreLancement()))} · ${tr("commission de")} ${REGLES.COMMISSION_PRO_PB / 100} % ${tr("au lieu de")} ${REGLES.COMMISSION_GRATUIT_PB / 100} %</p></div><span class="aller" aria-hidden="true">›</span></a>` : ""}
+    <label class="carte ligne-compte dispo-urgence"><span class="point-dispo${dispoJusqu ? " actif" : ""}"></span>
+      <div class="corps"><b>Disponible pour une urgence ?</b><p class="petit" style="margin:2px 0 0">${dispoJusqu
+        ? `${tr("Vous recevez en priorité les missions urgentes jusqu'à")} ${heure(dispoJusqu.getHours(), dispoJusqu.getMinutes())}`
+        : `${tr("Recevez en priorité les missions du jour pendant")} ${REGLES.URGENCE_DISPO_H} h`}</p></div>
+      <input type="checkbox" class="interrupteur" data-dispo-urgence ${dispoJusqu ? "checked" : ""}></label>
+    <a class="recherche-mission" href="#missions-disponibles" data-aller="missions-disponibles">🔎
+      <div><b>Rechercher une mission</b><span>${tr("Les plus proches, celles qui comblent vos trous de planning")}</span></div><span aria-hidden="true">›</span></a>
+    <div class="tuiles-tdb">
+      <a class="tuile-tdb" href="#missions-disponibles" data-aller="missions-disponibles"><b>${dispo.length}</b><span>${tr(dispo.length > 1 ? "missions disponibles" : "mission disponible")}</span></a>
+      <a class="tuile-tdb${conforme ? " ok" : " alerte"}" href="#dossier" data-aller="dossier"><b>${conforme ? "✓" : "!"}</b><span>${tr(conforme ? "Dossier conforme" : "Dossier à compléter")}</span></a>
+    </div>
+    ${blocJournee(miennes)}</div>`;
+}
+function brancherTableau(boite, miennes, recharger) {
+  boite.querySelectorAll("[data-aller]").forEach(a => a.onclick = e => {
+    const cible = document.getElementById(a.dataset.aller);
+    if (!cible) return;
+    e.preventDefault();
+    if (cible.closest("details")) cible.closest("details").open = true;
+    cible.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+  boite.querySelector("[data-dispo-urgence]")?.addEventListener("change", async e => { await dispoUrgence(e.target.checked).catch(() => null); recharger(); });
+  const majJournee = () => {
+    const j = boite.querySelector("#ma-journee");
+    j.outerHTML = blocJournee(miennes);
+    traduire(boite.querySelector("#ma-journee"));
+    brancherJournee();
+  };
+  const brancherJournee = () => {
+    boite.querySelectorAll("[data-vue-journee]").forEach(b => b.onclick = () => { vueJournee = b.dataset.vueJournee; decalage = 0; majJournee(); });
+    boite.querySelectorAll("[data-decaler]").forEach(b => b.onclick = () => { decalage += Number(b.dataset.decaler); majJournee(); });
+  };
+  brancherJournee();
 }
 
 /* ------------------------------------------------------------------ Avertissements (2 autorisés, banni au suivant) */
@@ -279,7 +382,8 @@ export async function brancherMissions(vue, p) {
   styles();
   const [miennes, dispo, geo, selfie, avert] = await Promise.all([mesMissions().catch(() => []), missionsDisponibles().catch(() => []), etatGeoloc(),
     selfieDuJour().catch(() => "aucun"), p.role === "admin" ? null : mesAvertissements().catch(() => null)]);
-  const penalites = p.role === "admin" ? null : await mesPenalites().catch(() => null);
+  const [penalites, docs, tableau] = await Promise.all([p.role === "admin" ? null : mesPenalites().catch(() => null),
+    mesDocuments().catch(() => []), tableauCleaneur().catch(() => null)]);
   if (!document.body.contains(boite)) return;
   const auj = new Date().toDateString();
   const duJour = miennes.filter(m => m.statut !== "CONFIRMEE" || (m.creneau && new Date(m.creneau).toDateString() === auj));
@@ -292,19 +396,19 @@ export async function brancherMissions(vue, p) {
     ${blocAvertissements(avert)}
     ${blocPenalites(penalites)}
     ${avert?.banni ? "" : blocSelfie(selfie)}
-    <div class="carte mise-en-avant"><span class="surtitre">Aujourd'hui</span>
-      ${duJour.length ? `<h2 style="margin:6px 0 10px">${duJour.length} mission${duJour.length > 1 ? "s" : ""}</h2>` : `<h2 style="margin:6px 0 2px">Aucune mission aujourd'hui</h2>
-        <p class="muet" style="margin:0">Les missions commencent le 1er janvier 2027. Elles s'afficheront ici, dans l'ordre de la journée.</p>`}</div>
+    ${tableauDeBord(p, docs, miennes, dispo, tableau)}
+    ${duJour.length ? `<h2 class="titre-section">${icone("termine", { tuile: true })}${tr("Missions du jour")}</h2>` : ""}
     ${duJour.map(carteMission).join("")}
     ${miennes.length || dispo.length ? `<div class="carte-missions" id="carte-missions" role="img" aria-label="Carte des missions"></div>
       <p class="petit legende-carte"><span><i style="--c:#1F8A80"></i>Mes missions</span><span><i style="--c:#FA8C66"></i>Missions disponibles (zone approximative)</span></p>` : ""}
     <h2 class="titre-section">${icone("calendrier", { tuile: true })}Mes prochaines missions</h2>
     ${plusTard.length ? plusTard.map(carteMission).join("") : vide("Aucune mission pour l'instant.", "Prenez une mission ci-dessous : elle est à vous dès que vous la prenez.")}
-    <h2 class="titre-section">${icone("position", { tuile: true })}Missions disponibles</h2>
+    <h2 class="titre-section" id="missions-disponibles">${icone("position", { tuile: true })}Missions disponibles</h2>
     <p class="petit" style="margin-top:0">Missions en ligne pour les prestations que vous proposez. Le premier Cleaneur qui la prend l'obtient.</p>
     ${dispo.length ? dispo.map(carteDisponible).join("") : vide("Aucune mission disponible pour l'instant.", p.dossier === "VALIDE" || p.role === "admin" ? "" : "Votre dossier doit être validé pour voir et prendre des missions.")}
     ${p.role === "admin" ? `<div id="selfies-admin" class="selfies-admin"></div><div id="avertissements-admin"></div>` : ""}`;
   traduire(boite);
+  brancherTableau(boite, miennes, () => brancherMissions(vue, p));
   if (p.role === "admin") { blocSelfiesAdmin(boite.querySelector("#selfies-admin")); blocAvertissementsAdmin(boite.querySelector("#avertissements-admin")); }
   majTemps(boite);
   clearInterval(minuterieFrise);
