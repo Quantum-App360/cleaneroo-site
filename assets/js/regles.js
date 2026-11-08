@@ -137,7 +137,17 @@ export const REGLES = {
   MARGE_TRAJET_MIN: 10,
   SUIVI_INTERVALLE_S: 10,
   SELFIE_MAX_PX: 600,
-  AVERTISSEMENTS_MAX: 2,         // avertissements autorisés ; au suivant, le Cleaneur est banni            // selfie du jour : plus grand côté de la photo envoyée        // suivi en direct : position envoyée et relue toutes les 10 s
+  AVERTISSEMENTS_MAX: 2,
+  // Plan d'urgence (copie des valeurs de la base : remettre_en_urgence, verifier_missions_urgence)
+  URGENCE_CONTROLE_AVANT_MIN: 120,   // confirmation demandée 2 h avant le début
+  URGENCE_APPEL_APRES_MIN: 15,       // appel automatique 15 min après le rappel sans réponse
+  URGENCE_ABSENCE_APRES_MIN: 15,     // absence constatée 15 min après l'appel
+  PENALITE_24H_C: 1500,              // annulation à moins de 24 h
+  PENALITE_2H_C: 3000,               // annulation à moins de 2 h ou absence (minimum)
+  PENALITE_2H_PCT: 25,               // … ou 25 % du prix si c'est plus
+  URGENCE_PRIME_PCT: [[2, 50], [4, 35], [24, 20]],   // [moins de N heures, prime en % du prix]
+  URGENCE_FRAIS_C: 200,              // frais d'appels et de SMS gardés par Cleaneroo
+           // avertissements autorisés ; au suivant, le Cleaneur est banni            // selfie du jour : plus grand côté de la photo envoyée        // suivi en direct : position envoyée et relue toutes les 10 s
   SURVEILLANCE_S: 30,            // nouvelles missions (Cleaneur) et prises en charge (client) : vérifiées toutes les 30 s, avec un son
 };
 

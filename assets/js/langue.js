@@ -174,6 +174,18 @@ const T = [
   ["Prochain départ", "Next check-out", "Prossima partenza", "Próxima salida"],
   ["Aucun bien ne correspond à votre recherche.", "No property matches your search.", "Nessun immobile corrisponde alla ricerca.", "Ningún inmueble coincide con tu búsqueda."],
   // Missions du Cleaneur (missions.js)
+  // Plan d'urgence (confirmation, annulation, pénalités, primes)
+  ["✓ Mission confirmée", "✓ Job confirmed", "✓ Missione confermata", "✓ Misión confirmada"],
+  ["✅ Je confirme ma venue", "✅ I confirm I'm coming", "✅ Confermo la mia venuta", "✅ Confirmo que voy"],
+  ["Annuler la mission", "Cancel the job", "Annulla la missione", "Cancelar la misión"],
+  ["🚨 Urgence", "🚨 Urgent", "🚨 Urgente", "🚨 Urgente"],
+  ["Pénalités", "Penalties", "Penali", "Penalizaciones"],
+  ["Absence sans prévenir", "No-show without notice", "Assenza senza preavviso", "Ausencia sin avisar"],
+  ["Annulation à moins de 24 h", "Cancellation less than 24 h before", "Annullamento a meno di 24 h", "Cancelación con menos de 24 h"],
+  ["Reste à retenir sur vos prochains versements :", "Still to be deducted from your next payouts:", "Ancora da trattenere sui prossimi versamenti:", "Pendiente de descontar de tus próximos pagos:"],
+  ["Réserve de garantie :", "Guarantee reserve:", "Riserva di garanzia:", "Reserva de garantía:"],
+  ["Annuler cette mission ? Elle sera proposée à un autre Cleaneur.", "Cancel this job? It will be offered to another Cleaneur.", "Annullare questa missione? Sarà proposta a un altro Cleaneur.", "¿Cancelar esta misión? Se ofrecerá a otro Cleaneur."],
+  ["Annuler à moins de 24 h entraîne une pénalité de {montant} et un avertissement. Annuler quand même ?", "Cancelling less than 24 h before means a {montant} penalty and a warning. Cancel anyway?", "Annullare a meno di 24 h comporta una penale di {montant} e un avviso. Annullare comunque?", "Cancelar con menos de 24 h supone una penalización de {montant} y un aviso. ¿Cancelar de todos modos?"],
   // Avertissements des Cleaneurs
   ["Compte suspendu", "Account suspended", "Account sospeso", "Cuenta suspendida"],
   ["Avertissements des Cleaneurs", "Cleaneur warnings", "Avvisi dei Cleaneur", "Avisos de los Cleaneurs"],
@@ -1838,6 +1850,9 @@ let PHRASES = null;
 /* ------------------------------------------------------------------ Textes avec une partie variable */
 export const LOCALE = { fr: "fr-FR", en: "en-GB", it: "it-IT", es: "es-ES" }[langue];
 const MOTIFS = IDX === undefined ? [] : [
+  [/^🚨 Mission d'urgence : prime de (.+) comprise$/, (m, p) => [`🚨 Urgent job: ${p} bonus included`, `🚨 Missione urgente: premio di ${p} incluso`, `🚨 Misión urgente: prima de ${p} incluida`][IDX]],
+  [/^\+ (.+) de prime d'urgence$/, (m, p) => [`+ ${p} urgent bonus`, `+ ${p} di premio d'urgenza`, `+ ${p} de prima de urgencia`][IDX]],
+  [/^💶 Pénalités$/, () => [`💶 Penalties`, `💶 Penali`, `💶 Penalizaciones`][IDX]],
   [/^(⚠️|🛡️) Avertissements : (\d+) \/ (\d+)$/, (m, e, n, x) => [`${e} Warnings: ${n} / ${x}`, `${e} Avvisi: ${n} / ${x}`, `${e} Avisos: ${n} / ${x}`][IDX]],
   [/^Aucun avertissement\. Vous avez droit à (\d+) avertissements : au suivant, votre compte est banni\.$/, (m, x) => [`No warnings. You are allowed ${x} warnings: at the next one, your account is banned.`, `Nessun avviso. Hai diritto a ${x} avvisi: al successivo, il tuo account viene bandito.`, `Ningún aviso. Tienes derecho a ${x} avisos: al siguiente, tu cuenta queda expulsada.`][IDX]],
   [/^Encore (\d+) avertissement possible : au-delà de (\d+), votre compte est banni\.$/, (m, r, x) => [`${r} more warning allowed: beyond ${x}, your account is banned.`, `Ancora ${r} avviso possibile: oltre ${x}, il tuo account viene bandito.`, `Queda ${r} aviso posible: más allá de ${x}, tu cuenta queda expulsada.`][IDX]],

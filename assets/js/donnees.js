@@ -147,6 +147,11 @@ export const mesAvertissements = () => rpc("mes_avertissements");
 export const avertissementsCleaneurs = () => rpc("avertissements_cleaneurs");
 export const avertirCleaneur = (id, motif) => rpc("avertir_cleaneur", { p_cleaneur: id, p_motif: motif });
 export const leverBannissement = id => rpc("lever_bannissement", { p_cleaneur: id });
+/* Plan d'urgence : confirmation, annulation (pénalité et avertissement selon le délai), pénalités. */
+export const confirmerMission = reference => rpc("confirmer_mission", { p_reference: reference });
+export const coutAnnulation = reference => rpc("cout_annulation", { p_reference: reference });
+export const annulerMissionCleaneur = reference => rpc("annuler_mission_cleaneur", { p_reference: reference });
+export const mesPenalites = () => rpc("mes_penalites");
 /** Dernière étape de la mission : le Cleaneur quitte le logement. */
 export const quitterLogement = reference => rpc("quitter_logement", { p_reference: reference });
 

@@ -7,7 +7,8 @@ import { icone } from "./icones.js";
 import { traduire, tr } from "./langue.js";
 import { missionsDisponibles, mesMissions, prendreMission, avancerMission, envoyerPosition, lienPhotoDemande,
   selfieDuJour, deposerSelfie, quitterLogement, selfiesAVerifier, deciderSelfie, lienSelfie, lienDocument,
-  mesAvertissements, avertissementsCleaneurs, avertirCleaneur, leverBannissement } from "./donnees.js";
+  mesAvertissements, avertissementsCleaneurs, avertirCleaneur, leverBannissement,
+  confirmerMission, coutAnnulation, annulerMissionCleaneur, mesPenalites } from "./donnees.js";
 import { afficherCarte, coordonnees } from "./cartes.js";
 import { brancherControle } from "./controle-ecran.js";
 
@@ -68,6 +69,8 @@ export function styles() {
   .frise-temps { text-align: center; margin: 6px 0 0; }
   .selfie-jour { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
   .selfie-jour img, .selfie-apercu { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 3px solid var(--surface); box-shadow: var(--ombre); }
+  .tampon.urgence { background: color-mix(in srgb, var(--erreur) 16%, transparent); color: var(--erreur); }
+  .confirmation-mission { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
   .avertissements.alerte { border-left: 4px solid var(--alerte); }
   .avertissements.banni { border-left: 4px solid var(--erreur); background: color-mix(in srgb, var(--erreur) 8%, var(--surface)); }
   .jauge-avert { display: inline-flex; gap: 5px; }
@@ -92,6 +95,16 @@ export function blocAvertissements(a) {
       : n < max ? `Encore ${max - n} avertissement possible : au-delà de ${max}, votre compte est banni.`
       : `Dernier avertissement : au prochain manquement, votre compte sera banni.`}</p>
     ${(a.liste || []).map(x => `<p class="petit" style="margin:4px 0 0">• ${esc(dateLongue(new Date(x.le)))} : ${esc(x.motif)}</p>`).join("")}</div>`;
+}
+
+/** Pénalités (annulation tardive, absence) : retenues sur la réserve de garantie puis sur les prochains versements. */
+export function blocPenalites(p) {
+  if (!p || !(p.liste || []).length) return "";
+  const reste = p.liste.reduce((s, x) => s + (x.reste_c || 0), 0);
+  return `<div class="carte avertissements alerte"><b>💶 Pénalités</b>
+    ${p.liste.map(x => `<p class="petit" style="margin:4px 0 0">• ${esc(dateLongue(new Date(x.le)))} : ${tr(x.raison === "absence" ? "Absence sans prévenir" : "Annulation à moins de 24 h")} · ${euros(x.montant_c)}</p>`).join("")}
+    ${reste ? `<p class="petit" style="margin:6px 0 0">${tr("Reste à retenir sur vos prochains versements :")} <b>${euros(reste)}</b></p>` : ""}
+    <p class="petit" style="margin:4px 0 0">${tr("Réserve de garantie :")} ${euros(p.garantie_c || 0)}</p></div>`;
 }
 
 /** Administration : avertir un Cleaneur, lever un bannissement. */
@@ -202,6 +215,10 @@ function carteMission(m) {
     <p style="margin:10px 0 0"><b>${esc(m.rue)}, ${esc(m.code_postal)} ${esc(m.ville)}</b></p>
     <p class="petit" style="margin:2px 0 0">Client : ${esc(m.prenom)}${m.telephone ? ` · <a href="tel:${esc(m.telephone)}">${esc(m.telephone)}</a>` : ""} · ${m.sur_devis ? "Sur devis" : euros(m.estimation_c)}</p>
     ${m.remarque ? `<p class="petit" style="margin:4px 0 0">« ${esc(m.remarque)} »</p>` : ""}
+    ${m.urgence && m.prime_urgence_c ? `<p class="petit" style="margin:6px 0 0;color:var(--succes);font-weight:700">🚨 Mission d'urgence : prime de ${euros(m.prime_urgence_c)} comprise</p>` : ""}
+    ${m.statut === "CONFIRMEE" ? `<div class="confirmation-mission">${(m.etapes || {}).confirme ? `<span class="tampon vert">✓ Mission confirmée</span>`
+      : `<button type="button" class="bouton secondaire" data-confirmer="${esc(m.reference)}">✅ Je confirme ma venue</button>`}
+      <button type="button" class="lien-bouton" style="color:var(--erreur)" data-annuler-mission="${esc(m.reference)}">Annuler la mission</button></div>` : ""}
     ${m.statut !== "CONFIRMEE" ? friseMission(m) : ""}
     ${blocAcces(m)}
     ${m.statut === "EN_ROUTE" ? `<p class="petit partage-actif" style="margin:8px 0 0">📍 Position partagée avec le client pendant le trajet</p>` : ""}
@@ -228,7 +245,8 @@ function blocAcces(m) {
 function carteDisponible(m) {
   const r = rubrique(m.rubrique_id);
   return `<div class="carte ligne-compte">${icone(r.icone, { tuile: true })}
-    <div class="corps"><div class="haut"><h3>${r.nom}</h3><b>${m.sur_devis ? tr("Sur devis") : euros(m.estimation_c)}</b></div>
+    <div class="corps"><div class="haut"><h3>${m.urgence ? `<span class="tampon urgence">🚨 Urgence</span> ` : ""}${r.nom}</h3><b>${m.sur_devis ? tr("Sur devis") : euros(m.estimation_c)}</b></div>
+      ${m.urgence && m.prime_urgence_c ? `<p class="petit" style="margin:2px 0 0;color:var(--succes);font-weight:700">+ ${euros(m.prime_urgence_c)} de prime d'urgence</p>` : ""}
       <p class="muet" style="margin:2px 0 0">${quand(m)} · ${duree(m.duree_min)}${m.nombre_cleaneurs === 2 ? " · 2 Cleaneurs" : ""}</p>
       <p class="petit" style="margin:2px 0 0">${esc(m.code_postal)} ${esc(m.ville)}</p><p class="erreur" data-erreur-prendre style="margin:4px 0 0"></p></div>
     <button type="button" class="bouton" data-prendre="${esc(m.reference)}">Prendre la mission</button></div>`;
@@ -261,6 +279,7 @@ export async function brancherMissions(vue, p) {
   styles();
   const [miennes, dispo, geo, selfie, avert] = await Promise.all([mesMissions().catch(() => []), missionsDisponibles().catch(() => []), etatGeoloc(),
     selfieDuJour().catch(() => "aucun"), p.role === "admin" ? null : mesAvertissements().catch(() => null)]);
+  const penalites = p.role === "admin" ? null : await mesPenalites().catch(() => null);
   if (!document.body.contains(boite)) return;
   const auj = new Date().toDateString();
   const duJour = miennes.filter(m => m.statut !== "CONFIRMEE" || (m.creneau && new Date(m.creneau).toDateString() === auj));
@@ -271,6 +290,7 @@ export async function brancherMissions(vue, p) {
         : "Elle sert à prévenir le client pendant votre trajet et à confirmer votre arrivée. Votre position n'est partagée que pendant le trajet."}</p>
       ${geo === "prompt" ? `<button type="button" class="bouton" id="autoriser-geoloc">Autoriser la géolocalisation</button>` : ""}</div>` : ""}
     ${blocAvertissements(avert)}
+    ${blocPenalites(penalites)}
     ${avert?.banni ? "" : blocSelfie(selfie)}
     <div class="carte mise-en-avant"><span class="surtitre">Aujourd'hui</span>
       ${duJour.length ? `<h2 style="margin:6px 0 10px">${duJour.length} mission${duJour.length > 1 ? "s" : ""}</h2>` : `<h2 style="margin:6px 0 2px">Aucune mission aujourd'hui</h2>
@@ -317,6 +337,24 @@ export async function brancherMissions(vue, p) {
     const m = miennes.find(x => x.reference === c.dataset.controle);
     const fin = c.closest(".carte").querySelector(`[data-etape="${CSS.escape(m.reference)}"]`);
     brancherControle(c, m, complet => { if (fin && m.statut === "EN_COURS") { fin.disabled = !complet; fin.title = complet ? "" : tr("Terminez le contrôle de chaque pièce."); } });
+  });
+  // Plan d'urgence : confirmer sa venue ; annuler (la pénalité et l'avertissement sont annoncés avant).
+  boite.querySelectorAll("[data-confirmer]").forEach(b => b.onclick = async () => {
+    b.disabled = true;
+    await confirmerMission(b.dataset.confirmer).catch(() => null);
+    recharger();
+  });
+  boite.querySelectorAll("[data-annuler-mission]").forEach(b => b.onclick = async () => {
+    const ref = b.dataset.annulerMission, err = b.closest(".carte").querySelector("[data-erreur-mission]");
+    const c = await coutAnnulation(ref).catch(() => null);
+    const texte = !c || !c.penalite_c ? tr("Annuler cette mission ? Elle sera proposée à un autre Cleaneur.")
+      : tr("Annuler à moins de 24 h entraîne une pénalité de {montant} et un avertissement. Annuler quand même ?").replace("{montant}", euros(c.penalite_c));
+    if (!confirm(texte)) return;
+    b.disabled = true;
+    const r = await annulerMissionCleaneur(ref).catch(() => "erreur");
+    if (r !== "ok") { b.disabled = false; err.textContent = tr("Le service est momentanément indisponible. Réessayez dans quelques minutes."); return; }
+    arreterPartage();
+    recharger();
   });
   boite.querySelectorAll("[data-etape]").forEach(b => b.onclick = async () => {
     const ref = b.dataset.etape, m = miennes.find(x => x.reference === ref), suivant = ETAPE[m.statut][1];

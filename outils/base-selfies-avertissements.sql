@@ -8,3 +8,13 @@
 -- 3. Avertissements : table avertissements_cleaneur, profils.banni_le ; avertir_cleaneur(id, motif) (au 3e : banni),
 --    lever_bannissement(id), mes_avertissements() (tableau de bord), avertissements_cleaneurs() (administration) ;
 --    cleaneur_actif() faux pour un Cleaneur banni (plus de missions disponibles ni de prise de mission).
+-- 4. Plan d'urgence (migrations « plan_urgence_missions » et « plan_urgence_cron ») : demandes.urgence / prime_urgence_c, profils.garantie_c,
+--    tables penalites_cleaneur et alertes_cleaneur, config_privee (clé partagée avec la fonction serveur, jamais lisible par le site).
+--    pg_cron « plan-urgence » toutes les 5 min : tache_plan_urgence() → verifier_missions_urgence() (rappel 2 h avant le début, appel
+--    15 min après sans réponse, absence 15 min après l'appel ; à l'heure sans « Je pars » : appel puis absence) puis appel de la fonction
+--    serveur « alertes-cleaneurs » (SMS et appels Twilio si les secrets TWILIO_SID, TWILIO_TOKEN, TWILIO_NUMERO sont posés ; sinon « non_configure »).
+--    Réponses (touche 1/2 ou SMS « 1 »/« 2 ») : fonction serveur « reponse-twilio » (signature vérifiée) → reponse_appel().
+--    remettre_en_urgence(ref, raison) : pénalité (absence ou < 2 h : max(30 €, 25 %) ; < 24 h : 15 €), avertissement, mission remise en ligne
+--    « Urgence » ; prime (< 2 h 50 %, < 4 h 35 %, < 24 h 20 % du prix) plafonnée à la part de la pénalité couverte par la réserve de garantie
+--    moins 2 € de frais : Cleaneroo ne perd jamais d'argent. Écrans : confirmer_mission, cout_annulation, annuler_mission_cleaneur, mes_penalites ;
+--    administration : annuler_penalite (force majeure).
