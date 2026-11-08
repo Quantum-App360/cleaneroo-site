@@ -174,6 +174,18 @@ const T = [
   ["Prochain départ", "Next check-out", "Prossima partenza", "Próxima salida"],
   ["Aucun bien ne correspond à votre recherche.", "No property matches your search.", "Nessun immobile corrisponde alla ricerca.", "Ningún inmueble coincide con tu búsqueda."],
   // Missions du Cleaneur (missions.js)
+  // Factures (factures.js)
+  ["Mes factures", "My invoices", "Le mie fatture", "Mis facturas"],
+  ["Les factures de vos prestations (établies pour votre compte) et les commissions Cleaneroo. Utile pour votre déclaration URSSAF.", "Invoices for your jobs (issued on your behalf) and Cleaneroo commissions. Useful for your URSSAF return.", "Le fatture delle tue prestazioni (emesse per tuo conto) e le commissioni Cleaneroo. Utile per la dichiarazione URSSAF.", "Las facturas de tus servicios (emitidas en tu nombre) y las comisiones de Cleaneroo. Útil para tu declaración URSSAF."],
+  ["Une facture est créée automatiquement à la fin de chaque prestation.", "An invoice is created automatically at the end of each service.", "Una fattura viene creata automaticamente alla fine di ogni servizio.", "Se crea una factura automáticamente al final de cada servicio."],
+  ["Frais de service", "Service fee", "Costi di servizio", "Gastos de servicio"],
+  ["Commission Cleaneroo", "Cleaneroo commission", "Commissione Cleaneroo", "Comisión de Cleaneroo"],
+  ["prestation", "service", "prestazione", "servicio"],
+  ["Total", "Total", "Totale", "Total"],
+  ["Aucune facture pour l'instant.", "No invoices yet.", "Nessuna fattura per ora.", "Ninguna factura por ahora."],
+  ["Vos factures apparaîtront ici après chaque prestation terminée.", "Your invoices will appear here after each completed service.", "Le tue fatture appariranno qui dopo ogni servizio terminato.", "Tus facturas aparecerán aquí tras cada servicio terminado."],
+  ["Autorisez les fenêtres de ce site pour ouvrir la facture.", "Allow pop-up windows for this site to open the invoice.", "Consenti le finestre di questo sito per aprire la fattura.", "Permite las ventanas de este sitio para abrir la factura."],
+  ["Partager le PDF", "Share the PDF", "Condividi il PDF", "Compartir el PDF"],
   // Tableau de bord du Cleaneur (comme l'appli iOS)
   ["Voici votre activité du jour.", "Here is today's activity.", "Ecco la tua attività di oggi.", "Esta es tu actividad del día."],
   ["Niveau", "Level", "Livello", "Nivel"],

@@ -1,0 +1,10 @@
+-- Déjà appliqué sur la base (migrations « factures » et « factures_description_cron »). Gardé pour mémoire.
+-- Quand une demande passe à TERMINEE (déclencheur factures_a_la_fin → emettre_factures), 3 factures numérotées sans trou :
+--   prestation : du Cleaneur au client, établie par Cleaneroo pour son compte (mandat de facturation), TVA non applicable art. 293 B du CGI ;
+--   frais      : de Cleaneroo au client (frais de service, TVA 20 % comprise) ;
+--   commission : de Cleaneroo au Cleaneur (12 % Pro / 20 % Gratuit, TVA 20 % comprise).
+-- Séries : CLN-AAAA-000001 (Cleaneroo), C<6 caractères>-AAAA-0001 (chaque Cleaneur). Tables factures (lecture seule, par le destinataire,
+-- le Cleaneur pour les factures émises en son nom, ou l'administration), compteurs_factures, infos_cleaneroo (raison sociale, SIRET,
+-- adresse, TVA intracommunautaire de Cleaneroo : à compléter par l'administration).
+-- Description : fonction serveur « description-facture » (pg_cron « factures-descriptions » toutes les 10 min), rédigée par Claude
+-- (secret ANTHROPIC_API_KEY ; sans clé, liste des tâches réalisées) ; les montants ne passent jamais par l'IA.
