@@ -129,6 +129,11 @@ export const REGLES = {
   VALIDATION_AUTO_H: 48,
   POURBOIRE_CHOIX_C: [200, 500, 1000],   // pourboires proposés au client (100 % pour le Cleaneur)
   GARANTIE_PLAFOND_C: 300000,
+  // Accès impossible / client absent (copie de Regles.kt) : après 15 min d'attente, 30 % du prix entre 20 et 60 €.
+  INDEMNITE_PCT: 30,
+  INDEMNITE_MIN_C: 2000,
+  INDEMNITE_MAX_C: 6000,
+  ATTENTE_ACCES_IMPOSSIBLE_MIN: 15,
   GARANTIE_REMPLACEMENT_OFFERT_C: 1500,
   GARANTIE_DECLARATION_H: 48,
   AVIS_DELAI_JOURS: 14,
@@ -242,3 +247,6 @@ export const seuilAbonnementProC = (t, n) => Math.ceil(prixAbonnementProC(t, n) 
 export const finOffreLancement = () => { const [a, m, j] = REGLES.OFFRE_LANCEMENT_FIN_INSCRIPTION.split("-").map(Number); return new Date(a, m - 1, j, 23, 59, 59); };
 /** Jours restants pour s'inscrire et profiter de l'offre (0 = terminée). */
 export const joursOffreLancement = (maintenant = new Date()) => Math.max(0, Math.ceil((finOffreLancement() - maintenant) / 86400000));
+
+/** Indemnité due au Cleaneur quand l'accès est impossible (même calcul que ReglesMetier.indemniteC et la base). */
+export const indemniteAccesC = prixC => Math.min(REGLES.INDEMNITE_MAX_C, Math.max(REGLES.INDEMNITE_MIN_C, Math.round((prixC || 0) * REGLES.INDEMNITE_PCT / 100)));

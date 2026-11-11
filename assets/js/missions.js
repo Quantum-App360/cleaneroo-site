@@ -2,7 +2,8 @@
 // automatique), étapes Je pars › Je suis arrivé › Je commence › J'ai terminé, et partage de la position pendant le trajet.
 // Mêmes écrans que l'application (EspacesCompte.kt / ServiceTrajet.kt).
 import { rubrique } from "./catalogue.js";
-import { REGLES, euros, dateLongue, heure, duree, finOffreLancement } from "./regles.js";
+import { REGLES, euros, dateLongue, heure, duree, finOffreLancement, indemniteAccesC } from "./regles.js";
+import { supabase } from "./donnees.js";
 import { preparationCleaneur } from "./espaces.js";
 import { icone } from "./icones.js";
 import { traduire, tr } from "./langue.js";
@@ -327,10 +328,22 @@ function carteMission(m) {
     ${blocAcces(m)}
     ${m.statut === "EN_ROUTE" ? `<p class="petit partage-actif" style="margin:8px 0 0">📍 Position partagée avec le client pendant le trajet</p>` : ""}
     ${["SUR_PLACE", "EN_COURS"].includes(m.statut) ? `<div class="controle-mission" data-controle="${esc(m.reference)}"></div>` : ""}
+    ${m.statut === "SUR_PLACE" ? blocAccesImpossible(m) : ""}
     <div class="boutons" style="margin-top:10px">
       ${bouton ? `<button type="button" class="bouton" data-etape="${esc(m.reference)}">${bouton}</button>` : ""}
       <a class="bouton secondaire" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${m.rue} ${m.code_postal} ${m.ville}`)}">Itinéraire</a>
     </div><p class="erreur" data-erreur-mission style="margin:6px 0 0"></p></div>`;
+}
+
+/* Accès impossible / client absent (11 novembre 2026, repris de l'appli iPhone) : après 15 min sur place et un essai pour joindre
+   le client, la mission est annulée et le client doit une indemnité (30 % du prix, entre 20 et 60 €), contestable 48 h. */
+export const MOTIFS_ACCES = [["ABSENT", "Client absent"], ["CLE_INTROUVABLE", "Clé ou code introuvable"], ["ACCES_REFUSE", "Accès refusé"], ["DANGEREUX", "Logement inaccessible ou dangereux"]];
+function blocAccesImpossible(m) {
+  return `<details class="acces-impossible" style="margin-top:10px"><summary class="petit">Impossible d'entrer ?</summary>
+    <p class="petit" style="margin:6px 0">Appelez d'abord le client. Après ${REGLES.ATTENTE_ACCES_IMPOSSIBLE_MIN} min d'attente sur place, déclarez l'accès impossible : la mission est annulée et vous recevez une indemnité de ${euros(indemniteAccesC(m.estimation_c))}. En cas de danger, partez tout de suite.</p>
+    <label class="champ">Motif<select data-motif-acces>${MOTIFS_ACCES.map(([v, n]) => `<option value="${v}">${n}</option>`).join("")}</select></label>
+    <label class="champ">Précisions (facultatif)<input data-note-acces maxlength="500"></label>
+    <button type="button" class="bouton danger" data-acces-impossible="${esc(m.reference)}">Déclarer l'accès impossible</button></details>`;
 }
 
 /** Accès au logement (transmis une fois la mission confirmée) : boîte à clés avec sa photo, personne sur place, accès autonome. */
@@ -460,6 +473,17 @@ export async function brancherMissions(vue, p) {
     if (r !== "ok") { b.disabled = false; err.textContent = tr("Le service est momentanément indisponible. Réessayez dans quelques minutes."); return; }
     arreterPartage();
     recharger();
+  });
+  boite.querySelectorAll("[data-acces-impossible]").forEach(b => b.onclick = async () => {
+    const carte = b.closest(".carte"), err = carte.querySelector("[data-erreur-mission]");
+    if (!confirm(tr("Déclarer l'accès impossible ? La mission sera annulée et le client prévenu."))) return;
+    b.disabled = true;
+    const { data: r } = await supabase.rpc("acces_impossible", { p_reference: b.dataset.accesImpossible,
+      p_motif: carte.querySelector("[data-motif-acces]").value, p_note: carte.querySelector("[data-note-acces]").value.trim() });
+    if (r === "ok") { arreterPartage(); recharger(); return; }
+    b.disabled = false;
+    err.textContent = String(r || "").startsWith("attente:") ? tr("Attendez encore {n} min sur place avant de déclarer l'accès impossible.").replace("{n}", r.split(":")[1])
+      : tr("Le service est momentanément indisponible. Réessayez dans quelques minutes.");
   });
   boite.querySelectorAll("[data-etape]").forEach(b => b.onclick = async () => {
     const ref = b.dataset.etape, m = miennes.find(x => x.reference === ref), suivant = ETAPE[m.statut][1];

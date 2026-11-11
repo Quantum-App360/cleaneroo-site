@@ -17,14 +17,22 @@ const MESSAGES = {
   montant: "Indiquez le montant estimé du dommage (3 000 € maximum).",
 };
 
+const MOTIFS_ACCES = { ABSENT: "Client absent", CLE_INTROUVABLE: "Clé ou code introuvable", ACCES_REFUSE: "Accès refusé", DANGEREUX: "Logement inaccessible ou dangereux" };
+
 export async function blocLitige(boite, reference, jeton, statut) {
-  if (!boite || !["A_VALIDER", "TERMINEE"].includes(statut)) return;
+  if (!boite || !["A_VALIDER", "TERMINEE", "ANNULEE"].includes(statut)) return;
+  // Mission annulée : seulement si le Cleaneur a déclaré l'accès impossible (le client peut contester sous 48 h).
+  const acces = statut === "ANNULEE" ? (await supabase.rpc("acces_impossible_de", { p_reference: reference, p_jeton: jeton })).data : null;
+  if (statut === "ANNULEE" && !acces) return;
   const { data: liste } = await supabase.rpc("litiges_de", { p_reference: reference, p_jeton: jeton });
   if (!boite.isConnected) return;
+  const infoAcces = acces ? `<div class="carte" style="margin:12px 0;border-color:var(--erreur)"><b>${tr("Accès impossible déclaré par le Cleaneur")}</b>
+    <p class="petit" style="margin:4px 0 0">${dateLongue(new Date(acces.le))} · ${tr(MOTIFS_ACCES[acces.motif] || "Autre")}${acces.note ? ` · « ${String(acces.note).replace(/[<>&]/g, "")} »` : ""}</p>
+    <p class="petit" style="margin:4px 0 0">${tr("Indemnité due au Cleaneur :")} <b>${euros(acces.indemnite_c)}</b>. ${tr("Vous pouvez la contester ci-dessous dans les 48 h.")}</p></div>` : "";
   const ouverts = (liste || []).filter(l => l.statut === "OUVERT");
   const suivi = (liste || []).map(l => `<div class="petit" style="margin-top:6px">${dateLongue(new Date(l.cree_le))} · ${l.genre === "DOMMAGE" ? tr("Dommage") : tr(MOTIFS_LITIGE.find(m => m[0] === l.motif)?.[1] || "Autre")}
     · <b>${tr(STATUTS_LITIGE[l.statut])}</b>${l.montant_decide_c ? ` · ${euros(l.montant_decide_c)}` : ""}${l.decision ? `<br>${l.decision.replace(/[<>&]/g, "")}` : ""}</div>`).join("");
-  boite.innerHTML = `<details class="carte" style="margin:12px 0" ${ouverts.length ? "open" : ""}><summary>Un problème avec ce ménage ?</summary>
+  boite.innerHTML = infoAcces + `<details class="carte" style="margin:12px 0" ${ouverts.length || acces ? "open" : ""}><summary>${acces ? "Contester" : "Un problème avec ce ménage ?"}</summary>
     ${suivi ? `<div style="margin:8px 0">${suivi}</div>` : ""}
     ${ouverts.length ? `<p class="petit">Votre signalement est en cours d'examen : la prestation n'est pas validée automatiquement en attendant. Réponse sous 72 h.</p>` : `
     <p class="petit" style="margin:8px 0">Dans les ${REGLES.GARANTIE_DECLARATION_H} h après la fin du ménage, signalez un problème ou déclarez un dommage (Garantie Cleaneroo, jusqu'à ${euros(REGLES.GARANTIE_PLAFOND_C)}). Nous examinons votre demande sous 72 h.</p>

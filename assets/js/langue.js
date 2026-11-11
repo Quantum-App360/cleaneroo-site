@@ -875,6 +875,20 @@ const T = [
   ["Un signalement est déjà en cours d'examen pour cette prestation.", "A report is already under review for this service.", "Una segnalazione è già in esame per questo servizio.", "Ya hay un informe en revisión para este servicio."],
   ["Décrivez le problème en au moins 20 caractères.", "Describe the problem in at least 20 characters.", "Descrivi il problema in almeno 20 caratteri.", "Describe el problema en al menos 20 caracteres."],
   ["Indiquez le montant estimé du dommage (3 000 € maximum).", "Enter the estimated amount of the damage (€3,000 maximum).", "Indica l'importo stimato del danno (massimo 3.000 €).", "Indica el importe estimado del daño (3.000 € como máximo)."],
+  // Accès impossible (11 novembre 2026)
+  ["Impossible d'entrer ?", "Can't get in?", "Impossibile entrare?", "¿No puedes entrar?"],
+  ["Client absent", "Customer not there", "Cliente assente", "Cliente ausente"],
+  ["Clé ou code introuvable", "Key or code not found", "Chiave o codice introvabile", "Llave o código no encontrado"],
+  ["Accès refusé", "Access refused", "Accesso rifiutato", "Acceso denegado"],
+  ["Logement inaccessible ou dangereux", "Property inaccessible or dangerous", "Alloggio inaccessibile o pericoloso", "Vivienda inaccesible o peligrosa"],
+  ["Précisions (facultatif)", "Details (optional)", "Dettagli (facoltativo)", "Detalles (opcional)"],
+  ["Déclarer l'accès impossible", "Report no access", "Dichiara accesso impossibile", "Declarar acceso imposible"],
+  ["Déclarer l'accès impossible ? La mission sera annulée et le client prévenu.", "Report no access? The job will be cancelled and the customer notified.", "Dichiarare l'accesso impossibile? La missione sarà annullata e il cliente avvisato.", "¿Declarar acceso imposible? La misión se cancelará y se avisará al cliente."],
+  ["Attendez encore {n} min sur place avant de déclarer l'accès impossible.", "Wait {n} more min on site before reporting no access.", "Attendi ancora {n} min sul posto prima di dichiarare l'accesso impossibile.", "Espera {n} min más en el lugar antes de declarar el acceso imposible."],
+  ["Accès impossible déclaré par le Cleaneur", "No access reported by the Cleaneur", "Accesso impossibile dichiarato dal Cleaneur", "Acceso imposible declarado por el Cleaneur"],
+  ["Indemnité due au Cleaneur :", "Compensation owed to the Cleaneur:", "Indennizzo dovuto al Cleaneur:", "Indemnización debida al Cleaneur:"],
+  ["Vous pouvez la contester ci-dessous dans les 48 h.", "You can dispute it below within 48 h.", "Puoi contestarlo qui sotto entro 48 h.", "Puedes impugnarla abajo en las 48 h."],
+  ["Contester", "Dispute", "Contesta", "Impugnar"],
   // « Être prévenu » (11 novembre 2026)
   ["Pas encore de Cleaneur dans votre secteur", "No Cleaneur in your area yet", "Ancora nessun Cleaneur nella tua zona", "Todavía no hay Cleaneur en tu zona"],
   ["Cette prestation n'est pas encore proposée à votre adresse : nous recrutons. Laissez vos coordonnées, nous vous prévenons dès qu'un Cleaneur qualifié s'installe près de chez vous.", "This service isn't available at your address yet: we're recruiting. Leave your details and we'll let you know as soon as a qualified Cleaneur sets up near you.", "Questo servizio non è ancora disponibile al tuo indirizzo: stiamo reclutando. Lascia i tuoi recapiti, ti avviseremo appena un Cleaneur qualificato si stabilisce vicino a te.", "Este servicio aún no está disponible en tu dirección: estamos reclutando. Deja tus datos y te avisaremos en cuanto un Cleaneur cualificado se instale cerca de ti."],
@@ -1987,6 +2001,7 @@ let PHRASES = null;
 /* ------------------------------------------------------------------ Textes avec une partie variable */
 export const LOCALE = { fr: "fr-FR", en: "en-GB", it: "it-IT", es: "es-ES" }[langue];
 const MOTIFS = IDX === undefined ? [] : [
+  [/^Appelez d'abord le client\. Après (\d+) min d'attente sur place, déclarez l'accès impossible : la mission est annulée et vous recevez une indemnité de (.+)\. En cas de danger, partez tout de suite\.$/, (x, n, mt) => [`Call the customer first. After ${n} min waiting on site, report no access: the job is cancelled and you receive compensation of ${mt}. If in danger, leave immediately.`, `Chiama prima il cliente. Dopo ${n} min di attesa sul posto, dichiara l'accesso impossibile: la missione è annullata e ricevi un indennizzo di ${mt}. In caso di pericolo, vai via subito.`, `Llama primero al cliente. Tras ${n} min de espera en el lugar, declara el acceso imposible: la misión se cancela y recibes una indemnización de ${mt}. En caso de peligro, vete de inmediato.`][IDX]],
   [/^Dans les (\d+) h après la fin du ménage, signalez un problème ou déclarez un dommage \(Garantie Cleaneroo, jusqu'à (.+)\)\. Nous examinons votre demande sous 72 h\.$/, (x, h, mt) => [`Within ${h} h of the end of the clean, report a problem or declare damage (Cleaneroo Guarantee, up to ${mt}). We review your request within 72 h.`, `Entro ${h} h dalla fine della pulizia, segnala un problema o dichiara un danno (Garanzia Cleaneroo, fino a ${mt}). Esaminiamo la tua richiesta entro 72 h.`, `En las ${h} h siguientes al final de la limpieza, informa de un problema o declara un daño (Garantía Cleaneroo, hasta ${mt}). Revisamos tu solicitud en 72 h.`][IDX]],
   [/^(\d+) photo\(s\)$/, (x, n) => [`${n} photo(s)`, `${n} foto`, `${n} foto(s)`][IDX]],
   [/^🚨 Mission d'urgence : prime de (.+) comprise$/, (m, p) => [`🚨 Urgent job: ${p} bonus included`, `🚨 Missione urgente: premio di ${p} incluso`, `🚨 Misión urgente: prima de ${p} incluida`][IDX]],
