@@ -1,5 +1,6 @@
 // Accueil « vivant » du compte connecté (Particulier, Pro, administrateur) : la prochaine prestation en direct
 // et la boîte « À faire » (tout ce qui attend le client). Se met à jour en temps réel. Même écran dans l'appli (AccueilVivant.kt).
+import { decorTableau } from "./commun.js";
 import { rubrique } from "./catalogue.js";
 import { REGLES, euros, dateLongue, heure } from "./regles.js";
 import { icone } from "./icones.js";
@@ -91,6 +92,7 @@ export async function pageTableau(vue) {
   const enDirect = d && ["EN_ROUTE", "SUR_PLACE", "EN_COURS"].includes(d.statut);
   const r = d && rubrique(d.rubrique_id);
   const pro = (profil?.statuts || []).includes("pro") && profil?.espace === "pro";
+  decorTableau(true);
   vue.innerHTML = `<section class="tableau"><div class="conteneur">
     <div class="tableau-entete">
       <div><span class="surtitre">${esc(new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" }))}</span>

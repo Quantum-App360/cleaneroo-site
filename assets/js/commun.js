@@ -38,6 +38,25 @@ const squelette = () => `<div class="squelette" aria-hidden="true">
 /** Page entière en attente de données (compte, prestations, suivi d'une demande). */
 export const pageChargement = (texte = "Chargement…") => `<div class="chargement-page"><div class="conteneur etroit">${chargeur(texte)}${squelette()}</div></div>`;
 
+/* ------------------------------------------------------------------ Décor animé des tableaux de bord (8 novembre 2026)
+   Étoiles qui scintillent, bulles de savon qui montent, éponge qui mousse dans un coin : en fond, discret, jamais cliquable.
+   Même décor dans l'appli (DecorTableau dans Chargement.kt). */
+const BULLES_DECOR = [[6, 18, 17, 0], [15, 10, 13, 5], [27, 24, 21, 9], [41, 12, 15, 2], [58, 20, 19, 12], [69, 9, 12, 7], [81, 16, 18, 3], [92, 11, 14, 10]];
+const ETOILES_DECOR = [[8, 22, "or", 0], [22, 64, "lilas", 1.2], [47, 12, "turquoise", .6], [63, 40, "or", 2.1], [78, 18, "lilas", 1.6], [90, 58, "turquoise", .3], [35, 82, "or", 2.6]];
+export function decorTableau(actif = true) {
+  document.querySelector(".decor-tableau")?.remove();
+  document.body.classList.toggle("avec-decor", actif);
+  if (!actif) return;
+  const d = document.createElement("div");
+  d.className = "decor-tableau";
+  d.setAttribute("aria-hidden", "true");
+  d.innerHTML = `<span class="tache t1"></span><span class="tache t2"></span><span class="tache t3"></span>
+    ${BULLES_DECOR.map(([x, t, duree, retard]) => `<i class="bulle-decor" style="left:${x}%;width:${t}px;height:${t}px;animation-duration:${duree}s;animation-delay:-${retard}s"></i>`).join("")}
+    ${ETOILES_DECOR.map(([x, y, c, retard]) => `<b class="etoile-decor ${c}" style="left:${x}%;top:${y}%;animation-delay:${retard}s"></b>`).join("")}
+    <div class="eponge-decor"><span class="mousse m1"></span><span class="mousse m2"></span><span class="mousse m3"></span><span class="mousse m4"></span><span class="corps"></span></div>`;
+  document.body.prepend(d);
+}
+
 /* ------------------------------------------------------------------ Comment ça marche */
 export const ETAPES = [
   ["calendrier", "Réservez en 2 minutes", "Choisissez la prestation, répondez à quelques questions, ajoutez des photos et choisissez votre créneau. Le prix s'affiche tout de suite."],

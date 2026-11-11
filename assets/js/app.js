@@ -16,7 +16,7 @@ import { icone, teinte, ICONES_RUBRIQUES, ICONES_INTERFACE } from "./icones.js";
 import { pageTableau, arreterTableau } from "./tableau.js";
 import { compteRenduPieces } from "./controle-ecran.js";
 import { blocFormulesCleaneur, brancherFormulesCleaneur } from "./formules-cleaneur.js";
-import { blocEtapes, blocReassurance, installerRappel, bandeauLancement, pageChargement } from "./commun.js";
+import { blocEtapes, blocReassurance, installerRappel, bandeauLancement, pageChargement, decorTableau } from "./commun.js";
 export { bandeauLancement };
 
 const vue = document.getElementById("vue");
@@ -538,6 +538,7 @@ async function afficherPage() {
   arreterEcouteDemandes();
   arreterTableau();
   arreterSuivi(); arreterSuivi = () => {};
+  decorTableau(false);
   const chemin = location.hash.replace(/^#\/?/, "");
   const [route, param] = chemin.split("/");
   if (route === "gestion") { location.href = "gestion.html"; return; }

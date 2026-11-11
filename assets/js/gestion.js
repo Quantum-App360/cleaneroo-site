@@ -1,5 +1,6 @@
 // Écran de gestion Cleaneroo : réservé aux comptes « admin » (règles de sécurité de la base).
 // Équivalent de « Administration (démo) » de l'application : vérifier, publier, confirmer, faire avancer ou refuser une demande.
+import { decorTableau } from "./commun.js";
 import { supabase, dossiersCleaneurs, documentsDe, deciderDossier, deciderDocument, lienDocument, DOCUMENTS_CLEANEUR } from "./donnees.js";
 import { rubrique } from "./catalogue.js";
 import { icone } from "./icones.js";
@@ -258,3 +259,6 @@ async function detail(d) {
 
 document.getElementById("deconnexion").addEventListener("click", async e => { e.preventDefault(); await supabase.auth.signOut(); location.reload(); });
 demarrer();
+
+// Décor animé en fond (étoiles, bulles, éponge qui mousse), comme le tableau de bord du compte.
+decorTableau(true);
