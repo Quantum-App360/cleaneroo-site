@@ -892,6 +892,19 @@ const T = [
   // Versements (11 novembre 2026)
   ["Prochain versement :", "Next payout:", "Prossimo versamento:", "Próximo pago:"],
   ["chaque vendredi, pour les missions validées jusqu'au mercredi minuit.", "every Friday, for jobs approved by Wednesday midnight.", "ogni venerdì, per le missioni convalidate entro mercoledì a mezzanotte.", "cada viernes, por las misiones validadas hasta el miércoles a medianoche."],
+  // Notes des clients par les Cleaneurs (11 novembre 2026)
+  ["Notez vos derniers clients", "Rate your recent customers", "Valuta i tuoi ultimi clienti", "Valora a tus últimos clientes"],
+  ["Votre note n'est visible que des Cleaneurs et de Cleaneroo, jamais du client.", "Your rating is only visible to Cleaneurs and Cleaneroo, never to the customer.", "Il tuo voto è visibile solo ai Cleaneur e a Cleaneroo, mai al cliente.", "Tu valoración solo la ven los Cleaneurs y Cleaneroo, nunca el cliente."],
+  ["Accueil agréable", "Pleasant welcome", "Accoglienza piacevole", "Recibimiento agradable"],
+  ["Logement conforme", "Property as described", "Alloggio conforme", "Vivienda conforme"],
+  ["Accès facile", "Easy access", "Accesso facile", "Acceso fácil"],
+  ["Consignes claires", "Clear instructions", "Istruzioni chiare", "Instrucciones claras"],
+  ["Logement non conforme", "Property not as described", "Alloggio non conforme", "Vivienda no conforme"],
+  ["Accès compliqué", "Difficult access", "Accesso complicato", "Acceso complicado"],
+  ["Comportement déplacé", "Inappropriate behaviour", "Comportamento inappropriato", "Comportamiento inapropiado"],
+  ["Envoyer ma note", "Send my rating", "Invia il mio voto", "Enviar mi valoración"],
+  ["Merci, votre note est enregistrée.", "Thank you, your rating has been saved.", "Grazie, il tuo voto è stato salvato.", "Gracias, tu valoración se ha guardado."],
+  ["Client noté", "Customer rated", "Cliente valutato", "Cliente valorado"],
   // « Être prévenu » (11 novembre 2026)
   ["Pas encore de Cleaneur dans votre secteur", "No Cleaneur in your area yet", "Ancora nessun Cleaneur nella tua zona", "Todavía no hay Cleaneur en tu zona"],
   ["Cette prestation n'est pas encore proposée à votre adresse : nous recrutons. Laissez vos coordonnées, nous vous prévenons dès qu'un Cleaneur qualifié s'installe près de chez vous.", "This service isn't available at your address yet: we're recruiting. Leave your details and we'll let you know as soon as a qualified Cleaneur sets up near you.", "Questo servizio non è ancora disponibile al tuo indirizzo: stiamo reclutando. Lascia i tuoi recapiti, ti avviseremo appena un Cleaneur qualificato si stabilisce vicino a te.", "Este servicio aún no está disponible en tu dirección: estamos reclutando. Deja tus datos y te avisaremos en cuanto un Cleaneur cualificado se instale cerca de ti."],
@@ -2004,6 +2017,7 @@ let PHRASES = null;
 /* ------------------------------------------------------------------ Textes avec une partie variable */
 export const LOCALE = { fr: "fr-FR", en: "en-GB", it: "it-IT", es: "es-ES" }[langue];
 const MOTIFS = IDX === undefined ? [] : [
+  [/^⭐ Client noté ([\d,]+) \/ 5 \((\d+)\)$/, (x, n, c) => [`⭐ Customer rated ${n.replace(",", ".")} / 5 (${c})`, `⭐ Cliente valutato ${n} / 5 (${c})`, `⭐ Cliente valorado ${n} / 5 (${c})`][IDX]],
   [/^Appelez d'abord le client\. Après (\d+) min d'attente sur place, déclarez l'accès impossible : la mission est annulée et vous recevez une indemnité de (.+)\. En cas de danger, partez tout de suite\.$/, (x, n, mt) => [`Call the customer first. After ${n} min waiting on site, report no access: the job is cancelled and you receive compensation of ${mt}. If in danger, leave immediately.`, `Chiama prima il cliente. Dopo ${n} min di attesa sul posto, dichiara l'accesso impossibile: la missione è annullata e ricevi un indennizzo di ${mt}. In caso di pericolo, vai via subito.`, `Llama primero al cliente. Tras ${n} min de espera en el lugar, declara el acceso imposible: la misión se cancela y recibes una indemnización de ${mt}. En caso de peligro, vete de inmediato.`][IDX]],
   [/^Dans les (\d+) h après la fin du ménage, signalez un problème ou déclarez un dommage \(Garantie Cleaneroo, jusqu'à (.+)\)\. Nous examinons votre demande sous 72 h\.$/, (x, h, mt) => [`Within ${h} h of the end of the clean, report a problem or declare damage (Cleaneroo Guarantee, up to ${mt}). We review your request within 72 h.`, `Entro ${h} h dalla fine della pulizia, segnala un problema o dichiara un danno (Garanzia Cleaneroo, fino a ${mt}). Esaminiamo la tua richiesta entro 72 h.`, `En las ${h} h siguientes al final de la limpieza, informa de un problema o declara un daño (Garantía Cleaneroo, hasta ${mt}). Revisamos tu solicitud en 72 h.`][IDX]],
   [/^(\d+) photo\(s\)$/, (x, n) => [`${n} photo(s)`, `${n} foto`, `${n} foto(s)`][IDX]],

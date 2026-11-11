@@ -4,6 +4,7 @@
 import { rubrique } from "./catalogue.js";
 import { REGLES, euros, dateLongue, heure, duree, finOffreLancement, indemniteAccesC, dateVersement } from "./regles.js";
 import { supabase } from "./donnees.js";
+import { blocNoterClients, remplirNotesClients } from "./avis-clients.js";
 import { preparationCleaneur } from "./espaces.js";
 import { icone } from "./icones.js";
 import { traduire, tr } from "./langue.js";
@@ -366,7 +367,7 @@ function carteDisponible(m) {
     <div class="corps"><div class="haut"><h3>${m.urgence ? `<span class="tampon urgence">🚨 Urgence</span> ` : ""}${r.nom}</h3><b>${m.sur_devis ? tr("Sur devis") : euros(m.estimation_c)}</b></div>
       ${m.urgence && m.prime_urgence_c ? `<p class="petit" style="margin:2px 0 0;color:var(--succes);font-weight:700">+ ${euros(m.prime_urgence_c)} de prime d'urgence</p>` : ""}
       <p class="muet" style="margin:2px 0 0">${quand(m)} · ${duree(m.duree_min)}${m.nombre_cleaneurs === 2 ? " · 2 Cleaneurs" : ""}</p>
-      <p class="petit" style="margin:2px 0 0">${esc(m.code_postal)} ${esc(m.ville)}</p><p class="erreur" data-erreur-prendre style="margin:4px 0 0"></p></div>
+      <p class="petit" style="margin:2px 0 0">${esc(m.code_postal)} ${esc(m.ville)}</p><p class="petit" data-note-client="${esc(m.reference)}" style="margin:2px 0 0"></p><p class="erreur" data-erreur-prendre style="margin:4px 0 0"></p></div>
     <button type="button" class="bouton" data-prendre="${esc(m.reference)}">Prendre la mission</button></div>`;
 }
 
@@ -418,12 +419,15 @@ export async function brancherMissions(vue, p) {
       <p class="petit legende-carte"><span><i style="--c:#1F8A80"></i>Mes missions</span><span><i style="--c:#FA8C66"></i>Missions disponibles (zone approximative)</span></p>` : ""}
     <h2 class="titre-section">${icone("calendrier", { tuile: true })}Mes prochaines missions</h2>
     ${plusTard.length ? plusTard.map(carteMission).join("") : vide("Aucune mission pour l'instant.", "Prenez une mission ci-dessous : elle est à vous dès que vous la prenez.")}
+    <div id="noter-clients"></div>
     <h2 class="titre-section" id="missions-disponibles">${icone("position", { tuile: true })}Missions disponibles</h2>
     <p class="petit" style="margin-top:0">Missions en ligne pour les prestations que vous proposez. Le premier Cleaneur qui la prend l'obtient.</p>
     ${dispo.length ? dispo.map(carteDisponible).join("") : vide("Aucune mission disponible pour l'instant.", p.dossier === "VALIDE" || p.role === "admin" ? "" : "Votre dossier doit être validé pour voir et prendre des missions.")}
     ${p.role === "admin" ? `<div id="selfies-admin" class="selfies-admin"></div><div id="avertissements-admin"></div>` : ""}`;
   traduire(boite);
   brancherTableau(boite, miennes, () => brancherMissions(vue, p));
+  blocNoterClients(boite.querySelector("#noter-clients"));
+  remplirNotesClients(boite);
   if (p.role === "admin") { blocSelfiesAdmin(boite.querySelector("#selfies-admin")); blocAvertissementsAdmin(boite.querySelector("#avertissements-admin")); }
   majTemps(boite);
   clearInterval(minuterieFrise);
