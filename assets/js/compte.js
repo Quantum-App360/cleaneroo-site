@@ -6,6 +6,7 @@ import { surveiller } from "./sons.js";
 import { brancherFormulesCleaneur } from "./formules-cleaneur.js";
 import { afficherFactures } from "./factures.js";
 import { blocAbonnementPro, brancherAbonnementPro } from "./abonnement-pro.js";
+import { blocInvitationsPro, brancherInvitationsPro, blocCodeInvitation, brancherCodeInvitation } from "./invitations.js";
 import { RUBRIQUES, rubrique, TYPES_LOGEMENT } from "./catalogue.js";
 import { euros, dateLongue, heure, REGLES, sirenSiretValide } from "./regles.js";
 import { icone } from "./icones.js";
@@ -84,9 +85,9 @@ export async function pageCompte(vue, param) {
   if (!admin && onglet !== p.espace) { p.espace = onglet; majProfil({ espace: onglet }).then(() => majLienCompte()).catch(() => null); }
   const docs = cleaneur && onglet === "cleaneur" ? await mesDocuments().catch(() => []) : [];
   if (location.hash !== ici) return;
-  const contenu = onglet === "pro" ? ongletPro(p, biens) + `<h2 class="titre-section">${icone("paiement", { tuile: true })}${tr("Mon abonnement")}</h2>${blocAbonnementPro(p, biens)}`
+  const contenu = onglet === "pro" ? ongletPro(p, biens) + `<h2 class="titre-section">${icone("paiement", { tuile: true })}${tr("Mon abonnement")}</h2>${blocAbonnementPro(p, biens)}` + blocInvitationsPro()
       + `<details class="carte" style="margin-top:14px"><summary>Mes informations</summary>${formulaireProfil(p, false)}</details>`
-    : onglet === "cleaneur" ? ongletCleaneur(p, docs, { dossier: cleaneur ? blocDossier(p, docs) : "", profil: cleaneur ? formulaireProfil(p, true) : "" })
+    : onglet === "cleaneur" ? ongletCleaneur(p, docs, { dossier: cleaneur ? blocDossier(p, docs) : "", profil: cleaneur ? formulaireProfil(p, true) : "" }) + (cleaneur ? blocCodeInvitation() : "")
     : ongletParticulier(p, biens, demandes) + formulaireProfil(p, false);
   const etiquette = admin ? ROLES.admin : statuts.map(x => NOMS_STATUTS[x][0]).join(" · ");
   const manquants = admin ? [] : ["particulier", "pro", "cleaneur"].filter(x => !statuts.includes(x));
@@ -114,8 +115,8 @@ export async function pageCompte(vue, param) {
   if (vue.querySelector("#form-profil")) brancherProfil(vue, p, onglet === "cleaneur" && cleaneur);
   brancherParrainage(vue, parrain, () => pageCompte(vue, onglet));
   afficherFactures(vue.querySelector("[data-factures]"));   // onglet « Factures » de l'espace
-  if (onglet === "cleaneur" && cleaneur) { brancherDossier(vue, p); brancherMissions(vue, p); brancherFormulesCleaneur(vue, p, () => pageCompte(vue, "cleaneur")); }
-  if (onglet === "pro") { brancherPro(vue, p, biens, demandes, { majProfil, recharger: () => pageCompte(vue) }); brancherAbonnementPro(vue, () => { majLienCompte(); pageCompte(vue, "pro"); }); }
+  if (onglet === "cleaneur" && cleaneur) { brancherDossier(vue, p); brancherMissions(vue, p); brancherFormulesCleaneur(vue, p, () => pageCompte(vue, "cleaneur")); brancherCodeInvitation(vue); }
+  if (onglet === "pro") { brancherPro(vue, p, biens, demandes, { majProfil, recharger: () => pageCompte(vue) }); brancherInvitationsPro(vue); brancherAbonnementPro(vue, () => { majLienCompte(); pageCompte(vue, "pro"); }); }
   // Ajouter un espace : Particulier ou Cleaneur tout de suite ; Pro avec la société (raison sociale + SIRET/SIREN).
   const ajouter = async (statut, bouton) => {
     if (bouton) bouton.disabled = true;
