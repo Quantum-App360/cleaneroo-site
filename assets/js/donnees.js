@@ -22,7 +22,7 @@ export function nouvelleReference() {
 }
 
 /** Réduit une photo à 1 280 px, JPEG qualité 0,6 (comme l'application). */
-async function reduirePhoto(fichier, taille = 1280, qualite = 0.6) {
+export async function reduirePhoto(fichier, taille = 1280, qualite = 0.6) {
   const img = await createImageBitmap(fichier);
   const r = Math.min(1, taille / Math.max(img.width, img.height));
   const c = document.createElement("canvas");

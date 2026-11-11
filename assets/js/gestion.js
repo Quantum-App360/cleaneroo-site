@@ -67,6 +67,7 @@ const ongletsHtml = () => `<div class="segments" style="margin:6px 0 4px;flex-wr
   <button type="button" data-onglet="demandes" class="${onglet === "demandes" ? "choisi" : ""}">Demandes</button>
   <button type="button" data-onglet="inscriptions" class="${onglet === "inscriptions" ? "choisi" : ""}">Inscriptions au lancement</button>
   <button type="button" data-onglet="dossiers" class="${onglet === "dossiers" ? "choisi" : ""}">Dossiers Cleaneurs</button>
+  <button type="button" data-onglet="litiges" class="${onglet === "litiges" ? "choisi" : ""}">Litiges</button>
   <button type="button" data-onglet="secteurs" class="${onglet === "secteurs" ? "choisi" : ""}">Secteurs à recruter</button>
   <button type="button" data-onglet="visites" class="${onglet === "visites" ? "choisi" : ""}">Visites</button></div>`;
 const brancherOnglets = () => vue.querySelectorAll("[data-onglet]").forEach(bt => bt.onclick = () => { onglet = bt.dataset.onglet; liste(); });
@@ -205,6 +206,42 @@ async function listeVisites() {
   brancherOnglets();
 }
 
+/* Litiges et Garantie Cleaneroo (11 novembre 2026) : signalements des clients dans les 48 h, décision avec un motif. */
+const DECISIONS_LITIGE = [["REPRISE_GRATUITE", "Reprise gratuite"], ["REMBOURSEMENT", "Remboursement"], ["INDEMNISATION", "Indemnisation (Garantie)"], ["REFUSE", "Refuser"]];
+async function listeLitiges() {
+  const { data, error } = await supabase.from("litiges").select("*").order("cree_le", { ascending: false }).limit(300);
+  if (error) { vue.innerHTML = `<p class="erreur">${esc(error.message)}</p>`; return; }
+  const liens = {};
+  await Promise.all(data.flatMap(l => l.photos || []).map(async c => {
+    const { data: u } = await supabase.storage.from("photos-demandes").createSignedUrl(c, 3600); liens[c] = u?.signedUrl || ""; }));
+  const ouverts = data.filter(l => l.statut === "OUVERT").length;
+  vue.innerHTML = `<h1>Tableau de bord</h1><div class="trait-corail"></div>${ongletsHtml()}
+    <p class="muet">${ouverts} signalement(s) à examiner · ${data.length} au total. Réponse au client sous 72 h ; indemnisation sous 5 jours ouvrés.</p>
+    ${data.map(l => `<div class="carte" style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><b>${esc(l.reference)} · ${l.genre === "DOMMAGE" ? "Dommage" : { INCOMPLETE: "Prestation incomplète", NON_CONFORME: "Prestation non conforme", AUTRE: "Autre" }[l.motif]}</b>
+        <span class="tampon">${{ OUVERT: "À examiner", REPRISE_GRATUITE: "Reprise gratuite", REMBOURSEMENT: "Remboursement", INDEMNISATION: "Indemnisation", REFUSE: "Refusé" }[l.statut]}</span></div>
+      <div class="petit">Signalé le ${dateLongue(new Date(l.cree_le))}${l.montant_c ? ` · montant demandé ${euros(l.montant_c)}` : ""}</div>
+      <p style="margin:8px 0">${esc(l.description)}</p>
+      ${(l.photos || []).length ? `<div style="display:flex;gap:8px;flex-wrap:wrap">${l.photos.map(c => liens[c] ? `<a href="${esc(liens[c])}" target="_blank" rel="noopener"><img src="${esc(liens[c])}" alt="Photo" style="width:96px;height:96px;object-fit:cover;border-radius:10px"></a>` : "").join("")}</div>` : ""}
+      ${l.reponse_cleaneur ? `<p class="petit"><b>Réponse du Cleaneur :</b> ${esc(l.reponse_cleaneur)}</p>` : ""}
+      ${l.statut === "OUVERT" ? `<form data-decider-litige="${l.id}" novalidate style="margin-top:10px">
+        <label class="champ">Décision<select name="statut">${DECISIONS_LITIGE.map(([v, n]) => `<option value="${v}">${n}</option>`).join("")}</select></label>
+        <label class="champ">Montant (€, remboursement ou indemnisation)<input name="montant" type="number" min="0" max="3000" inputmode="numeric"></label>
+        <label class="champ">Motif envoyé au client<textarea name="decision" rows="2" maxlength="1000"></textarea></label>
+        <button class="bouton plein" type="submit">Enregistrer la décision</button></form>`
+        : `<p class="petit"><b>Décision :</b> ${esc(l.decision || "")}${l.montant_decide_c ? ` · ${euros(l.montant_decide_c)}` : ""}</p>`}</div>`).join("") || `<p class="muet">Aucun litige.</p>`}`;
+  brancherOnglets();
+  vue.querySelectorAll("[data-decider-litige]").forEach(f => f.onsubmit = async e => {
+    e.preventDefault();
+    if (!f.decision.value.trim()) { alert("Indiquez le motif de la décision : il est envoyé au client."); return; }
+    f.querySelector("[type=submit]").disabled = true;
+    const { error } = await supabase.rpc("decider_litige", { p_id: f.dataset.deciderLitige, p_statut: f.statut.value, p_decision: f.decision.value.trim(),
+      p_montant_c: Math.round((Number(f.montant.value) || 0) * 100) });
+    if (error) { alert(error.message); f.querySelector("[type=submit]").disabled = false; return; }
+    listeLitiges();
+  });
+}
+
 /* Secteurs à recruter (11 novembre 2026) : où des clients attendent une prestation (« Être prévenu ») et où arrivent
    les pré-réservations. Les plus demandés d'abord : c'est là qu'il faut trouver des Cleaneurs. */
 async function listeSecteurs() {
@@ -226,6 +263,7 @@ async function liste() {
   if (onglet === "dossiers") return listeDossiers();
   if (onglet === "visites") return listeVisites();
   if (onglet === "secteurs") return listeSecteurs();
+  if (onglet === "litiges") return listeLitiges();
   const { data, error } = await supabase.from("demandes").select("*").order("cree_le", { ascending: false }).limit(300);
   if (error) { vue.innerHTML = `<p class="erreur">${esc(error.message)}</p>`; return; }
   const compte = s => data.filter(d => d.statut === s).length;

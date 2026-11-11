@@ -853,6 +853,28 @@ const T = [
   ["Vous ne pouvez pas utiliser votre propre invitation.", "You can't use your own invitation.", "Non puoi usare il tuo invito.", "No puedes usar tu propia invitación."],
   ["Code reconnu ! Dès que votre dossier sera validé, vous deviendrez Cleaneur attitré de cette conciergerie.", "Code recognised! As soon as your file is approved, you'll become this concierge's dedicated Cleaneur.", "Codice riconosciuto! Appena il tuo dossier sarà convalidato, diventerai il Cleaneur di fiducia di questa concierge.", "¡Código reconocido! En cuanto tu expediente esté validado, serás el Cleaneur habitual de esta conserjería."],
   ["Code reconnu : vous êtes Cleaneur attitré de cette conciergerie et voyez ses missions en priorité.", "Code recognised: you're this concierge's dedicated Cleaneur and see its jobs first.", "Codice riconosciuto: sei il Cleaneur di fiducia di questa concierge e vedi le sue missioni in priorità.", "Código reconocido: eres el Cleaneur habitual de esta conserjería y ves sus misiones primero."],
+  // Litiges et Garantie Cleaneroo (11 novembre 2026)
+  ["Un problème avec ce ménage ?", "A problem with this clean?", "Un problema con questa pulizia?", "¿Algún problema con esta limpieza?"],
+  ["Signaler un problème", "Report a problem", "Segnala un problema", "Informar de un problema"],
+  ["Déclarer un dommage", "Report damage", "Dichiara un danno", "Declarar un daño"],
+  ["Motif", "Reason", "Motivo", "Motivo"],
+  ["Prestation incomplète", "Service incomplete", "Servizio incompleto", "Servicio incompleto"],
+  ["Prestation non conforme", "Service not as agreed", "Servizio non conforme", "Servicio no conforme"],
+  ["Montant estimé du dommage (€)", "Estimated amount of the damage (€)", "Importo stimato del danno (€)", "Importe estimado del daño (€)"],
+  ["Décrivez ce qui s'est passé", "Describe what happened", "Descrivi cosa è successo", "Describe lo que pasó"],
+  ["Ajouter des photos", "Add photos", "Aggiungi foto", "Añadir fotos"],
+  ["Envoyer", "Send", "Invia", "Enviar"],
+  ["Dommage", "Damage", "Danno", "Daño"],
+  ["En cours d'examen", "Under review", "In esame", "En revisión"],
+  ["Reprise gratuite", "Free redo", "Ripresa gratuita", "Repaso gratuito"],
+  ["Remboursement", "Refund", "Rimborso", "Reembolso"],
+  ["Indemnisation", "Compensation", "Indennizzo", "Indemnización"],
+  ["Votre signalement est en cours d'examen : la prestation n'est pas validée automatiquement en attendant. Réponse sous 72 h.", "Your report is under review: the service won't be approved automatically in the meantime. Answer within 72 h.", "La tua segnalazione è in esame: nel frattempo il servizio non viene convalidato automaticamente. Risposta entro 72 h.", "Tu informe está en revisión: mientras tanto el servicio no se valida automáticamente. Respuesta en 72 h."],
+  ["Un problème ne peut être signalé qu'après la fin du ménage.", "A problem can only be reported after the clean has finished.", "Un problema può essere segnalato solo dopo la fine della pulizia.", "Solo se puede informar de un problema tras el final de la limpieza."],
+  ["Le délai de 48 h après la fin du ménage est dépassé. Écrivez à contact@cleaneroo.fr.", "The 48-hour period after the clean has passed. Write to contact@cleaneroo.fr.", "Il termine di 48 h dopo la fine della pulizia è scaduto. Scrivi a contact@cleaneroo.fr.", "Han pasado más de 48 h desde el final de la limpieza. Escribe a contact@cleaneroo.fr."],
+  ["Un signalement est déjà en cours d'examen pour cette prestation.", "A report is already under review for this service.", "Una segnalazione è già in esame per questo servizio.", "Ya hay un informe en revisión para este servicio."],
+  ["Décrivez le problème en au moins 20 caractères.", "Describe the problem in at least 20 characters.", "Descrivi il problema in almeno 20 caratteri.", "Describe el problema en al menos 20 caracteres."],
+  ["Indiquez le montant estimé du dommage (3 000 € maximum).", "Enter the estimated amount of the damage (€3,000 maximum).", "Indica l'importo stimato del danno (massimo 3.000 €).", "Indica el importe estimado del daño (3.000 € como máximo)."],
   // « Être prévenu » (11 novembre 2026)
   ["Pas encore de Cleaneur dans votre secteur", "No Cleaneur in your area yet", "Ancora nessun Cleaneur nella tua zona", "Todavía no hay Cleaneur en tu zona"],
   ["Cette prestation n'est pas encore proposée à votre adresse : nous recrutons. Laissez vos coordonnées, nous vous prévenons dès qu'un Cleaneur qualifié s'installe près de chez vous.", "This service isn't available at your address yet: we're recruiting. Leave your details and we'll let you know as soon as a qualified Cleaneur sets up near you.", "Questo servizio non è ancora disponibile al tuo indirizzo: stiamo reclutando. Lascia i tuoi recapiti, ti avviseremo appena un Cleaneur qualificato si stabilisce vicino a te.", "Este servicio aún no está disponible en tu dirección: estamos reclutando. Deja tus datos y te avisaremos en cuanto un Cleaneur cualificado se instale cerca de ti."],
@@ -1965,6 +1987,8 @@ let PHRASES = null;
 /* ------------------------------------------------------------------ Textes avec une partie variable */
 export const LOCALE = { fr: "fr-FR", en: "en-GB", it: "it-IT", es: "es-ES" }[langue];
 const MOTIFS = IDX === undefined ? [] : [
+  [/^Dans les (\d+) h après la fin du ménage, signalez un problème ou déclarez un dommage \(Garantie Cleaneroo, jusqu'à (.+)\)\. Nous examinons votre demande sous 72 h\.$/, (x, h, mt) => [`Within ${h} h of the end of the clean, report a problem or declare damage (Cleaneroo Guarantee, up to ${mt}). We review your request within 72 h.`, `Entro ${h} h dalla fine della pulizia, segnala un problema o dichiara un danno (Garanzia Cleaneroo, fino a ${mt}). Esaminiamo la tua richiesta entro 72 h.`, `En las ${h} h siguientes al final de la limpieza, informa de un problema o declara un daño (Garantía Cleaneroo, hasta ${mt}). Revisamos tu solicitud en 72 h.`][IDX]],
+  [/^(\d+) photo\(s\)$/, (x, n) => [`${n} photo(s)`, `${n} foto`, `${n} foto(s)`][IDX]],
   [/^🚨 Mission d'urgence : prime de (.+) comprise$/, (m, p) => [`🚨 Urgent job: ${p} bonus included`, `🚨 Missione urgente: premio di ${p} incluso`, `🚨 Misión urgente: prima de ${p} incluida`][IDX]],
   [/^\+ (.+) de prime d'urgence$/, (m, p) => [`+ ${p} urgent bonus`, `+ ${p} di premio d'urgenza`, `+ ${p} de prima de urgencia`][IDX]],
   [/^💶 Pénalités$/, () => [`💶 Penalties`, `💶 Penali`, `💶 Penalizaciones`][IDX]],

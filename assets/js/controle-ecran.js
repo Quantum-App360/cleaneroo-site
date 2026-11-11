@@ -2,6 +2,7 @@
 // Cleaneur : tâches cochées › photo après › contrôle IA (écart → reprendre la photo ou justifier). Photo avant seulement si la
 // réservation coche « Photos avant exigées » ; sinon « Signaler un problème à l'arrivée » (dégât, saleté, casse) avec photo au besoin.
 // Client : compte rendu (signalements d'arrivée, photos, tâches, avis de l'IA, justification).
+import { blocLitige } from "./litiges.js";
 import { icone } from "./icones.js";
 import { traduire, tr, langue } from "./langue.js";
 import { piecesDe, pieceComplete } from "./controle.js";
@@ -140,7 +141,8 @@ export async function compteRenduPieces(boite, reference) {
   const jeton = decodeURIComponent(location.hash.split("/")[3] || "");
   if (jeton && !boite.previousElementSibling?.matches?.("[data-avis]")) {
     const zone = document.createElement("div"); zone.dataset.avis = "1"; boite.before(zone);
-    suivre(reference, jeton).then(d => d && blocAvis(zone, reference, jeton, d.statut)).catch(() => null);
+    const zoneLitige = document.createElement("div"); zoneLitige.dataset.litige = "1"; boite.before(zoneLitige);
+    suivre(reference, jeton).then(d => { if (!d) return; blocAvis(zone, reference, jeton, d.statut); blocLitige(zoneLitige, reference, jeton, d.statut); }).catch(() => null);
   }
   const liste = await controlesDe(reference).catch(() => []);
   if (!liste.length) { boite.innerHTML = ""; return; }
