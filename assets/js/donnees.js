@@ -278,7 +278,7 @@ export async function ecouterDemandes(surChangement) {
 
 /** Documents du dossier Cleaneur. Types : identite, siret, rc_pro, urssaf (obligatoires), certibiocide (nuisibles). */
 export const DOCUMENTS_CLEANEUR = [
-  { type: "identite", nom: "Pièce d'identité", aide: "Carte d'identité ou passeport, recto verso.", obligatoire: true },
+  { type: "identite", nom: "Pièce d'identité", aide: "Carte d'identité ou passeport en cours de validité, recto verso. Hors Union européenne : titre de séjour qui autorise à travailler.", obligatoire: true },
   { type: "siret", nom: "Justificatif SIRET", aide: "Avis de situation INSEE ou extrait Kbis de moins de 3 mois.", obligatoire: true },
   { type: "rc_pro", nom: "Assurance RC Pro", aide: "Attestation d'assurance responsabilité civile professionnelle en cours de validité.", obligatoire: true },
   { type: "urssaf", nom: "Attestation de vigilance URSSAF", aide: "À télécharger sur votre espace URSSAF, de moins de 6 mois.", obligatoire: true },

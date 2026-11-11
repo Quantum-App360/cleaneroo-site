@@ -51,6 +51,14 @@ function ecranConnexion(message = "") {
   });
 }
 
+/* Points de contrôle des documents (11 novembre 2026, règles reprises de l'appli iPhone de Vincent). */
+const AIDE_CONTROLE = {
+  identite: "À contrôler : pièce en cours de validité, recto et verso, numéro de 9 à 12 caractères. Hors Union européenne, EEE et Suisse : titre de séjour qui autorise à travailler. Cartes d'identité de majeurs délivrées entre 2004 et 2013 (date de fin imprimée entre 2014 et 2023) : valables 5 ans de plus que la date imprimée.",
+  urssaf: `À contrôler : attestation de moins de 6 mois, même SIREN que le dossier, code de sécurité de 15 caractères à vérifier sur <a href="https://www.urssaf.fr/accueil/outils-documentation/outils/verification-attestation.html" target="_blank" rel="noopener">urssaf.fr</a> (micro-entrepreneur : <a href="https://www.autoentrepreneur.urssaf.fr/portail/accueil/verification-attestations.html" target="_blank" rel="noopener">autoentrepreneur.urssaf.fr</a>).`,
+  siret: "À contrôler : avis de situation INSEE ou Kbis de moins de 3 mois, même SIRET que le dossier, établissement actif.",
+  rc_pro: "À contrôler : assureur, numéro de contrat, date de fin, activités couvertes (ménage à domicile, locaux professionnels, vitres…).",
+};
+
 const TYPES_INSCRIPTION = { client: "Client", cleaneur: "Cleaneur", conciergerie: "Conciergerie", rappel: "À rappeler" };
 const CRENEAUX_RAPPEL = { matin: "le matin", midi: "à midi", apres_midi: "l'après-midi", soir: "en soirée" };
 let onglet = "demandes";
@@ -130,6 +138,7 @@ async function detailDossier(d) {
     <h2 style="margin-top:20px">Documents</h2>
     ${docs.map(x => `<div class="carte" style="margin-bottom:10px"><b>${NOM_DOC[x.type] || x.type}</b> <span class="tampon">${{ A_VERIFIER: "À vérifier", ACCEPTE: "Accepté", REFUSE: "Refusé" }[x.statut]}</span>
       <div class="petit">déposé le ${dateLongue(new Date(x.cree_le))}${x.motif ? ` · ${esc(x.motif)}` : ""}</div>
+      ${AIDE_CONTROLE[x.type] ? `<p class="petit" style="margin:6px 0 0">${AIDE_CONTROLE[x.type]}</p>` : ""}
       <div class="boutons" style="margin-top:8px"><button class="bouton secondaire" data-voir="${esc(x.chemin)}">Voir</button>
         ${x.statut !== "ACCEPTE" ? `<button class="bouton secondaire" data-doc-ok="${x.id}">Accepter</button>` : ""}
         ${x.statut !== "REFUSE" ? `<button class="bouton danger" data-doc-non="${x.id}">Refuser</button>` : ""}</div></div>`).join("") || `<p class="muet">Aucun document déposé.</p>`}
