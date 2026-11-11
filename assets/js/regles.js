@@ -134,6 +134,8 @@ export const REGLES = {
   INDEMNITE_MIN_C: 2000,
   INDEMNITE_MAX_C: 6000,
   ATTENTE_ACCES_IMPOSSIBLE_MIN: 15,
+  // « Photos avant exigées » cochée d'office (décision du 12 novembre 2026) : preuve de l'état laissé par les voyageurs.
+  PHOTOS_AVANT_PAR_DEFAUT: ["rental"],
   // Versements des Cleaneurs (repris de l'appli iPhone) : chaque vendredi, pour les missions validées jusqu'au mercredi minuit.
   VERSEMENT_JOUR_ISO: 5,          // vendredi (lundi = 1)
   VERSEMENT_LIMITE_JOUR_ISO: 3,   // mercredi

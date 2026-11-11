@@ -92,6 +92,7 @@ function brouillonInitial(rubriqueId, espace = "personnel", rapide = false) {
 const SURFACE_DEPART = { office: 120, commerce: 120, communal: 200, kitchen: 30, outdoor: 40, event: 100, construction: 80 };
 function vierge(rubriqueId, espace, r, lieux) {
   return {
+    photosAvantExigees: REGLES.PHOTOS_AVANT_PAR_DEFAUT.includes(rubriqueId),
     rubriqueId, espace, etape: 2, typeLogementId: "appartement", surface: SURFACE_DEPART[rubriqueId] ?? 62, chambres: 2, sdb: 1, niveaux: 1, fenetres: 8,
     formuleId: formulesPour(r)[0]?.id || "", typeLieuId: lieux ? lieux[0].id : "", salissure: "NORMAL",
     taches: [], tachesPerso: [], animaux: false, etapesLocation: 8, consommables: true, remarque: "",
