@@ -1,7 +1,7 @@
 // Écran de gestion Cleaneroo : réservé aux comptes « admin » (règles de sécurité de la base).
 // Équivalent de « Administration (démo) » de l'application : vérifier, publier, confirmer, faire avancer ou refuser une demande.
 import { decorTableau } from "./commun.js";
-import { supabase, dossiersCleaneurs, documentsDe, deciderDossier, deciderDocument, lienDocument, DOCUMENTS_CLEANEUR } from "./donnees.js";
+import { supabase, secteursARecruter, dossiersCleaneurs, documentsDe, deciderDossier, deciderDocument, lienDocument, DOCUMENTS_CLEANEUR } from "./donnees.js";
 import { rubrique } from "./catalogue.js";
 import { icone } from "./icones.js";
 import { euros, duree, heure, dateLongue } from "./regles.js";
@@ -59,6 +59,7 @@ const ongletsHtml = () => `<div class="segments" style="margin:6px 0 4px;flex-wr
   <button type="button" data-onglet="demandes" class="${onglet === "demandes" ? "choisi" : ""}">Demandes</button>
   <button type="button" data-onglet="inscriptions" class="${onglet === "inscriptions" ? "choisi" : ""}">Inscriptions au lancement</button>
   <button type="button" data-onglet="dossiers" class="${onglet === "dossiers" ? "choisi" : ""}">Dossiers Cleaneurs</button>
+  <button type="button" data-onglet="secteurs" class="${onglet === "secteurs" ? "choisi" : ""}">Secteurs à recruter</button>
   <button type="button" data-onglet="visites" class="${onglet === "visites" ? "choisi" : ""}">Visites</button></div>`;
 const brancherOnglets = () => vue.querySelectorAll("[data-onglet]").forEach(bt => bt.onclick = () => { onglet = bt.dataset.onglet; liste(); });
 
@@ -195,10 +196,27 @@ async function listeVisites() {
   brancherOnglets();
 }
 
+/* Secteurs à recruter (11 novembre 2026) : où des clients attendent une prestation (« Être prévenu ») et où arrivent
+   les pré-réservations. Les plus demandés d'abord : c'est là qu'il faut trouver des Cleaneurs. */
+async function listeSecteurs() {
+  let lignes;
+  try { lignes = await secteursARecruter(); } catch (e) { vue.innerHTML = `<p class="erreur">${esc(e.message)}</p>`; return; }
+  const total = k => lignes.reduce((t, l) => t + (l[k] || 0), 0);
+  vue.innerHTML = `<h1>Tableau de bord</h1><div class="trait-corail"></div>${ongletsHtml()}
+    <p class="muet">${total("en_attente")} client(s) en attente · ${total("pre_reservations")} pré-réservation(s) · ${total("a_prevenir")} client(s) à prévenir (un Cleaneur couvre maintenant leur secteur)</p>
+    <p class="note">Après le lancement, une prestation ne se réserve que si un Cleaneur validé la propose et couvre l'adresse. Sinon le client laisse ses coordonnées : recrutez en priorité dans les villes du haut de la liste.</p>
+    <div style="margin-top:14px">${lignes.map(l => `<div class="carte" style="margin-bottom:10px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap">
+      <div><b>${esc(l.ville || "—")}</b> · ${esc(rubrique(l.rubrique_id)?.nom || l.rubrique_id)}</div>
+      <div class="petit">${l.en_attente} en attente · ${l.pre_reservations} pré-réservation(s)${l.a_prevenir ? ` · <b style="color:var(--succes)">${l.a_prevenir} à prévenir</b>` : ""}</div></div>`).join("")
+      || `<p class="muet">Aucune demande pour l'instant.</p>`}</div>`;
+  brancherOnglets();
+}
+
 async function liste() {
   if (onglet === "inscriptions") return listeInscriptions();
   if (onglet === "dossiers") return listeDossiers();
   if (onglet === "visites") return listeVisites();
+  if (onglet === "secteurs") return listeSecteurs();
   const { data, error } = await supabase.from("demandes").select("*").order("cree_le", { ascending: false }).limit(300);
   if (error) { vue.innerHTML = `<p class="erreur">${esc(error.message)}</p>`; return; }
   const compte = s => data.filter(d => d.statut === s).length;

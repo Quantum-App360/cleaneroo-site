@@ -250,7 +250,7 @@ export async function monProfil() {
   if (error) throw new Error(error.message);
   return data ? { ...data, email: s.user.email } : null;
 }
-const CHAMPS_PROFIL = ["prenom", "nom", "telephone", "code_postal", "ville", "siret", "societe", "prestations", "zone_km", "espace"];
+const CHAMPS_PROFIL = ["prenom", "nom", "telephone", "code_postal", "ville", "siret", "societe", "prestations", "zone_km", "zone_lat", "zone_lon", "espace"];
 export async function majProfil(champs) {
   const s = await session();
   const maj = Object.fromEntries(Object.entries(champs).filter(([k]) => CHAMPS_PROFIL.includes(k)));
@@ -392,4 +392,23 @@ export async function lireCalendrier(url, forcer = false) {
   else r = data;
   if (!r.erreur) { cache[url] = { quand: Date.now(), r }; try { sessionStorage.setItem(CLE_AGENDA, JSON.stringify(cache)); } catch { /* rien */ } }
   return r;
+}
+
+/* « Être prévenu » (11 novembre 2026, comme l'appli iPhone) : la prestation est-elle disponible à cette adresse ?
+   Renvoie le nombre de Cleaneurs validés qui la couvrent (null si le service ne répond pas : on ne bloque alors pas). */
+export async function secteurCouvert(rubriqueId, lat, lon) {
+  const { data, error } = await supabase.rpc("secteur_couvert", { p_rubrique: rubriqueId, p_lat: lat, p_lon: lon });
+  return error ? null : data;
+}
+/** Inscrit le client sur la liste d'attente de son secteur ; il est prévenu dès qu'un Cleaneur qualifié s'y installe. */
+export async function rejoindreAttente(a) {
+  const { error } = await supabase.rpc("rejoindre_attente", { p_rubrique: a.rubriqueId, p_code_postal: a.codePostal || "", p_ville: a.ville,
+    p_lat: a.lat, p_lon: a.lon, p_prenom: a.prenom || "", p_email: a.email || "", p_telephone: a.telephone || "", p_source: "site" });
+  if (error) throw error;
+}
+/** Administration : où recruter (demandes en attente et pré-réservations par ville et prestation). */
+export async function secteursARecruter() {
+  const { data, error } = await supabase.rpc("secteurs_a_recruter");
+  if (error) throw error;
+  return data || [];
 }

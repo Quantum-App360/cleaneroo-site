@@ -331,6 +331,9 @@ function brancherProfil(vue, p, cleaneur) {
       if (siret && siret.length !== 14) { err.textContent = tr("Le numéro SIRET compte 14 chiffres."); return; }
       Object.assign(champs, { siret, zone_km: Number(f.zone_km.value) || REGLES.ZONE_KM_DEFAUT,
         prestations: [...f.querySelectorAll("[name=prestation]:checked")].map(c => c.value) });
+      // Centre de la zone d'intervention : sert à savoir quels secteurs sont couverts (« Être prévenu »).
+      const centre = cp ? await positionCommune(cp, champs.ville).catch(() => null) : null;
+      if (centre) Object.assign(champs, { zone_lat: centre.lat, zone_lon: centre.lon });
     }
     f.querySelector("[type=submit]").disabled = true;
     try { await majProfil(champs); pageCompte(vue); majLienCompte(); }

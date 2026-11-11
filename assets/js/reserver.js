@@ -7,7 +7,7 @@ import { PARTIES, partie, partiePour, TARIFS_SPECIAUX, RUBRIQUES, rubrique, form
 import { calculer, entreeEstimation, SALISSURE, disponibilite, meilleurPack, tachesChiffrees, formuleDe, passagesPlanifies, datesPassages,
   etapesDe, consommablesDe, menageTientEntreVoyageurs, frequenceDe, minutesEquipements, prixIndicatifEquipement, heuresEvenement, litsDe } from "./estimation.js";
 import { REGLES, euros, duree, heure, dateCourte, dateLongue, estPrelancement, MESSAGE_LANCEMENT, DATE_PREMIERES_INTERVENTIONS, pctZone, libelleZone } from "./regles.js";
-import { envoyerDemande } from "./donnees.js";
+import { envoyerDemande, secteurCouvert, rejoindreAttente } from "./donnees.js";
 import { maPosition, adresseDe, chercherAdresse, afficherCarte } from "./cartes.js";
 import { traduire, langue, tr } from "./langue.js";
 import { profilMemorise } from "./entete.js";
@@ -565,6 +565,31 @@ function etape4() {
     ${actions(!manque, manque)}`;
 }
 
+/* « Être prévenu » : après le lancement, une prestation ne se réserve que si un Cleaneur validé couvre l'adresse. */
+let couverture = { cle: "", n: null }, attente = "";
+function verifierCouverture() {
+  if (estPrelancement() || !b || !Number.isFinite(b.lat)) return null;
+  const cle = `${b.rubriqueId}|${b.lat.toFixed(3)}|${b.lon.toFixed(3)}`;
+  if (couverture.cle !== cle) {
+    couverture = { cle, n: null }; attente = "";
+    secteurCouvert(b.rubriqueId, b.lat, b.lon).then(n => { if (couverture.cle === cle) { couverture.n = n; if (b?.etape === 5 && racine?.isConnected) rendre(); } }).catch(() => {});
+  }
+  return couverture.n;
+}
+function blocAttente(r, contactOk) {
+  if (attente === "ok") return `<div class="carte" style="margin-top:14px;border-color:var(--primaire)"><h3 style="margin:0 0 6px">C'est noté !</h3>
+    <p class="muet" style="margin:0">Nous vous prévenons par e-mail dès qu'un Cleaneur qualifié intervient dans votre secteur. Votre demande est gardée en brouillon.</p></div>`;
+  return `<div class="carte" style="margin-top:14px"><h3 style="margin:0 0 6px">Pas encore de Cleaneur dans votre secteur</h3>
+    <p class="muet" style="margin:0 0 6px">Cette prestation n'est pas encore proposée à votre adresse : nous recrutons. Laissez vos coordonnées, nous vous prévenons dès qu'un Cleaneur qualifié s'installe près de chez vous.</p>
+    ${attente === "erreur" ? `<p class="erreur" style="margin:6px 0 0">Le service est momentanément indisponible. Réessayez dans quelques minutes.</p>` : ""}</div>
+    ${actions(contactOk && attente !== "envoi", contactOk ? "" : "Complétez vos coordonnées.", attente === "envoi" ? "Envoi en cours…" : "Être prévenu", "prevenir")}`;
+}
+async function prevenir() {
+  attente = "envoi"; rendre();
+  try { await rejoindreAttente({ ...b }); attente = "ok"; } catch { attente = "erreur"; }
+  rendre();
+}
+
 function etape5() {
   const r = rubrique(b.rubriqueId);
   const debut = debutChoisi();
@@ -609,7 +634,7 @@ function etape5() {
     <div class="carte">${caseCocher("Photos avant exigées", "photosAvantExigees", !!b.photosAvantExigees, "Le Cleaneur photographie chaque pièce avant et après le ménage. Conseillé pour les locations saisonnières et les états des lieux. Sinon, il photographie chaque pièce après le ménage et signale tout problème constaté à son arrivée.")}</div>
     <div class="note" style="margin-top:14px">Aucun paiement maintenant : vous ne serez débité qu'après avoir validé la prestation. Annulation gratuite jusqu'à 48 h avant ; ensuite 25 % du prix accepté.</div>
     <div class="carte" style="margin-top:12px">${caseCocher(`J'accepte les <a href="#/conditions" target="_blank">conditions d'utilisation</a> et la <a href="#/confidentialite" target="_blank">politique de confidentialité</a>`, "cgv", b.cgv)}</div>
-    ${actions(!manque && !envoi, manque, envoi ? "Envoi en cours…" : estPrelancement() ? "Envoyer ma pré-réservation" : est.devisObligatoire ? "Envoyer ma demande de devis" : "Envoyer ma demande", "envoyer")}`;
+    ${verifierCouverture() === 0 ? blocAttente(r, contactOk) : actions(!manque && !envoi, manque, envoi ? "Envoi en cours…" : estPrelancement() ? "Envoyer ma pré-réservation" : est.devisObligatoire ? "Envoyer ma demande de devis" : "Envoyer ma demande", "envoyer")}`;
 }
 
 function actions(ok, message = "", libelle = "Continuer", id = "suivant") {
@@ -748,6 +773,7 @@ document.addEventListener("click", async e => {
   if (t.id === "changer" || t.id === "precedent") return retour();
   if (t.id === "suivant") { maj({ etape: b.etape + 1, ...(b.etape === 4 && b.flexible ? { choixCleaneur: "candidatures" } : {}) }, true); return noterEtape(); }
   if (t.id === "envoyer") return envoyer();
+  if (t.id === "prevenir") return prevenir();
 });
 
 document.addEventListener("change", e => {

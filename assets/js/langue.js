@@ -824,6 +824,12 @@ const T = [
   ["et la", "and the", "e la", "y la"],
   ["politique de confidentialité", "privacy policy", "informativa sulla privacy", "política de privacidad"],
   ["Complétez vos coordonnées.", "Complete your contact details.", "Completa i tuoi recapiti.", "Completa tus datos de contacto."],
+  // « Être prévenu » (11 novembre 2026)
+  ["Pas encore de Cleaneur dans votre secteur", "No Cleaneur in your area yet", "Ancora nessun Cleaneur nella tua zona", "Todavía no hay Cleaneur en tu zona"],
+  ["Cette prestation n'est pas encore proposée à votre adresse : nous recrutons. Laissez vos coordonnées, nous vous prévenons dès qu'un Cleaneur qualifié s'installe près de chez vous.", "This service isn't available at your address yet: we're recruiting. Leave your details and we'll let you know as soon as a qualified Cleaneur sets up near you.", "Questo servizio non è ancora disponibile al tuo indirizzo: stiamo reclutando. Lascia i tuoi recapiti, ti avviseremo appena un Cleaneur qualificato si stabilisce vicino a te.", "Este servicio aún no está disponible en tu dirección: estamos reclutando. Deja tus datos y te avisaremos en cuanto un Cleaneur cualificado se instale cerca de ti."],
+  ["Être prévenu", "Notify me", "Avvisami", "Avisarme"],
+  ["C'est noté !", "Got it!", "Fatto!", "¡Anotado!"],
+  ["Nous vous prévenons par e-mail dès qu'un Cleaneur qualifié intervient dans votre secteur. Votre demande est gardée en brouillon.", "We'll email you as soon as a qualified Cleaneur works in your area. Your request is saved as a draft.", "Ti avviseremo via e-mail appena un Cleaneur qualificato interviene nella tua zona. La tua richiesta è salvata come bozza.", "Te avisaremos por e-mail en cuanto un Cleaneur cualificado trabaje en tu zona. Tu solicitud se guarda como borrador."],
   ["Acceptez les conditions pour envoyer la demande.", "Accept the terms to send the request.", "Accetta le condizioni per inviare la richiesta.", "Acepta las condiciones para enviar la solicitud."],
   ["Envoyer ma demande", "Send my request", "Invia la mia richiesta", "Enviar mi solicitud"],
   ["Envoyer ma pré-réservation", "Send my pre-booking", "Invia la mia pre-prenotazione", "Enviar mi prerreserva"],
