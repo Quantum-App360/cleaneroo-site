@@ -889,6 +889,9 @@ const T = [
   ["Indemnité due au Cleaneur :", "Compensation owed to the Cleaneur:", "Indennizzo dovuto al Cleaneur:", "Indemnización debida al Cleaneur:"],
   ["Vous pouvez la contester ci-dessous dans les 48 h.", "You can dispute it below within 48 h.", "Puoi contestarlo qui sotto entro 48 h.", "Puedes impugnarla abajo en las 48 h."],
   ["Contester", "Dispute", "Contesta", "Impugnar"],
+  // Versements (11 novembre 2026)
+  ["Prochain versement :", "Next payout:", "Prossimo versamento:", "Próximo pago:"],
+  ["chaque vendredi, pour les missions validées jusqu'au mercredi minuit.", "every Friday, for jobs approved by Wednesday midnight.", "ogni venerdì, per le missioni convalidate entro mercoledì a mezzanotte.", "cada viernes, por las misiones validadas hasta el miércoles a medianoche."],
   // « Être prévenu » (11 novembre 2026)
   ["Pas encore de Cleaneur dans votre secteur", "No Cleaneur in your area yet", "Ancora nessun Cleaneur nella tua zona", "Todavía no hay Cleaneur en tu zona"],
   ["Cette prestation n'est pas encore proposée à votre adresse : nous recrutons. Laissez vos coordonnées, nous vous prévenons dès qu'un Cleaneur qualifié s'installe près de chez vous.", "This service isn't available at your address yet: we're recruiting. Leave your details and we'll let you know as soon as a qualified Cleaneur sets up near you.", "Questo servizio non è ancora disponibile al tuo indirizzo: stiamo reclutando. Lascia i tuoi recapiti, ti avviseremo appena un Cleaneur qualificato si stabilisce vicino a te.", "Este servicio aún no está disponible en tu dirección: estamos reclutando. Deja tus datos y te avisaremos en cuanto un Cleaneur cualificado se instale cerca de ti."],

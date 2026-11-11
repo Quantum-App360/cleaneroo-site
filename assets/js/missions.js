@@ -2,7 +2,7 @@
 // automatique), étapes Je pars › Je suis arrivé › Je commence › J'ai terminé, et partage de la position pendant le trajet.
 // Mêmes écrans que l'application (EspacesCompte.kt / ServiceTrajet.kt).
 import { rubrique } from "./catalogue.js";
-import { REGLES, euros, dateLongue, heure, duree, finOffreLancement, indemniteAccesC } from "./regles.js";
+import { REGLES, euros, dateLongue, heure, duree, finOffreLancement, indemniteAccesC, dateVersement } from "./regles.js";
 import { supabase } from "./donnees.js";
 import { preparationCleaneur } from "./espaces.js";
 import { icone } from "./icones.js";
@@ -144,6 +144,7 @@ export function tableauDeBord(p, docs, miennes, dispo, t) {
   return `<div class="tableau-cleaneur">
     <p class="petit muet" style="margin:0">${esc(dateLongue(new Date()))}</p>
     <p style="margin:2px 0 8px">Voici votre activité du jour.</p>
+    <p class="petit" style="margin:0 0 8px">💶 ${tr("Prochain versement :")} <b>${esc(dateLongue(dateVersement()))}</b> · ${tr("chaque vendredi, pour les missions validées jusqu'au mercredi minuit.")}</p>
     <span class="badge-niveau">★ ${tr("Niveau")} ${tr(niveauDe(t?.missions_terminees || 0))} · ${tr("commission")} ${commission} %</span>
     ${t?.nb_avis ? `<p class="petit" style="margin:0">⭐ ${String(t.note_moyenne).replace(".", ",")} / 5 · ${t.nb_avis} ${tr(t.nb_avis > 1 ? "avis" : "avis")}${t.pourboires_c ? ` · ${tr("pourboires :")} ${euros(t.pourboires_c)}` : ""}</p>` : ""}
     ${p.role === "admin" ? "" : `<details class="carte profil-a-completer"${faites < etapes.length ? "" : ""}><summary><span>👤 <b>${faites === etapes.length ? tr("Profil complet") : tr("Complétez votre profil")}</b></span><b class="compte">${faites}/${etapes.length}</b></summary>

@@ -3,8 +3,8 @@
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Tests des prix</title>
 <meta name="robots" content="noindex">
 <style>body{font:15px system-ui;margin:24px}li.ok{color:#2E9E72}li.ko{color:#D0485A;font-weight:700}</style>  <!-- chargement : généré par outils/generer_pages.py, ne pas modifier à la main -->
-  <script type="importmap">{"imports":{"/assets/js/abonnement-pro.js":"/assets/js/abonnement-pro.js?v=2026111106","/assets/js/agenda.js":"/assets/js/agenda.js?v=2026111106","/assets/js/app.js":"/assets/js/app.js?v=2026111106","/assets/js/avis.js":"/assets/js/avis.js?v=2026111106","/assets/js/cartes.js":"/assets/js/cartes.js?v=2026111106","/assets/js/catalogue.js":"/assets/js/catalogue.js?v=2026111106","/assets/js/commun.js":"/assets/js/commun.js?v=2026111106","/assets/js/compte.js":"/assets/js/compte.js?v=2026111106","/assets/js/compteur.js":"/assets/js/compteur.js?v=2026111106","/assets/js/controle-ecran.js":"/assets/js/controle-ecran.js?v=2026111106","/assets/js/controle.js":"/assets/js/controle.js?v=2026111106","/assets/js/donnees.js":"/assets/js/donnees.js?v=2026111106","/assets/js/entete.js":"/assets/js/entete.js?v=2026111106","/assets/js/espaces.js":"/assets/js/espaces.js?v=2026111106","/assets/js/estimation.js":"/assets/js/estimation.js?v=2026111106","/assets/js/factures.js":"/assets/js/factures.js?v=2026111106","/assets/js/fond-anime.js":"/assets/js/fond-anime.js?v=2026111106","/assets/js/formules-cleaneur.js":"/assets/js/formules-cleaneur.js?v=2026111106","/assets/js/gestion.js":"/assets/js/gestion.js?v=2026111106","/assets/js/icones.js":"/assets/js/icones.js?v=2026111106","/assets/js/invitations.js":"/assets/js/invitations.js?v=2026111106","/assets/js/langue.js":"/assets/js/langue.js?v=2026111106","/assets/js/litiges.js":"/assets/js/litiges.js?v=2026111106","/assets/js/missions.js":"/assets/js/missions.js?v=2026111106","/assets/js/page.js":"/assets/js/page.js?v=2026111106","/assets/js/parrainage.js":"/assets/js/parrainage.js?v=2026111106","/assets/js/regles.js":"/assets/js/regles.js?v=2026111106","/assets/js/reserver.js":"/assets/js/reserver.js?v=2026111106","/assets/js/sons.js":"/assets/js/sons.js?v=2026111106","/assets/js/suivi-live.js":"/assets/js/suivi-live.js?v=2026111106","/assets/js/tableau.js":"/assets/js/tableau.js?v=2026111106","/assets/js/villes.js":"/assets/js/villes.js?v=2026111106"}}</script>
-  <link rel="stylesheet" href="/assets/style.css?v=2026111106">
+  <script type="importmap">{"imports":{"/assets/js/abonnement-pro.js":"/assets/js/abonnement-pro.js?v=2026111201","/assets/js/agenda.js":"/assets/js/agenda.js?v=2026111201","/assets/js/app.js":"/assets/js/app.js?v=2026111201","/assets/js/avis.js":"/assets/js/avis.js?v=2026111201","/assets/js/cartes.js":"/assets/js/cartes.js?v=2026111201","/assets/js/catalogue.js":"/assets/js/catalogue.js?v=2026111201","/assets/js/commun.js":"/assets/js/commun.js?v=2026111201","/assets/js/compte.js":"/assets/js/compte.js?v=2026111201","/assets/js/compteur.js":"/assets/js/compteur.js?v=2026111201","/assets/js/controle-ecran.js":"/assets/js/controle-ecran.js?v=2026111201","/assets/js/controle.js":"/assets/js/controle.js?v=2026111201","/assets/js/donnees.js":"/assets/js/donnees.js?v=2026111201","/assets/js/entete.js":"/assets/js/entete.js?v=2026111201","/assets/js/espaces.js":"/assets/js/espaces.js?v=2026111201","/assets/js/estimation.js":"/assets/js/estimation.js?v=2026111201","/assets/js/factures.js":"/assets/js/factures.js?v=2026111201","/assets/js/fond-anime.js":"/assets/js/fond-anime.js?v=2026111201","/assets/js/formules-cleaneur.js":"/assets/js/formules-cleaneur.js?v=2026111201","/assets/js/gestion.js":"/assets/js/gestion.js?v=2026111201","/assets/js/icones.js":"/assets/js/icones.js?v=2026111201","/assets/js/invitations.js":"/assets/js/invitations.js?v=2026111201","/assets/js/langue.js":"/assets/js/langue.js?v=2026111201","/assets/js/litiges.js":"/assets/js/litiges.js?v=2026111201","/assets/js/missions.js":"/assets/js/missions.js?v=2026111201","/assets/js/page.js":"/assets/js/page.js?v=2026111201","/assets/js/parrainage.js":"/assets/js/parrainage.js?v=2026111201","/assets/js/regles.js":"/assets/js/regles.js?v=2026111201","/assets/js/reserver.js":"/assets/js/reserver.js?v=2026111201","/assets/js/sons.js":"/assets/js/sons.js?v=2026111201","/assets/js/suivi-live.js":"/assets/js/suivi-live.js?v=2026111201","/assets/js/tableau.js":"/assets/js/tableau.js?v=2026111201","/assets/js/villes.js":"/assets/js/villes.js?v=2026111201"}}</script>
+  <link rel="stylesheet" href="/assets/style.css?v=2026111201">
   <!-- /chargement -->
 </head>
 <body>
@@ -17,7 +17,7 @@ import { calculer, meilleurPack, disponibilite, entreeEstimation, complementMini
 import { rubrique, pastille, tacheChiffree, tachesPour, packsPour, remisePack, DERNIERS_NETTOYAGES,
   PACK_ETAPES_CONSEILLE, PACK_CONSOMMABLES_CONSEILLE, minutesEtapesLocation, nombreEtapesLocation, vuesPhotos, vuesCompletes } from "./assets/js/catalogue.js";
 import { menageTientEntreVoyageurs } from "./assets/js/estimation.js";
-import { euros, REGLES, indemniteAccesC } from "./assets/js/regles.js";
+import { euros, REGLES, indemniteAccesC, dateVersement } from "./assets/js/regles.js";
 const res = [];
 const egal = (nom, obtenu, attendu) => res.push([nom, obtenu === attendu, `obtenu ${obtenu}, attendu ${attendu}`]);
 const t = id => rubrique("home").taches.find(x => x.id === id);
@@ -30,6 +30,13 @@ egal("euros 7200", euros(7200), "72,00 €");
 egal("indemnité accès impossible : minimum 20 €", indemniteAccesC(3000), 2000);
 egal("indemnité accès impossible : 30 %", indemniteAccesC(9976), 2993);
 egal("indemnité accès impossible : maximum 60 €", indemniteAccesC(50000), 6000);
+// Versement : validée du lundi au mercredi → vendredi de la même semaine ; du jeudi au dimanche → vendredi suivant.
+const jourVersement = s => { const v = dateVersement(new Date(s + "T15:00:00")); return `${v.getFullYear()}-${String(v.getMonth() + 1).padStart(2, "0")}-${String(v.getDate()).padStart(2, "0")}`; };
+egal("versement : mission validée un lundi", jourVersement("2027-01-04"), "2027-01-08");
+egal("versement : mission validée un mercredi", jourVersement("2027-01-06"), "2027-01-08");
+egal("versement : mission validée un jeudi", jourVersement("2027-01-07"), "2027-01-15");
+egal("versement : mission validée un vendredi", jourVersement("2027-01-08"), "2027-01-15");
+egal("versement : mission validée un dimanche", jourVersement("2027-01-10"), "2027-01-15");
 egal("euros 123456", euros(123456), "1 234,56 €");
 egal("euros 5", euros(5), "0,05 €");
 let e = menage();

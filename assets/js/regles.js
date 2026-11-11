@@ -134,6 +134,9 @@ export const REGLES = {
   INDEMNITE_MIN_C: 2000,
   INDEMNITE_MAX_C: 6000,
   ATTENTE_ACCES_IMPOSSIBLE_MIN: 15,
+  // Versements des Cleaneurs (repris de l'appli iPhone) : chaque vendredi, pour les missions validées jusqu'au mercredi minuit.
+  VERSEMENT_JOUR_ISO: 5,          // vendredi (lundi = 1)
+  VERSEMENT_LIMITE_JOUR_ISO: 3,   // mercredi
   GARANTIE_REMPLACEMENT_OFFERT_C: 1500,
   GARANTIE_DECLARATION_H: 48,
   AVIS_DELAI_JOURS: 14,
@@ -250,3 +253,12 @@ export const joursOffreLancement = (maintenant = new Date()) => Math.max(0, Math
 
 /** Indemnité due au Cleaneur quand l'accès est impossible (même calcul que ReglesMetier.indemniteC et la base). */
 export const indemniteAccesC = prixC => Math.min(REGLES.INDEMNITE_MAX_C, Math.max(REGLES.INDEMNITE_MIN_C, Math.round((prixC || 0) * REGLES.INDEMNITE_PCT / 100)));
+
+/** Jour du versement d'une mission validée à la date d : le vendredi de la même semaine si elle est validée au plus tard
+ *  le mercredi (minuit), sinon le vendredi suivant. Même calcul que ReglesMetier.dateVersement. */
+export function dateVersement(d = new Date()) {
+  const iso = ((d.getDay() + 6) % 7) + 1;   // lundi = 1 … dimanche = 7
+  const jours = iso <= REGLES.VERSEMENT_LIMITE_JOUR_ISO ? REGLES.VERSEMENT_JOUR_ISO - iso : REGLES.VERSEMENT_JOUR_ISO - iso + 7;
+  const v = new Date(d.getFullYear(), d.getMonth(), d.getDate() + jours);
+  return v;
+}
