@@ -1757,6 +1757,7 @@ details.piece.complete .pastille-piece { background: #23955A; border-color: #239
    Décor animé des tableaux de bord (8 novembre 2026) : taches pastel qui dérivent, bulles de savon irisées,
    étoiles qui scintillent, éponge qui mousse dans le coin. Discret (derrière le contenu), jamais cliquable.
    ================================================================================================ */
+body.avec-decor .fond-bulles { display: none; }
 .decor-tableau { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
 body.avec-decor main, body.avec-decor #vue, body.avec-decor footer { position: relative; z-index: 1; }
 .decor-tableau .tache { position: absolute; border-radius: 50%; filter: blur(50px); opacity: .55; animation: tache-derive 22s ease-in-out infinite alternate; }

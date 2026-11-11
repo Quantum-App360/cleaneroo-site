@@ -657,7 +657,7 @@ function rendre() {
       maj({ lat, lon, ...(a ? { rue: a.rue || b.rue, codePostal: a.codePostal, ville: a.ville } : {}) });
     },
   }).catch(() => {});
-  if (b.etape === 4 && !b.logementId && !Number.isFinite(b.lat) && b.rue.trim().length >= 3 && /^[0-9]{5}$/.test(b.codePostal) && b.ville.trim()) {
+  if (b && b.etape === 4 && !b.logementId && !Number.isFinite(b.lat) && b.rue.trim().length >= 3 && /^[0-9]{5}$/.test(b.codePostal) && b.ville.trim()) {
     const cle = `${b.rue}|${b.codePostal}|${b.ville}`;
     if (cle !== adresseCherchee) {
       adresseCherchee = cle;
