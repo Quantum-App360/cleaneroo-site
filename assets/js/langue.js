@@ -893,6 +893,7 @@ const T = [
   ["Prochain versement :", "Next payout:", "Prossimo versamento:", "Próximo pago:"],
   ["chaque vendredi, pour les missions validées jusqu'au mercredi minuit.", "every Friday, for jobs approved by Wednesday midnight.", "ogni venerdì, per le missioni convalidate entro mercoledì a mezzanotte.", "cada viernes, por las misiones validadas hasta el miércoles a medianoche."],
   // Notes des clients par les Cleaneurs (11 novembre 2026)
+  ["‹ Retour au site", "‹ Back to the site", "‹ Torna al sito", "‹ Volver al sitio"],
   // Œil du mot de passe (12 novembre 2026)
   ["Afficher le mot de passe", "Show password", "Mostra la password", "Mostrar la contraseña"],
   ["Masquer le mot de passe", "Hide password", "Nascondi la password", "Ocultar la contraseña"],
