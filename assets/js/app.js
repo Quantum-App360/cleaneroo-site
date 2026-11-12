@@ -255,6 +255,9 @@ function maquetteAppli(m) {
   </div>`;
 }
 
+/** Compte connecté (session Supabase lue avant chaque page, ou profil mémorisé) : l'accueil n'invite plus à s'inscrire. */
+let sessionActive = false;
+const connecte = () => sessionActive || !!profilMemorise();
 function pageAccueil() {
   const m = messagesNotif();
   return `
@@ -280,7 +283,7 @@ function pageAccueil() {
     </div>
   </section>
   <section class="bandeau-chiffres"><div class="conteneur">${CHIFFRES.map(([n, l], i) => `<div data-teinte="${["turquoise", "corail", "soleil", "lilas"][i]}"><b>${n}</b><span>${l}</span></div>`).join("")}</div></section>
-  ${profilMemorise() ? `<section class="bloc"><div class="conteneur">
+  ${connecte() ? `<section class="bloc"><div class="conteneur">
     ${titreSection("Un espace pour chacun", "Particuliers, conciergeries et Cleaneurs : chacun a son espace, pensé pour son usage.", "Pour qui ?")}
     <div class="grille-3 espaces-accueil">${ESPACES_ACCUEIL.map(([ico, titre, texte, lien, action]) => `
       <a class="carte espace-carte revele" data-teinte="${teinte(ico)}" href="${lien}">${icone(ico, { tuile: true })}<h3>${titre}</h3><p class="muet">${texte}</p><span class="aller">${action} ›</span></a>`).join("")}</div>
@@ -309,7 +312,7 @@ function pageAccueil() {
       <div><h3>Le propre, à moitié prix.</h3><p>50 % de crédit d'impôt sur le ménage à domicile, déduit tout de suite avec l'avance immédiate.</p></div>
     </div>
   </div></section>
-  ${estPrelancement() && !profilMemorise() ? `<section class="appel-2026"><div class="conteneur appel-grille"><div class="revele"><span class="pastille-lancement sombre"><i></i>J-${joursAvantLancement()}</span>
+  ${estPrelancement() && !connecte() ? `<section class="appel-2026"><div class="conteneur appel-grille"><div class="revele"><span class="pastille-lancement sombre"><i></i>J-${joursAvantLancement()}</span>
       <h2>Prêts pour le 31 décembre ?</h2><p>Inscrivez-vous maintenant : les premiers inscrits sont prévenus en priorité.</p>
       <div class="boutons"><a class="bouton clair" href="#/estimer">Estimer mon prix</a></div></div>
       <div class="revele" id="inscription">${formulaireInscription()}</div></div></section>` : ""}`;
@@ -640,6 +643,7 @@ async function afficherPage() {
     if (await pageTableau(vue)) { window.scrollTo(0, 0); return; }
   }
   const page = ROUTES[route] || pageAccueil;
+  sessionActive = !!(await supabase.auth.getSession().catch(() => null))?.data?.session;
   vue.innerHTML = await page();
   brancherInscription(vue);
   brancherExpress(vue);
@@ -683,4 +687,6 @@ window.addEventListener("hashchange", afficher);
 await retourEmail();
 // La page s'affiche tout de suite ; le compte est relu ensuite (l'en-tête se met à jour tout seul).
 afficher();
-majLienCompte();
+// Le profil vient d'être relu : si l'accueil invitait encore à s'inscrire alors que le compte est connecté, on le redessine.
+majLienCompte().then(() => { if (connecte() && document.querySelector("#vue .appel-2026, #vue .inscription-inspirante")) afficher(); });
+supabase.auth.onAuthStateChange((evt, sess) => { sessionActive = !!sess; });
