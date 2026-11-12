@@ -893,6 +893,13 @@ const T = [
   ["Prochain versement :", "Next payout:", "Prossimo versamento:", "Próximo pago:"],
   ["chaque vendredi, pour les missions validées jusqu'au mercredi minuit.", "every Friday, for jobs approved by Wednesday midnight.", "ogni venerdì, per le missioni convalidate entro mercoledì a mezzanotte.", "cada viernes, por las misiones validadas hasta el miércoles a medianoche."],
   // Notes des clients par les Cleaneurs (11 novembre 2026)
+  // Portefeuille du Cleaneur (12 novembre 2026)
+  ["Portefeuille de l'année", "This year's wallet", "Portafoglio dell'anno", "Monedero del año"],
+  ["Pourboires", "Tips", "Mance", "Propinas"],
+  ["Primes d'urgence", "Urgent bonuses", "Premi d'urgenza", "Primas de urgencia"],
+  ["Moins-values", "Deductions", "Trattenute", "Deducciones"],
+  ["Net de l'année", "Net for the year", "Netto dell'anno", "Neto del año"],
+  ["Votre IBAN sera saisi auprès du prestataire de paiement sécurisé à l'ouverture des paiements : Cleaneroo ne le conserve pas.", "Your IBAN will be entered with the secure payment provider when payments open: Cleaneroo does not keep it.", "Il tuo IBAN sarà inserito presso il fornitore di pagamento sicuro all'apertura dei pagamenti: Cleaneroo non lo conserva.", "Tu IBAN se introducirá en el proveedor de pago seguro al abrir los pagos: Cleaneroo no lo guarda."],
   // Dossier Cleaneur complet (12 novembre 2026)
   ["Une première mission accompagnée et rémunérée (40 €, payée par Cleaneroo) vérifie la qualité avant l'activation complète.", "A first supervised, paid job (€40, paid by Cleaneroo) checks quality before full activation.", "Una prima missione accompagnata e retribuita (40 €, pagata da Cleaneroo) verifica la qualità prima dell'attivazione completa.", "Un primer servicio acompañado y remunerado (40 €, pagado por Cleaneroo) comprueba la calidad antes de la activación completa."],
   ["Objet", "Purpose", "Oggetto", "Objeto"],

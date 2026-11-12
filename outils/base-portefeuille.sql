@@ -1,0 +1,3 @@
+-- Portefeuille du Cleaneur (12 novembre 2026, repris de l'appli de Vincent) — appliqué (migration « portefeuille_cleaneur ») :
+-- mon_portefeuille() : montants de l'année (prestations, commissions, pourboires, primes d'urgence, moins-values).
+-- L'IBAN sera saisi chez le prestataire de paiement (paiements sécurisés), jamais conservé par Cleaneroo.

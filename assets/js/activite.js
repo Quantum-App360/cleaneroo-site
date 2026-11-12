@@ -4,7 +4,7 @@
 // Calculs dans regles.js (calculActivite, copie dans ReglesMetier.kt). Même écran dans l'appli (Activite.kt).
 import { supabase } from "./donnees.js";
 import { mesFactures } from "./factures.js";
-import { euros, REGLES, calculActivite } from "./regles.js";
+import { euros, REGLES, calculActivite, netPortefeuille, dateVersement, dateLongue } from "./regles.js";
 import { tr, traduire } from "./langue.js";
 import { esc } from "./commun.js";
 
@@ -23,6 +23,7 @@ export async function blocActivite(boite, profil) {
     supabase.from("avis").select("reference, pourboire_c, cree_le").eq("cleaneur_id", session.user.id).gt("pourboire_c", 0).then(r => r.data || [])]);
   if (!boite.isConnected) return;
   const reglages = { periode: "mois", acre: false, liberatoire: false, ...lireReglages() };
+  const portefeuille = (await supabase.rpc("mon_portefeuille")).data || {};
   const afficher = () => {
     const a = calculActivite({ factures, pourboires: avis, ...reglages });
     boite.innerHTML = `<h2 class="titre-section">📊 ${tr("Mon activité")}</h2>
@@ -48,6 +49,16 @@ export async function blocActivite(boite, profil) {
         <b>${tr("Déclaration URSSAF")}</b>
         <p class="petit">${tr("Déclarez votre chiffre d'affaires chaque mois ou chaque trimestre, même s'il est nul :")} <b>${euros(a.caC)}</b> ${tr(reglages.periode === "mois" ? "ce mois-ci selon Cleaneroo." : "cette année selon Cleaneroo.")}</p>
         <a class="bouton secondaire" href="https://autoentrepreneur.urssaf.fr" target="_blank" rel="noopener">autoentrepreneur.urssaf.fr ↗</a>
+      </div>
+      <div class="carte">
+        <b>👛 ${tr("Portefeuille de l'année")}</b>
+        <div class="ligne-activite"><span>${tr("Prestations")}</span><span>${euros(portefeuille.prestations_c || 0)}</span></div>
+        <div class="ligne-activite"><span>${tr("Commission Cleaneroo")}</span><span>−${euros(portefeuille.commissions_c || 0)}</span></div>
+        <div class="ligne-activite"><span>${tr("Pourboires")}</span><span>+${euros(portefeuille.pourboires_c || 0)}</span></div>
+        <div class="ligne-activite"><span>${tr("Primes d'urgence")}</span><span>+${euros(portefeuille.primes_c || 0)}</span></div>
+        <div class="ligne-activite"><span>${tr("Moins-values")}</span><span>−${euros(portefeuille.moins_values_c || 0)}</span></div>
+        <div class="ligne-activite total"><span>${tr("Net de l'année")}</span><b>${euros(netPortefeuille(portefeuille))}</b></div>
+        <p class="petit">${tr("Prochain versement :")} ${dateLongue(dateVersement(new Date()))}. ${tr("Votre IBAN sera saisi auprès du prestataire de paiement sécurisé à l'ouverture des paiements : Cleaneroo ne le conserve pas.")}</p>
       </div>
       <div class="carte">
         <b>${tr("Documents")}</b>

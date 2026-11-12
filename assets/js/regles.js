@@ -333,6 +333,9 @@ export function verifierProposition(estimationC, prixC, raison = "", note = "") 
   return "ok";
 }
 
+/** Portefeuille : net de l'année = prestations − commissions + pourboires + primes − moins-values (centimes). */
+export const netPortefeuille = p => (p.prestations_c || 0) - (p.commissions_c || 0) + (p.pourboires_c || 0) + (p.primes_c || 0) - (p.moins_values_c || 0);
+
 export function dateVersement(d = new Date()) {
   const iso = ((d.getDay() + 6) % 7) + 1;   // lundi = 1 … dimanche = 7
   const jours = iso <= REGLES.VERSEMENT_LIMITE_JOUR_ISO ? REGLES.VERSEMENT_JOUR_ISO - iso : REGLES.VERSEMENT_JOUR_ISO - iso + 7;
