@@ -894,6 +894,7 @@ const T = [
   ["chaque vendredi, pour les missions validées jusqu'au mercredi minuit.", "every Friday, for jobs approved by Wednesday midnight.", "ogni venerdì, per le missioni convalidate entro mercoledì a mezzanotte.", "cada viernes, por las misiones validadas hasta el miércoles a medianoche."],
   // Notes des clients par les Cleaneurs (11 novembre 2026)
   // Alerte de mission en demi-écran (12 novembre 2026)
+  ["Documents", "Documents", "Documenti", "Documentos"],
   ["Nouvelle mission près de chez vous", "New job near you", "Nuova missione vicino a te", "Nuevo servicio cerca de ti"],
   ["Date flexible", "Flexible date", "Data flessibile", "Fecha flexible"],
   ["autre(s) mission(s)", "other job(s)", "altra/e missione/i", "otro(s) servicio(s)"],

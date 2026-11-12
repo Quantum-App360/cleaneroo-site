@@ -1,0 +1,6 @@
+-- Droits des fonctions ajoutées le 12 novembre 2026 (appliqué, migration « droits_fonctions_12nov ») :
+-- fonctions qui exigent un compte connecté fermées aux visiteurs (anon) : basculer_favori, est_favori, ce_qui_me_manque,
+-- decider_mission_test, definir_activites_rc_pro, infos_dossier, noter_consommable, signer_contrat, peut_voir_fil ;
+-- fonctions de déclencheur fermées à tous (demande_debit_cagnotte, demande_fin_parrainage, demande_remises, factures_a_la_fin).
+-- Restent ouvertes aux visiteurs, par le lien de suivi (jeton) : propositions_de, accepter/refuser_proposition, retard_annonce,
+-- annuler_pour_retard, presence_a_confirmer, repondre_presence, consommables_de, signer, signatures_de, noter_criteres.
