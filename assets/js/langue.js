@@ -893,6 +893,17 @@ const T = [
   ["Prochain versement :", "Next payout:", "Prossimo versamento:", "Próximo pago:"],
   ["chaque vendredi, pour les missions validées jusqu'au mercredi minuit.", "every Friday, for jobs approved by Wednesday midnight.", "ogni venerdì, per le missioni convalidate entro mercoledì a mezzanotte.", "cada viernes, por las misiones validadas hasta el miércoles a medianoche."],
   // Notes des clients par les Cleaneurs (11 novembre 2026)
+  // Avis en double aveugle (12 novembre 2026)
+  ["Qualité du ménage", "Cleaning quality", "Qualità della pulizia", "Calidad de la limpieza"],
+  ["Ponctualité", "Punctuality", "Puntualità", "Puntualidad"],
+  ["Communication", "Communication", "Comunicazione", "Comunicación"],
+  ["Respect des consignes", "Following instructions", "Rispetto delle istruzioni", "Respeto de las instrucciones"],
+  ["Avis en double aveugle : votre Cleaneur ne le verra qu'après vous avoir noté à son tour, ou sous 14 jours.", "Double-blind review: your Cleaneur will only see it after rating you in turn, or within 14 days.", "Recensione in doppio cieco: il tuo Cleaneur la vedrà solo dopo averti valutato a sua volta, o entro 14 giorni.", "Opinión en doble ciego: tu Cleaneur solo la verá después de valorarte a su vez, o en 14 días."],
+  ["Notez chacun des 4 critères de 1 à 5 étoiles.", "Rate each of the 4 criteria from 1 to 5 stars.", "Valuta ciascuno dei 4 criteri da 1 a 5 stelle.", "Valora cada uno de los 4 criterios de 1 a 5 estrellas."],
+  ["Les avis de vos clients", "Your customers' reviews", "Le recensioni dei tuoi clienti", "Las opiniones de tus clientes"],
+  ["Avis en double aveugle : celui du client s'affiche dès que vous l'avez noté à votre tour, ou 14 jours après son avis.", "Double-blind reviews: the customer's review appears as soon as you have rated them in turn, or 14 days after their review.", "Recensioni in doppio cieco: quella del cliente appare non appena l'hai valutato a tua volta, o 14 giorni dopo la sua recensione.", "Opiniones en doble ciego: la del cliente aparece en cuanto lo hayas valorado a tu vez, o 14 días después de su opinión."],
+  ["Le client a donné son avis. Il s'affichera dès que vous l'aurez noté, ou le", "The customer has left a review. It will appear as soon as you have rated them, or on", "Il cliente ha lasciato una recensione. Apparirà non appena l'avrai valutato, o il", "El cliente ha dejado su opinión. Aparecerá en cuanto lo hayas valorado, o el"],
+  ["autoentrepreneur.urssaf.fr ↗", "autoentrepreneur.urssaf.fr ↗", "autoentrepreneur.urssaf.fr ↗", "autoentrepreneur.urssaf.fr ↗"],
   // Mon activité du Cleaneur (12 novembre 2026)
   ["Mon activité", "My business", "La mia attività", "Mi actividad"],
   ["Ce mois-ci", "This month", "Questo mese", "Este mes"],
@@ -925,6 +936,8 @@ const T = [
   ["Indiquez une désignation et un montant.", "Enter a description and an amount.", "Indica una descrizione e un importo.", "Indica un concepto y un importe."],
   ["Indiquez le client et au moins une ligne.", "Enter the customer and at least one line.", "Indica il cliente e almeno una riga.", "Indica el cliente y al menos una línea."],
   ["Pourboire", "Tip", "Mancia", "Propina"],
+  ["ou", "or", "o", "o"],
+  ["sur", "out of", "su", "de"],
   // Formations des Cleaneurs (12 novembre 2026)
   ["Mes formations", "My training", "La mia formazione", "Mis formaciones"],
   ["formations validées sur", "training modules passed out of", "moduli superati su", "formaciones validadas de"],

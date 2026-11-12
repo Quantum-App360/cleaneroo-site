@@ -4,7 +4,7 @@
 import { rubrique } from "./catalogue.js";
 import { REGLES, euros, dateLongue, heure, duree, finOffreLancement, indemniteAccesC, dateVersement } from "./regles.js";
 import { supabase } from "./donnees.js";
-import { blocNoterClients, remplirNotesClients } from "./avis-clients.js";
+import { blocNoterClients, remplirNotesClients, blocAvisRecus } from "./avis-clients.js";
 import { blocFormations } from "./formations.js";
 import { preparationCleaneur } from "./espaces.js";
 import { icone } from "./icones.js";
@@ -421,6 +421,7 @@ export async function brancherMissions(vue, p) {
     <h2 class="titre-section">${icone("calendrier", { tuile: true })}Mes prochaines missions</h2>
     ${plusTard.length ? plusTard.map(carteMission).join("") : vide("Aucune mission pour l'instant.", "Prenez une mission ci-dessous : elle est à vous dès que vous la prenez.")}
     <div id="noter-clients"></div>
+    <div id="avis-recus"></div>
     <div id="formations-cleaneur"></div>
     <h2 class="titre-section" id="missions-disponibles">${icone("position", { tuile: true })}Missions disponibles</h2>
     <p class="petit" style="margin-top:0">Missions en ligne pour les prestations que vous proposez et pour lesquelles vous êtes formé. Le premier Cleaneur qui la prend l'obtient.</p>
@@ -428,7 +429,7 @@ export async function brancherMissions(vue, p) {
     ${p.role === "admin" ? `<div id="selfies-admin" class="selfies-admin"></div><div id="avertissements-admin"></div>` : ""}`;
   traduire(boite);
   brancherTableau(boite, miennes, () => brancherMissions(vue, p));
-  blocNoterClients(boite.querySelector("#noter-clients"));
+  blocNoterClients(boite.querySelector("#noter-clients")).then(() => blocAvisRecus(boite.querySelector("#avis-recus")));
   if (p.role !== "admin") blocFormations(boite.querySelector("#formations-cleaneur"));
   remplirNotesClients(boite);
   if (p.role === "admin") { blocSelfiesAdmin(boite.querySelector("#selfies-admin")); blocAvertissementsAdmin(boite.querySelector("#avertissements-admin")); }

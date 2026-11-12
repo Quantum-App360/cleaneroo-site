@@ -6,6 +6,24 @@ import { rubrique } from "./catalogue.js";
 import { dateLongue } from "./regles.js";
 import { tr, traduire } from "./langue.js";
 import { esc } from "./commun.js";
+import { CRITERES } from "./avis.js";
+
+/** « Les avis de vos clients » (double aveugle) : visibles après avoir noté le client, ou 14 jours après l'avis. */
+export async function blocAvisRecus(boite) {
+  if (!boite) return;
+  const { data: liste } = await supabase.rpc("avis_recus");
+  if (!boite.isConnected || !liste?.length) { boite.innerHTML = ""; return; }
+  const etoiles = n => `<span class="etoiles-avis" aria-label="${n} / 5">${"★".repeat(n)}${"☆".repeat(5 - n)}</span>`;
+  boite.innerHTML = `<h2 class="titre-section">💬 ${tr("Les avis de vos clients")}</h2>
+    <p class="petit" style="margin-top:0">${tr("Avis en double aveugle : celui du client s'affiche dès que vous l'avez noté à votre tour, ou 14 jours après son avis.")}</p>
+    ${liste.map(a => `<div class="carte avis-recu"><b>${esc(rubrique(a.rubrique_id)?.nom || "")}</b> · ${esc(a.ville)} · ${esc(dateLongue(new Date(a.recu_le)))}
+      ${a.revele ? `${a.categories ? CRITERES.map(([id, nom]) => `<div class="critere-recu"><span>${tr(nom)}</span>${etoiles(a.categories[id] || 0)}</div>`).join("")
+          : `<div class="critere-recu"><span>${tr("Note")}</span>${etoiles(a.note || 0)}</div>`}
+        ${a.commentaire ? `<p class="petit" style="margin:6px 0 0"><i>« ${esc(a.commentaire)} »</i></p>` : ""}`
+      : `<p class="petit" style="margin:6px 0 0">🔒 ${tr("Le client a donné son avis. Il s'affichera dès que vous l'aurez noté, ou le")} ${esc(dateLongue(new Date(a.visible_le)))}.</p>`}</div>`).join("")}`;
+  traduire(boite);
+  styles();
+}
 
 export const ETIQUETTES_CLIENT = [
   ["ACCUEIL_AGREABLE", "Accueil agréable", true], ["LOGEMENT_CONFORME", "Logement conforme", true], ["ACCES_FACILE", "Accès facile", true],
@@ -46,6 +64,7 @@ export async function blocNoterClients(boite) {
       const { data } = await supabase.rpc("noter_client", { p_reference: carte.dataset.noter, p_note: note, p_etiquettes: [...etiquettes], p_commentaire: "" });
       if (data !== "ok") { e.target.disabled = false; err.textContent = tr("Le service est momentanément indisponible. Réessayez dans quelques minutes."); return; }
       carte.innerHTML = `<p class="petit" style="margin:0;color:var(--succes)"><b>${tr("Merci, votre note est enregistrée.")}</b></p>`;
+      blocAvisRecus(document.getElementById("avis-recus"));   // double aveugle : l'avis du client devient visible
     };
   });
 }
@@ -62,6 +81,8 @@ export async function remplirNotesClients(boite) {
 }
 
 function styles() {
+  if (!document.getElementById("styles-avis-recus")) { const r = document.createElement("style"); r.id = "styles-avis-recus";
+    r.textContent = `.critere-recu{display:flex;justify-content:space-between;gap:10px;padding:4px 0;font-size:.92rem}.etoiles-avis{color:#F5B301;letter-spacing:1px}`; document.head.appendChild(r); }
   if (document.getElementById("style-avis-clients")) return;
   const st = document.createElement("style");
   st.id = "style-avis-clients";
