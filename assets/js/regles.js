@@ -159,6 +159,7 @@ export const REGLES = {
   AVIS_DELAI_JOURS: 14,
   TOLERANCE_RETARD_MIN: 30,
   RAYON_ARRIVEE_KM: 1.0,
+  RETARD_TOLERE_MIN: 30,   // retard annoncé toléré ; au-delà, le client peut annuler sans frais (base-retards.sql)
   VITESSE_MOYENNE_KMH: 35,
   MARGE_TRAJET_MIN: 10,
   SUIVI_INTERVALLE_S: 10,        // suivi en direct : position envoyée et relue toutes les 10 s

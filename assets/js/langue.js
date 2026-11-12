@@ -893,6 +893,20 @@ const T = [
   ["Prochain versement :", "Next payout:", "Prossimo versamento:", "Próximo pago:"],
   ["chaque vendredi, pour les missions validées jusqu'au mercredi minuit.", "every Friday, for jobs approved by Wednesday midnight.", "ogni venerdì, per le missioni convalidate entro mercoledì a mezzanotte.", "cada viernes, por las misiones validadas hasta el miércoles a medianoche."],
   // Notes des clients par les Cleaneurs (11 novembre 2026)
+  // Retards déclarés (12 novembre 2026)
+  ["J'aurai du retard", "I will be late", "Sarò in ritardo", "Llegaré tarde"],
+  ["Retard prévu", "Expected delay", "Ritardo previsto", "Retraso previsto"],
+  ["Intervention Cleaneroo précédente prolongée", "Previous Cleaneroo job took longer", "Intervento Cleaneroo precedente prolungato", "Servicio Cleaneroo anterior prolongado"],
+  ["Circulation ou transports", "Traffic or transport", "Traffico o trasporti", "Tráfico o transporte"],
+  ["Autre imprévu", "Other unforeseen event", "Altro imprevisto", "Otro imprevisto"],
+  ["Le client est prévenu tout de suite. Seul un retard de 30 min au plus dû à une intervention Cleaneroo précédente est justifié ; au-delà de 30 min, le client peut annuler sans frais.", "The customer is informed straight away. Only a delay of 30 min at most caused by a previous Cleaneroo job is justified; beyond 30 min, the customer may cancel free of charge.", "Il cliente viene avvisato subito. È giustificato solo un ritardo di massimo 30 min dovuto a un intervento Cleaneroo precedente; oltre i 30 min il cliente può annullare senza costi.", "El cliente recibe el aviso de inmediato. Solo se justifica un retraso de 30 min como máximo debido a un servicio Cleaneroo anterior; más allá de 30 min, el cliente puede cancelar sin gastos."],
+  ["Prévenir le client", "Inform the customer", "Avvisa il cliente", "Avisar al cliente"],
+  ["Retard annoncé : le client est prévenu.", "Delay announced: the customer has been informed.", "Ritardo annunciato: il cliente è stato avvisato.", "Retraso anunciado: el cliente ha sido avisado."],
+  ["Votre Cleaneur a annoncé un retard", "Your Cleaneur has announced a delay", "Il tuo Cleaneur ha annunciato un ritardo", "Tu Cleaneur ha anunciado un retraso"],
+  ["arrivée prévue vers", "expected arrival around", "arrivo previsto verso le", "llegada prevista hacia las"],
+  ["Plus de 30 minutes de retard : vous pouvez annuler sans frais.", "More than 30 minutes late: you can cancel free of charge.", "Più di 30 minuti di ritardo: puoi annullare senza costi.", "Más de 30 minutos de retraso: puedes cancelar sin gastos."],
+  ["Annuler sans frais", "Cancel free of charge", "Annulla senza costi", "Cancelar sin gastos"],
+  ["Annuler cette prestation sans frais ?", "Cancel this service free of charge?", "Annullare questo servizio senza costi?", "¿Cancelar este servicio sin gastos?"],
   // Arrivée à 1 km et présence confirmée par le client (12 novembre 2026)
   ["Votre position n'a pas pu être confirmée.", "Your position could not be confirmed.", "Non è stato possibile confermare la tua posizione.", "No se ha podido confirmar tu posición."],
   ["Vous êtes à {km} km de l'adresse : l'arrivée se confirme à 1 km au plus.", "You are {km} km from the address: arrival is confirmed within 1 km.", "Sei a {km} km dall'indirizzo: l'arrivo si conferma entro 1 km.", "Estás a {km} km de la dirección: la llegada se confirma a 1 km como máximo."],

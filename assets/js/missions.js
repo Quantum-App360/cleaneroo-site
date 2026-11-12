@@ -9,6 +9,7 @@ import { blocNoterClients, remplirNotesClients, blocAvisRecus } from "./avis-cli
 import { blocFormations } from "./formations.js";
 import { blocPeriodes } from "./periodes.js";
 import { blocNiveau } from "./niveaux.js";
+import { blocRetardCleaneur, brancherRetards } from "./retards.js";
 import { preparationCleaneur } from "./espaces.js";
 import { icone } from "./icones.js";
 import { traduire, tr } from "./langue.js";
@@ -335,6 +336,7 @@ function carteMission(m) {
     ${m.statut === "EN_ROUTE" ? `<p class="petit partage-actif" style="margin:8px 0 0">📍 Position partagée avec le client pendant le trajet</p>` : ""}
     ${["SUR_PLACE", "EN_COURS"].includes(m.statut) ? `<div class="controle-mission" data-controle="${esc(m.reference)}"></div>` : ""}
     ${m.statut === "SUR_PLACE" ? blocAccesImpossible(m) : ""}
+    ${blocRetardCleaneur(m)}
     <div class="boutons" style="margin-top:10px">
       ${bouton ? `<button type="button" class="bouton" data-etape="${esc(m.reference)}">${bouton}</button>` : ""}
       <a class="bouton secondaire" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${m.rue} ${m.code_postal} ${m.ville}`)}">Itinéraire</a>
@@ -438,6 +440,7 @@ export async function brancherMissions(vue, p) {
   if (p.role !== "admin") { blocFormations(boite.querySelector("#formations-cleaneur")); blocPeriodes(boite.querySelector("#periodes-fermees")); blocNiveau(boite.querySelector("#niveau-cleaneur")); }
   remplirNotesClients(boite);
   if (p.role === "admin") { blocSelfiesAdmin(boite.querySelector("#selfies-admin")); blocAvertissementsAdmin(boite.querySelector("#avertissements-admin")); }
+  brancherRetards(boite);
   majTemps(boite);
   clearInterval(minuterieFrise);
   minuterieFrise = setInterval(() => { if (!boite.isConnected) return clearInterval(minuterieFrise); majTemps(boite); }, 60000);

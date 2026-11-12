@@ -8,6 +8,7 @@ import { euros, duree, dateLongue, dateHeure, heure, estPrelancement, joursAvant
 traduireCatalogue(RUBRIQUES, TYPES_LIEU);
 import { ouvrirReservation, modeles, logements, nomLogement } from "./reserver.js";
 import { supabase, suivre, annuler, memoriser, inscrire } from "./donnees.js";
+import { blocRetardClient } from "./retards.js";
 import { compterPage } from "./compteur.js";
 import { suivreEnDirect, demoSuivi } from "./suivi-live.js";
 import { pageCompte, pageMesPrestations, arreterEcouteDemandes, retourEmail, majLienCompte, afficherAccesCleaneur } from "./compte.js";
@@ -476,6 +477,7 @@ async function pageDemande(ref, jeton) {
   <section class="bloc" style="padding-top:28px"><div class="etroit">
     <div class="progression">${ETAPES_SUIVI.map((_, i) => `<span class="${d.statut !== "ANNULEE" && i <= idx ? "fait" : ""}"></span>`).join("")}</div>
     <div class="note" style="margin-bottom:14px">${etat}</div>
+    ${["CONFIRMEE", "EN_ROUTE"].includes(d.statut) ? `<div id="retard-client"></div>` : ""}
     ${d.statut === "EN_ROUTE" ? `<div id="presence-client"></div>` : ""}
     ${["EN_ROUTE", "SUR_PLACE"].includes(d.statut) ? `<div id="suivi-live" style="margin-bottom:14px"></div>`
       : ["VERIFICATION", "PUBLIEE", "CONFIRMEE"].includes(d.statut) ? `<a class="carte ligne-compte" href="#/suivi-demo" style="margin-bottom:14px">${icone("position", { tuile: true })}
@@ -579,6 +581,7 @@ async function afficherPage() {
     const rendu = document.getElementById("compte-rendu-pieces");
     if (rendu) compteRenduPieces(rendu, decodeURIComponent(ref || ""));
     // Présence du Cleaneur à confirmer (sa position n'a pas pu confirmer l'arrivée).
+    blocRetardClient(document.getElementById("retard-client"), decodeURIComponent(ref || ""), decodeURIComponent(jeton || ""));
     const presence = document.getElementById("presence-client");
     if (presence) supabase.rpc("presence_a_confirmer", { p_reference: decodeURIComponent(ref || ""), p_jeton: decodeURIComponent(jeton || "") }).then(({ data }) => {
       if (!data || !presence.isConnected) return;
