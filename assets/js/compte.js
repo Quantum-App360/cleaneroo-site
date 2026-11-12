@@ -159,8 +159,6 @@ export async function pageCompte(vue, param) {
     if (d) { d.open = true; setTimeout(() => { d.scrollIntoView({ behavior: "smooth", block: "center" }); vue.querySelector(`[data-ajouter-statut="${voulu}"]`)?.click(); }, 300); }
   }
   vue.querySelector("#devenir-cleaneur")?.addEventListener("click", e => ajouter("cleaneur", e.target));
-  vue.querySelector("#connexion-google")?.addEventListener("click", () =>
-    supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: location.origin + location.pathname + "#/compte" } }));
   vue.querySelector("#deconnexion-compte").onclick = async () => { await deconnecter(); majLienCompte(); location.hash = "#/compte"; pageCompte(vue); };
   // Suppression du compte (confirmation « SUPPRIMER », comme l'appli de Vincent et l'appli Android).
   const champSuppr = vue.querySelector("#confirmer-suppression"), boutonSuppr = vue.querySelector("#supprimer-compte");
@@ -211,6 +209,9 @@ function ecranConnexion(vue, mode, message = "", ok = false, roleDefaut = "clien
     </form></div></section>`;
   traduire(vue);
   vue.querySelectorAll("[data-mode]").forEach(b => b.onclick = () => ecranConnexion(vue, b.dataset.mode, "", false, roleDefaut));
+  // Connexion avec Google (fournisseur activé dans Supabase) : retour sur « Mon compte ».
+  vue.querySelector("#connexion-google")?.addEventListener("click", () =>
+    supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: location.origin + location.pathname + "?vers=compte" } }));
   const f = vue.querySelector("#form-compte");
   f.querySelectorAll("[name=statut]").forEach(c => c.onchange = () => {
     if (c.value === "pro") vue.querySelector("#champs-pro").classList.toggle("masque", !c.checked);

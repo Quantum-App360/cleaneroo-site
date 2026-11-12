@@ -159,7 +159,7 @@ export const REGLES = {
   AVIS_DELAI_JOURS: 14,
   TOLERANCE_RETARD_MIN: 30,
   RAYON_ARRIVEE_KM: 1.0,
-  CONNEXION_GOOGLE: false,   // passer à true une fois le fournisseur Google activé dans Supabase (comme Regles.CONNEXION_GOOGLE)
+  CONNEXION_GOOGLE: true,    // fournisseur Google activé dans Supabase le 12 novembre 2026 (comme Regles.CONNEXION_GOOGLE)
   // Propositions des Cleaneurs (base-propositions.sql) : remise et hausse maximales, note minimale d'une hausse, propositions par demande.
   PROPOSITION_REMISE_MAX_PCT: 10,
   PROPOSITION_HAUSSE_MAX_PCT: 50,
