@@ -99,7 +99,7 @@ export async function pageCompte(vue, param) {
     <span class="surtitre">${NOMS_ESPACES[onglet]}</span>
     ${titre(`Bonjour ${esc(p.prenom || "")}`.trim())}
     <p><span class="tampon">${etiquette}</span> <span class="petit">${esc(p.email)}</span></p>
-    <div class="note" style="margin:14px 0"><span><b>Comptes ouverts dès maintenant.</b> ${OUVERTURE}</span></div>
+    <div class="note" style="margin:14px 0"><span>${tr("Ouverture le 31 décembre 2026, premières interventions le 1er janvier 2027 : votre espace est prêt.")}</span></div>
     ${admin ? `<div class="carte teintee" style="margin-bottom:14px"><b>Espace administrateur</b>
       <p class="petit" style="margin:4px 0 10px">Demandes, inscriptions et dossiers des Cleaneurs (documents, validation).</p>
       <a class="bouton secondaire" href="gestion.html">Ouvrir le tableau de bord</a></div>` : ""}

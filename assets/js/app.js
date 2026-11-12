@@ -6,7 +6,8 @@ import { euros, duree, dateLongue, dateHeure, heure, estPrelancement, joursAvant
 
 // Langue : catalogue traduit avant tout affichage.
 traduireCatalogue(RUBRIQUES, TYPES_LIEU);
-import { ouvrirReservation, ouvrirSimulateur, modeles, logements, nomLogement } from "./reserver.js";
+import { ouvrirReservation, ouvrirSimulateur, modeles, logements, nomLogement, brouillonExemple } from "./reserver.js";
+import { calculer, entreeEstimation } from "./estimation.js";
 import { supabase, suivre, annuler, memoriser, inscrire } from "./donnees.js";
 import { blocRetardClient, blocRemplacementClient } from "./retards.js";
 import { pageNotifications } from "./notifications.js";
@@ -396,6 +397,14 @@ function blocOffreCleaneurs() {
   return `<h2 class="titre-section">${icone("paiement", { tuile: true })}Deux formules, à vous de choisir</h2>${blocFormulesCleaneur(null)}`;
 }
 
+/** Exemple concret de revenu pour un Cleaneur : un ménage de location de 2 h (prix catalogue), en formule Gratuite et Pro. */
+function exempleRevenu() {
+  const prixC = calculer(entreeEstimation({ ...brouillonExemple("rental", {}) }, false, null)).totalC;
+  const gratuit = Math.round(prixC * (10000 - REGLES.COMMISSION_GRATUIT_PB) / 10000), pro = Math.round(prixC * (10000 - REGLES.COMMISSION_PRO_PB) / 10000);
+  return `<div class="carte teintee" style="margin-bottom:16px"><b>💶 ${tr("Exemple : un ménage de location saisonnière")}</b>
+    <p style="margin:6px 0 0">${tr("Prix de la prestation")} : <b>${euros(prixC)}</b> · ${tr("vous touchez")} <b>${euros(gratuit)}</b> ${tr("en formule Gratuite")}, <b>${euros(pro)}</b> ${tr("en formule Pro")}.</p>
+    <p class="petit" style="margin:4px 0 0">${tr("Pourboires en plus, à 100 % pour vous. Vous déclarez vous-même votre chiffre d'affaires (micro-entreprise).")}</p></div>`;
+}
 function pageDevenir() {
   const etapes = ["Avoir un statut d'indépendant", "Préparer vos documents (pièce d'identité, SIRET, RC Pro, attestation de vigilance URSSAF)",
     "Pour la dératisation et la désinsectisation : Certibiocide « nuisibles » obligatoire",
@@ -405,7 +414,7 @@ function pageDevenir() {
   return `<section class="fond-cleaneroo" style="padding:40px 0 90px">${decor([[90, 20, 90], [4, 60, 60]], [])}
     <div class="conteneur"><h1>Devenir Cleaneur</h1><div class="trait-corail"></div><p>Travaillez à votre rythme, près de chez vous.</p>
       <div class="etiquettes"><span class="etiquette">Missions proches</span><span class="etiquette">Compte rendu guidé</span><span class="etiquette">Paiement sécurisé</span></div></div></section>
-  <section class="bloc"><div class="etroit"><div data-acces-cleaneur></div>${blocOffreCleaneurs()}${etapes.map((t, i) => `<div class="carte" style="margin-bottom:10px"><b style="color:var(--corail-texte)">${i + 1}.</b> ${t}</div>`).join("")}
+  <section class="bloc"><div class="etroit"><div data-acces-cleaneur></div>${exempleRevenu()}${blocOffreCleaneurs()}${etapes.map((t, i) => `<div class="carte" style="margin-bottom:10px"><b style="color:var(--corail-texte)">${i + 1}.</b> ${t}</div>`).join("")}
     <div style="margin-top:18px">${formulaireInscription("cleaneur", true)}</div>
   </div></section>`;
 }

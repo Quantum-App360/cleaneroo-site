@@ -128,9 +128,19 @@ async function listeDossiers() {
     <p class="muet">${data.length} compte(s) Cleaneur · ${n("A_VERIFIER")} à vérifier · ${n("VALIDE")} validé(s) · ${n("BROUILLON")} en préparation · ${n("REFUSE")} à corriger</p>
     ${data.map(d => `<div class="carte ligne-demande" data-dossier="${d.id}"><div><b>${esc(d.prenom)} ${esc(d.nom)}</b>
       <div class="petit">${esc(d.email)} · ${esc(d.code_postal)} ${esc(d.ville)}${d.dossier_soumis_le ? ` · envoyé le ${dateLongue(new Date(d.dossier_soumis_le))}` : ""}</div></div>
-      <div style="text-align:right"><span class="tampon">${ETAT_DOSSIER[d.dossier]}</span></div></div>`).join("") || `<p class="muet">Aucun compte Cleaneur pour l'instant.</p>`}`;
+      <div style="text-align:right"><span class="tampon">${ETAT_DOSSIER[d.dossier]}</span></div></div>`).join("") || `<p class="muet">Aucun compte Cleaneur pour l'instant.</p>`}
+    <div id="stats-supplements"></div>`;
   brancherOnglets();
   vue.querySelectorAll("[data-dossier]").forEach(c => c.onclick = () => detailDossier(data.find(d => d.id === c.dataset.dossier)));
+  // Suppléments pour imprévu (90 jours) : repérer les Cleaneurs qui en demandent trop souvent (plus d'un sur cinq missions = à surveiller).
+  const { data: sup } = await supabase.rpc("stats_supplements");
+  const z = vue.querySelector("#stats-supplements");
+  if (z && sup?.length) z.innerHTML = `<h2 style="margin-top:26px">Suppléments pour imprévu (90 jours)</h2>
+    <p class="petit">Plus d'un supplément pour cinq missions : à surveiller (en rouge).</p>
+    ${sup.map(s => { const taux = s.missions ? s.demandes / s.missions : 1;
+      return `<div class="carte ligne-demande"><div><b>${esc(s.prenom || "")} ${esc(s.nom || "")}</b>
+        <div class="petit">${s.demandes} demandé(s) · ${s.acceptes} accepté(s) · ${s.missions} mission(s)</div></div>
+        <div style="text-align:right"><span class="tampon" style="${taux > 0.2 ? "background:var(--erreur);color:#fff" : ""}">${Math.round(taux * 100)} %</span></div></div>`; }).join("")}`;
 }
 
 async function detailDossier(d) {
