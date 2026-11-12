@@ -5,7 +5,7 @@ import { supabase } from "./donnees.js";
 import { tr, traduire } from "./langue.js";
 
 /** Zone de signature ; apres(ok) est appelé une fois la signature enregistrée. */
-export function zoneSignature(boite, reference, { jeton = null, titre = "Signez le compte rendu", apres = () => {} } = {}) {
+export function zoneSignature(boite, reference, { jeton = null, titre = "Signez le compte rendu", apres = () => {}, envoyer = null } = {}) {
   if (!boite) return;
   boite.innerHTML = `<div class="carte signature" style="margin-top:10px"><b>✍️ ${tr(titre)}</b>
     <canvas width="600" height="200" class="toile-signature" aria-label="${tr("Zone de signature")}"></canvas>
@@ -29,7 +29,8 @@ export function zoneSignature(boite, reference, { jeton = null, titre = "Signez 
   bouton.onclick = async () => {
     if (vide) return;
     bouton.disabled = true;
-    const { data } = await supabase.rpc("signer", { p_reference: reference, p_image: toile.toDataURL("image/png"), p_jeton: jeton });
+    const png = toile.toDataURL("image/png");
+    const data = envoyer ? await envoyer(png).catch(() => null) : (await supabase.rpc("signer", { p_reference: reference, p_image: png, p_jeton: jeton })).data;
     const res = boite.querySelector("[data-resultat-signature]");
     if (data === "ok") { res.textContent = tr("Signature enregistrée."); res.style.color = "var(--succes)"; apres(true); }
     else { bouton.disabled = false; res.textContent = tr("Le service est momentanément indisponible. Réessayez dans quelques minutes."); res.style.color = "var(--erreur)"; }

@@ -6,6 +6,7 @@ import { surveiller } from "./sons.js";
 import { brancherFormulesCleaneur } from "./formules-cleaneur.js";
 import { afficherFactures } from "./factures.js";
 import { blocActivite } from "./activite.js";
+import { blocContrat } from "./dossier.js";
 import { blocAbonnementPro, brancherAbonnementPro } from "./abonnement-pro.js";
 import { blocInvitationsPro, brancherInvitationsPro, blocCodeInvitation, brancherCodeInvitation } from "./invitations.js";
 import { RUBRIQUES, rubrique, TYPES_LOGEMENT } from "./catalogue.js";
@@ -380,10 +381,12 @@ function blocDossier(p, docs) {
           <button type="button" class="lien-bouton" style="padding:0;min-height:36px" data-voir="${esc(x.chemin)}">Voir le document</button>
           <span class="tampon">${STATUT_DOC[x.statut]}</span>${x.motif ? `<span class="erreur">${esc(x.motif)}</span>` : ""}
           ${x.statut !== "ACCEPTE" && modifiable ? `<button type="button" class="lien-bouton" style="padding:0;min-height:36px;color:var(--erreur)" data-retirer="${x.id}">Retirer</button>` : ""}</div>`).join("")}
+        ${modifiable && ["identite", "rc_pro", "urssaf", "certibiocide"].includes(d.type) ? `<label class="champ petit" style="max-width:240px;margin-top:6px">${tr("Valable jusqu'au (facultatif)")}<input type="date" data-expire="${d.type}"></label>` : ""}
         ${modifiable ? `<div class="boutons-photo"><label class="bouton secondaire">${icone("photo")} Scanner avec l'appareil photo<input type="file" accept="image/*" capture="environment" hidden data-doc="${d.type}"></label>
           <label class="bouton secondaire">Choisir un fichier<input type="file" accept="image/*,application/pdf" hidden data-doc="${d.type}"></label></div>` : ""}
       </div>`;
     }).join("")}
+    <div id="contrat-prestataire"></div>
     <p class="erreur" id="erreur-dossier" style="margin:6px 0 0"></p>
     ${modifiable ? `<button type="button" class="bouton plein" id="envoyer-dossier" style="margin-top:8px" ${manquants.length ? "disabled" : ""}>Envoyer mon dossier pour vérification</button>
       ${manquants.length ? `<p class="petit" style="margin:6px 0 0">Il manque : ${manquants.map(d => d.nom).join(", ")}.</p>` : ""}` : ""}
@@ -391,12 +394,13 @@ function blocDossier(p, docs) {
 }
 
 function brancherDossier(vue, p) {
+  blocContrat(vue.querySelector("#contrat-prestataire"), p);
   const err = vue.querySelector("#erreur-dossier");
   vue.querySelectorAll("[data-doc]").forEach(inp => inp.onchange = async () => {
     const f = inp.files[0];
     if (!f) return;
     err.textContent = tr("Envoi en cours…");
-    try { await deposerDocument(inp.dataset.doc, f); pageCompte(vue); }
+    try { await deposerDocument(inp.dataset.doc, f, vue.querySelector(`[data-expire="${inp.dataset.doc}"]`)?.value || null); pageCompte(vue); }
     catch (e) { err.textContent = /lourd/.test(e.message) ? tr("Fichier trop lourd (10 Mo maximum).") : tr("Le document n'a pas pu être envoyé. Réessayez."); }
   });
   vue.querySelectorAll("[data-voir]").forEach(b => b.onclick = async () => {
@@ -415,6 +419,7 @@ function brancherDossier(vue, p) {
     e.target.disabled = false;
     err.textContent = tr(r === "profil" ? "Complétez d'abord votre profil : prénom, nom, téléphone, code postal, SIRET et au moins une prestation."
       : r === "documents" ? "Ajoutez les 4 documents obligatoires avant d'envoyer votre dossier."
+      : r === "contrat" ? "Signez d'abord le contrat de prestataire (juste au-dessus)."
       : "Le service est momentanément indisponible. Réessayez dans quelques minutes.");
   });
 }

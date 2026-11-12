@@ -290,7 +290,7 @@ export async function mesDocuments() {
   return data;
 }
 /** Dépose un document : photo réduite (2 000 px, nette pour la lecture) ou PDF tel quel. */
-export async function deposerDocument(type, fichier) {
+export async function deposerDocument(type, fichier, expireLe = null) {
   const s = await session();
   const pdf = fichier.type === "application/pdf";
   if (fichier.size > 10 * 1024 * 1024) throw new Error("Fichier trop lourd (10 Mo maximum).");
@@ -298,7 +298,7 @@ export async function deposerDocument(type, fichier) {
   const chemin = `${s.user.id}/${type}-${Date.now()}.${pdf ? "pdf" : "jpg"}`;
   const { error: e1 } = await supabase.storage.from("documents-cleaneurs").upload(chemin, contenu, { contentType: pdf ? "application/pdf" : "image/jpeg" });
   if (e1) throw new Error(e1.message);
-  const { error: e2 } = await supabase.from("documents_cleaneur").insert({ cleaneur_id: s.user.id, type, chemin });
+  const { error: e2 } = await supabase.from("documents_cleaneur").insert({ cleaneur_id: s.user.id, type, chemin, ...(expireLe ? { expire_le: expireLe } : {}) });
   if (e2) throw new Error(e2.message);
 }
 export async function retirerDocument(doc) {

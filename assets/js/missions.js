@@ -13,6 +13,7 @@ import { blocRetardCleaneur, brancherRetards } from "./retards.js";
 import { formulaireProposition, brancherPropositions } from "./propositions.js";
 import { blocConsommablesCleaneur } from "./consommables.js";
 import { zoneSignature, signaturesDe } from "./signature.js";
+import { blocCeQuiMeManque } from "./dossier.js";
 import { preparationCleaneur } from "./espaces.js";
 import { icone } from "./icones.js";
 import { traduire, tr } from "./langue.js";
@@ -423,6 +424,7 @@ export async function brancherMissions(vue, p) {
       <p class="petit" style="margin:4px 0 10px">${geo === "denied" ? "La géolocalisation est bloquée dans votre navigateur : autorisez-la dans les réglages du site (cadenas à gauche de l'adresse)."
         : "Elle sert à prévenir le client pendant votre trajet et à confirmer votre arrivée. Votre position n'est partagée que pendant le trajet."}</p>
       ${geo === "prompt" ? `<button type="button" class="bouton" id="autoriser-geoloc">Autoriser la géolocalisation</button>` : ""}</div>` : ""}
+    <div id="ce-qui-manque"></div>
     ${blocAvertissements(avert)}
     ${blocPenalites(penalites)}
     ${avert?.banni ? "" : blocSelfie(selfie)}
@@ -445,6 +447,7 @@ export async function brancherMissions(vue, p) {
   traduire(boite);
   brancherTableau(boite, miennes, () => brancherMissions(vue, p));
   blocNoterClients(boite.querySelector("#noter-clients")).then(() => blocAvisRecus(boite.querySelector("#avis-recus")));
+  if (p.role !== "admin") blocCeQuiMeManque(boite.querySelector("#ce-qui-manque"));
   if (p.role !== "admin") { blocFormations(boite.querySelector("#formations-cleaneur")); blocPeriodes(boite.querySelector("#periodes-fermees")); blocNiveau(boite.querySelector("#niveau-cleaneur")); }
   remplirNotesClients(boite);
   if (p.role === "admin") { blocSelfiesAdmin(boite.querySelector("#selfies-admin")); blocAvertissementsAdmin(boite.querySelector("#avertissements-admin")); }
@@ -484,7 +487,8 @@ export async function brancherMissions(vue, p) {
       dossier: "Votre dossier doit être validé pour prendre des missions.", formule: "Cette mission est réservée aux Cleaneurs Pro pendant ses 30 premières minutes.",
       qualification: "Validez d'abord la formation demandée pour cette prestation (Mes formations).",
       fermee: "Cette mission tombe pendant une de vos périodes fermées.",
-      candidature: "Le client choisit parmi les propositions : proposez vos conditions." }[r] || "Le service est momentanément indisponible. Réessayez dans quelques minutes.");
+      candidature: "Le client choisit parmi les propositions : proposez vos conditions.",
+      assurance: "Votre RC Pro ne couvre pas cette activité : mettez-la à jour dans votre dossier." }[r] || "Le service est momentanément indisponible. Réessayez dans quelques minutes.");
   });
   // Contrôle pièce par pièce : « J'ai terminé » reste grisé tant qu'une pièce n'est pas complète.
   boite.querySelectorAll("[data-controle]").forEach(c => {

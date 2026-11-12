@@ -164,6 +164,7 @@ export const REGLES = {
   PROPOSITION_HAUSSE_MAX_PCT: 50,
   PROPOSITION_NOTE_MIN: 20,
   PROPOSITIONS_MAX: 5,
+  MISSION_TEST_C: 4000,   // mission test rémunérée par Cleaneroo avant l'activation (base-dossier-complet.sql)
   RETARD_TOLERE_MIN: 30,   // retard annoncé toléré ; au-delà, le client peut annuler sans frais (base-retards.sql)
   VITESSE_MOYENNE_KMH: 35,
   MARGE_TRAJET_MIN: 10,

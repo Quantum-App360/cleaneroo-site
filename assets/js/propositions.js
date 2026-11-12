@@ -16,7 +16,8 @@ export const MESSAGES_PROPOSITION = {
   ok: "Proposition envoyée : le client est prévenu et choisit.", remise: "La remise ne peut pas dépasser 10 % de l'estimation.",
   devis: "Au-delà de 50 % de plus que l'estimation, la prestation passe sur devis.", justification: "Une hausse se justifie : choisissez une raison et écrivez au moins 20 caractères pour le client.",
   raison: "Choisissez la raison de votre remise.", complet: "Cette demande a déjà reçu 5 propositions.", ouverture: "Les missions commencent le 1er janvier 2027.",
-  dossier: "Votre dossier doit être validé pour proposer.", indisponible: "Cette mission n'est plus disponible." };
+  dossier: "Votre dossier doit être validé pour proposer.", indisponible: "Cette mission n'est plus disponible.",
+  assurance: "Votre RC Pro ne couvre pas cette activité : mettez-la à jour dans votre dossier." };
 
 /** Formulaire « Proposer » d'une mission en mode candidatures (Cleaneur). */
 export function formulaireProposition(m, mienne) {

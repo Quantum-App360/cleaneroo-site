@@ -2,6 +2,7 @@
 // Équivalent de « Administration (démo) » de l'application : vérifier, publier, confirmer, faire avancer ou refuser une demande.
 import { decorTableau } from "./commun.js";
 import { nomsAttestations } from "./formations.js";
+import { blocDossierAdmin } from "./dossier.js";
 import { supabase, secteursARecruter, dossiersCleaneurs, documentsDe, deciderDossier, deciderDocument, lienDocument, DOCUMENTS_CLEANEUR } from "./donnees.js";
 import { rubrique } from "./catalogue.js";
 import { icone } from "./icones.js";
@@ -139,9 +140,10 @@ async function detailDossier(d) {
       <dt>Prestations</dt><dd>${(d.prestations || []).map(id => esc(rubrique(id)?.nom || id)).join(", ") || "—"}</dd>
       ${d.dossier_motif ? `<dt>Motif envoyé</dt><dd>${esc(d.dossier_motif)}</dd>` : ""}
     </dl></div>
+    <div id="dossier-admin"></div>
     <h2 style="margin-top:20px">Documents</h2>
     ${docs.map(x => `<div class="carte" style="margin-bottom:10px"><b>${NOM_DOC[x.type] || x.type}</b> <span class="tampon">${{ A_VERIFIER: "À vérifier", ACCEPTE: "Accepté", REFUSE: "Refusé" }[x.statut]}</span>
-      <div class="petit">déposé le ${dateLongue(new Date(x.cree_le))}${x.motif ? ` · ${esc(x.motif)}` : ""}</div>
+      <div class="petit">déposé le ${dateLongue(new Date(x.cree_le))}${x.expire_le ? ` · valable jusqu'au ${new Date(x.expire_le).toLocaleDateString("fr-FR")}` : ""}${x.motif ? ` · ${esc(x.motif)}` : ""}</div>
       ${AIDE_CONTROLE[x.type] ? `<p class="petit" style="margin:6px 0 0">${AIDE_CONTROLE[x.type]}</p>` : ""}
       <div class="boutons" style="margin-top:8px"><button class="bouton secondaire" data-voir="${esc(x.chemin)}">Voir</button>
         ${x.statut !== "ACCEPTE" ? `<button class="bouton secondaire" data-doc-ok="${x.id}">Accepter</button>` : ""}
@@ -152,6 +154,7 @@ async function detailDossier(d) {
     </div>`;
   const recharger = async () => { const liste = await dossiersCleaneurs().catch(() => []); const n = liste.find(x => x.id === d.id); n ? detailDossier(n) : listeDossiers(); };
   document.getElementById("retour").onclick = listeDossiers;
+  blocDossierAdmin(document.getElementById("dossier-admin"), d.id, recharger);
   vue.querySelectorAll("[data-voir]").forEach(b => b.onclick = async () => { const f = window.open("", "_blank"); try { f.location = await lienDocument(b.dataset.voir); } catch { f?.close(); } });
   vue.querySelectorAll("[data-doc-ok]").forEach(b => b.onclick = async () => { await deciderDocument(b.dataset.docOk, true).catch(e => alert(e.message)); recharger(); });
   vue.querySelectorAll("[data-doc-non]").forEach(b => b.onclick = async () => {
