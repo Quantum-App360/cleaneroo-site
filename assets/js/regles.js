@@ -142,6 +142,15 @@ export const REGLES = {
   VERSEMENT_LIBERATOIRE_PCT: 1.7,
   PLAFOND_MICRO_SERVICES_C: 8360000,   // 83 600 € de chiffre d'affaires par an (prestations de services, 2026-2028)
   DEVIS_VALIDITE_JOURS: 30,
+  // Programme Cleaneur (12 novembre 2026, repris de Vincent ; calcul en base : niveau_de dans base-niveaux.sql, copie dans Regles.kt).
+  // avance : minutes d'avance sur les missions des particuliers. Un niveau de moins si annulations > 5 % ou avertissement en cours.
+  NIVEAUX: [
+    { id: "base", nom: "Cleaneur", icone: "✨", missions: 0, note: 0, avance: 0, avantages: ["Toutes les missions de vos formations"] },
+    { id: "confirme", nom: "Confirmé", icone: "⭐", missions: 10, note: 4.6, avance: 5, avantages: ["Badge « Confirmé » visible des clients", "Missions des particuliers 5 min avant les autres"] },
+    { id: "expert", nom: "Expert", icone: "🌟", missions: 30, note: 4.8, avance: 10, avantages: ["Badge « Expert » visible des clients", "Missions des particuliers 10 min avant les autres", "Missions des entreprises et conciergeries"] },
+    { id: "elite", nom: "Élite", icone: "👑", missions: 60, note: 4.9, avance: 15, avantages: ["Badge « Élite » visible des clients", "Missions des particuliers 15 min avant les autres", "Missions des entreprises et conciergeries", "Assistance prioritaire"] },
+  ],
+  ANNULATION_MAX_NIVEAU_PCT: 5,
   // Versements des Cleaneurs (repris de l'appli iPhone) : chaque vendredi, pour les missions validées jusqu'au mercredi minuit.
   VERSEMENT_JOUR_ISO: 5,          // vendredi (lundi = 1)
   VERSEMENT_LIMITE_JOUR_ISO: 3,   // mercredi
@@ -296,6 +305,15 @@ export function calculActivite({ factures = [], pourboires = [], periode = "mois
   const caAnneeC = ca("annee");
   return { caC, commissionC, tauxPct, cotisationsC, resteC: Math.max(0, caC - commissionC - cotisationsC), caAnneeC,
     plafondPct: Math.min(100, Math.round(100 * caAnneeC / REGLES.PLAFOND_MICRO_SERVICES_C)) };
+}
+
+/** Niveau du Cleaneur (copie de niveau_de en base) : 0 Cleaneur, 1 Confirmé, 2 Expert, 3 Élite. */
+export function niveauCleaneur({ missions = 0, note = 0, annulationPct = 0, avertissements = 0 }) {
+  let n = 0;
+  REGLES.NIVEAUX.forEach((x, i) => { if (missions >= x.missions && (note || 0) >= x.note) n = i; });
+  if (annulationPct > REGLES.ANNULATION_MAX_NIVEAU_PCT) n--;
+  if (avertissements > 0) n--;
+  return Math.max(0, n);
 }
 
 export function dateVersement(d = new Date()) {

@@ -7,6 +7,7 @@ import { supabase } from "./donnees.js";
 import { blocNoterClients, remplirNotesClients, blocAvisRecus } from "./avis-clients.js";
 import { blocFormations } from "./formations.js";
 import { blocPeriodes } from "./periodes.js";
+import { blocNiveau } from "./niveaux.js";
 import { preparationCleaneur } from "./espaces.js";
 import { icone } from "./icones.js";
 import { traduire, tr } from "./langue.js";
@@ -423,6 +424,7 @@ export async function brancherMissions(vue, p) {
     ${plusTard.length ? plusTard.map(carteMission).join("") : vide("Aucune mission pour l'instant.", "Prenez une mission ci-dessous : elle est à vous dès que vous la prenez.")}
     <div id="noter-clients"></div>
     <div id="avis-recus"></div>
+    <div id="niveau-cleaneur"></div>
     <div id="formations-cleaneur"></div>
     <div id="periodes-fermees"></div>
     <h2 class="titre-section" id="missions-disponibles">${icone("position", { tuile: true })}Missions disponibles</h2>
@@ -432,7 +434,7 @@ export async function brancherMissions(vue, p) {
   traduire(boite);
   brancherTableau(boite, miennes, () => brancherMissions(vue, p));
   blocNoterClients(boite.querySelector("#noter-clients")).then(() => blocAvisRecus(boite.querySelector("#avis-recus")));
-  if (p.role !== "admin") { blocFormations(boite.querySelector("#formations-cleaneur")); blocPeriodes(boite.querySelector("#periodes-fermees")); }
+  if (p.role !== "admin") { blocFormations(boite.querySelector("#formations-cleaneur")); blocPeriodes(boite.querySelector("#periodes-fermees")); blocNiveau(boite.querySelector("#niveau-cleaneur")); }
   remplirNotesClients(boite);
   if (p.role === "admin") { blocSelfiesAdmin(boite.querySelector("#selfies-admin")); blocAvertissementsAdmin(boite.querySelector("#avertissements-admin")); }
   majTemps(boite);

@@ -1,5 +1,6 @@
 // Accueil « vivant » du compte connecté (Particulier, Pro, administrateur) : la prochaine prestation en direct
 // et la boîte « À faire » (tout ce qui attend le client). Se met à jour en temps réel. Même écran dans l'appli (AccueilVivant.kt).
+import { badgeNiveau } from "./niveaux.js";
 import { decorTableau } from "./commun.js";
 import { rubrique } from "./catalogue.js";
 import { REGLES, euros, dateLongue, heure } from "./regles.js";
@@ -85,6 +86,7 @@ export async function pageTableau(vue) {
     synchroniserBiens().catch(() => []), supabase.rpc("cleaneurs_de_mes_demandes").then(r => r.data || []).catch(() => [])]);
   if (location.hash !== ici) return true;
   const prenoms = Object.fromEntries(cleaneurs.map(c => [c.reference, c.prenom]));
+  const niveaux = Object.fromEntries(cleaneurs.map(c => [c.reference, c.niveau || 0]));
   const d = prochaine(demandes);
   const autres = demandes.filter(x => !FINIES.includes(x.statut) && x !== d).length;
   const taches = aFaire({ profil, demandes, biens });
@@ -104,7 +106,7 @@ export async function pageTableau(vue) {
         ${d ? `<div class="vivant-haut"><span class="pastille-etat">${enDirect ? `<i></i>${tr("En direct")}` : esc(tr("Ma prochaine prestation"))}</span>
             <span class="rebours" data-rebours="${esc(d.creneau || "")}">${compteARebours(d.creneau)}</span></div>
           <div class="vivant-corps">${icone(r.icone, { tuile: true })}
-            <div><h2>${esc(phrase(d, prenoms[d.reference]))}</h2>
+            <div><h2>${esc(phrase(d, prenoms[d.reference]))}${badgeNiveau(niveaux[d.reference])}</h2>
               <p class="muet">${r.nom} · ${d.creneau ? `${dateLongue(new Date(d.creneau))} · ${heure(new Date(d.creneau).getHours())}` : tr("Date à fixer")} · ${esc(d.ville)}</p></div></div>
           <ol class="frise">${ETAPES_VIVANT.map(([, nom], i) => `<li class="${i < rang ? "fait" : i === rang ? "actif" : ""}"><span></span><b>${tr(nom)}</b></li>`).join("")}</ol>
           <div class="boutons"><a class="bouton" href="#/demande/${esc(d.reference)}/${esc(d.jeton)}">${enDirect ? tr("Suivre en direct") : tr("Voir ma prestation")}</a>
