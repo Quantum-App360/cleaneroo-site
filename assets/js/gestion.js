@@ -69,6 +69,7 @@ const ongletsHtml = () => `<div class="segments" style="margin:6px 0 4px;flex-wr
   <button type="button" data-onglet="inscriptions" class="${onglet === "inscriptions" ? "choisi" : ""}">Inscriptions au lancement</button>
   <button type="button" data-onglet="dossiers" class="${onglet === "dossiers" ? "choisi" : ""}">Dossiers Cleaneurs</button>
   <button type="button" data-onglet="litiges" class="${onglet === "litiges" ? "choisi" : ""}">Litiges</button>
+  <button type="button" data-onglet="support" class="${onglet === "support" ? "choisi" : ""}">Support</button>
   <button type="button" data-onglet="secteurs" class="${onglet === "secteurs" ? "choisi" : ""}">Secteurs à recruter</button>
   <button type="button" data-onglet="visites" class="${onglet === "visites" ? "choisi" : ""}">Visites</button></div>`;
 const brancherOnglets = () => vue.querySelectorAll("[data-onglet]").forEach(bt => bt.onclick = () => { onglet = bt.dataset.onglet; liste(); });
@@ -208,6 +209,19 @@ async function listeVisites() {
   brancherOnglets();
 }
 
+/* Support (12 novembre 2026) : conversations « Cleaneroo · Support » ouvertes par les clients et les Cleaneurs. */
+async function listeSupport() {
+  const { data, error } = await supabase.rpc("fils_support");
+  if (error) { vue.innerHTML = `<p class="erreur">${esc(error.message)}</p>`; return; }
+  vue.innerHTML = `<h1>Tableau de bord</h1><div class="trait-corail"></div>${ongletsHtml()}
+    <p class="muet">${data.filter(f => f.non_lus).length} conversation(s) en attente de réponse · ${data.length} au total.</p>
+    ${data.length ? data.map(f => `<a class="carte" style="display:flex;justify-content:space-between;gap:12px;margin-bottom:10px;text-decoration:none;color:inherit" target="_blank" rel="noopener"
+      href="./#/messages/${encodeURIComponent(f.fil)}"><span><b>${esc([f.prenom, f.nom].filter(Boolean).join(" ") || "Compte supprimé")}</b><br><span class="petit">${esc(f.dernier || "")}</span></span>
+      <span class="petit">${new Date(f.dernier_le).toLocaleString("fr-FR")}${f.non_lus ? ` · <b style="color:var(--corail-texte)">${f.non_lus} non lu(s)</b>` : ""}</span></a>`).join("")
+      : `<p class="muet">Aucune conversation pour l'instant.</p>`}`;
+  brancherOnglets();
+}
+
 /* Litiges et Garantie Cleaneroo (11 novembre 2026) : signalements des clients dans les 48 h, décision avec un motif. */
 const DECISIONS_LITIGE = [["REPRISE_GRATUITE", "Reprise gratuite"], ["REMBOURSEMENT", "Remboursement"], ["INDEMNISATION", "Indemnisation (Garantie)"], ["REFUSE", "Refuser"]];
 async function listeLitiges() {
@@ -266,6 +280,7 @@ async function liste() {
   if (onglet === "visites") return listeVisites();
   if (onglet === "secteurs") return listeSecteurs();
   if (onglet === "litiges") return listeLitiges();
+  if (onglet === "support") return listeSupport();
   const { data, error } = await supabase.from("demandes").select("*").order("cree_le", { ascending: false }).limit(300);
   if (error) { vue.innerHTML = `<p class="erreur">${esc(error.message)}</p>`; return; }
   const compte = s => data.filter(d => d.statut === s).length;

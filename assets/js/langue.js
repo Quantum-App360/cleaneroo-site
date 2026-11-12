@@ -893,6 +893,17 @@ const T = [
   ["Prochain versement :", "Next payout:", "Prossimo versamento:", "Próximo pago:"],
   ["chaque vendredi, pour les missions validées jusqu'au mercredi minuit.", "every Friday, for jobs approved by Wednesday midnight.", "ogni venerdì, per le missioni convalidate entro mercoledì a mezzanotte.", "cada viernes, por las misiones validadas hasta el miércoles a medianoche."],
   // Notes des clients par les Cleaneurs (11 novembre 2026)
+  // Messagerie (12 novembre 2026)
+  ["Messages", "Messages", "Messaggi", "Mensajes"],
+  ["Une conversation s'ouvre avec votre Cleaneur (ou votre client) dès que la prestation est confirmée.", "A conversation opens with your Cleaneur (or your customer) as soon as the service is confirmed.", "Una conversazione si apre con il tuo Cleaneur (o il tuo cliente) appena il servizio è confermato.", "Se abre una conversación con tu Cleaneur (o tu cliente) en cuanto se confirma el servicio."],
+  ["Cleaneroo · Support", "Cleaneroo · Support", "Cleaneroo · Assistenza", "Cleaneroo · Asistencia"],
+  ["Aucun message pour l'instant.", "No messages yet.", "Nessun messaggio per ora.", "Ningún mensaje por ahora."],
+  ["Toutes les conversations", "All conversations", "Tutte le conversazioni", "Todas las conversaciones"],
+  ["Joindre une photo", "Attach a photo", "Allega una foto", "Adjuntar una foto"],
+  ["Votre message…", "Your message…", "Il tuo messaggio…", "Tu mensaje…"],
+  ["Écrivez le premier message.", "Write the first message.", "Scrivi il primo messaggio.", "Escribe el primer mensaje."],
+  ["La photo n'a pas pu être envoyée. Réessayez.", "The photo could not be sent. Please try again.", "Non è stato possibile inviare la foto. Riprova.", "No se ha podido enviar la foto. Inténtalo de nuevo."],
+  ["Nouveau message", "New message", "Nuovo messaggio", "Nuevo mensaje"],
   // Centre de notifications (12 novembre 2026)
   ["Notifications", "Notifications", "Notifiche", "Notificaciones"],
   ["Espace client", "Customer space", "Spazio cliente", "Espacio cliente"],

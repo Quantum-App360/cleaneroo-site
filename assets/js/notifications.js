@@ -30,7 +30,7 @@ export async function pageNotifications(vue, espaceVoulu) {
   const espace = espaceVoulu || (p.espace === "cleaneur" && cleaneur ? "cleaneur" : client ? "client" : "cleaneur");
   const [{ data: liste }, demandes] = await Promise.all([supabase.rpc("mes_notifications", { p_espace: espace }), espace === "client" ? demandesDuCompte().catch(() => []) : []]);
   const jetons = Object.fromEntries((demandes || []).map(d => [d.reference, d.jeton]));
-  const lien = n => !n.reference ? "" : espace === "client" ? (jetons[n.reference] ? `#/demande/${encodeURIComponent(n.reference)}/${encodeURIComponent(jetons[n.reference])}` : "#/mes-prestations") : "#/compte/cleaneur";
+  const lien = n => n.titre === "Nouveau message" && n.reference ? `#/messages/${encodeURIComponent(n.reference)}` : !n.reference ? "" : espace === "client" ? (jetons[n.reference] ? `#/demande/${encodeURIComponent(n.reference)}/${encodeURIComponent(jetons[n.reference])}` : "#/mes-prestations") : "#/compte/cleaneur";
   vue.innerHTML = `<section class="bloc"><div class="etroit">
     <h1>🔔 ${tr("Notifications")}</h1><div class="trait-corail"></div>
     ${cleaneur && client ? `<div class="choix-periode" role="tablist">${[["client", "Espace client"], ["cleaneur", "Espace Cleaneur"]].map(([v, t]) =>

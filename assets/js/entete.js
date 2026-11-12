@@ -45,6 +45,7 @@ export function rendreEntete(p) {
   const html = type === "visiteur"
     ? `<a class="lien-connexion" href="${b}#/compte">Se connecter</a><a class="bouton bouton-entete" href="${b}#/compte/creer">Créer mon espace</a>`
     : `${["particulier", "pro"].includes(type) ? `<a class="bouton bouton-entete" href="${b}#/reserver${type === "pro" ? "/rental" : ""}">Réserver</a>` : ""}
+       <a class="cloche" href="${b}#/messages" title="${tr("Messages")}" aria-label="${tr("Messages")}">💬</a>
        <a class="cloche" href="${b}#/notifications" title="${tr("Notifications")}" aria-label="${tr("Notifications")}">🔔<span class="pastille-cloche" hidden></span></a>
        <a class="puce-compte" href="${b}#/compte" title="${tr("Mon compte")}"><span class="avatar">${initiale}</span><span class="qui"><b>${p.prenom || tr("Mon compte")}</b><small>${NOM_ESPACE[type]}</small></span></a>`;
   actions.innerHTML = html;
