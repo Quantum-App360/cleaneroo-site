@@ -2,6 +2,7 @@
 // un seul bouton de compte une fois connecté. Même organisation que le menu de l'application.
 // Le dernier profil connu est gardé sur l'appareil : l'en-tête s'affiche tout de suite, sans clignoter.
 import { tr, traduire } from "./langue.js";
+import { majCloche } from "./notifications.js";
 
 const CLE = "cleaneroo-moi";
 /** Pages fixes (villes, calculateur…) : les liens repartent vers l'accueil du site. */
@@ -44,6 +45,7 @@ export function rendreEntete(p) {
   const html = type === "visiteur"
     ? `<a class="lien-connexion" href="${b}#/compte">Se connecter</a><a class="bouton bouton-entete" href="${b}#/compte/creer">Créer mon espace</a>`
     : `${["particulier", "pro"].includes(type) ? `<a class="bouton bouton-entete" href="${b}#/reserver${type === "pro" ? "/rental" : ""}">Réserver</a>` : ""}
+       <a class="cloche" href="${b}#/notifications" title="${tr("Notifications")}" aria-label="${tr("Notifications")}">🔔<span class="pastille-cloche" hidden></span></a>
        <a class="puce-compte" href="${b}#/compte" title="${tr("Mon compte")}"><span class="avatar">${initiale}</span><span class="qui"><b>${p.prenom || tr("Mon compte")}</b><small>${NOM_ESPACE[type]}</small></span></a>`;
   actions.innerHTML = html;
   // Téléphone : le panneau du menu reprend les liens puis le compte.
@@ -54,6 +56,7 @@ export function rendreEntete(p) {
   document.body.classList.toggle("acces-cleaneur", type === "cleaneur");
   traduire(nav); traduire(actions);
   marquerActif();
+  if (type !== "visiteur") majCloche().catch(() => null);
 }
 
 /** Lien de la page en cours mis en valeur. */

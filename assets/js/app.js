@@ -9,6 +9,7 @@ traduireCatalogue(RUBRIQUES, TYPES_LIEU);
 import { ouvrirReservation, modeles, logements, nomLogement } from "./reserver.js";
 import { supabase, suivre, annuler, memoriser, inscrire } from "./donnees.js";
 import { blocRetardClient } from "./retards.js";
+import { pageNotifications } from "./notifications.js";
 import { compterPage } from "./compteur.js";
 import { suivreEnDirect, demoSuivi } from "./suivi-live.js";
 import { pageCompte, pageMesPrestations, arreterEcouteDemandes, retourEmail, majLienCompte, afficherAccesCleaneur } from "./compte.js";
@@ -552,6 +553,7 @@ async function afficherPage() {
   marquerActif();
   document.body.classList.toggle("sans-rappel", route === "reserver");
   // Pages qui attendent le serveur : animation de chargement pendant l'attente.
+  if (route === "notifications") { window.scrollTo(0, 0); vue.innerHTML = pageChargement(); traduire(vue); await pageNotifications(vue, param); return; }
   if (route === "compte") { window.scrollTo(0, 0); vue.innerHTML = pageChargement(); traduire(vue); await pageCompte(vue, param); return; }
   if (route === "mes-demandes" || route === "mes-biens") {
     const deja = vue.querySelector(".onglets-demandes") && route === "mes-demandes";
