@@ -893,6 +893,12 @@ const T = [
   ["Prochain versement :", "Next payout:", "Prossimo versamento:", "Próximo pago:"],
   ["chaque vendredi, pour les missions validées jusqu'au mercredi minuit.", "every Friday, for jobs approved by Wednesday midnight.", "ogni venerdì, per le missioni convalidate entro mercoledì a mezzanotte.", "cada viernes, por las misiones validadas hasta el miércoles a medianoche."],
   // Notes des clients par les Cleaneurs (11 novembre 2026)
+  // Alerte de mission en demi-écran (12 novembre 2026)
+  ["Nouvelle mission près de chez vous", "New job near you", "Nuova missione vicino a te", "Nuevo servicio cerca de ti"],
+  ["Date flexible", "Flexible date", "Data flessibile", "Fecha flexible"],
+  ["autre(s) mission(s)", "other job(s)", "altra/e missione/i", "otro(s) servicio(s)"],
+  ["Voir la mission", "See the job", "Vedi la missione", "Ver el servicio"],
+  ["Cette mission ne m'intéresse pas", "I'm not interested in this job", "Questa missione non mi interessa", "Este servicio no me interesa"],
   // Créneaux disponibles et recommandation des missions (12 novembre 2026)
   ["Mes créneaux disponibles", "My available slots", "Le mie fasce disponibili", "Mis franjas disponibles"],
   ["h ouvertes par semaine", "h open per week", "h aperte a settimana", "h abiertas por semana"],

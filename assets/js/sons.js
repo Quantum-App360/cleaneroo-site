@@ -1,6 +1,7 @@
 // Sons et alertes : « nouvelle mission » (Cleaneur) et « prise en charge » (client).
 // Sons fabriqués par Cleanova/design/sons/fabriquer_sons.py (assets/sons/*.mp3).
 // Les navigateurs n'acceptent un son qu'après un premier geste sur la page (clic, touche) : on « débloque » l'audio à ce moment-là.
+import { rubrique } from "./catalogue.js";
 import { tr } from "./langue.js";
 import { REGLES } from "./regles.js";
 import { missionsDisponibles, demandesDuCompte } from "./donnees.js";
@@ -43,6 +44,31 @@ export function alerter(nom, titre, texte, lien) {
   setTimeout(() => b.remove(), 7600);
 }
 
+/**
+ * Alerte de mission en demi-écran (12 novembre 2026, reprise de l'appli de Vincent) : son, et une fenêtre qui ne se ferme
+ * qu'en répondant (« Voir la mission » ou « Cette mission ne m'intéresse pas »).
+ */
+export function alerteMission(m, nombre = 1) {
+  if (document.querySelector(".alerte-mission")) return;
+  const r = rubrique(m.rubrique_id);
+  const d = document.createElement("dialog");
+  d.className = "alerte-mission";
+  const quand = m.creneau ? new Date(m.creneau).toLocaleString("fr-FR", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }) : tr("Date flexible");
+  d.innerHTML = `<div class="haut-alerte">🔔 ${tr("Nouvelle mission près de chez vous")}</div>
+    <h2>${r?.nom || ""}</h2><p>${quand}</p><p><b>${(m.code_postal || "")} ${m.ville || ""}</b> · ${m.sur_devis ? tr("Sur devis") : (m.estimation_c / 100).toFixed(2).replace(".", ",") + " €"}</p>
+    ${nombre > 1 ? `<p class="petit">+${nombre - 1} ${tr("autre(s) mission(s)")}</p>` : ""}
+    <div class="boutons"><a class="bouton" href="#/compte/cleaneur" data-voir>${tr("Voir la mission")}</a>
+      <button type="button" class="bouton secondaire" data-non>${tr("Cette mission ne m'intéresse pas")}</button></div>`;
+  d.addEventListener("cancel", e => e.preventDefault());   // pas de fermeture sans réponse
+  d.querySelector("[data-non]").onclick = () => { d.close(); d.remove(); };
+  d.querySelector("[data-voir]").onclick = () => { d.close(); d.remove(); setTimeout(() => document.getElementById("missions-disponibles")?.scrollIntoView({ behavior: "smooth" }), 800); };
+  if (!document.getElementById("styles-alerte-mission")) { const s = document.createElement("style"); s.id = "styles-alerte-mission";
+    s.textContent = `.alerte-mission{position:fixed;inset:auto 0 0 0;margin:0 auto;width:min(560px,100%);max-height:55vh;border:none;border-radius:22px 22px 0 0;padding:22px 20px 26px;box-shadow:0 -10px 40px rgba(0,0,0,.25)}
+      .alerte-mission::backdrop{background:rgba(16,40,44,.45)}.alerte-mission h2{margin:6px 0 4px}.haut-alerte{font-weight:800;color:var(--corail-texte,#C2552F)}`; document.head.appendChild(s); }
+  document.body.append(d);
+  d.showModal();
+}
+
 /* ------------------------------------------------------------------ Surveillance (toutes les SURVEILLANCE_S secondes, page ouverte) */
 let minuterie = null;
 const STATUTS_PRIS = ["CONFIRMEE", "EN_ROUTE", "SUR_PLACE", "EN_COURS", "A_VALIDER", "TERMINEE", "VALIDEE"];
@@ -58,6 +84,7 @@ function surveillerMissions(surNouvelle) {
     const nouvelles = connues ? dispo.filter(m => !connues.has(m.reference)) : [];
     connues = refs;
     if (nouvelles.length) {
+      alerteMission(nouvelles[0], nouvelles.length);
       alerter("nouvelle-mission", tr("Nouvelle mission disponible"),
         nouvelles.length > 1 ? `${nouvelles.length} ${tr("nouvelles missions près de chez vous")}` : tr("Une prestation vient d'être publiée près de chez vous."), "#/compte/cleaneur");
       surNouvelle?.();

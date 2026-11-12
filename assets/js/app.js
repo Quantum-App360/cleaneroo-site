@@ -14,6 +14,7 @@ import { pageMessages } from "./messages.js";
 import { blocPropositionsClient } from "./propositions.js";
 import { blocConsommablesClient } from "./consommables.js";
 import { blocFavori } from "./favoris.js";
+import { transitionVitre } from "./vitre.js";
 import { compterPage } from "./compteur.js";
 import { suivreEnDirect, demoSuivi } from "./suivi-live.js";
 import { pageCompte, pageMesPrestations, arreterEcouteDemandes, retourEmail, majLienCompte, afficherAccesCleaneur } from "./compte.js";
@@ -545,6 +546,7 @@ const ROUTES = {
 };
 
 let arreterSuivi = () => {};
+let espacePrecedent = null;
 async function afficherPage() {
   clearInterval(minuterieNotifs);
   arreterEcouteDemandes();
@@ -554,6 +556,10 @@ async function afficherPage() {
   const chemin = location.hash.replace(/^#\/?/, "");
   const [route, param] = chemin.split("/");
   if (route === "gestion") { location.href = "gestion.html"; return; }
+  // Changement d'espace (Particulier, Pro, Cleaneur) : transition « laveur de vitres », comme l'appli.
+  const espace = route === "compte" && ["particulier", "pro", "cleaneur"].includes(param) ? param : null;
+  if (espace && espacePrecedent && espace !== espacePrecedent) transitionVitre();
+  if (espace) espacePrecedent = espace;
   // Accès Cleaneur : l'accueil, les prestations, l'estimation et « Mes prestations » mènent à son espace.
   if (document.body.classList.contains("acces-cleaneur") && ["", "prestations", "reserver", "mes-demandes", "mes-biens"].includes(route)) { location.replace("#/compte/cleaneur"); return; }
   compterPage(route, param);
