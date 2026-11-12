@@ -506,7 +506,7 @@ export async function pageMesPrestations(vue, mode = "demandes", sous = null) {
     ${biens.length ? `<p style="margin-top:18px"><button type="button" class="lien-bouton" style="color:var(--erreur);padding:0" id="oublier">Oublier mes informations sur cet appareil</button></p>` : ""}
   </div></section>` : `<section class="bloc"><div class="etroit">
     ${titre("Mes demandes")}
-    <a class="bouton plein" href="#/reserver" style="margin-bottom:10px">＋ Nouvelle demande</a>
+    <a class="bouton plein" href="#/reserver" data-choisir-prestation style="margin-bottom:10px">＋ Nouvelle demande</a>
     ${s ? "" : `<div class="note" style="margin:8px 0 6px"><span>Créez votre compte pour retrouver vos biens et vos prestations sur tous vos appareils et dans l'application. <a href="#/compte/creer">Créer mon compte</a> · <a href="#/compte">Se connecter</a></span></div>`}
     <nav class="onglets-compte onglets-demandes" aria-label="Mes demandes">${ONGLETS_DEMANDES.map(([id, nom, ico]) => `<a href="#/mes-demandes/${id}" class="${id === actif ? "actif" : ""}" ${id === actif ? 'aria-current="page"' : ""}>${icone(ico)}<span>${nom}</span>${parOnglet[id].length ? `<em>${parOnglet[id].length}</em>` : ""}</a>`).join("")}</nav>
     ${s ? `<p class="petit direct"><i></i>Mis à jour en temps réel</p>` : ""}

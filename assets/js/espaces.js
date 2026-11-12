@@ -55,14 +55,14 @@ export function ongletParticulier(p, biens, demandes) {
       <span class="surtitre">Ma prochaine prestation</span>
       ${prochaine ? `<div class="ligne-compte" style="padding:0;box-shadow:none;border:0;background:none;margin-top:10px">${icone(r.icone, { tuile: true })}
         <div class="corps"><h3 style="margin:0">${r.nom}</h3><p class="muet" style="margin:2px 0 0">${prochaine.creneau ? dateLongue(new Date(prochaine.creneau)) : tr("Date à fixer")} · ${esc(prochaine.ville)}</p></div></div>
-        <div class="boutons"><a class="bouton" href="#/demande/${esc(prochaine.reference)}/${esc(prochaine.jeton)}">Suivre ma prestation</a><a class="bouton secondaire" href="#/reserver">Réserver un ménage</a></div>`
+        <div class="boutons"><a class="bouton" href="#/demande/${esc(prochaine.reference)}/${esc(prochaine.jeton)}">Suivre ma prestation</a><a class="bouton secondaire" href="#/reserver" data-choisir-prestation>Réserver une prestation</a></div>`
       : `<p class="muet" style="margin:8px 0 0">Aucune prestation prévue pour l'instant.</p>
-        <div class="boutons"><a class="bouton" href="#/reserver">Réserver un ménage</a></div>`}
+        <div class="boutons"><a class="bouton" href="#/reserver" data-choisir-prestation>Réserver une prestation</a></div>`}
     </div>
     <div class="grille-raccourcis">
       <a class="carte raccourci" href="#/mes-demandes">${icone("calendrier", { tuile: true })}<b>Mes prestations</b><span class="petit">À venir et passées</span></a>
       <a class="carte raccourci" href="#/mes-demandes">${icone("logement", { tuile: true })}<b>Mes biens</b><span class="petit">${biens.length} adresse${biens.length > 1 ? "s" : ""} enregistrée${biens.length > 1 ? "s" : ""}</span></a>
-      <a class="carte raccourci" href="#/reserver">${icone("instantane", { tuile: true })}<b>Nouvelle demande</b><span class="petit">Prix immédiat</span></a>
+      <a class="carte raccourci" href="#/reserver" data-choisir-prestation>${icone("instantane", { tuile: true })}<b>Nouvelle demande</b><span class="petit">Prix immédiat</span></a>
     </div>
 `;
 }
@@ -104,7 +104,7 @@ export function ongletPro(p, biens) {
     <div class="grille-raccourcis">
       <a class="carte raccourci" href="#/mes-demandes">${icone("calendrier", { tuile: true })}<b>Mes prestations</b><span class="petit">À venir et passées</span></a>
       <a class="carte raccourci" href="#/reserver/rental">${icone("location", { tuile: true })}<b>Ménage de location</b><span class="petit">Entre deux voyageurs</span></a>
-      <a class="carte raccourci" href="#/reserver">${icone("instantane", { tuile: true })}<b>Nouvelle demande</b><span class="petit">Prix immédiat</span></a>
+      <a class="carte raccourci" href="#/reserver" data-choisir-prestation>${icone("instantane", { tuile: true })}<b>Nouvelle demande</b><span class="petit">Prix immédiat</span></a>
     </div>
     <div class="tuiles-chiffres" id="chiffres-pro">
       <div class="tuile-chiffre"><b>${biens.length}</b><span>Biens gérés</span></div>

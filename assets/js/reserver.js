@@ -76,6 +76,15 @@ function nouveauBrouillon(rubriqueId, espace = "personnel", rapide = false) {
   return lieuEnAttente && !br.rue ? { ...br, ...lieuEnAttente } : br;
 }
 
+/** Fenêtre « Réserver une prestation » : réservation de cette prestation pour cette partie (brouillon en cours gardé s'il correspond). */
+export function reserverPrestation(rubriqueId, espace = "personnel") {
+  const ancien = charger(), pour = partiePour(rubriqueId, espace);
+  if (!(ancien && ancien.rubriqueId === rubriqueId && ancien.espace === pour && ancien.etape >= 2)) {
+    try { localStorage.setItem(CLE_BROUILLON, JSON.stringify({ ...nouveauBrouillon(rubriqueId, pour), etape: 2 })); } catch { /* rien */ }
+  }
+  location.hash = `#/reserver/${rubriqueId}`;
+}
+
 function brouillonInitial(rubriqueId, espace = "personnel", rapide = false) {
   const r = rubrique(rubriqueId);
   const lieux = TYPES_LIEU[rubriqueId];

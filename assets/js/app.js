@@ -26,7 +26,8 @@ import { compteRenduPieces } from "./controle-ecran.js";
 import { blocFormulesCleaneur, brancherFormulesCleaneur } from "./formules-cleaneur.js";
 import { blocEtapes, blocReassurance, installerRappel, bandeauLancement, pageChargement, decorTableau } from "./commun.js";
 import "./fond-anime.js";
-import "./oeil.js";   // œil pour afficher le mot de passe
+import "./oeil.js";
+import "./choix-prestation.js";   // fenêtre animée « Réserver une prestation »   // œil pour afficher le mot de passe
 export { bandeauLancement };
 
 const vue = document.getElementById("vue");

@@ -894,6 +894,9 @@ const T = [
   ["chaque vendredi, pour les missions validées jusqu'au mercredi minuit.", "every Friday, for jobs approved by Wednesday midnight.", "ogni venerdì, per le missioni convalidate entro mercoledì a mezzanotte.", "cada viernes, por las misiones validadas hasta el miércoles a medianoche."],
   // Notes des clients par les Cleaneurs (11 novembre 2026)
   ["‹ Retour au site", "‹ Back to the site", "‹ Torna al sito", "‹ Volver al sitio"],
+  // Fenêtre « Réserver une prestation » (12 novembre 2026)
+  ["Réserver une prestation", "Book a service", "Prenota un servizio", "Reservar un servicio"],
+  ["Juste connaître le prix ? Estimer mon prix ›", "Just want the price? Get my price ›", "Vuoi solo sapere il prezzo? Calcola il prezzo ›", "¿Solo quieres saber el precio? Calcular mi precio ›"],
   // Œil du mot de passe (12 novembre 2026)
   ["Afficher le mot de passe", "Show password", "Mostra la password", "Mostrar la contraseña"],
   ["Masquer le mot de passe", "Hide password", "Nascondi la password", "Ocultar la contraseña"],

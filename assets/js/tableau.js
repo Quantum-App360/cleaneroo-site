@@ -99,7 +99,7 @@ export async function pageTableau(vue) {
     <div class="tableau-entete">
       <div><span class="surtitre">${esc(new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" }))}</span>
         <h1>${tr("Bonjour")} ${esc(profil?.prenom || "")}</h1></div>
-      <a class="bouton" href="#/reserver">＋ ${tr("Réserver")}</a>
+      <a class="bouton" href="#/reserver" data-choisir-prestation>＋ ${tr("Réserver")}</a>
     </div>
     <div class="tableau-grille">
       <article class="carte vivant${enDirect ? " en-direct" : ""}${d ? "" : " vide"}" data-teinte="${d ? (enDirect ? "corail" : "turquoise") : "lilas"}">
@@ -113,7 +113,7 @@ export async function pageTableau(vue) {
             ${autres ? `<a class="bouton secondaire" href="#/mes-demandes/a-venir">+${autres} ${tr(autres > 1 ? "autres prestations" : "autre prestation")}</a>` : ""}</div>`
         : `<div class="vivant-corps">${icone("instantane", { tuile: true })}<div><h2>${tr("Aucune prestation prévue")}</h2>
             <p class="muet">${tr("Décrivez votre besoin : le prix s'affiche tout de suite.")}</p></div></div>
-          <div class="boutons"><a class="bouton" href="#/reserver">${tr("Réserver un ménage")}</a></div>`}
+          <div class="boutons"><a class="bouton" href="#/reserver" data-choisir-prestation>${tr("Réserver une prestation")}</a></div>`}
       </article>
       <article class="carte a-faire">
         <div class="a-faire-titre"><h2>${tr("À faire")}</h2>${taches.length ? `<em>${taches.length}</em>` : ""}</div>
