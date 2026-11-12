@@ -139,6 +139,7 @@ returns integer language sql stable security definer set search_path = '' as $$
 $$;
 
 -- 6. Aucune intervention avant le 1er janvier 2027 (heure de Paris), quelle que soit la personne qui enregistre la demande.
+-- Remplacée le 12 novembre 2026 par un déclencheur : voir base-ouverture.sql.
 alter table public.demandes drop constraint if exists demandes_ouverture_check;
 alter table public.demandes add constraint demandes_ouverture_check
   check (creneau is null or creneau >= timestamptz '2027-01-01 00:00:00 Europe/Paris') not valid;

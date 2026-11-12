@@ -12,6 +12,10 @@ const vue = document.getElementById("vue");
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const STATUTS = { VERIFICATION: "À vérifier", PUBLIEE: "En ligne", CONFIRMEE: "Confirmée", EN_ROUTE: "En route", SUR_PLACE: "Sur place",
   EN_COURS: "En cours", A_VALIDER: "À valider", TERMINEE: "Terminée", ANNULEE: "Annulée" };
+/** Erreurs de la base en français simple (règle d'ouverture, date passée). */
+const messageErreur = e => /ouverture/.test(e?.message || "") ? "Aucune intervention avant l'ouverture du 1er janvier 2027 : choisissez une date à partir de cette ouverture."
+  : /creneau_passe/.test(e?.message || "") ? "La date de cette demande est déjà passée : elle ne peut plus être mise en ligne. Annulez-la."
+  : e?.message || "Le service est momentanément indisponible. Réessayez dans quelques minutes.";
 const SUIVANT = { VERIFICATION: "PUBLIEE", PUBLIEE: "CONFIRMEE", CONFIRMEE: "EN_ROUTE", EN_ROUTE: "SUR_PLACE", SUR_PLACE: "EN_COURS", EN_COURS: "A_VALIDER", A_VALIDER: "TERMINEE" };
 const ACCUEIL = { PRESENT: "Client présent", TIERS: "Concierge / tiers", BOITE: "Boîte à clés", AUTONOME: "Accès autonome" };
 let filtre = "VERIFICATION";
@@ -306,6 +310,7 @@ async function detail(d) {
   const r = rubrique(d.rubrique_id);
   const det = d.details || {};
   const acces = d.acces || {};
+  const datePassee = d.statut === "VERIFICATION" && d.creneau && new Date(d.creneau) < new Date();
   const urls = await Promise.all((d.photos || []).map(async p => (await supabase.storage.from("photos-demandes").createSignedUrl(p, 3600)).data?.signedUrl));
   const taches = (r.taches || []).filter(t => (det.taches || []).includes(t.id)).map(t => t.nom);
   vue.innerHTML = `<button class="lien-bouton" id="retour">‹ Toutes les demandes</button>
@@ -325,14 +330,15 @@ async function detail(d) {
     </dl></div>
     <label class="champ" style="margin-top:14px">Notes internes<textarea id="notes" rows="3">${esc(d.notes_admin)}</textarea></label>
     <div class="boutons" style="margin-top:8px">
-      ${SUIVANT[d.statut] ? `<button class="bouton" id="avancer">Passer à « ${STATUTS[SUIVANT[d.statut]]} »</button>` : ""}
+      ${SUIVANT[d.statut] && !datePassee ? `<button class="bouton" id="avancer">Passer à « ${STATUTS[SUIVANT[d.statut]]} »</button>` : ""}
       <button class="bouton secondaire" id="enregistrer">Enregistrer les notes</button>
       ${!["TERMINEE", "ANNULEE"].includes(d.statut) ? `<button class="bouton danger" id="annuler">Annuler la demande</button>` : ""}
     </div>
+    ${datePassee ? `<p class="erreur" style="margin-top:8px">La date de cette demande est déjà passée : elle ne peut plus être mise en ligne. Annulez-la (le client n'est pas facturé).</p>` : ""}
     <p class="petit">Prochainement : candidatures des Cleaneurs, messages et compte rendu photo (étape 2 du site).</p>`;
   const maj = async champs => {
     const { error } = await supabase.from("demandes").update(champs).eq("id", d.id);
-    if (error) return alert(error.message);
+    if (error) return alert(messageErreur(error));
     const { data } = await supabase.from("demandes").select("*").eq("id", d.id).single();
     detail(data);
   };
