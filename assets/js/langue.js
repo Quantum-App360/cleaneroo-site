@@ -893,6 +893,26 @@ const T = [
   ["Prochain versement :", "Next payout:", "Prossimo versamento:", "Próximo pago:"],
   ["chaque vendredi, pour les missions validées jusqu'au mercredi minuit.", "every Friday, for jobs approved by Wednesday midnight.", "ogni venerdì, per le missioni convalidate entro mercoledì a mezzanotte.", "cada viernes, por las misiones validadas hasta el miércoles a medianoche."],
   // Notes des clients par les Cleaneurs (11 novembre 2026)
+  // Signature du compte rendu (12 novembre 2026)
+  ["Signez le compte rendu", "Sign the report", "Firma il resoconto", "Firma el informe"],
+  ["Zone de signature", "Signature area", "Area della firma", "Zona de firma"],
+  ["Effacer", "Clear", "Cancella", "Borrar"],
+  ["Valider ma signature", "Confirm my signature", "Conferma la mia firma", "Validar mi firma"],
+  ["Signature enregistrée.", "Signature saved.", "Firma registrata.", "Firma guardada."],
+  ["Compte rendu signé.", "Report signed.", "Resoconto firmato.", "Informe firmado."],
+  ["Signez le compte rendu avant de terminer.", "Sign the report before finishing.", "Firma il resoconto prima di terminare.", "Firma el informe antes de terminar."],
+  ["Vous êtes sur place ? Signez le compte rendu (facultatif)", "Are you on site? Sign the report (optional)", "Sei sul posto? Firma il resoconto (facoltativo)", "¿Estás en el lugar? Firma el informe (opcional)"],
+  // Consommables contrôlés par le Cleaneur (12 novembre 2026)
+  ["Notez chaque consommable. Vous n'en apportez jamais : ils doivent être sur place.", "Record each supply item. You never bring any: they must be on site.", "Annota ogni materiale di consumo. Non ne porti mai: devono essere sul posto.", "Anota cada consumible. Nunca los traes: deben estar en el lugar."],
+  ["Réapprovisionné", "Restocked", "Rifornito", "Repuesto"],
+  ["Stock suffisant", "Enough stock", "Scorta sufficiente", "Existencias suficientes"],
+  ["Stock bas", "Low stock", "Scorta bassa", "Existencias bajas"],
+  ["Manquant", "Missing", "Mancante", "Falta"],
+  ["Consommables", "Supplies", "Materiali di consumo", "Consumibles"],
+  ["Pensez à racheter les consommables en stock bas ou manquants avant le prochain voyageur.", "Remember to buy the supplies that are low or missing before the next guest.", "Ricordati di riacquistare i materiali in esaurimento o mancanti prima del prossimo ospite.", "Recuerda comprar los consumibles con existencias bajas o que faltan antes del próximo huésped."],
+  ["Notez chaque consommable avant de terminer.", "Record each supply item before finishing.", "Annota ogni materiale di consumo prima di terminare.", "Anota cada consumible antes de terminar."],
+  ["Consommables à prévoir", "Supplies to plan", "Materiali da prevedere", "Consumibles por prever"],
+  ["Votre Cleaneur a relevé des consommables en stock bas ou manquants.", "Your Cleaneur noted supplies that are low or missing.", "Il tuo Cleaneur ha rilevato materiali in esaurimento o mancanti.", "Tu Cleaneur ha detectado consumibles con existencias bajas o que faltan."],
   // Propositions des Cleaneurs (12 novembre 2026)
   ["Remise de proximité", "Proximity discount", "Sconto di prossimità", "Descuento por cercanía"],
   ["Tarif de lancement", "Launch price", "Tariffa di lancio", "Tarifa de lanzamiento"],

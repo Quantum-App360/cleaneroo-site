@@ -6,6 +6,7 @@
 import { supabase } from "./donnees.js";
 import { REGLES, euros } from "./regles.js";
 import { traduire, tr } from "./langue.js";
+import { zoneSignature } from "./signature.js";
 
 const rpc = async (nom, args) => { const { data, error } = await supabase.rpc(nom, args); if (error) throw new Error(error.message); return data; };
 
@@ -34,9 +35,11 @@ export async function blocAvis(boite, reference, jeton, statut) {
     <p style="margin:8px 0 4px;font-weight:600">${tr("Laisser un pourboire ?")} <span class="petit">${tr("100 % pour votre Cleaneur")}</span></p>
     <div class="pourboires">${[0, ...REGLES.POURBOIRE_CHOIX_C].map(c => `<button type="button" data-pourboire="${c}" class="${c === 0 ? "choisi" : ""}">${c ? euros(c) : tr("Non merci")}</button>`).join("")}
       <label class="pourboire-libre">${tr("Autre")}<input type="number" min="1" max="200" step="1" inputmode="numeric" data-pourboire-libre placeholder="€"></label></div>
+    ${statut === "A_VALIDER" ? `<div data-signature-client></div>` : ""}
     <p class="erreur" data-erreur-avis></p>
     <button type="button" class="bouton plein" data-valider-avis>${tr(statut === "A_VALIDER" ? "Valider la prestation" : "Envoyer mon avis")}</button></div>`;
   traduire(boite);
+  if (statut === "A_VALIDER") zoneSignature(boite.querySelector("[data-signature-client]"), reference, { jeton, titre: "Vous êtes sur place ? Signez le compte rendu (facultatif)" });
   boite.querySelectorAll("[data-critere]").forEach(ligne => ligne.querySelectorAll("[data-etoile]").forEach(b => b.onclick = () => {
     notes[ligne.dataset.critere] = Number(b.dataset.etoile);
     ligne.querySelectorAll("[data-etoile]").forEach(x => { const on = Number(x.dataset.etoile) <= notes[ligne.dataset.critere]; x.textContent = on ? "★" : "☆"; x.classList.toggle("allumee", on); });

@@ -12,6 +12,7 @@ import { blocRetardClient } from "./retards.js";
 import { pageNotifications } from "./notifications.js";
 import { pageMessages } from "./messages.js";
 import { blocPropositionsClient } from "./propositions.js";
+import { blocConsommablesClient } from "./consommables.js";
 import { compterPage } from "./compteur.js";
 import { suivreEnDirect, demoSuivi } from "./suivi-live.js";
 import { pageCompte, pageMesPrestations, arreterEcouteDemandes, retourEmail, majLienCompte, afficherAccesCleaneur } from "./compte.js";
@@ -502,6 +503,7 @@ async function pageDemande(ref, jeton) {
       <a class="bouton secondaire" href="${mailAssurance(d, lien)}">Préparer l'e-mail à mon assureur</a></div>` : ""}
     ${annulable ? `<button type="button" class="bouton danger plein" id="annuler-demande">Annuler la demande</button>
       <p class="petit">Annulation gratuite : aucun Cleaneur n'est encore confirmé.</p>` : ""}
+    ${d.rubrique_id === "rental" && ["EN_COURS", "A_VALIDER", "TERMINEE"].includes(d.statut) ? `<div id="consommables-client"></div>` : ""}
     ${["EN_COURS", "A_VALIDER", "TERMINEE", "ANNULEE"].includes(d.statut) ? `<div id="compte-rendu-pieces"></div>` : ""}
   </div></section>`;
 }
@@ -587,6 +589,7 @@ async function afficherPage() {
     const rendu = document.getElementById("compte-rendu-pieces");
     if (rendu) compteRenduPieces(rendu, decodeURIComponent(ref || ""));
     // Présence du Cleaneur à confirmer (sa position n'a pas pu confirmer l'arrivée).
+    blocConsommablesClient(document.getElementById("consommables-client"), decodeURIComponent(ref || ""), decodeURIComponent(jeton || ""));
     blocPropositionsClient(document.getElementById("propositions-client"), decodeURIComponent(ref || ""), decodeURIComponent(jeton || ""));
     blocRetardClient(document.getElementById("retard-client"), decodeURIComponent(ref || ""), decodeURIComponent(jeton || ""));
     const presence = document.getElementById("presence-client");

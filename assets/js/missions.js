@@ -11,6 +11,8 @@ import { blocPeriodes } from "./periodes.js";
 import { blocNiveau } from "./niveaux.js";
 import { blocRetardCleaneur, brancherRetards } from "./retards.js";
 import { formulaireProposition, brancherPropositions } from "./propositions.js";
+import { blocConsommablesCleaneur } from "./consommables.js";
+import { zoneSignature, signaturesDe } from "./signature.js";
 import { preparationCleaneur } from "./espaces.js";
 import { icone } from "./icones.js";
 import { traduire, tr } from "./langue.js";
@@ -337,6 +339,8 @@ function carteMission(m) {
     ${m.statut === "EN_ROUTE" ? `<p class="petit partage-actif" style="margin:8px 0 0">📍 Position partagée avec le client pendant le trajet</p>` : ""}
     ${["SUR_PLACE", "EN_COURS"].includes(m.statut) ? `<div class="controle-mission" data-controle="${esc(m.reference)}"></div>` : ""}
     ${m.statut === "SUR_PLACE" ? blocAccesImpossible(m) : ""}
+    ${m.rubrique_id === "rental" && ["SUR_PLACE", "EN_COURS"].includes(m.statut) ? `<div data-consommables="${esc(m.reference)}"></div>` : ""}
+    ${m.statut === "EN_COURS" ? `<div data-signature-cleaneur="${esc(m.reference)}"></div>` : ""}
     ${blocRetardCleaneur(m)}
     <div class="boutons" style="margin-top:10px">
       ${bouton ? `<button type="button" class="bouton" data-etape="${esc(m.reference)}">${bouton}</button>` : ""}
@@ -445,6 +449,13 @@ export async function brancherMissions(vue, p) {
   remplirNotesClients(boite);
   if (p.role === "admin") { blocSelfiesAdmin(boite.querySelector("#selfies-admin")); blocAvertissementsAdmin(boite.querySelector("#avertissements-admin")); }
   brancherRetards(boite);
+  boite.querySelectorAll("[data-consommables]").forEach(c => blocConsommablesCleaneur(c, c.dataset.consommables));
+  // Signature du compte rendu, obligatoire avant « J'ai terminé ».
+  boite.querySelectorAll("[data-signature-cleaneur]").forEach(async z => {
+    const deja = (await signaturesDe(z.dataset.signatureCleaneur)).some(s => s.role === "cleaneur");
+    if (deja) { z.innerHTML = `<p class="petit" style="color:var(--succes);margin-top:8px">✅ ${tr("Compte rendu signé.")}</p>`; return; }
+    zoneSignature(z, z.dataset.signatureCleaneur, { apres: () => { z.innerHTML = `<p class="petit" style="color:var(--succes);margin-top:8px">✅ ${tr("Compte rendu signé.")}</p>`; } });
+  });
   brancherPropositions(boite, () => brancherMissions(vue, p));
   majTemps(boite);
   clearInterval(minuterieFrise);
@@ -544,6 +555,8 @@ export async function brancherMissions(vue, p) {
     const r = await avancerMission(ref, suivant).catch(() => "erreur");
     if (r !== "ok") { b.disabled = false; err.textContent = tr(r === "controle" ? "Cochez toutes les tâches de chaque pièce avant de terminer : photos avant et après, tâches, avis de l'IA ou justification."
       : r === "selfie" ? "Prenez d'abord votre selfie du jour (en haut de la page) : il confirme votre identité au client."
+      : r === "consommables" ? "Notez chaque consommable avant de terminer."
+      : r === "signature" ? "Signez le compte rendu avant de terminer."
       : "Le service est momentanément indisponible. Réessayez dans quelques minutes."); return; }
     if (suivant === "EN_ROUTE") partagerPosition(ref);
     if (suivant === "SUR_PLACE") {
