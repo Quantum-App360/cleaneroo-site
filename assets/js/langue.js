@@ -893,6 +893,12 @@ const T = [
   ["Prochain versement :", "Next payout:", "Prossimo versamento:", "Próximo pago:"],
   ["chaque vendredi, pour les missions validées jusqu'au mercredi minuit.", "every Friday, for jobs approved by Wednesday midnight.", "ogni venerdì, per le missioni convalidate entro mercoledì a mezzanotte.", "cada viernes, por las misiones validadas hasta el miércoles a medianoche."],
   // Notes des clients par les Cleaneurs (11 novembre 2026)
+  // Favoris et réserver à nouveau (12 novembre 2026)
+  ["Cleaneur favori", "Favourite Cleaneur", "Cleaneur preferito", "Cleaneur favorito"],
+  ["Ajouter à mes favoris", "Add to my favourites", "Aggiungi ai preferiti", "Añadir a mis favoritos"],
+  ["Réserver à nouveau", "Book again", "Prenota di nuovo", "Reservar de nuevo"],
+  ["Votre Cleaneur favori voit vos nouvelles demandes en priorité et en est prévenu.", "Your favourite Cleaneur sees your new requests first and is notified.", "Il tuo Cleaneur preferito vede per primo le tue nuove richieste e ne viene avvisato.", "Tu Cleaneur favorito ve tus nuevas solicitudes con prioridad y recibe un aviso."],
+  ["Un client qui vous a mis en favori a une nouvelle demande", "A customer who added you as a favourite has a new request", "Un cliente che ti ha aggiunto ai preferiti ha una nuova richiesta", "Un cliente que te ha añadido a favoritos tiene una nueva solicitud"],
   // Signature du compte rendu (12 novembre 2026)
   ["Signez le compte rendu", "Sign the report", "Firma il resoconto", "Firma el informe"],
   ["Zone de signature", "Signature area", "Area della firma", "Zona de firma"],

@@ -1,0 +1,5 @@
+-- Cleaneurs favoris du client (12 novembre 2026, repris de l'appli de Vincent) — appliqué (migration « favoris_cleaneurs ») :
+-- table favoris (client_id, cleaneur_id) ; basculer_favori(p_reference) après une prestation terminée ; est_favori(p_reference) ;
+-- mission_visible : un favori voit tout de suite les nouvelles demandes de ce client ; trigger prevenir_favoris : notification
+-- « Un client qui vous a mis en favori a une nouvelle demande » à la mise en ligne.
+-- « Réserver à nouveau » (site et appli) : même prestation, même logement (dernier modèle mémorisé), Cleaneur favori prévenu.
