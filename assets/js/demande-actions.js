@@ -6,7 +6,7 @@
 import { supabase } from "./donnees.js";
 import { rubrique } from "./catalogue.js";
 import { euros, dateLongue, heure, duree } from "./regles.js";
-import { tr, traduire, langue } from "./langue.js";
+import { tr, traduire, langue, LOCALE } from "./langue.js";
 import { libelleStatut } from "./app.js";
 import { esc } from "./commun.js";
 
@@ -67,4 +67,42 @@ export async function ouvrirBon(ref, jeton = null) {
 export const boutonBon = (ref, jeton = "") => `<button type="button" class="bouton secondaire" data-bon="${esc(ref)}" data-bon-jeton="${esc(jeton)}">🧾 ${tr("Bon d'intervention (PDF)")}</button>`;
 export function brancherBons(boite) {
   boite?.querySelectorAll("[data-bon]").forEach(b => b.onclick = () => ouvrirBon(b.dataset.bon, b.dataset.bonJeton || null));
+}
+
+/* ------------------------------------------------------------------ Constat d'arrivée (12 novembre 2026)
+   Problèmes signalés par le Cleaneur à son arrivée : document horodaté avec photos, pour l'assurance du client
+   (ou une réclamation Airbnb / Booking d'une conciergerie). Base : constat_arrivee. Même document dans l'appli (Constat.kt). */
+const TYPES_SIGNAL = { degat: "Dégât", salete: "Saleté exceptionnelle", casse: "Objet cassé", autre: "Autre" };
+export async function blocConstat(boite, ref, jeton) {
+  if (!boite) return;
+  const { data: c } = await supabase.rpc("constat_arrivee", { p_reference: ref, p_jeton: jeton || null });
+  if (!c?.signalements?.length || !boite.isConnected) return;
+  boite.innerHTML = `<div class="carte" style="margin:12px 0;border:1.5px solid var(--alerte)"><b>⚠️ ${tr("Problème signalé à l'arrivée")}</b>
+    <p class="petit" style="margin:4px 0 10px">${tr("Constat horodaté avec photos, à joindre à une déclaration d'assurance ou à une réclamation auprès de la plateforme de location.")}</p>
+    <button type="button" class="bouton secondaire" data-constat>📄 ${tr("Constat d'arrivée (PDF)")}</button></div>`;
+  traduire(boite);
+  boite.querySelector("[data-constat]").onclick = () => ouvrirConstat(c);
+}
+async function ouvrirConstat(c) {
+  const w = window.open("", "_blank");
+  if (!w) return;
+  const { lienPhotoControle } = await import("./donnees.js");
+  const liens = await Promise.all(c.signalements.map(s => s.photo ? lienPhotoControle(s.photo).catch(() => "") : ""));
+  const quand = d => d ? `${new Date(d).toLocaleDateString(LOCALE)} ${tr("à")} ${new Date(d).toLocaleTimeString(LOCALE, { hour: "2-digit", minute: "2-digit" })}` : "—";
+  w.document.write(`<!doctype html><html lang="${langue}"><head><meta charset="utf-8"><title>${esc(tr("Constat d'arrivée"))} ${esc(c.reference)}</title><style>
+    body{font:14px/1.5 "Plus Jakarta Sans",Arial,sans-serif;color:#16343A;max-width:780px;margin:28px auto;padding:0 16px}h1{color:#146B63;font-size:21px;margin:0}
+    table{width:100%;border-collapse:collapse;margin:12px 0}th,td{text-align:left;padding:7px 8px;border-bottom:1px solid #e3eded;vertical-align:top}th{width:34%;color:#425E62}
+    .sig{border:1px solid #e3c9a8;background:#fffaf2;border-radius:12px;padding:12px 14px;margin:12px 0}.sig img{max-width:100%;border-radius:10px;margin-top:8px}
+    .petit{font-size:12.5px;color:#425E62}@media print{button{display:none}.sig{break-inside:avoid}}</style></head><body>
+    <p style="font-weight:800;color:#146B63;margin:0 0 4px">Cleaneroo</p><h1>${esc(tr("Constat d'arrivée"))}</h1><p class="petit">${esc(c.reference)}</p>
+    <table><tr><th>${esc(tr("Prestation"))}</th><td>${esc(tr(rubrique(c.rubrique_id)?.nom || ""))}</td></tr>
+      <tr><th>${esc(tr("Adresse"))}</th><td>${esc(c.adresse)}</td></tr><tr><th>${esc(tr("Client"))}</th><td>${esc(c.client)}</td></tr>
+      <tr><th>${esc(tr("Cleaneur"))}</th><td>${esc(c.cleaneur)}${c.siret ? ` · SIRET ${esc(c.siret)}` : ""}</td></tr>
+      <tr><th>${esc(tr("Arrivée enregistrée"))}</th><td>${esc(quand(c.arrivee))}</td></tr></table>
+    <p>${esc(tr("Constats faits par le Cleaneur à son arrivée, avant le début de l'intervention :"))}</p>
+    ${c.signalements.map((s, i) => `<div class="sig"><b>${i + 1}. ${esc(tr(TYPES_SIGNAL[s.type] || s.type))}</b> · <span class="petit">${esc(quand(s.le))}</span>
+      ${s.texte ? `<p style="margin:6px 0 0">${esc(s.texte)}</p>` : ""}${liens[i] ? `<img src="${esc(liens[i])}" alt="">` : ""}</div>`).join("")}
+    <p class="petit">${esc(tr("Document établi par Cleaneroo à partir des informations enregistrées dans l'application au moment du constat (heure du serveur, photos prises sur place). Il ne préjuge pas de la responsabilité de quiconque."))}</p>
+    <button onclick="print()">${esc(tr("Imprimer ou enregistrer en PDF"))}</button></body></html>`);
+  w.document.close();
 }

@@ -1,0 +1,4 @@
+-- Constat d'arrivée et supplément pour imprévu (12 novembre 2026) — appliqué (migrations « constat_arrivee », « supplement_imprevu »).
+-- constat_arrivee(reference, jeton) : document horodaté des signalements (assurance, plateformes de location).
+-- supplements : un par prestation, 15 à 60 min, prix = minutes x prix / durée prévue, au plus 25 % ; proposer_supplement (signalement requis),
+-- repondre_supplement (client), supplement_de, expirer_supplements (cron toutes les 5 min, 15 min pour répondre), stats_supplements (gestion).

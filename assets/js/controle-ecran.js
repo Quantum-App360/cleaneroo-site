@@ -6,6 +6,7 @@ import { blocLitige } from "./litiges.js";
 import { icone } from "./icones.js";
 import { traduire, tr, langue } from "./langue.js";
 import { piecesDe, pieceComplete } from "./controle.js";
+import { blocSupplementCleaneur } from "./supplement.js";
 import { controlesDe, enregistrerPieces, majPiece, deposerPhotoControle, lienPhotoControle, controleIA, signalerArrivee, signalementsDe } from "./donnees.js";
 import { chargeur } from "./commun.js";
 import { blocAvis } from "./avis.js";
@@ -65,6 +66,7 @@ export async function brancherControle(boite, m, surFin) {
       <button type="button" class="bouton" data-envoyer-signal style="margin-top:8px">${tr("Envoyer le signalement")}</button>
       <p class="erreur" data-erreur-signal></p></details>
     ${signalements}
+    <div data-supplement></div>
     <div class="controle-tete"><b>${tr("Contrôle pièce par pièce")}</b><span>${faites} / ${liste.length}</span></div>
     <div class="jauge"><i style="width:${Math.round(faites / liste.length * 100)}%"></i></div>
     <p class="petit" style="margin:6px 0 10px">${tr(avantExigee ? "Photos avant exigées par le client : pour chaque pièce, photo avant, tâches cochées, photo après au même endroit. L'IA compare les deux photos."
@@ -99,6 +101,7 @@ export async function brancherControle(boite, m, surFin) {
   // Signalement d'arrivée : type, texte, photo facultative.
   const photoSignal = boite.querySelector("[data-photo-signal]");
   photoSignal.onchange = () => { boite.querySelector("[data-nom-photo-signal]").textContent = photoSignal.files?.[0] ? "✓ " + tr("Photo ajoutée") : ""; };
+  blocSupplementCleaneur(boite.querySelector("[data-supplement]"), m, !!signalements);
   boite.querySelector("[data-envoyer-signal]").onclick = async e => {
     const texte = boite.querySelector("[data-texte-signal]").value.trim(), err = boite.querySelector("[data-erreur-signal]");
     if (texte.length < 3 && !photoSignal.files?.[0]) { err.textContent = tr("Décrivez le problème ou ajoutez une photo."); return; }

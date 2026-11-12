@@ -14,7 +14,8 @@ import { pageMessages } from "./messages.js";
 import { blocPropositionsClient } from "./propositions.js";
 import { blocConsommablesClient } from "./consommables.js";
 import { blocFavori } from "./favoris.js";
-import { blocModifier, boutonBon, brancherBons } from "./demande-actions.js";
+import { blocModifier, boutonBon, brancherBons, blocConstat } from "./demande-actions.js";
+import { blocSupplementClient } from "./supplement.js";
 import { CONDITIONS, CONFIDENTIALITE, MENTIONS, texteLegal } from "./legal.js";
 import { transitionVitre } from "./vitre.js";
 import { compterPage } from "./compteur.js";
@@ -500,6 +501,7 @@ async function pageDemande(ref, jeton) {
       <p class="petit">Annulation gratuite : aucun Cleaneur n'est encore confirmé.</p>` : ""}
     ${d.rubrique_id === "rental" && ["EN_COURS", "A_VALIDER", "TERMINEE"].includes(d.statut) ? `<div id="consommables-client"></div>` : ""}
     ${["A_VALIDER", "TERMINEE"].includes(d.statut) ? `<div id="favori-client" data-rubrique="${esc(d.rubrique_id)}"></div>` : ""}
+    ${["SUR_PLACE", "EN_COURS", "A_VALIDER", "TERMINEE", "ANNULEE"].includes(d.statut) ? `<div id="supplement-client"></div><div id="constat-arrivee"></div>` : ""}
     ${["EN_COURS", "A_VALIDER", "TERMINEE", "ANNULEE"].includes(d.statut) ? `<div id="compte-rendu-pieces"></div>` : ""}
   </div></section>`;
 }
@@ -593,6 +595,8 @@ async function afficherPage() {
     // Présence du Cleaneur à confirmer (sa position n'a pas pu confirmer l'arrivée).
     blocModifier(document.getElementById("modifier-demande"), demandeAffichee || {}, decodeURIComponent(ref || ""), decodeURIComponent(jeton || ""), () => afficher());
     brancherBons(document.getElementById("bon-client"));
+    blocSupplementClient(document.getElementById("supplement-client"), decodeURIComponent(ref || ""), decodeURIComponent(jeton || ""));
+    blocConstat(document.getElementById("constat-arrivee"), decodeURIComponent(ref || ""), decodeURIComponent(jeton || ""));
     const fav = document.getElementById("favori-client");
     if (fav) blocFavori(fav, decodeURIComponent(ref || ""), fav.dataset.rubrique);
     blocRemplacementClient(document.getElementById("remplacement-client"), decodeURIComponent(ref || ""), decodeURIComponent(jeton || ""));

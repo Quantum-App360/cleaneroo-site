@@ -171,6 +171,9 @@ export const REGLES = {
   // 8 € jusqu'à 30 km, 15 € jusqu'à 50 km, au-delà 0,30 €/km aller-retour, 60 € au plus.
   FRAIS_DEPLACEMENT: { inclusKm: 15, palier1Km: 30, palier1C: 800, palier2Km: 50, palier2C: 1500, parKmC: 30, maxC: 6000 },
   MISSION_TEST_C: 4000,
+  // Supplément pour imprévu (après un signalement à l'arrivée) : curseur de 15 à 60 min, au tarif de la prestation, au plus 25 % du prix,
+  // réponse du client sous 15 min (sinon refus). Copie de Regles.kt ; la base fait foi (proposer_supplement).
+  SUPPLEMENT_PAS_MIN: 15, SUPPLEMENT_MAX_MIN: 60, SUPPLEMENT_MAX_PCT: 25, SUPPLEMENT_REPONSE_MIN: 15,
   // Créneaux disponibles du Cleaneur (grille) et score de recommandation des missions (repris de Vincent).
   CRENEAUX_DEBUT_H: 6, CRENEAUX_FIN_H: 22,   // mission test rémunérée par Cleaneroo avant l'activation (base-dossier-complet.sql)
   RETARD_TOLERE_MIN: 30,   // retard annoncé toléré ; au-delà, le client peut annuler sans frais (base-retards.sql)
