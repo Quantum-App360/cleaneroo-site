@@ -309,7 +309,7 @@ function pageAccueil() {
       <div><h3>Le propre, à moitié prix.</h3><p>50 % de crédit d'impôt sur le ménage à domicile, déduit tout de suite avec l'avance immédiate.</p></div>
     </div>
   </div></section>
-  ${estPrelancement() ? `<section class="appel-2026"><div class="conteneur appel-grille"><div class="revele"><span class="pastille-lancement sombre"><i></i>J-${joursAvantLancement()}</span>
+  ${estPrelancement() && !profilMemorise() ? `<section class="appel-2026"><div class="conteneur appel-grille"><div class="revele"><span class="pastille-lancement sombre"><i></i>J-${joursAvantLancement()}</span>
       <h2>Prêts pour le 31 décembre ?</h2><p>Inscrivez-vous maintenant : les premiers inscrits sont prévenus en priorité.</p>
       <div class="boutons"><a class="bouton clair" href="#/estimer">Estimer mon prix</a></div></div>
       <div class="revele" id="inscription">${formulaireInscription()}</div></div></section>` : ""}`;
