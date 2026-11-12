@@ -127,7 +127,7 @@ export function ongletPro(p, biens) {
       const cals = (l.calendriers || []).filter(c => c.url);
       return `<div class="carte bien-pro" data-bien="${esc(l.id)}" data-texte="${esc(`${nomBien(l)} ${l.rue} ${l.codePostal} ${l.ville}`.toLowerCase())}">
         <div class="ligne-compte" style="padding:0;box-shadow:none;border:0;background:none">${icone("logement", { tuile: true })}
-          <div class="corps"><b>${esc(nomBien(l))}</b><div class="petit">${esc(l.rue)}, ${esc(l.codePostal)} ${esc(l.ville)}${l.surface ? `<span> · ${l.surface} m²</span>` : ""}${l.chambres != null ? `<span> · ${l.chambres} ch.</span>` : ""}</div>
+          <div class="corps"><b>${esc(nomBien(l))}</b><div class="petit">${esc(l.rue)}, ${esc(l.codePostal)} ${esc(l.ville)}${l.surface ? `<span> · ${l.surface} m²</span>` : ""}${l.chambres ? `<span> · ${l.chambres} ch.</span>` : ""}</div>
           <div class="pastilles">${cals.length ? cals.map(c => `<span class="pastille ${c.source}" data-etat-cal="${esc(c.url)}">${SOURCES.find(s => s[0] === c.source)?.[1] || ""}</span>`).join("") : `<span class="pastille vide">Aucun calendrier relié</span>`}</div></div></div>
         <details><summary>${cals.length ? tr("Modifier le nom et les calendriers") : tr("Relier un calendrier")}</summary>
           <form data-form-cal="${esc(l.id)}" novalidate style="margin-top:10px">

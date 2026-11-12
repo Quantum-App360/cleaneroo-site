@@ -397,7 +397,8 @@ function blocOffreCleaneurs() {
 function pageDevenir() {
   const etapes = ["Avoir un statut d'indépendant", "Préparer vos documents (pièce d'identité, SIRET, RC Pro, attestation de vigilance URSSAF)",
     "Pour la dératisation et la désinsectisation : Certibiocide « nuisibles » obligatoire",
-    "Déposer votre dossier (zone, prestations ; chaque document vérifié avant activation)", "Suivre la charte qualité",
+    "Déposer votre dossier (zone, prestations ; chaque document vérifié avant activation)", "Signer le contrat de prestataire et valider les formations de vos prestations",
+    "Réussir la mission test (rémunérée 40 €, payée par Cleaneroo)",
     "Choisir vos missions (prix et horaires proposés, libre d'accepter)", "Être payé (validation client → commission prélevée → versement)"];
   return `<section class="fond-cleaneroo" style="padding:40px 0 90px">${decor([[90, 20, 90], [4, 60, 60]], [])}
     <div class="conteneur"><h1>Devenir Cleaneur</h1><div class="trait-corail"></div><p>Travaillez à votre rythme, près de chez vous.</p>
@@ -413,7 +414,7 @@ function pageConfidentialite() {
   return pageTexte("Confidentialité", `
     <p>Cleaneroo collecte uniquement les informations nécessaires à votre demande de nettoyage : nom, coordonnées, adresse d'intervention, description du besoin, photos que vous ajoutez et créneau choisi.</p>
     <p>Ces informations servent à trouver un Cleaneur, à organiser l'intervention et à vous en rendre compte. Elles ne sont jamais vendues ni utilisées pour de la publicité. Les données sont hébergées dans l'Union européenne.</p>
-    <p>Le code d'accès à votre logement n'est communiqué qu'au Cleaneur retenu, le jour de l'intervention.</p>
+    <p>Le code d'accès, la photo de la boîte à clés et le guide d'accès de votre logement ne sont communiqués qu'au Cleaneur retenu, une fois la mission confirmée.</p>
     <p>Vous pouvez à tout moment demander l'accès, la correction ou la suppression de vos données en écrivant à <a href="mailto:contact@cleaneroo.fr">contact@cleaneroo.fr</a>. Les factures sont conservées le temps imposé par la loi.</p>
     <p>Pour aller plus vite à la commande suivante, votre navigateur garde sur cet appareil vos coordonnées, vos adresses enregistrées et votre dernière commande (jamais le code d'accès). Vous pouvez tout effacer depuis « Mes prestations ». Avec un compte, vos biens et vos demandes sont aussi gardés dans votre compte, hébergé dans l'Union européenne.</p>
     <p>Le site n'utilise ni traceur publicitaire ni cookie. Pour connaître sa fréquentation, il compte lui-même les pages vues, sans aucune donnée personnelle (ni adresse IP, ni identifiant) : seuls le nom de la page, le type d'appareil et le site d'origine sont comptés, dans notre base hébergée dans l'Union européenne.</p>

@@ -31,6 +31,7 @@ export function compteARebours(dateIso, maintenant = Date.now()) {
   if (min <= 0) return "";
   if (min < 60) return `${tr("dans")} ${min} min`;
   const h = Math.floor(min / 60), j = Math.floor(h / 24);
+  if (j >= 2) return `${tr("dans")} ${j} ${tr("jours")}`;
   if (j >= 1) return `${tr("dans")} ${j} ${tr("j")} ${h % 24} h`;
   return `${tr("dans")} ${h} h ${String(min % 60).padStart(2, "0")}`;
 }

@@ -1059,7 +1059,8 @@ body { background: var(--fond); }
 .entete .burger { color: var(--texte); display: none; place-items: center; }
 body.sans-defilement { overflow: hidden; }
 @media (max-width: 1080px) { .entete .nav a { padding: 9px 9px; font-size: 14.5px; } .lien-connexion { padding: 10px 8px; } .puce-compte .qui { display: none; } .puce-compte { padding: 4px; } }
-@media (max-width: 960px) {
+/* Menu replié jusqu’à 1280 px : au-dessous, téléphone et langue chevauchaient les liens (contrôle du 12 novembre 2026). */
+@media (max-width: 1280px) {
   .entete .burger { display: grid; margin-left: 2px; }
   .entete .nav, .actions-compte, .rappel-entete { display: none; }
   .entete.menu-ouvert .nav { display: flex; position: fixed; top: 68px; left: 0; right: 0; bottom: 0; margin: 0; flex-direction: column; align-items: stretch; gap: 4px;

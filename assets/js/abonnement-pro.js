@@ -18,7 +18,7 @@ export function blocAbonnementPro(p, biens) {
     <div class="tranches">${REGLES.ABONNEMENTS_PRO.map(t => {
       const prix = prixAbonnementProC(t, n), choisie = actuelle === t.id;
       return `<div class="tranche${t.id === conseillee?.id ? " conseillee" : ""}${choisie ? " actuelle" : ""}">
-        ${t.id === conseillee?.id ? `<span class="badge-formule">${tr("Conseillée pour vos")} ${biens.length} ${tr(biens.length > 1 ? "biens" : "bien")}</span>` : ""}
+        ${t.id === conseillee?.id ? `<span class="badge-formule">${biens.length > 1 ? `${tr("Conseillée pour vos")} ${biens.length} ${tr("biens")}` : tr("Conseillée pour votre bien")}</span>` : ""}
         <b class="nom-formule">${tr(NOMS[t.id])}</b>
         <span class="prix-formule">${t.parLogementC ? `${euros(t.parLogementC)} <small>${tr("HT par logement / mois")}</small>` : `${euros(t.prixC)} <small>${tr("HT / mois")}</small>`}</span>
         ${!t.parLogementC ? `<span class="petit">${tr("soit de")} ${euros(Math.round(t.prixC / t.max))} ${tr("à")} ${euros(Math.round(t.prixC / (REGLES.ABONNEMENTS_PRO[REGLES.ABONNEMENTS_PRO.indexOf(t) - 1]?.max + 1 || 1)))} ${tr("par logement")}</span>` : `<span class="petit">${tr("Sur devis au-delà de")} ${REGLES.ABONNEMENT_PRO_SUR_DEVIS_LOGEMENTS} ${tr("logements")}</span>`}
