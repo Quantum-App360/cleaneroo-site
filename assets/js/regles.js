@@ -159,6 +159,8 @@ export const REGLES = {
   AVIS_DELAI_JOURS: 14,
   TOLERANCE_RETARD_MIN: 30,
   RAYON_ARRIVEE_KM: 1.0,
+  // Société éditrice (mentions légales, documents) : à compléter dès l'immatriculation ; vide = « publiées avant l'ouverture ».
+  SOCIETE: { nom: "", adresse: "", siret: "", directeur: "" },
   CONNEXION_GOOGLE: true,    // fournisseur Google activé dans Supabase le 12 novembre 2026 (comme Regles.CONNEXION_GOOGLE)
   // Propositions des Cleaneurs (base-propositions.sql) : remise et hausse maximales, note minimale d'une hausse, propositions par demande.
   PROPOSITION_REMISE_MAX_PCT: 10,

@@ -1,0 +1,2 @@
+-- Signalement à l'arrivée (12 novembre 2026) — appliqué (migration « signalement_arrivee_notifie ») : en plus de l'enregistrement,
+-- le client reçoit tout de suite une notification « Votre Cleaneur signale un problème à l'arrivée » (type, texte, lien vers le suivi).

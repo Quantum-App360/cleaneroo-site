@@ -15,6 +15,7 @@ import { blocPropositionsClient } from "./propositions.js";
 import { blocConsommablesClient } from "./consommables.js";
 import { blocFavori } from "./favoris.js";
 import { blocModifier, boutonBon, brancherBons } from "./demande-actions.js";
+import { CONDITIONS, CONFIDENTIALITE, MENTIONS, texteLegal } from "./legal.js";
 import { transitionVitre } from "./vitre.js";
 import { compterPage } from "./compteur.js";
 import { suivreEnDirect, demoSuivi } from "./suivi-live.js";
@@ -410,30 +411,12 @@ function pageDevenir() {
 
 const pageTexte = (titre, html) => `<section class="bloc"><div class="etroit"><h1>${titre}</h1><div class="trait-corail"></div>${html}</div></section>`;
 
-function pageConfidentialite() {
-  return pageTexte("Confidentialité", `
-    <p>Cleaneroo collecte uniquement les informations nécessaires à votre demande de nettoyage : nom, coordonnées, adresse d'intervention, description du besoin, photos que vous ajoutez et créneau choisi.</p>
-    <p>Ces informations servent à trouver un Cleaneur, à organiser l'intervention et à vous en rendre compte. Elles ne sont jamais vendues ni utilisées pour de la publicité. Les données sont hébergées dans l'Union européenne.</p>
-    <p>Le code d'accès, la photo de la boîte à clés et le guide d'accès de votre logement ne sont communiqués qu'au Cleaneur retenu, une fois la mission confirmée.</p>
-    <p>Vous pouvez à tout moment demander l'accès, la correction ou la suppression de vos données en écrivant à <a href="mailto:contact@cleaneroo.fr">contact@cleaneroo.fr</a>. Les factures sont conservées le temps imposé par la loi.</p>
-    <p>Pour aller plus vite à la commande suivante, votre navigateur garde sur cet appareil vos coordonnées, vos adresses enregistrées et votre dernière commande (jamais le code d'accès). Vous pouvez tout effacer depuis « Mes prestations ». Avec un compte, vos biens et vos demandes sont aussi gardés dans votre compte, hébergé dans l'Union européenne.</p>
-    <p>Le site n'utilise ni traceur publicitaire ni cookie. Pour connaître sa fréquentation, il compte lui-même les pages vues, sans aucune donnée personnelle (ni adresse IP, ni identifiant) : seuls le nom de la page, le type d'appareil et le site d'origine sont comptés, dans notre base hébergée dans l'Union européenne.</p>
-    <p>Dans l'espace Cleaneur, la carte du périmètre d'intervention utilise OpenStreetMap, et la position de la commune est recherchée dans la Base Adresse Nationale (Géoplateforme de l'IGN) : seuls le code postal et la ville leur sont envoyés.</p>`);
-}
-function pageConditions() {
-  return pageTexte("Conditions d'utilisation", `
-    <p>Cleaneroo met en relation des clients et des Cleaneurs indépendants vérifiés. Rien n'est ajouté à votre commande sans votre accord ; vous n'êtes débité qu'après avoir validé le compte rendu de l'intervention.</p>
-    <p>Annulation gratuite jusqu'à 48 h avant l'intervention, puis 25 % du prix accepté. Un litige ou une déclaration de dommage (Garantie Cleaneroo) peut être ouvert dans les 48 h suivant l'intervention.</p>
-    <p>Le prix affiché est une estimation : le montant final ne peut pas la dépasser sans votre accord.</p>
-    <p><b>Cleaneurs :</b> deux formules au choix : Gratuit (sans abonnement, commission de ${REGLES.COMMISSION_GRATUIT_PB / 100} %) ou Pro (${euros(REGLES.ABONNEMENT_CLEANEUR_C)} par mois, commission de ${REGLES.COMMISSION_PRO_PB / 100} %). Les Cleaneurs inscrits jusqu'au 31 janvier 2027 ont la formule Pro offerte pendant ${REGLES.OFFRE_LANCEMENT_MOIS} mois, à partir de leur première mission. En cas d'impayé de l'abonnement Pro, ${REGLES.PREAVIS_BLOCAGE_JOURS} jours après la date de facturation prévue, le compte est bloqué et les missions réservées sont redistribuées.</p>`);
-}
-function pageMentions() {
-  return pageTexte("Mentions légales", `
-    <p><b>Éditeur :</b> Cleaneroo — [raison sociale, adresse et numéro SIRET à compléter].</p>
-    <p><b>Contact :</b> <a href="mailto:contact@cleaneroo.fr">contact@cleaneroo.fr</a></p>
-    <p><b>Hébergement :</b> GitHub Pages (GitHub, Inc.) ; données de réservation hébergées dans l'Union européenne.</p>
-    <p><b>Nom de domaine :</b> cleaneroo.fr, enregistré chez IONOS.</p>`);
-}
+/** Pages légales : textes de legal.js (site et appli identiques, 4 langues). */
+const pageLegale = (titre, liste, numeros = true) => pageTexte(titre, liste.map(([t, x], i) =>
+  `<h3 style="margin:22px 0 6px">${numeros ? `${i + 1}. ` : ""}${esc(tr(t))}</h3><p style="margin:0">${esc(texteLegal(x))}</p>`).join(""));
+function pageConfidentialite() { return pageLegale("Confidentialité", CONFIDENTIALITE); }
+function pageConditions() { return pageLegale("Conditions générales", CONDITIONS); }
+function pageMentions() { return pageLegale("Mentions légales", MENTIONS, false); }
 
 const STATUTS = { VERIFICATION: "En cours de vérification", PUBLIEE: "En ligne · candidatures", CONFIRMEE: "Confirmée", EN_ROUTE: "Cleaneur en route",
   SUR_PLACE: "Cleaneur sur place", EN_COURS: "En cours", A_VALIDER: "À valider", TERMINEE: "Terminée", ANNULEE: "Annulée" };
