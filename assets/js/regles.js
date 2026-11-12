@@ -159,6 +159,11 @@ export const REGLES = {
   AVIS_DELAI_JOURS: 14,
   TOLERANCE_RETARD_MIN: 30,
   RAYON_ARRIVEE_KM: 1.0,
+  // Propositions des Cleaneurs (base-propositions.sql) : remise et hausse maximales, note minimale d'une hausse, propositions par demande.
+  PROPOSITION_REMISE_MAX_PCT: 10,
+  PROPOSITION_HAUSSE_MAX_PCT: 50,
+  PROPOSITION_NOTE_MIN: 20,
+  PROPOSITIONS_MAX: 5,
   RETARD_TOLERE_MIN: 30,   // retard annoncé toléré ; au-delà, le client peut annuler sans frais (base-retards.sql)
   VITESSE_MOYENNE_KMH: 35,
   MARGE_TRAJET_MIN: 10,
@@ -315,6 +320,16 @@ export function niveauCleaneur({ missions = 0, note = 0, annulationPct = 0, aver
   if (annulationPct > REGLES.ANNULATION_MAX_NIVEAU_PCT) n--;
   if (avertissements > 0) n--;
   return Math.max(0, n);
+}
+
+/** Proposition d'un Cleaneur (copie de proposer en base) : "ok", "remise", "devis", "justification" ou "raison". */
+export function verifierProposition(estimationC, prixC, raison = "", note = "") {
+  if (prixC < Math.round(estimationC * (100 - REGLES.PROPOSITION_REMISE_MAX_PCT) / 100)) return "remise";
+  if (prixC > Math.round(estimationC * (100 + REGLES.PROPOSITION_HAUSSE_MAX_PCT) / 100)) return "devis";
+  const hausses = ["TEMPS", "ETAT", "ACCES", "MATERIEL", "AUTRE_HAUSSE"], remises = ["PROXIMITE", "LANCEMENT", "FIDELITE", "AUTRE_REMISE"];
+  if (prixC > estimationC && (!hausses.includes(raison) || note.trim().length < REGLES.PROPOSITION_NOTE_MIN)) return "justification";
+  if (prixC < estimationC && !remises.includes(raison)) return "raison";
+  return "ok";
 }
 
 export function dateVersement(d = new Date()) {

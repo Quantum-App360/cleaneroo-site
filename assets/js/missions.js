@@ -10,6 +10,7 @@ import { blocFormations } from "./formations.js";
 import { blocPeriodes } from "./periodes.js";
 import { blocNiveau } from "./niveaux.js";
 import { blocRetardCleaneur, brancherRetards } from "./retards.js";
+import { formulaireProposition, brancherPropositions } from "./propositions.js";
 import { preparationCleaneur } from "./espaces.js";
 import { icone } from "./icones.js";
 import { traduire, tr } from "./langue.js";
@@ -374,8 +375,10 @@ function carteDisponible(m) {
       ${m.urgence && m.prime_urgence_c ? `<p class="petit" style="margin:2px 0 0;color:var(--succes);font-weight:700">+ ${euros(m.prime_urgence_c)} de prime d'urgence</p>` : ""}
       <p class="muet" style="margin:2px 0 0">${quand(m)} · ${duree(m.duree_min)}${m.nombre_cleaneurs === 2 ? " · 2 Cleaneurs" : ""}</p>
       <p class="petit" style="margin:2px 0 0">${esc(m.code_postal)} ${esc(m.ville)}</p><p class="petit" data-note-client="${esc(m.reference)}" style="margin:2px 0 0"></p><p class="erreur" data-erreur-prendre style="margin:4px 0 0"></p></div>
-    <button type="button" class="bouton" data-prendre="${esc(m.reference)}">Prendre la mission</button></div>`;
+    ${m.choix_cleaneur === "directe" ? `<button type="button" class="bouton" data-prendre="${esc(m.reference)}">Prendre la mission</button>`
+      : formulaireProposition(m, mesPropositions.find(x => x.reference === m.reference))}</div>`;
 }
+let mesPropositions = [];
 
 const vide = (t, plus = "") => `<div class="vide-compte"><p class="muet">${t}</p>${plus ? `<p class="petit">${plus}</p>` : ""}</div>`;
 
@@ -404,6 +407,7 @@ export async function brancherMissions(vue, p) {
   styles();
   const [miennes, dispo, geo, selfie, avert] = await Promise.all([mesMissions().catch(() => []), missionsDisponibles().catch(() => []), etatGeoloc(),
     selfieDuJour().catch(() => "aucun"), p.role === "admin" ? null : mesAvertissements().catch(() => null)]);
+  mesPropositions = await supabase.rpc("mes_propositions").then(r => r.data || []).catch(() => []);
   const [penalites, docs, tableau] = await Promise.all([p.role === "admin" ? null : mesPenalites().catch(() => null),
     mesDocuments().catch(() => []), tableauCleaneur().catch(() => null)]);
   if (!document.body.contains(boite)) return;
@@ -441,6 +445,7 @@ export async function brancherMissions(vue, p) {
   remplirNotesClients(boite);
   if (p.role === "admin") { blocSelfiesAdmin(boite.querySelector("#selfies-admin")); blocAvertissementsAdmin(boite.querySelector("#avertissements-admin")); }
   brancherRetards(boite);
+  brancherPropositions(boite, () => brancherMissions(vue, p));
   majTemps(boite);
   clearInterval(minuterieFrise);
   minuterieFrise = setInterval(() => { if (!boite.isConnected) return clearInterval(minuterieFrise); majTemps(boite); }, 60000);
@@ -467,7 +472,8 @@ export async function brancherMissions(vue, p) {
       deja_prise: "Un autre Cleaneur a pris cette mission juste avant vous.", ouverture: "Les missions commencent le 1er janvier 2027.",
       dossier: "Votre dossier doit être validé pour prendre des missions.", formule: "Cette mission est réservée aux Cleaneurs Pro pendant ses 30 premières minutes.",
       qualification: "Validez d'abord la formation demandée pour cette prestation (Mes formations).",
-      fermee: "Cette mission tombe pendant une de vos périodes fermées." }[r] || "Le service est momentanément indisponible. Réessayez dans quelques minutes.");
+      fermee: "Cette mission tombe pendant une de vos périodes fermées.",
+      candidature: "Le client choisit parmi les propositions : proposez vos conditions." }[r] || "Le service est momentanément indisponible. Réessayez dans quelques minutes.");
   });
   // Contrôle pièce par pièce : « J'ai terminé » reste grisé tant qu'une pièce n'est pas complète.
   boite.querySelectorAll("[data-controle]").forEach(c => {
