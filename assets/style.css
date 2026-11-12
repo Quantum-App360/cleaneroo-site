@@ -1832,3 +1832,12 @@ body.avec-decor main, body.avec-decor #vue, body.avec-decor footer { position: r
 .nav-gestion a { white-space: nowrap; }
 .nav-gestion .retour-site { font-weight: 700; color: var(--primaire); }
 @media (max-width: 560px) { .nav-gestion { font-size: 13.5px; gap: 0 12px !important; justify-content: flex-end; max-width: 62%; } .nav-gestion a { padding: 3px 0 !important; min-height: 0 !important; } }
+
+/* Bloc « Prêts pour le 31 décembre ? » : le formulaire d'inscription garde des textes foncés sur sa carte blanche (12 novembre 2026). */
+.appel-2026 .carte { color: var(--texte); }
+.appel-2026 .carte h3 { color: var(--texte); }
+.appel-2026 .carte p, .appel-2026 .carte .muet { color: var(--texte2); }
+.appel-2026 .carte .petit { color: var(--texte3); }
+.appel-2026 .carte .erreur { color: var(--erreur); }
+.appel-2026 .carte label, .appel-2026 .carte button:not(.bouton):not(.choisi), .appel-2026 .carte .case { color: var(--texte); }
+.appel-2026 .carte a:not(.bouton) { color: var(--primaire); }
