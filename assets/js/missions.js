@@ -5,6 +5,7 @@ import { rubrique } from "./catalogue.js";
 import { REGLES, euros, dateLongue, heure, duree, finOffreLancement, indemniteAccesC, dateVersement } from "./regles.js";
 import { supabase } from "./donnees.js";
 import { blocNoterClients, remplirNotesClients } from "./avis-clients.js";
+import { blocFormations } from "./formations.js";
 import { preparationCleaneur } from "./espaces.js";
 import { icone } from "./icones.js";
 import { traduire, tr } from "./langue.js";
@@ -420,13 +421,15 @@ export async function brancherMissions(vue, p) {
     <h2 class="titre-section">${icone("calendrier", { tuile: true })}Mes prochaines missions</h2>
     ${plusTard.length ? plusTard.map(carteMission).join("") : vide("Aucune mission pour l'instant.", "Prenez une mission ci-dessous : elle est à vous dès que vous la prenez.")}
     <div id="noter-clients"></div>
+    <div id="formations-cleaneur"></div>
     <h2 class="titre-section" id="missions-disponibles">${icone("position", { tuile: true })}Missions disponibles</h2>
-    <p class="petit" style="margin-top:0">Missions en ligne pour les prestations que vous proposez. Le premier Cleaneur qui la prend l'obtient.</p>
+    <p class="petit" style="margin-top:0">Missions en ligne pour les prestations que vous proposez et pour lesquelles vous êtes formé. Le premier Cleaneur qui la prend l'obtient.</p>
     ${dispo.length ? dispo.map(carteDisponible).join("") : vide("Aucune mission disponible pour l'instant.", p.dossier === "VALIDE" || p.role === "admin" ? "" : "Votre dossier doit être validé pour voir et prendre des missions.")}
     ${p.role === "admin" ? `<div id="selfies-admin" class="selfies-admin"></div><div id="avertissements-admin"></div>` : ""}`;
   traduire(boite);
   brancherTableau(boite, miennes, () => brancherMissions(vue, p));
   blocNoterClients(boite.querySelector("#noter-clients"));
+  if (p.role !== "admin") blocFormations(boite.querySelector("#formations-cleaneur"));
   remplirNotesClients(boite);
   if (p.role === "admin") { blocSelfiesAdmin(boite.querySelector("#selfies-admin")); blocAvertissementsAdmin(boite.querySelector("#avertissements-admin")); }
   majTemps(boite);
@@ -453,7 +456,8 @@ export async function brancherMissions(vue, p) {
     b.disabled = false;
     b.closest(".carte").querySelector("[data-erreur-prendre]").textContent = tr({
       deja_prise: "Un autre Cleaneur a pris cette mission juste avant vous.", ouverture: "Les missions commencent le 1er janvier 2027.",
-      dossier: "Votre dossier doit être validé pour prendre des missions.", formule: "Cette mission est réservée aux Cleaneurs Pro pendant ses 30 premières minutes." }[r] || "Le service est momentanément indisponible. Réessayez dans quelques minutes.");
+      dossier: "Votre dossier doit être validé pour prendre des missions.", formule: "Cette mission est réservée aux Cleaneurs Pro pendant ses 30 premières minutes.",
+      qualification: "Validez d'abord la formation demandée pour cette prestation (Mes formations)." }[r] || "Le service est momentanément indisponible. Réessayez dans quelques minutes.");
   });
   // Contrôle pièce par pièce : « J'ai terminé » reste grisé tant qu'une pièce n'est pas complète.
   boite.querySelectorAll("[data-controle]").forEach(c => {

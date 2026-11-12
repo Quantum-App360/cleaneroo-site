@@ -1,0 +1,1252 @@
+[
+ {
+  "id": "socle",
+  "categorie": "obligatoire",
+  "externe": false,
+  "titre": "Socle Cleaneroo",
+  "resume": "La charte qualité, la sécurité des produits, les photos de preuve et la relation client. Indispensable avant toute mission.",
+  "gestes": [
+   "Travailler du haut vers le bas, du plus propre vers le plus sale, du sec vers l’humide.",
+   "Garder un code couleur constant pour les microfibres (une couleur réservée aux WC, jamais ailleurs).",
+   "Photos avant / après sous le même angle, pièce par pièce.",
+   "Prévenir le client et obtenir son accord avant tout dépassement de temps ou supplément.",
+   "Laisser les lieux comme on les a trouvés : objets remis en place, fenêtres refermées, clés rendues."
+  ],
+  "produits": [
+   "Lire l’étiquette et la fiche de données de sécurité (FDS) avant d’utiliser un produit inconnu.",
+   "Ne jamais mélanger deux produits : javel + acide (vinaigre, détartrant) dégage du chlore, javel + ammoniaque des chloramines.",
+   "Respecter le dosage : plus de produit ne nettoie pas mieux, cela laisse des traces et abîme les surfaces.",
+   "Ne jamais transvaser un produit dans une bouteille alimentaire."
+  ],
+  "securite": [
+   "Gants nitrile pour les produits ménagers, lunettes pour les dégraissants et détartrants forts.",
+   "Aérer pendant et après l’utilisation de produits.",
+   "Gestes et postures : plier les jambes, éviter les torsions, utiliser un manche télescopique."
+  ],
+  "documents": [],
+  "quiz": [
+   {
+    "q": "Vous avez versé de la javel dans un WC déjà traité au gel détartrant, et une odeur piquante apparaît. Que faites-vous ?",
+    "options": [
+     "Je tire la chasse et je continue",
+     "J’aère, je quitte la pièce et je préviens le client",
+     "J’ajoute de l’eau chaude pour diluer",
+     "Je mets un masque en tissu et je continue"
+    ],
+    "bonne": 1,
+    "explication": "Javel + acide dégage du chlore gazeux, toxique : on aère et on s’éloigne. Ne jamais mélanger les produits."
+   },
+   {
+    "q": "Le pictogramme montrant une main et une surface rongées par un liquide signifie :",
+    "options": [
+     "Produit inflammable",
+     "Produit corrosif : gants et lunettes obligatoires",
+     "Produit dangereux uniquement pour l’environnement",
+     "Produit légèrement irritant"
+    ],
+    "bonne": 1,
+    "explication": "C’est le pictogramme « corrosion » (SGH05) : protection des mains et des yeux."
+   },
+   {
+    "q": "Dans une pièce, quel est le bon ordre de travail ?",
+    "options": [
+     "Sols, puis meubles, puis hauteurs",
+     "Hauteurs, meubles, sanitaires, puis sols en reculant vers la sortie",
+     "Sanitaires d’abord, puis le reste dans n’importe quel ordre",
+     "Peu importe si le résultat est propre"
+    ],
+    "bonne": 1,
+    "explication": "Du haut vers le bas, du propre vers le sale, en terminant par les sols vers la sortie."
+   },
+   {
+    "q": "Sur place, le client vous demande aussi de nettoyer le four, non commandé. Que faites-vous ?",
+    "options": [
+     "Je le fais gratuitement",
+     "Je le fais et je l’ajoute à la facture",
+     "Je propose l’ajout dans l’app : il n’est réalisé qu’après son accord sur le nouveau prix",
+     "Je refuse catégoriquement"
+    ],
+    "bonne": 2,
+    "explication": "Aucun supplément sans accord explicite du client, enregistré dans l’app."
+   },
+   {
+    "q": "Vous cassez un vase pendant l’intervention.",
+    "options": [
+     "Je le jette discrètement",
+     "Je le signale tout de suite au client et dans l’app, photo à l’appui",
+     "Je le recolle",
+     "J’attends que le client s’en aperçoive"
+    ],
+    "bonne": 1,
+    "explication": "Tout dommage se déclare immédiatement : c’est ce qui permet la prise en charge par l’assurance."
+   }
+  ]
+ },
+ {
+  "id": "domicile",
+  "categorie": "prestations",
+  "externe": false,
+  "titre": "Entretien du domicile",
+  "resume": "Ménage complet d’un logement : méthode, ordre des pièces, matériaux fragiles.",
+  "gestes": [
+   "Commencer par les chambres et pièces de vie, finir par la cuisine puis les sanitaires.",
+   "Dépoussiérer et aspirer avant de laver les sols ; laver les sols en reculant vers la sortie.",
+   "Microfibre légèrement humide pour les surfaces, sèche pour lustrer.",
+   "Respecter le rangement du client ; ne pas déplacer d’objets fragiles sans accord."
+  ],
+  "produits": [
+   "Nettoyant multi-usage neutre pour la plupart des surfaces.",
+   "Détartrant (ou vinaigre blanc) pour la robinetterie et les parois — jamais sur le marbre ni la pierre calcaire.",
+   "Dégraissant pour la cuisine, produit vitres ou eau + liquide vaisselle pour les miroirs.",
+   "Parquet vitrifié : serpillière bien essorée ; parquet huilé ou ciré : produit dédié, très peu d’eau."
+  ],
+  "securite": [
+   "Escabeau stable pour les hauteurs : jamais de chaise ni de meuble.",
+   "Débrancher les appareils avant de nettoyer four, hotte ou micro-ondes."
+  ],
+  "documents": [],
+  "quiz": [
+   {
+    "q": "Quelle règle pour les microfibres ?",
+    "options": [
+     "Une seule microfibre pour tout le logement",
+     "Une couleur par zone (sanitaires, cuisine, pièces de vie) pour éviter les contaminations",
+     "Les laver une fois par semaine seulement",
+     "Les imbiber de javel pure"
+    ],
+    "bonne": 1,
+    "explication": "Le code couleur évite de transporter les germes des sanitaires vers la cuisine."
+   },
+   {
+    "q": "Comment entretenir un parquet huilé ?",
+    "options": [
+     "Seau d’eau abondant et détergent",
+     "Serpillière bien essorée, savon adapté au bois, jamais d’eau stagnante",
+     "Nettoyeur vapeur",
+     "Javel diluée"
+    ],
+    "bonne": 1,
+    "explication": "L’eau en excès fait gonfler le bois ; la vapeur et la javel abîment la finition."
+   },
+   {
+    "q": "Sur un plan de travail en marbre, quel produit faut-il éviter ?",
+    "options": [
+     "Le savon neutre",
+     "Le vinaigre et les produits acides",
+     "L’eau tiède",
+     "La microfibre sèche"
+    ],
+    "bonne": 1,
+    "explication": "Les acides attaquent le calcaire du marbre et le ternissent définitivement."
+   },
+   {
+    "q": "Une plaque vitrocéramique présente des résidus brûlés.",
+    "options": [
+     "Éponge grattoir verte",
+     "Grattoir à lame spécial vitrocéramique tenu à plat, puis produit adapté",
+     "Laine d’acier",
+     "Couteau de cuisine"
+    ],
+    "bonne": 1,
+    "explication": "Les abrasifs rayent le verre ; le grattoir à plat retire les résidus sans dommage."
+   },
+   {
+    "q": "Vous trouvez de l’argent liquide sous un coussin.",
+    "options": [
+     "Je le laisse en place et je le signale au client via l’app",
+     "Je le garde pour le rendre plus tard",
+     "Je le range dans un tiroir",
+     "Je n’en parle pas"
+    ],
+    "bonne": 0,
+    "explication": "On ne déplace jamais un objet de valeur : on le laisse et on le signale."
+   }
+  ]
+ },
+ {
+  "id": "location",
+  "categorie": "prestations",
+  "externe": false,
+  "titre": "Rotation location courte durée",
+  "resume": "Préparer un logement entre deux voyageurs : check-list, linge, inventaire, consommables, preuves pour l’hôte.",
+  "gestes": [
+   "Suivre la check-list du logement, pièce par pièce, et valider chaque étape en photo.",
+   "Changer tout le linge (draps, housses, serviettes) et faire les lits selon la photo de référence.",
+   "Contrôler l’inventaire et signaler immédiatement toute casse ou tout objet manquant.",
+   "Vérifier les consommables et refermer la réserve sous scellé numéroté."
+  ],
+  "produits": [
+   "Désinfectant pour les points de contact : poignées, interrupteurs, télécommandes.",
+   "Produit vitres pour les baies et miroirs, détartrant pour les sanitaires."
+  ],
+  "securite": [
+   "Ne jamais emporter de consommables : ils restent sur place.",
+   "Respecter la fenêtre entre départ et arrivée : prévenir tôt en cas de retard."
+  ],
+  "documents": [],
+  "quiz": [
+   {
+    "q": "Entre deux voyageurs, le linge de lit doit :",
+    "options": [
+     "Être secoué s’il semble propre",
+     "Être systématiquement remplacé, même s’il semble propre",
+     "Être changé une fois sur deux",
+     "Être aéré sur le balcon"
+    ],
+    "bonne": 1,
+    "explication": "Chaque voyageur doit trouver un linge propre : c’est une exigence d’hygiène et d’avis."
+   },
+   {
+    "q": "Vous constatez une tache sur le canapé et une ampoule grillée.",
+    "options": [
+     "Je ne dis rien, ce n’est pas mon rôle",
+     "Je photographie et je signale l’anomalie dans l’app avant de partir",
+     "Je remplace l’ampoule et je facture l’hôte",
+     "Je retourne le coussin"
+    ],
+    "bonne": 1,
+    "explication": "Le signalement protège l’hôte et vous : il distingue l’état trouvé de votre travail."
+   },
+   {
+    "q": "Le voyageur suivant arrive à 15 h et vous avez du retard.",
+    "options": [
+     "Je finis tranquillement",
+     "Je préviens l’hôte via l’app et je priorise chambres, salle de bains et cuisine",
+     "Je laisse la clé et je pars",
+     "Je saute la salle de bains"
+    ],
+    "bonne": 1,
+    "explication": "Prévenir tôt permet à l’hôte d’informer son voyageur ; les pièces clés passent en premier."
+   },
+   {
+    "q": "Il manque du papier toilette et du café.",
+    "options": [
+     "J’en achète et je facture",
+     "Je complète depuis la réserve de l’hôte et je signale l’écart de stock",
+     "Je ne fais rien",
+     "J’en prends dans un autre logement"
+    ],
+    "bonne": 1,
+    "explication": "On utilise la réserve prévue et on trace l’écart : jamais d’achat sans accord."
+   },
+   {
+    "q": "Les photos de fin d’intervention doivent montrer :",
+    "options": [
+     "Uniquement la porte d’entrée",
+     "Chaque pièce, sous l’angle de la photo de référence de l’hôte, lumière allumée",
+     "Seulement ce qui a été difficile",
+     "Un selfie devant le logement"
+    ],
+    "bonne": 1,
+    "explication": "Des photos comparables à la référence permettent une validation rapide et sans litige."
+   }
+  ]
+ },
+ {
+  "id": "vitres",
+  "categorie": "prestations",
+  "externe": false,
+  "titre": "Vitres et surfaces vitrées",
+  "resume": "Vitres sans traces : mouilleur, raclette, finitions, cas particuliers (vitrines, verres traités).",
+  "gestes": [
+   "Mouiller au mouilleur, racler en « S » ou par bandes, essuyer les bords à la microfibre.",
+   "Essuyer la lame de la raclette après chaque passage.",
+   "Éviter le plein soleil : l’eau sèche trop vite et laisse des traces.",
+   "Nettoyer encadrements et rebords en dernier."
+  ],
+  "produits": [
+   "Eau tiède + quelques gouttes de liquide vaisselle : la solution des pros.",
+   "Eau pure (déminéralisée) pour la perche télescopique, sans produit.",
+   "Grattoir uniquement sur verre standard mouillé, jamais sur verre traité ou film."
+  ],
+  "securite": [
+   "Pas de travail penché à l’extérieur d’une fenêtre en étage.",
+   "Au-delà de ce qui est accessible depuis le sol ou un escabeau : qualification « Travail en hauteur »."
+  ],
+  "documents": [],
+  "quiz": [
+   {
+    "q": "Des vitres sont en plein soleil.",
+    "options": [
+     "C’est idéal, elles sèchent vite",
+     "À éviter : le séchage trop rapide laisse des traces ; commencer par la façade à l’ombre",
+     "Mettre plus de produit",
+     "Utiliser de l’eau bouillante"
+    ],
+    "bonne": 1,
+    "explication": "Le soleil fait sécher le produit avant le raclage : traces assurées."
+   },
+   {
+    "q": "La bonne technique à la raclette :",
+    "options": [
+     "Mouiller, racler par bandes en essuyant la lame à chaque passage, finir par les bords",
+     "Racler à sec",
+     "Frotter au papier journal uniquement",
+     "Racler du bas vers le haut sans essuyer la lame"
+    ],
+    "bonne": 0,
+    "explication": "Une lame essuyée à chaque passage évite de redéposer de l’eau sale."
+   },
+   {
+    "q": "Une vitre a un film de protection ou un traitement anti-reflet.",
+    "options": [
+     "Grattoir à lame partout",
+     "Ni lame ni abrasif : microfibre et produit doux, et vérification avec le client",
+     "Vinaigre pur",
+     "Laine d’acier fine"
+    ],
+    "bonne": 1,
+    "explication": "Les vitrages traités se rayent ou perdent leur traitement au contact d’une lame."
+   },
+   {
+    "q": "Du calcaire couvre une paroi de douche vitrée.",
+    "options": [
+     "Javel",
+     "Détartrant acide adapté, temps de pose, rinçage, puis raclette",
+     "Poudre à récurer",
+     "Gratter au couteau"
+    ],
+    "bonne": 1,
+    "explication": "Le calcaire se dissout à l’acide ; la javel ne l’enlève pas et les abrasifs rayent."
+   },
+   {
+    "q": "Une vitre est à 4 m, accessible seulement avec une échelle sur un sol en pente.",
+    "options": [
+     "J’improvise avec une chaise",
+     "Je ne monte pas : je signale ; il faut un équipement adapté et une formation au travail en hauteur",
+     "Je cale l’échelle avec des livres",
+     "Je demande au client de tenir l’échelle"
+    ],
+    "bonne": 1,
+    "explication": "Le travail en hauteur exige un équipement sûr et une formation attestée : jamais d’improvisation."
+   }
+  ]
+ },
+ {
+  "id": "hauteur",
+  "categorie": "attestation",
+  "externe": true,
+  "titre": "Travail en hauteur",
+  "resume": "Toute intervention qui ne se fait pas de plain-pied (vitres hautes, verrières, hauteurs au-delà de l’escabeau) exige une formation attestée, pas un simple quiz.",
+  "gestes": [
+   "Privilégier la perche depuis le sol plutôt que l’échelle.",
+   "Escabeau : 3 points d’appui, jamais sur la dernière marche.",
+   "Baliser la zone au sol si des personnes circulent."
+  ],
+  "produits": [
+   "Perche à eau pure et brosse adaptée ; pas de produit en hauteur (coulures, glissades)."
+  ],
+  "securite": [
+   "Nacelle : CACES R486 en cours de validité (5 ans) et autorisation de conduite.",
+   "Travail sur cordes : CQP Cordiste ; non proposé par Cleaneroo.",
+   "Toiture : hors prestation Cleaneroo."
+  ],
+  "documents": [
+   "Attestation de formation « Travail en hauteur et port du harnais » délivrée par un organisme de formation",
+   "CACES R486 en cours de validité si vous utilisez une nacelle",
+   "Attestation d’aptitude médicale au travail en hauteur"
+  ],
+  "quiz": []
+ },
+ {
+  "id": "remise-etat",
+  "categorie": "prestations",
+  "externe": false,
+  "titre": "Remise en état et fin de chantier",
+  "resume": "Poussières fines, laitance, traces de peinture et de plâtre : méthode, produits et limites.",
+  "gestes": [
+   "Aspirer avant de laver : aspirateur à filtre HEPA pour les poussières fines.",
+   "Dépoussiérer de haut en bas plusieurs fois : la poussière de chantier redescend.",
+   "Retirer les films et étiquettes, gratter les traces de plâtre à sec puis humidifier.",
+   "Faire un premier passage pour dégrossir, un second pour finir."
+  ],
+  "produits": [
+   "Nettoyant acide dilué pour la laitance de ciment sur carrelage — jamais sur pierre calcaire, marbre ou béton ciré.",
+   "Décolle-étiquettes et grattoir adaptés, sans rayer.",
+   "Nettoyant neutre pour la finition."
+  ],
+  "securite": [
+   "Masque FFP2 (FFP3 en cas de forte poussière), lunettes, gants.",
+   "STOP : en cas de doute sur de l’amiante (dalles anciennes, flocages, plaques fibreuses), ne pas toucher et prévenir Cleaneroo.",
+   "Ne pas intervenir tant que des artisans travaillent encore dans la pièce."
+  ],
+  "documents": [],
+  "quiz": [
+   {
+    "q": "Que faire d’une fine poussière de plâtre après travaux ?",
+    "options": [
+     "Balai classique",
+     "Aspirateur à filtre HEPA, puis lavage humide du haut vers le bas",
+     "Soufflette",
+     "Lavage à grande eau directement"
+    ],
+    "bonne": 1,
+    "explication": "Le balai et la soufflette remettent la poussière en suspension ; le filtre HEPA la retient."
+   },
+   {
+    "q": "Des traces de ciment marquent un carrelage neuf.",
+    "options": [
+     "Javel",
+     "Nettoyant acide « fin de chantier » dilué, testé sur une zone cachée, puis rinçage",
+     "Grattoir métallique",
+     "Ponceuse"
+    ],
+    "bonne": 1,
+    "explication": "L’acide dissout le voile de ciment ; le test évite d’abîmer les joints ou l’émail."
+   },
+   {
+    "q": "Des taches de peinture sont sur une vitre (non traitée).",
+    "options": [
+     "Lame de rasoir sur vitre mouillée, tenue à plat, sans rayer",
+     "Diluant versé sur le joint",
+     "Laine d’acier",
+     "On les laisse"
+    ],
+    "bonne": 0,
+    "explication": "La lame à plat sur verre mouillé retire la peinture sans rayer."
+   },
+   {
+    "q": "Vous découvrez des matériaux dégradés pouvant contenir de l’amiante.",
+    "options": [
+     "Je nettoie avec précaution",
+     "J’arrête, je ne touche à rien, je préviens le client et Cleaneroo",
+     "Je les mets à la poubelle",
+     "J’aspire avec un aspirateur domestique"
+    ],
+    "bonne": 1,
+    "explication": "L’amiante relève d’entreprises certifiées : on n’intervient pas."
+   },
+   {
+    "q": "Des gravats et déchets de chantier restent sur place.",
+    "options": [
+     "Je les emporte dans ma voiture",
+     "Évacuation hors prestation sauf accord : je signale le volume au client",
+     "Je les jette dans le conteneur de la copropriété",
+     "Je les cache au garage"
+    ],
+    "bonne": 1,
+    "explication": "L’évacuation des déchets de chantier n’est pas incluse et suit des filières spécifiques."
+   }
+  ]
+ },
+ {
+  "id": "cuisine-pro",
+  "categorie": "prestations",
+  "externe": false,
+  "titre": "Cuisines professionnelles et dégraissage",
+  "resume": "Dégraisser et désinfecter une cuisine de restaurant : plan de nettoyage, produits contact alimentaire, sécurité.",
+  "gestes": [
+   "Protéger ou retirer les denrées ; ne jamais nettoyer pendant le service.",
+   "Nettoyer puis désinfecter : ce sont deux étapes distinctes.",
+   "Appliquer le dégraissant, respecter le temps de contact, frotter, rincer.",
+   "Filtres de hotte : trempage dans un bac de dégraissant, puis rinçage.",
+   "Remplir la fiche de traçabilité si elle est demandée."
+  ],
+  "produits": [
+   "Dégraissant alcalin professionnel (dilution selon la fiche technique).",
+   "Désinfectant agréé contact alimentaire, avec rinçage si l’étiquette l’exige.",
+   "Jamais de javel sur l’inox chaud ni en mélange."
+  ],
+  "securite": [
+   "Lunettes et gants : les dégraissants alcalins sont corrosifs.",
+   "Équipements froids et débranchés avant nettoyage.",
+   "Hors prestation : conduits d’extraction et bacs à graisse (entreprises certifiées)."
+  ],
+  "documents": [],
+  "quiz": [
+   {
+    "q": "Comment dégraisser une hotte de cuisine professionnelle ?",
+    "options": [
+     "Filtres démontés, trempés dans un dégraissant alcalin adapté, rincés ; conduits d’extraction exclus",
+     "Javel sur les filtres",
+     "Nettoyage du conduit d’extraction",
+     "Brûler la graisse"
+    ],
+    "bonne": 0,
+    "explication": "Les conduits relèvent d’entreprises spécialisées ; les filtres se dégraissent par trempage."
+   },
+   {
+    "q": "Avant d’utiliser un produit sur une surface en contact avec les aliments :",
+    "options": [
+     "N’importe quel désinfectant convient",
+     "Je vérifie qu’il est autorisé au contact alimentaire et je respecte le rinçage indiqué",
+     "Javel pure sans rinçage",
+     "Un parfum d’ambiance"
+    ],
+    "bonne": 1,
+    "explication": "Seuls les produits autorisés au contact alimentaire, rincés selon la notice, sont admis."
+   },
+   {
+    "q": "Le bon enchaînement nettoyage-désinfection :",
+    "options": [
+     "Désinfecter puis nettoyer",
+     "Nettoyer, rincer, désinfecter en respectant le temps de contact, rincer si nécessaire",
+     "Mélanger détergent et désinfectant",
+     "Seulement désinfecter"
+    ],
+    "bonne": 1,
+    "explication": "Un désinfectant est inefficace sur une surface encore sale."
+   },
+   {
+    "q": "Une friteuse est encore chaude.",
+    "options": [
+     "Je la vide et je la nettoie tout de suite",
+     "J’attends le refroidissement complet, appareil débranché",
+     "J’ajoute de l’eau froide",
+     "Je la nettoie en marche"
+    ],
+    "bonne": 1,
+    "explication": "Huile chaude + eau = projections et brûlures graves."
+   },
+   {
+    "q": "Le sol de la cuisine est gras.",
+    "options": [
+     "Serpillière et eau claire",
+     "Dégraissant adapté, brossage, raclage vers le siphon, rinçage, panneau sol glissant",
+     "Cire",
+     "Javel pure"
+    ],
+    "bonne": 1,
+    "explication": "Le gras se retire chimiquement et mécaniquement ; le balisage évite les chutes."
+   }
+  ]
+ },
+ {
+  "id": "haccp",
+  "categorie": "attestation",
+  "externe": true,
+  "titre": "Hygiène alimentaire (HACCP)",
+  "resume": "Attestation de formation à l’hygiène alimentaire (méthode HACCP) délivrée par un organisme de formation. À téléverser ; elle est vérifiée par Cleaneroo.",
+  "gestes": [
+   "Comprendre les dangers (biologiques, chimiques, physiques) et les contaminations croisées.",
+   "Respecter la marche en avant et les zones propres / sales."
+  ],
+  "produits": [
+   "Produits agréés contact alimentaire uniquement sur les surfaces en contact avec les denrées."
+  ],
+  "securite": [
+   "Tenue propre, cheveux attachés, mains lavées avant et après."
+  ],
+  "documents": [],
+  "quiz": []
+ },
+ {
+  "id": "auto",
+  "categorie": "prestations",
+  "externe": false,
+  "titre": "Nettoyage automobile",
+  "resume": "Intérieur et extérieur à la main : méthode, produits par matériau, sécurité du conducteur.",
+  "gestes": [
+   "Intérieur : vider, aspirer de haut en bas, plastiques, vitres, tapis en dernier.",
+   "Lavage à la main avec la méthode des deux seaux (un savonneux, un de rinçage).",
+   "Jantes en premier avec leur propre éponge ; jamais en plein soleil."
+  ],
+  "produits": [
+   "Nettoyant plastiques sans silicone gras sur le volant, les pédales et le tapis conducteur.",
+   "Cuir : nettoyant pH neutre puis lait nourrissant.",
+   "Tissus : shampoing en injection-extraction, peu mouillé."
+  ],
+  "securite": [
+   "Ne jamais laisser de produit glissant sur le volant, le levier ou les pédales.",
+   "Moteur arrêté, clé remise au client en main propre."
+  ],
+  "documents": [],
+  "quiz": [
+   {
+    "q": "Avec un nettoyeur haute pression sur la carrosserie :",
+    "options": [
+     "Buse collée à la carrosserie",
+     "Distance d’environ 30 cm, jamais de jet direct sur les joints ou les autocollants",
+     "Eau bouillante",
+     "Brosse métallique"
+    ],
+    "bonne": 1,
+    "explication": "Trop près, le jet arrache vernis, joints et adhésifs."
+   },
+   {
+    "q": "La méthode des deux seaux sert à :",
+    "options": [
+     "Rincer le gant dans un seau d’eau claire et éviter les rayures",
+     "Avoir deux fois plus de savon",
+     "Laver les jantes uniquement",
+     "Rien, c’est inutile"
+    ],
+    "bonne": 0,
+    "explication": "On rince le gant avant de le replonger dans le savon : les particules ne rayent pas la peinture."
+   },
+   {
+    "q": "Des sièges sont en cuir.",
+    "options": [
+     "Nettoyant cuir spécifique puis nourrissant, sans excès d’eau",
+     "Shampoing moquette",
+     "Javel diluée",
+     "Dégraissant moteur"
+    ],
+    "bonne": 0,
+    "explication": "Le cuir se dessèche et craquelle avec l’eau ou les produits agressifs."
+   },
+   {
+    "q": "Les jantes sont très chaudes après roulage.",
+    "options": [
+     "Je pulvérise le nettoyant tout de suite",
+     "J’attends qu’elles refroidissent",
+     "Je les arrose d’eau froide",
+     "J’utilise de l’acide pur"
+    ],
+    "bonne": 1,
+    "explication": "Sur une jante chaude, le produit sèche et tache ; le choc thermique est risqué."
+   },
+   {
+    "q": "Comment remettre les clés du véhicule ?",
+    "options": [
+     "Dans la boîte aux lettres",
+     "Uniquement en main propre, au client ou à la personne désignée",
+     "Sur la roue",
+     "Au voisin"
+    ],
+    "bonne": 1,
+    "explication": "Règle Cleaneroo : remise des clés en main propre uniquement."
+   }
+  ]
+ },
+ {
+  "id": "polissage",
+  "categorie": "techniques",
+  "externe": false,
+  "titre": "Polissage et rénovation",
+  "resume": "Lustrage machine en une étape et rénovation des phares : technique avancée.",
+  "gestes": [
+   "Décontaminer la carrosserie (argile) avant de polir.",
+   "Faire un test sur une petite zone, puis travailler par sections.",
+   "Protéger joints et plastiques au ruban de masquage.",
+   "Phares : ponçage progressif à l’eau, polissage, puis vernis de protection UV."
+  ],
+  "produits": [
+   "Polisseuse orbitale (plus sûre qu’une rotative) et polish adapté.",
+   "Kit de rénovation de phares avec vernis UV."
+  ],
+  "securite": [
+   "Ne jamais polir une peinture chaude ou au soleil.",
+   "Lunettes ; attention au câble de la machine."
+  ],
+  "documents": [],
+  "quiz": [
+   {
+    "q": "Avant un polissage :",
+    "options": [
+     "Je décontamine la carrosserie (lavage, argile) pour ne pas incruster de particules",
+     "Je polis directement",
+     "Je mouille abondamment",
+     "J’applique d’abord la cire"
+    ],
+    "bonne": 0,
+    "explication": "Les particules restantes rayeraient le vernis sous le tampon."
+   },
+   {
+    "q": "Pour ne pas traverser le vernis :",
+    "options": [
+     "Je n’y pense pas",
+     "Je contrôle l’épaisseur et j’évite arêtes et zones fines",
+     "J’appuie fort",
+     "Je polis longtemps au même endroit"
+    ],
+    "bonne": 1,
+    "explication": "Les arêtes ont un vernis plus fin : on les évite."
+   },
+   {
+    "q": "Rénover des optiques de phares :",
+    "options": [
+     "Ponçage progressif à l’eau, polissage, puis protection anti-UV",
+     "Dentifrice uniquement",
+     "Acétone",
+     "Peinture"
+    ],
+    "bonne": 0,
+    "explication": "Sans protection anti-UV, le jaunissement revient en quelques mois."
+   },
+   {
+    "q": "Polir en plein soleil sur une carrosserie chaude :",
+    "options": [
+     "C’est recommandé",
+     "À éviter : le produit sèche trop vite et peut marquer le vernis",
+     "C’est indifférent",
+     "C’est obligatoire"
+    ],
+    "bonne": 1,
+    "explication": "La chaleur fait sécher le produit et chauffe le vernis."
+   },
+   {
+    "q": "Après le polissage :",
+    "options": [
+     "Rien",
+     "Une cire ou un scellant pour protéger le vernis",
+     "De la javel",
+     "De l’huile moteur"
+    ],
+    "bonne": 1,
+    "explication": "Le polissage enlève une fine couche : il faut protéger la surface."
+   }
+  ]
+ },
+ {
+  "id": "textiles",
+  "categorie": "prestations",
+  "externe": false,
+  "titre": "Canapés, matelas et tapis",
+  "resume": "Lire l’étiquette, tester, détacher et nettoyer en injection-extraction sans détremper.",
+  "gestes": [
+   "Lire le code d’entretien : W (eau), S (solvant), W/S (les deux), X (aspiration uniquement).",
+   "Toujours tester sur une zone cachée.",
+   "Détacher en tamponnant, du bord vers le centre ; ne jamais frotter.",
+   "Injection-extraction : peu d’eau, plusieurs passages d’aspiration."
+  ],
+  "produits": [
+   "Shampoing textile à pH adapté ; détachant enzymatique pour les taches organiques (urine, sang).",
+   "Eau froide pour le sang (l’eau chaude le fixe)."
+  ],
+  "securite": [
+   "Matelas : ne pas détremper (moisissures) ; prévoir le séchage, fenêtre ouverte.",
+   "Ne pas traiter un tissu codé X avec de l’eau."
+  ],
+  "documents": [],
+  "quiz": [
+   {
+    "q": "L’étiquette d’un canapé porte le code « S ». Cela signifie :",
+    "options": [
+     "Nettoyage à l’eau",
+     "Nettoyage au solvant uniquement, pas d’eau",
+     "Vapeur uniquement",
+     "Javel autorisée"
+    ],
+    "bonne": 1,
+    "explication": "Codes : W eau, S solvant, WS les deux, X aspiration seule."
+   },
+   {
+    "q": "Et le code « X » ?",
+    "options": [
+     "Aspiration uniquement, aucun liquide",
+     "Eau chaude",
+     "Shampoing",
+     "Vapeur"
+    ],
+    "bonne": 0,
+    "explication": "Le code X interdit tout liquide : on se limite à l’aspiration ou on renvoie à un spécialiste."
+   },
+   {
+    "q": "Pour l’injection-extraction :",
+    "options": [
+     "Je mouille au maximum",
+     "Je ne détrempe pas, je fais plusieurs passages d’extraction et je fais aérer pour sécher",
+     "Je laisse sécher fenêtres fermées",
+     "Je frotte à la brosse métallique"
+    ],
+    "bonne": 1,
+    "explication": "Un textile détrempé sèche mal : auréoles, odeurs, moisissures."
+   },
+   {
+    "q": "Une tache est d’origine inconnue.",
+    "options": [
+     "Produit puissant directement",
+     "Test sur une zone cachée, puis je tamponne de l’extérieur vers l’intérieur sans frotter",
+     "Je frotte fort",
+     "Javel"
+    ],
+    "bonne": 1,
+    "explication": "Frotter étale et fixe la tache ; le test évite décoloration et dégâts."
+   },
+   {
+    "q": "Un matelas porte des traces biologiques (sang).",
+    "options": [
+     "Eau chaude seule",
+     "Produit enzymatique adapté, gants, et jamais de vapeur sur le sang",
+     "Javel pure",
+     "Vapeur très chaude"
+    ],
+    "bonne": 1,
+    "explication": "La chaleur fixe les protéines du sang : on travaille à froid avec un enzymatique."
+   }
+  ]
+ },
+ {
+  "id": "locaux-pro",
+  "categorie": "prestations",
+  "externe": false,
+  "titre": "Locaux professionnels et parties communes",
+  "resume": "Bureaux, commerces, immeubles : discrétion, horaires, sécurité des usagers, tri des déchets.",
+  "gestes": [
+   "Ne pas toucher aux documents, ni aux postes informatiques sans accord.",
+   "Signaler les sols humides avec un panneau « sol glissant ».",
+   "Trier les déchets selon les consignes du site (papier, emballages, verre).",
+   "Respecter les horaires d’ouverture, les badges et les consignes d’alarme."
+  ],
+  "produits": [
+   "Désinfectant pour les points de contact (poignées, boutons d’ascenseur, rampes).",
+   "Détergent neutre pour les sols, produit vitres pour les vitrines."
+  ],
+  "securite": [
+   "Ne jamais bloquer une issue de secours avec le chariot.",
+   "Escaliers : nettoyer en descendant, panneau en haut et en bas."
+  ],
+  "documents": [],
+  "quiz": [
+   {
+    "q": "Vous intervenez dans des bureaux occupés.",
+    "options": [
+     "J’aspire pendant les réunions",
+     "J’adapte l’ordre des zones, je ne déplace aucun document et je signale tout souci au référent",
+     "Je range les bureaux",
+     "Je jette les papiers posés sur les bureaux"
+    ],
+    "bonne": 1,
+    "explication": "Discrétion et confidentialité : on ne touche jamais aux documents."
+   },
+   {
+    "q": "Badge et alarme :",
+    "options": [
+     "Je prête mon badge à un collègue",
+     "Je respecte les procédures d’accès et d’alarme, et je signale tout incident",
+     "Je laisse la porte ouverte pour aérer",
+     "Je communique le code à un remplaçant"
+    ],
+    "bonne": 1,
+    "explication": "Les accès sont personnels : une faille engage votre responsabilité."
+   },
+   {
+    "q": "Le sol est mouillé dans une zone de passage.",
+    "options": [
+     "Rien de spécial",
+     "Panneau « sol glissant » et passage préservé",
+     "Une serviette au sol",
+     "Je préviens après"
+    ],
+    "bonne": 1,
+    "explication": "Le balisage est obligatoire pour éviter les chutes."
+   },
+   {
+    "q": "Les poubelles de tri :",
+    "options": [
+     "Je mélange tout",
+     "Je respecte le tri du client (papier, recyclables, ordures) avec les bons sacs",
+     "Je vide tout dans la même benne",
+     "Je les laisse"
+    ],
+    "bonne": 1,
+    "explication": "Le tri du client fait partie de la prestation."
+   },
+   {
+    "q": "Désinfecter les points de contact :",
+    "options": [
+     "Une fois par mois",
+     "Poignées, interrupteurs, boutons d’ascenseur, rampes : produit adapté, temps de contact respecté",
+     "Seulement les sols",
+     "Avec un parfum d’ambiance"
+    ],
+    "bonne": 1,
+    "explication": "Sans temps de contact, un désinfectant n’agit pas."
+   }
+  ]
+ },
+ {
+  "id": "machines",
+  "categorie": "techniques",
+  "externe": false,
+  "titre": "Autolaveuse et monobrosse",
+  "resume": "Lavage mécanisé, décapage et protection des sols : réglages, disques, sécurité.",
+  "gestes": [
+   "Choisir le disque : blanc (lustrage), rouge (entretien), bleu / vert (récurage), noir (décapage).",
+   "Décapage : décapant, monobrosse, aspiration, rinçage, séchage, puis émulsion en couches fines.",
+   "Garder le câble derrière soi, travailler par bandes qui se chevauchent."
+  ],
+  "produits": [
+   "Détergent basse mousse pour l’autolaveuse.",
+   "Décapant alcalin puis émulsion (cire) selon le type de sol."
+  ],
+  "securite": [
+   "Panneau sol glissant obligatoire.",
+   "Vérifier la machine et le câble avant usage ; ne jamais la laisser branchée sans surveillance.",
+   "Chaussures antidérapantes."
+  ],
+  "documents": [],
+  "quiz": [
+   {
+    "q": "Avant d’utiliser une autolaveuse :",
+    "options": [
+     "Je vérifie batterie, réservoirs, raclette et brosses, et je balise la zone",
+     "Je la lance directement",
+     "Je remplis le réservoir de javel",
+     "Je retire la raclette"
+    ],
+    "bonne": 0,
+    "explication": "Un contrôle préalable évite pannes, fuites et accidents."
+   },
+   {
+    "q": "Avec une monobrosse :",
+    "options": [
+     "Je démarre en tenant fermement le manche, câble derrière moi, jamais sur le câble",
+     "Câble devant moi",
+     "Je lâche le manche au démarrage",
+     "Je la penche pour démarrer"
+    ],
+    "bonne": 0,
+    "explication": "Au démarrage, la machine tourne sur elle-même : le câble ne doit jamais être sur sa trajectoire."
+   },
+   {
+    "q": "Décaper un sol protégé :",
+    "options": [
+     "Décapant adapté au revêtement, rinçage, neutralisation, puis nouvelle émulsion",
+     "Javel",
+     "Eau seule",
+     "Ponçage"
+    ],
+    "bonne": 0,
+    "explication": "Le décapant doit correspondre au revêtement, et le sol être neutralisé avant la nouvelle protection."
+   },
+   {
+    "q": "Sol humide et prises électriques :",
+    "options": [
+     "Aucun risque",
+     "Je vérifie câbles et prises et je tiens l’eau éloignée des connexions",
+     "Je mouille la prise",
+     "Je branche plusieurs rallonges en série"
+    ],
+    "bonne": 1,
+    "explication": "Eau et électricité : risque d’électrocution."
+   },
+   {
+    "q": "En fin de prestation avec une machine :",
+    "options": [
+     "Je la range sale",
+     "Je vide et rince les réservoirs, je nettoie brosses et raclette, je recharge",
+     "Je laisse l’eau dedans",
+     "Rien"
+    ],
+    "bonne": 1,
+    "explication": "L’eau stagnante dégage des odeurs et abîme la machine."
+   }
+  ]
+ },
+ {
+  "id": "bionettoyage",
+  "categorie": "prestations",
+  "externe": false,
+  "titre": "Bionettoyage (cabinets médicaux)",
+  "resume": "Nettoyage et désinfection des cabinets : produits normés, protocole, déchets à risque.",
+  "gestes": [
+   "Du plus propre au plus sale, du haut vers le bas, sans revenir en arrière.",
+   "Lavettes à usage unique ou code couleur strict par zone.",
+   "Respecter le temps de contact du désinfectant indiqué sur l’étiquette."
+  ],
+  "produits": [
+   "Détergent-désinfectant conforme aux normes : bactéricide EN 1276 / EN 13697, virucide EN 14476.",
+   "Pas de mélange avec la javel."
+  ],
+  "securite": [
+   "Ne jamais manipuler les déchets d’activités de soins (DASRI : aiguilles, compresses) : signaler au praticien.",
+   "Gants changés entre chaque zone."
+  ],
+  "documents": [],
+  "quiz": [
+   {
+    "q": "Le bionettoyage, c’est :",
+    "options": [
+     "Nettoyage et désinfection, du plus propre au plus sale et du haut vers le bas",
+     "Seulement aspirer",
+     "Désinfecter sans nettoyer",
+     "Parfumer la pièce"
+    ],
+    "bonne": 0,
+    "explication": "Il réduit la contamination des surfaces en combinant nettoyage et désinfection."
+   },
+   {
+    "q": "Pour la table d’examen :",
+    "options": [
+     "Détergent-désinfectant conforme aux normes bactéricides et virucides, temps de contact respecté",
+     "Eau savonneuse",
+     "Lingette parfumée",
+     "Javel non diluée"
+    ],
+    "bonne": 0,
+    "explication": "En milieu de soins, le produit doit être normé et le temps de contact respecté."
+   },
+   {
+    "q": "Des déchets d’activités de soins (DASRI) sont présents.",
+    "options": [
+     "Je les jette avec les ordures",
+     "Je n’y touche pas : ils suivent une filière spécifique gérée par le cabinet",
+     "Je les vide dans un sac",
+     "Je les compacte"
+    ],
+    "bonne": 1,
+    "explication": "Les DASRI ont leur propre filière : vous ne les manipulez pas."
+   },
+   {
+    "q": "Quand changer de gants ?",
+    "options": [
+     "Une fois par jour",
+     "Entre zone sale et zone propre, et dès qu’ils sont abîmés",
+     "Jamais",
+     "Seulement s’ils sont visiblement sales"
+    ],
+    "bonne": 1,
+    "explication": "Des gants souillés transportent les germes d’une zone à l’autre."
+   },
+   {
+    "q": "Votre tenue :",
+    "options": [
+     "Tenue de ville",
+     "Tenue dédiée, cheveux attachés, pas de bijoux aux mains",
+     "Gants en tissu",
+     "Peu importe"
+    ],
+    "bonne": 1,
+    "explication": "Les bijoux et vêtements de ville retiennent les micro-organismes."
+   }
+  ]
+ },
+ {
+  "id": "exterieurs",
+  "categorie": "techniques",
+  "externe": false,
+  "titre": "Extérieurs et haute pression",
+  "resume": "Terrasses, allées, mobilier : nettoyeur haute pression, démoussage, respect de l’environnement.",
+  "gestes": [
+   "Haute pression : buse en éventail, lance inclinée, au moins 30 cm des joints.",
+   "Démoussage : appliquer par temps sec, sans pluie annoncée, respecter le temps d’action.",
+   "Protéger plantes et massifs, rincer le mobilier à basse pression."
+  ],
+  "produits": [
+   "Anti-mousse : c’est un biocide, à doser selon l’étiquette ; jamais près d’un point d’eau.",
+   "Dégraissant pour les taches d’huile, savon noir pour le mobilier."
+  ],
+  "securite": [
+   "Jamais le jet vers une personne, un animal ou une installation électrique.",
+   "Lunettes, bottes, gants ; pas de haute pression sur toiture ni sur bois tendre.",
+   "Hors prestation : tonte, taille, élagage."
+  ],
+  "documents": [],
+  "quiz": [
+   {
+    "q": "Haute pression sur une terrasse en bois tendre :",
+    "options": [
+     "Pression maximale",
+     "Pression réduite, buse large, à distance et dans le sens des fibres",
+     "Buse rotative collée au bois",
+     "Eau bouillante"
+    ],
+    "bonne": 1,
+    "explication": "Une pression trop forte arrache les fibres et rend le bois pelucheux."
+   },
+   {
+    "q": "Démousser une terrasse :",
+    "options": [
+     "Javel en grande quantité",
+     "Produit adapté, sans rejet dans les eaux pluviales ni sur les plantes",
+     "Acide chlorhydrique pur",
+     "Sel"
+    ],
+    "bonne": 1,
+    "explication": "Les rejets polluent et peuvent tuer la végétation."
+   },
+   {
+    "q": "Vos équipements de protection pour la haute pression :",
+    "options": [
+     "Aucun",
+     "Lunettes, gants, chaussures de sécurité et protection auditive",
+     "Des gants seulement",
+     "Une casquette"
+    ],
+    "bonne": 1,
+    "explication": "Projections, bruit et sol glissant imposent ces protections."
+   },
+   {
+    "q": "Une façade est en crépi ancien.",
+    "options": [
+     "Haute pression maximale",
+     "Test préalable : risque d’arracher l’enduit ; pression basse ou refus",
+     "Grattoir",
+     "Javel"
+    ],
+    "bonne": 1,
+    "explication": "Un enduit fragile s’arrache sous le jet."
+   },
+   {
+    "q": "Le client demande de nettoyer la toiture.",
+    "options": [
+     "Je monte si la pente est faible",
+     "Non : la toiture est hors prestation sans équipement antichute et formation au travail en hauteur",
+     "Avec une échelle simple",
+     "En baskets"
+    ],
+    "bonne": 1,
+    "explication": "Le travail sur toiture exige protections collectives ou antichute et formation attestée."
+   }
+  ]
+ },
+ {
+  "id": "evenementiel",
+  "categorie": "prestations",
+  "externe": false,
+  "titre": "Événements",
+  "resume": "Avant et après un événement : volume, déchets, vaisselle, passages discrets pendant la réception.",
+  "gestes": [
+   "Commencer par débarrasser et trier les déchets, puis tables, puis sols.",
+   "Pendant l’événement : passages sanitaires réguliers et discrets.",
+   "Ramasser le verre brisé avec une pelle et une balayette, jamais à la main."
+  ],
+  "produits": [
+   "Détachant boissons pour sols et textiles, dégraissant pour l’office traiteur.",
+   "Sacs résistants pour le verre."
+  ],
+  "securite": [
+   "Gants anti-coupure pour le verre.",
+   "Ne jamais porter de charges trop lourdes : faire plusieurs voyages."
+  ],
+  "documents": [],
+  "quiz": [
+   {
+    "q": "Après un événement, dans quel ordre travailler ?",
+    "options": [
+     "Les sols d’abord",
+     "Débarrasser, trier les déchets, sanitaires, surfaces, puis sols",
+     "Tout laver à grande eau",
+     "Les vitres d’abord"
+    ],
+    "bonne": 1,
+    "explication": "On évacue d’abord, on termine par les sols."
+   },
+   {
+    "q": "Des objets ont été oubliés.",
+    "options": [
+     "Je les garde",
+     "Je les rassemble, je les remets à l’organisateur et je les signale dans l’app",
+     "Je les jette",
+     "Je les donne"
+    ],
+    "bonne": 1,
+    "explication": "Tout objet trouvé est tracé et remis."
+   },
+   {
+    "q": "Du verre est brisé au sol.",
+    "options": [
+     "Je ramasse à la main",
+     "Gants anti-coupure, pelle et balayette, contenant résistant étiqueté",
+     "Je le laisse",
+     "Je l’aspire sans précaution"
+    ],
+    "bonne": 1,
+    "explication": "Le verre se ramasse avec protection et s’emballe pour protéger les autres."
+   },
+   {
+    "q": "Des vomissures sont présentes.",
+    "options": [
+     "Serpillière et eau",
+     "Gants, produit absorbant, retrait, nettoyage puis désinfection, aération",
+     "Du parfum",
+     "Beaucoup de javel pure"
+    ],
+    "bonne": 1,
+    "explication": "Liquides biologiques : protection, absorption, nettoyage puis désinfection."
+   },
+   {
+    "q": "Vous risquez de dépasser l’horaire convenu.",
+    "options": [
+     "Je pars quand j’ai fini une partie",
+     "Je préviens l’organisateur dès que possible et nous convenons ensemble de la suite",
+     "Je reviens le lendemain sans prévenir",
+     "Je bâcle"
+    ],
+    "bonne": 1,
+    "explication": "Tout dépassement se convient avec le client, jamais en silence."
+   }
+  ]
+ },
+ {
+  "id": "biocides",
+  "categorie": "attestation",
+  "externe": true,
+  "titre": "Désinfection professionnelle (Certibiocide)",
+  "resume": "Depuis le 1er janvier 2026, acheter et utiliser des désinfectants réservés aux professionnels (TP2 surfaces, TP3 hygiène vétérinaire, TP4 contact alimentaire) exige le Certibiocide « désinfectants » : 7 h de formation, certificat individuel valable 5 ans.",
+  "gestes": [
+   "Respecter la dilution et le temps de contact indiqués sur la fiche technique.",
+   "Nettoyer avant de désinfecter."
+  ],
+  "produits": [
+   "Désinfectants professionnels TP2 (surfaces, locaux) et TP4 (contact alimentaire) avec fiches de données de sécurité."
+  ],
+  "securite": [
+   "Gants, lunettes et aération selon la fiche de données de sécurité.",
+   "Jamais de mélange de produits."
+  ],
+  "documents": [
+   "Certificat individuel Certibiocide « désinfectants » (TP2, TP3, TP4) en cours de validité"
+  ],
+  "quiz": []
+ },
+ {
+  "id": "nuisibles",
+  "categorie": "attestation",
+  "externe": true,
+  "titre": "Lutte contre les nuisibles (Certibiocide)",
+  "resume": "Désinsectisation (cafards, punaises de lit), dératisation et destruction de nids de guêpes ou de frelons : Certibiocide « nuisibles » obligatoire (21 h de formation, certificat valable 5 ans), produits professionnels autorisés uniquement.",
+  "gestes": [
+   "Diagnostic avant tout traitement : espèce, ampleur, zones à traiter.",
+   "Postes d’appâtage sécurisés, hors de portée des enfants et des animaux.",
+   "Passage de contrôle prévu et expliqué au client."
+  ],
+  "produits": [
+   "Biocides professionnels autorisés (insecticides, rodenticides) avec fiches de données de sécurité."
+  ],
+  "securite": [
+   "Équipement de protection adapté au produit (gants, masque, lunettes).",
+   "Nid au-delà de 5 m de hauteur ou inaccessible : intervention refusée, orientation vers une entreprise spécialisée."
+  ],
+  "documents": [
+   "Certificat individuel Certibiocide « nuisibles » en cours de validité",
+   "Attestation d’assurance couvrant la lutte contre les nuisibles"
+  ],
+  "quiz": []
+ },
+ {
+  "id": "electrique",
+  "categorie": "attestation",
+  "externe": true,
+  "titre": "Locaux électriques (habilitation B0 / H0)",
+  "resume": "Nettoyer un local technique (tableau général, salle serveurs, poste de transformation) exige une habilitation électrique de non-électricien.",
+  "gestes": [
+   "Ne jamais toucher aux armoires ni aux équipements : nettoyage des sols et surfaces accessibles uniquement."
+  ],
+  "produits": [
+   "Aucun liquide près des installations : aspiration et microfibre sèche ou à peine humide."
+  ],
+  "securite": [
+   "Habilitation délivrée par votre employeur ou, pour un indépendant, attestation de formation B0/H0/H0V.",
+   "Recyclage conseillé tous les 3 ans."
+  ],
+  "documents": [
+   "Attestation de formation à l’habilitation électrique B0 / H0 / H0V (non-électricien)",
+   "Avis d’aptitude médicale"
+  ],
+  "quiz": []
+ },
+ {
+  "id": "specialise",
+  "categorie": "attestation",
+  "externe": true,
+  "titre": "Interventions spécialisées",
+  "resume": "Désinfection approfondie, logements insalubres, après sinistre ou après décès : qualification sur dossier (expérience, attestations, équipement de protection), validée par Cleaneroo.",
+  "gestes": [
+   "Évaluation préalable systématique, protocole écrit, intervention à deux si nécessaire."
+  ],
+  "produits": [
+   "Produits et équipements adaptés au risque, définis lors de l’évaluation."
+  ],
+  "securite": [
+   "Équipement de protection complet (combinaison, masque adapté, gants, lunettes).",
+   "Désinsectisation, dératisation et nids de guêpes : qualification « Lutte contre les nuisibles » (Certibiocide) obligatoire."
+  ],
+  "documents": [
+   "Attestation de formation ou justificatifs d’expérience (désinfection, sinistres, après décès)"
+  ],
+  "quiz": []
+ }
+]

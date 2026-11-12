@@ -1,6 +1,7 @@
 // Écran de gestion Cleaneroo : réservé aux comptes « admin » (règles de sécurité de la base).
 // Équivalent de « Administration (démo) » de l'application : vérifier, publier, confirmer, faire avancer ou refuser une demande.
 import { decorTableau } from "./commun.js";
+import { nomsAttestations } from "./formations.js";
 import { supabase, secteursARecruter, dossiersCleaneurs, documentsDe, deciderDossier, deciderDocument, lienDocument, DOCUMENTS_CLEANEUR } from "./donnees.js";
 import { rubrique } from "./catalogue.js";
 import { icone } from "./icones.js";
@@ -111,6 +112,7 @@ async function listeInscriptions() {
 /* Dossiers des Cleaneurs inscrits avec un compte : profil, documents scannés, validation (place de l'offre de lancement). */
 const ETAT_DOSSIER = { BROUILLON: "À compléter", A_VERIFIER: "À vérifier", VALIDE: "Validé", REFUSE: "À corriger" };
 const NOM_DOC = Object.fromEntries(DOCUMENTS_CLEANEUR.map(d => [d.type, d.nom]));
+nomsAttestations().then(n => Object.assign(NOM_DOC, n));
 async function listeDossiers() {
   let data;
   try { data = await dossiersCleaneurs(); } catch (e) { vue.innerHTML = `<h1>Tableau de bord</h1><div class="trait-corail"></div>${ongletsHtml()}<p class="erreur">${esc(e.message)}</p>`; brancherOnglets(); return; }

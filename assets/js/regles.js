@@ -258,6 +258,22 @@ export const indemniteAccesC = prixC => Math.min(REGLES.INDEMNITE_MAX_C, Math.ma
 
 /** Jour du versement d'une mission validée à la date d : le vendredi de la même semaine si elle est validée au plus tard
  *  le mercredi (minuit), sinon le vendredi suivant. Même calcul que ReglesMetier.dateVersement. */
+/**
+ * Formations exigées pour une prestation (12 novembre 2026, reprises de l'appli de Vincent). Copie de qualifs_requises
+ * (outils/base-formations.sql) et de Regles.qualificationsRequises (appli). typeLieuId : type de lieu de la demande.
+ */
+export function qualificationsRequises(rubriqueId, typeLieuId = "") {
+  const t = typeLieuId || "";
+  const selon = {
+    home: ["domicile"], rental: ["domicile", "location"], moving: ["domicile"], car: ["auto"], textiles: ["textiles"],
+    construction: ["remise-etat"], kitchen: !t || t === "particulier" ? ["domicile"] : ["cuisine-pro", "haccp"],
+    office: t === "medical" ? ["locaux-pro", "bionettoyage"] : ["locaux-pro"], commerce: ["locaux-pro"], communal: ["locaux-pro"],
+    windows: ["vitres"], outdoor: ["exterieurs"], event: ["evenementiel"],
+    special: ["cafards", "punaises", "rats", "guepes"].includes(t) ? ["nuisibles"] : ["specialise"],
+  }[rubriqueId] || [];
+  return ["socle", ...selon];
+}
+
 export function dateVersement(d = new Date()) {
   const iso = ((d.getDay() + 6) % 7) + 1;   // lundi = 1 … dimanche = 7
   const jours = iso <= REGLES.VERSEMENT_LIMITE_JOUR_ISO ? REGLES.VERSEMENT_JOUR_ISO - iso : REGLES.VERSEMENT_JOUR_ISO - iso + 7;
