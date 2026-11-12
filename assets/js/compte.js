@@ -5,6 +5,7 @@ import { blocParrainage, brancherParrainage, champCodeParrain, oublierCodeParrai
 import { surveiller } from "./sons.js";
 import { brancherFormulesCleaneur } from "./formules-cleaneur.js";
 import { afficherFactures } from "./factures.js";
+import { blocActivite } from "./activite.js";
 import { blocAbonnementPro, brancherAbonnementPro } from "./abonnement-pro.js";
 import { blocInvitationsPro, brancherInvitationsPro, blocCodeInvitation, brancherCodeInvitation } from "./invitations.js";
 import { RUBRIQUES, rubrique, TYPES_LOGEMENT } from "./catalogue.js";
@@ -100,7 +101,7 @@ export async function pageCompte(vue, param) {
       <p class="petit" style="margin:4px 0 10px">Demandes, inscriptions et dossiers des Cleaneurs (documents, validation).</p>
       <a class="bouton secondaire" href="gestion.html">Ouvrir le tableau de bord</a></div>` : ""}
     ${statuts.length > 1 ? barreOnglets(onglet, statuts) : ""}
-    <div class="contenu-onglet">${contenu}${onglet !== "cleaneur" || cleaneur ? `<div data-factures="${onglet === "particulier" ? "personnel" : onglet}"></div>` : ""}${blocParrainage(parrain, onglet)}</div>
+    <div class="contenu-onglet">${contenu}${onglet === "cleaneur" && cleaneur ? `<div id="mon-activite"></div>` : ""}${onglet !== "cleaneur" || cleaneur ? `<div data-factures="${onglet === "particulier" ? "personnel" : onglet}"></div>` : ""}${blocParrainage(parrain, onglet)}</div>
     ${manquants.length ? `<details class="carte ajout-espace" id="ajout-espace" style="margin-top:16px"><summary>Ajouter un espace</summary>
       <p class="petit" style="margin:8px 0 10px">Chaque espace reste séparé : vous passez de l'un à l'autre avec les onglets en haut de votre compte.</p>
       ${manquants.map(x => `<button type="button" class="carte ligne-compte" data-ajouter-statut="${x}">${icone(NOMS_STATUTS[x][2], { tuile: true })}
@@ -115,7 +116,7 @@ export async function pageCompte(vue, param) {
   if (vue.querySelector("#form-profil")) brancherProfil(vue, p, onglet === "cleaneur" && cleaneur);
   brancherParrainage(vue, parrain, () => pageCompte(vue, onglet));
   afficherFactures(vue.querySelector("[data-factures]"));   // onglet « Factures » de l'espace
-  if (onglet === "cleaneur" && cleaneur) { brancherDossier(vue, p); brancherMissions(vue, p); brancherFormulesCleaneur(vue, p, () => pageCompte(vue, "cleaneur")); brancherCodeInvitation(vue); }
+  if (onglet === "cleaneur" && cleaneur) { brancherDossier(vue, p); brancherMissions(vue, p); brancherFormulesCleaneur(vue, p, () => pageCompte(vue, "cleaneur")); brancherCodeInvitation(vue); blocActivite(vue.querySelector("#mon-activite"), p); }
   if (onglet === "pro") { brancherPro(vue, p, biens, demandes, { majProfil, recharger: () => pageCompte(vue) }); brancherInvitationsPro(vue); brancherAbonnementPro(vue, () => { majLienCompte(); pageCompte(vue, "pro"); }); }
   // Ajouter un espace : Particulier ou Cleaneur tout de suite ; Pro avec la société (raison sociale + SIRET/SIREN).
   const ajouter = async (statut, bouton) => {

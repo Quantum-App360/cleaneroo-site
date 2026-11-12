@@ -136,6 +136,12 @@ export const REGLES = {
   ATTENTE_ACCES_IMPOSSIBLE_MIN: 15,
   // « Photos avant exigées » cochée d'office (décision du 12 novembre 2026) : preuve de l'état laissé par les voyageurs.
   PHOTOS_AVANT_PAR_DEFAUT: ["rental"],
+  // « Mon activité » du Cleaneur micro-entrepreneur (taux 2026, prestations de services BIC dont le nettoyage) — à revoir chaque année.
+  URSSAF_SERVICES_PCT: 21.2,
+  URSSAF_ACRE_PCT: 10.6,
+  VERSEMENT_LIBERATOIRE_PCT: 1.7,
+  PLAFOND_MICRO_SERVICES_C: 8360000,   // 83 600 € de chiffre d'affaires par an (prestations de services, 2026-2028)
+  DEVIS_VALIDITE_JOURS: 30,
   // Versements des Cleaneurs (repris de l'appli iPhone) : chaque vendredi, pour les missions validées jusqu'au mercredi minuit.
   VERSEMENT_JOUR_ISO: 5,          // vendredi (lundi = 1)
   VERSEMENT_LIMITE_JOUR_ISO: 3,   // mercredi
@@ -272,6 +278,24 @@ export function qualificationsRequises(rubriqueId, typeLieuId = "") {
     special: ["cafards", "punaises", "rats", "guepes"].includes(t) ? ["nuisibles"] : ["specialise"],
   }[rubriqueId] || [];
   return ["socle", ...selon];
+}
+
+/**
+ * « Mon activité » (copie de ReglesMetier.calculActivite) : factures du Cleaneur (prestation +, commission −) et pourboires,
+ * sur le mois ou l'année en cours. Montants en centimes.
+ */
+export function calculActivite({ factures = [], pourboires = [], periode = "mois", acre = false, liberatoire = false, maintenant = new Date() }) {
+  const an = maintenant.getFullYear(), mois = maintenant.getMonth();
+  const date = s => { const [a, m] = String(s).slice(0, 10).split("-").map(Number); return { a, m: m - 1 }; };
+  const dans = (s, p) => { const d = date(s); return d.a === an && (p === "annee" || d.m === mois); };
+  const somme = (p, type) => factures.filter(f => f.type === type && dans(f.date_emission, p)).reduce((s, f) => s + f.total_ttc_c, 0);
+  const ca = p => somme(p, "prestation") + pourboires.filter(x => dans(x.cree_le, p)).reduce((s, x) => s + (x.pourboire_c || 0), 0);
+  const caC = ca(periode), commissionC = somme(periode, "commission");
+  const tauxPct = Math.round(((acre ? REGLES.URSSAF_ACRE_PCT : REGLES.URSSAF_SERVICES_PCT) + (liberatoire ? REGLES.VERSEMENT_LIBERATOIRE_PCT : 0)) * 10) / 10;
+  const cotisationsC = Math.round(caC * tauxPct / 100);
+  const caAnneeC = ca("annee");
+  return { caC, commissionC, tauxPct, cotisationsC, resteC: Math.max(0, caC - commissionC - cotisationsC), caAnneeC,
+    plafondPct: Math.min(100, Math.round(100 * caAnneeC / REGLES.PLAFOND_MICRO_SERVICES_C)) };
 }
 
 export function dateVersement(d = new Date()) {
