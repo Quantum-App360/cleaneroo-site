@@ -4,6 +4,7 @@
 import { rubrique } from "./catalogue.js";
 import { REGLES, euros, dateLongue, heure, duree, finOffreLancement, indemniteAccesC, dateVersement } from "./regles.js";
 import { supabase } from "./donnees.js";
+import { positionAdresse, distanceKm } from "./suivi-live.js";
 import { blocNoterClients, remplirNotesClients, blocAvisRecus } from "./avis-clients.js";
 import { blocFormations } from "./formations.js";
 import { blocPeriodes } from "./periodes.js";
@@ -515,6 +516,21 @@ export async function brancherMissions(vue, p) {
       return;
     }
     if (suivant === "EN_ROUTE" && !(await demanderGeoloc())) { err.textContent = tr("Autorisez la géolocalisation pour partir : le client suit votre trajet."); return; }
+    if (suivant === "SUR_PLACE") {
+      // Arrivée à 1 km au plus de l'adresse (comme l'appli de Vincent) ; sinon le client confirme la présence.
+      b.disabled = true;
+      const km = await distanceArrivee(m);
+      b.disabled = false;
+      if (km == null || km > REGLES.RAYON_ARRIVEE_KM) {
+        err.innerHTML = `${esc(km == null ? tr("Votre position n'a pas pu être confirmée.") : tr("Vous êtes à {km} km de l'adresse : l'arrivée se confirme à 1 km au plus.").replace("{km}", String(Math.round(km * 10) / 10).replace(".", ",")))}
+          <button type="button" class="lien-bouton" data-presence-client>${tr("Position incorrecte ? Faire confirmer ma présence par le client")}</button>`;
+        err.querySelector("[data-presence-client]").onclick = async () => {
+          const r = await supabase.rpc("demander_presence", { p_reference: ref }).then(x => x.data).catch(() => null);
+          err.textContent = tr(r === "ok" ? "Demande envoyée : le client confirme votre présence depuis son suivi." : "Le service est momentanément indisponible. Réessayez dans quelques minutes.");
+        };
+        return;
+      }
+    }
     b.disabled = true;
     const r = await avancerMission(ref, suivant).catch(() => "erreur");
     if (r !== "ok") { b.disabled = false; err.textContent = tr(r === "controle" ? "Cochez toutes les tâches de chaque pièce avant de terminer : photos avant et après, tâches, avis de l'IA ou justification."
@@ -528,4 +544,13 @@ export async function brancherMissions(vue, p) {
     }
     recharger();
   });
+}
+
+/** Distance (km) entre la position du téléphone et l'adresse de la mission ; null si l'une des deux est introuvable. */
+async function distanceArrivee(m) {
+  const pos = await new Promise(ok => navigator.geolocation.getCurrentPosition(p => ok({ lat: p.coords.latitude, lon: p.coords.longitude }), () => ok(null),
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 }));
+  if (!pos) return null;
+  const adresse = await positionAdresse(m.rue, m.code_postal, m.ville).catch(() => null);
+  return adresse ? distanceKm(pos, adresse) : null;
 }

@@ -7,7 +7,7 @@ import { euros, duree, dateLongue, dateHeure, heure, estPrelancement, joursAvant
 // Langue : catalogue traduit avant tout affichage.
 traduireCatalogue(RUBRIQUES, TYPES_LIEU);
 import { ouvrirReservation, modeles, logements, nomLogement } from "./reserver.js";
-import { suivre, annuler, memoriser, inscrire } from "./donnees.js";
+import { supabase, suivre, annuler, memoriser, inscrire } from "./donnees.js";
 import { compterPage } from "./compteur.js";
 import { suivreEnDirect, demoSuivi } from "./suivi-live.js";
 import { pageCompte, pageMesPrestations, arreterEcouteDemandes, retourEmail, majLienCompte, afficherAccesCleaneur } from "./compte.js";
@@ -476,6 +476,7 @@ async function pageDemande(ref, jeton) {
   <section class="bloc" style="padding-top:28px"><div class="etroit">
     <div class="progression">${ETAPES_SUIVI.map((_, i) => `<span class="${d.statut !== "ANNULEE" && i <= idx ? "fait" : ""}"></span>`).join("")}</div>
     <div class="note" style="margin-bottom:14px">${etat}</div>
+    ${d.statut === "EN_ROUTE" ? `<div id="presence-client"></div>` : ""}
     ${["EN_ROUTE", "SUR_PLACE"].includes(d.statut) ? `<div id="suivi-live" style="margin-bottom:14px"></div>`
       : ["VERIFICATION", "PUBLIEE", "CONFIRMEE"].includes(d.statut) ? `<a class="carte ligne-compte" href="#/suivi-demo" style="margin-bottom:14px">${icone("position", { tuile: true })}
         <div class="corps"><b>Suivi en direct le jour J</b><p class="petit" style="margin:2px 0 0">Vous suivrez votre Cleaneur sur une carte jusqu'à chez vous. Voir la démonstration.</p></div><span class="aller" aria-hidden="true">›</span></a>` : ""}
@@ -577,6 +578,20 @@ async function afficherPage() {
     // Compte rendu pièce par pièce (photos avant / après, tâches, avis de l'IA) pour le client connecté.
     const rendu = document.getElementById("compte-rendu-pieces");
     if (rendu) compteRenduPieces(rendu, decodeURIComponent(ref || ""));
+    // Présence du Cleaneur à confirmer (sa position n'a pas pu confirmer l'arrivée).
+    const presence = document.getElementById("presence-client");
+    if (presence) supabase.rpc("presence_a_confirmer", { p_reference: decodeURIComponent(ref || ""), p_jeton: decodeURIComponent(jeton || "") }).then(({ data }) => {
+      if (!data || !presence.isConnected) return;
+      presence.innerHTML = `<div class="carte teintee" style="margin-bottom:14px"><b>📍 ${tr("Votre Cleaneur est-il arrivé ?")}</b>
+        <p class="petit" style="margin:4px 0 10px">${tr("Sa géolocalisation n'a pas pu le confirmer. Confirmez-vous sa présence chez vous ?")}</p>
+        <div class="boutons"><button type="button" class="bouton" data-present="1">${tr("Oui, il est là")}</button>
+        <button type="button" class="bouton secondaire" data-present="0">${tr("Non, pas encore")}</button></div></div>`;
+      presence.querySelectorAll("[data-present]").forEach(b => b.onclick = async () => {
+        b.disabled = true;
+        await supabase.rpc("repondre_presence", { p_reference: decodeURIComponent(ref || ""), p_present: b.dataset.present === "1", p_jeton: decodeURIComponent(jeton || "") });
+        location.reload();
+      });
+    });
     const boite = document.getElementById("suivi-live");
     if (boite && demandeAffichee) suivreEnDirect(boite, demandeAffichee).then(f => { if (document.body.contains(boite)) arreterSuivi = f; else f(); });
     document.getElementById("annuler-demande")?.addEventListener("click", async e => {

@@ -893,6 +893,15 @@ const T = [
   ["Prochain versement :", "Next payout:", "Prossimo versamento:", "Próximo pago:"],
   ["chaque vendredi, pour les missions validées jusqu'au mercredi minuit.", "every Friday, for jobs approved by Wednesday midnight.", "ogni venerdì, per le missioni convalidate entro mercoledì a mezzanotte.", "cada viernes, por las misiones validadas hasta el miércoles a medianoche."],
   // Notes des clients par les Cleaneurs (11 novembre 2026)
+  // Arrivée à 1 km et présence confirmée par le client (12 novembre 2026)
+  ["Votre position n'a pas pu être confirmée.", "Your position could not be confirmed.", "Non è stato possibile confermare la tua posizione.", "No se ha podido confirmar tu posición."],
+  ["Vous êtes à {km} km de l'adresse : l'arrivée se confirme à 1 km au plus.", "You are {km} km from the address: arrival is confirmed within 1 km.", "Sei a {km} km dall'indirizzo: l'arrivo si conferma entro 1 km.", "Estás a {km} km de la dirección: la llegada se confirma a 1 km como máximo."],
+  ["Position incorrecte ? Faire confirmer ma présence par le client", "Wrong position? Ask the customer to confirm I am here", "Posizione errata? Fai confermare la mia presenza dal cliente", "¿Posición incorrecta? Pedir al cliente que confirme mi presencia"],
+  ["Demande envoyée : le client confirme votre présence depuis son suivi.", "Request sent: the customer confirms you are there from their tracking page.", "Richiesta inviata: il cliente conferma la tua presenza dalla sua pagina di monitoraggio.", "Solicitud enviada: el cliente confirma tu presencia desde su seguimiento."],
+  ["Votre Cleaneur est-il arrivé ?", "Has your Cleaneur arrived?", "Il tuo Cleaneur è arrivato?", "¿Ha llegado tu Cleaneur?"],
+  ["Sa géolocalisation n'a pas pu le confirmer. Confirmez-vous sa présence chez vous ?", "Their location could not confirm it. Do you confirm they are at your place?", "La sua geolocalizzazione non ha potuto confermarlo. Confermi la sua presenza da te?", "Su geolocalización no ha podido confirmarlo. ¿Confirmas que está en tu casa?"],
+  ["Oui, il est là", "Yes, they are here", "Sì, è qui", "Sí, está aquí"],
+  ["Non, pas encore", "No, not yet", "No, non ancora", "No, todavía no"],
   // Programme Cleaneur, niveaux (12 novembre 2026)
   ["Mon niveau Cleaneroo", "My Cleaneroo level", "Il mio livello Cleaneroo", "Mi nivel Cleaneroo"],
   ["missions réalisées", "jobs completed", "missioni svolte", "servicios realizados"],

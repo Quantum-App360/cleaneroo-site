@@ -1,0 +1,7 @@
+-- Arrivée du Cleaneur (12 novembre 2026, reprise de l'appli de Vincent) : « Je suis arrivé » n'est possible qu'à 1 km
+-- au plus de l'adresse (REGLES.RAYON_ARRIVEE_KM, contrôle sur le téléphone : position GPS et adresse géocodée) ;
+-- sinon le Cleaneur demande au client de confirmer sa présence (demander_presence), le client répond (repondre_presence).
+-- Fonctions appliquées le 12 novembre 2026 (migration « presence_confirmee_client ») :
+--   demander_presence(p_reference) -> 'ok' | 'etape' | 'interdit' | 'introuvable'
+--   repondre_presence(p_reference, p_present, p_jeton default null) -> 'ok' : présent = statut SUR_PLACE
+--   presence_a_confirmer(p_reference, p_jeton default null) -> boolean
