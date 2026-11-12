@@ -893,6 +893,16 @@ const T = [
   ["Prochain versement :", "Next payout:", "Prossimo versamento:", "Próximo pago:"],
   ["chaque vendredi, pour les missions validées jusqu'au mercredi minuit.", "every Friday, for jobs approved by Wednesday midnight.", "ogni venerdì, per le missioni convalidate entro mercoledì a mezzanotte.", "cada viernes, por las misiones validadas hasta el miércoles a medianoche."],
   // Notes des clients par les Cleaneurs (11 novembre 2026)
+  // Suppression du compte (12 novembre 2026)
+  ["Supprimer mon compte", "Delete my account", "Elimina il mio account", "Eliminar mi cuenta"],
+  ["Ce qui sera supprimé :", "What will be deleted:", "Cosa verrà eliminato:", "Lo que se eliminará:"],
+  ["votre profil, vos logements, vos photos, vos documents et vos préférences, tout de suite et définitivement.", "your profile, homes, photos, documents and preferences, immediately and permanently.", "il tuo profilo, i tuoi alloggi, le tue foto, i tuoi documenti e le tue preferenze, subito e definitivamente.", "tu perfil, tus viviendas, tus fotos, tus documentos y tus preferencias, de inmediato y para siempre."],
+  ["Vos réservations à venir sont annulées ; si vous êtes Cleaneur, vos missions acceptées sont remises en ligne pour un autre Cleaneur.", "Your upcoming bookings are cancelled; if you are a Cleaneur, your accepted jobs are put back online for another Cleaneur.", "Le tue prenotazioni future vengono annullate; se sei Cleaneur, le missioni accettate vengono rimesse online per un altro Cleaneur.", "Tus próximas reservas se cancelan; si eres Cleaneur, tus servicios aceptados vuelven a publicarse para otro Cleaneur."],
+  ["Conservées seulement le temps exigé par la loi : les factures (10 ans), sans lien avec votre compte.", "Kept only for as long as the law requires: invoices (10 years), no longer linked to your account.", "Conservate solo per il tempo richiesto dalla legge: le fatture (10 anni), senza legame con il tuo account.", "Conservadas solo el tiempo que exige la ley: las facturas (10 años), sin vínculo con tu cuenta."],
+  ["Pour confirmer, tapez SUPPRIMER", "To confirm, type SUPPRIMER", "Per confermare, digita SUPPRIMER", "Para confirmar, escribe SUPPRIMER"],
+  ["Supprimer définitivement mon compte", "Permanently delete my account", "Elimina definitivamente il mio account", "Eliminar definitivamente mi cuenta"],
+  ["Un compte d'administration ne peut pas être supprimé ici.", "An administration account cannot be deleted here.", "Un account di amministrazione non può essere eliminato qui.", "Una cuenta de administración no puede eliminarse aquí."],
+  ["Votre compte a été supprimé.", "Your account has been deleted.", "Il tuo account è stato eliminato.", "Tu cuenta ha sido eliminada."],
   // Avis en double aveugle (12 novembre 2026)
   ["Qualité du ménage", "Cleaning quality", "Qualità della pulizia", "Calidad de la limpieza"],
   ["Ponctualité", "Punctuality", "Puntualità", "Puntualidad"],

@@ -13,7 +13,7 @@ import { euros, dateLongue, heure, REGLES, sirenSiretValide } from "./regles.js"
 import { icone } from "./icones.js";
 import { traduire, tr } from "./langue.js";
 import {
-  session, creerCompte, connecter, deconnecter, mdpOublie, nouveauMdp, monProfil, majProfil, ajouterStatut, ecouterDemandes,
+  supabase, session, creerCompte, connecter, deconnecter, mdpOublie, nouveauMdp, monProfil, majProfil, ajouterStatut, ecouterDemandes,
   DOCUMENTS_CLEANEUR, mesDocuments, deposerDocument, retirerDocument, lienDocument, soumettreDossier,
   demandesDuCompte, mesDemandes, synchroniserBiens, enregistrerBien, supprimerBien,
 } from "./donnees.js";
@@ -111,6 +111,13 @@ export async function pageCompte(vue, param) {
         <label class="champ">SIRET (14 chiffres) ou SIREN (9 chiffres)<input name="siret" inputmode="numeric" maxlength="17" value="${esc(p.siret_societe || "")}"></label>
         <p class="erreur" id="erreur-ajout-pro"></p><button class="bouton plein" type="submit">Ajouter l'espace Pro</button></form>` : ""}</details>` : ""}
     <p style="margin-top:18px"><button type="button" class="lien-bouton" id="deconnexion-compte">Se déconnecter</button></p>
+    <details class="supprimer-compte"><summary>Supprimer mon compte</summary>
+      <p class="petit"><b>Ce qui sera supprimé :</b> votre profil, vos logements, vos photos, vos documents et vos préférences, tout de suite et définitivement.
+        Vos réservations à venir sont annulées ; si vous êtes Cleaneur, vos missions acceptées sont remises en ligne pour un autre Cleaneur.</p>
+      <p class="petit">Conservées seulement le temps exigé par la loi : les factures (10 ans), sans lien avec votre compte.</p>
+      <label class="champ">Pour confirmer, tapez SUPPRIMER<input id="confirmer-suppression" autocomplete="off" autocapitalize="characters" spellcheck="false"></label>
+      <p class="erreur" id="erreur-suppression"></p>
+      <button type="button" class="bouton danger" id="supprimer-compte" disabled>Supprimer définitivement mon compte</button></details>
   </div></section>`;
   traduire(vue);
   if (vue.querySelector("#form-profil")) brancherProfil(vue, p, onglet === "cleaneur" && cleaneur);
@@ -150,6 +157,17 @@ export async function pageCompte(vue, param) {
   }
   vue.querySelector("#devenir-cleaneur")?.addEventListener("click", e => ajouter("cleaneur", e.target));
   vue.querySelector("#deconnexion-compte").onclick = async () => { await deconnecter(); majLienCompte(); location.hash = "#/compte"; pageCompte(vue); };
+  // Suppression du compte (confirmation « SUPPRIMER », comme l'appli de Vincent et l'appli Android).
+  const champSuppr = vue.querySelector("#confirmer-suppression"), boutonSuppr = vue.querySelector("#supprimer-compte");
+  if (champSuppr) {
+    champSuppr.oninput = () => { boutonSuppr.disabled = champSuppr.value.trim() !== "SUPPRIMER"; };
+    boutonSuppr.onclick = async () => {
+      boutonSuppr.disabled = true;
+      const { data } = await supabase.rpc("supprimer_mon_compte", { p_confirmation: champSuppr.value.trim() });
+      if (data !== "ok") { boutonSuppr.disabled = false; vue.querySelector("#erreur-suppression").textContent = tr(data === "admin" ? "Un compte d'administration ne peut pas être supprimé ici." : "Le service est momentanément indisponible. Réessayez dans quelques minutes."); return; }
+      await deconnecter().catch(() => null); majLienCompte(); location.hash = "#/"; alert(tr("Votre compte a été supprimé."));
+    };
+  }
 }
 
 /** Coordonnées du compte reprises par le parcours de réservation (si l'appareil ne les connaît pas encore). */
