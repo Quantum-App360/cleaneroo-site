@@ -893,6 +893,16 @@ const T = [
   ["Prochain versement :", "Next payout:", "Prossimo versamento:", "Próximo pago:"],
   ["chaque vendredi, pour les missions validées jusqu'au mercredi minuit.", "every Friday, for jobs approved by Wednesday midnight.", "ogni venerdì, per le missioni convalidate entro mercoledì a mezzanotte.", "cada viernes, por las misiones validadas hasta el miércoles a medianoche."],
   // Notes des clients par les Cleaneurs (11 novembre 2026)
+  // Simulateur « Estimer mon prix » (12 novembre 2026)
+  ["Choisissez une prestation et vos options : le prix se met à jour à chaque choix. Sans inscription et sans engagement.", "Choose a service and your options: the price updates with every choice. No sign-up, no commitment.", "Scegli un servizio e le tue opzioni: il prezzo si aggiorna a ogni scelta. Senza registrazione e senza impegno.", "Elige un servicio y tus opciones: el precio se actualiza con cada elección. Sin registro y sin compromiso."],
+  ["Code postal (facultatif)", "Postcode (optional)", "CAP (facoltativo)", "Código postal (opcional)"],
+  ["Le prix peut varier selon la ville", "The price may vary by town", "Il prezzo può variare in base alla città", "El precio puede variar según la ciudad"],
+  ["Votre prix estimé", "Your estimated price", "Il tuo prezzo stimato", "Tu precio estimado"],
+  ["Prix de la prestation", "Service price", "Prezzo del servizio", "Precio del servicio"],
+  ["Pré-réserver avec ces choix", "Pre-book with these choices", "Pre-prenota con queste scelte", "Prerreservar con estas opciones"],
+  ["Réserver avec ces choix", "Book with these choices", "Prenota con queste scelte", "Reservar con estas opciones"],
+  ["Voir le détail", "See the details", "Vedi il dettaglio", "Ver el detalle"],
+  ["Prix maximum : le montant final ne peut pas le dépasser sans votre accord. Le jour et l'heure choisis ensuite peuvent encore le baisser (créneau malin −10 %).", "Maximum price: the final amount cannot exceed it without your consent. The day and time chosen next can still lower it (smart slot −10 %).", "Prezzo massimo: l'importo finale non può superarlo senza il tuo consenso. Il giorno e l'ora scelti dopo possono ancora abbassarlo (fascia smart −10 %).", "Precio máximo: el importe final no puede superarlo sin tu consentimiento. El día y la hora que elijas después aún pueden bajarlo (franja inteligente −10 %)."],
   // Contrat de prestataire, version 2026-12 (12 novembre 2026)
   ["Parties et objet", "Parties and purpose", "Parti e oggetto", "Partes y objeto"],
   ["Indépendance du Cleaneur", "Cleaner's independence", "Indipendenza del Cleaner", "Independencia del Cleaner"],

@@ -6,7 +6,7 @@ import { euros, duree, dateLongue, dateHeure, heure, estPrelancement, joursAvant
 
 // Langue : catalogue traduit avant tout affichage.
 traduireCatalogue(RUBRIQUES, TYPES_LIEU);
-import { ouvrirReservation, modeles, logements, nomLogement } from "./reserver.js";
+import { ouvrirReservation, ouvrirSimulateur, modeles, logements, nomLogement } from "./reserver.js";
 import { supabase, suivre, annuler, memoriser, inscrire } from "./donnees.js";
 import { blocRetardClient, blocRemplacementClient } from "./retards.js";
 import { pageNotifications } from "./notifications.js";
@@ -191,7 +191,7 @@ function blocRecommander() {
 
 /* ------------------------------------------------------------------ Accueil 2026 : clair, structuré, un espace pour chacun */
 const ESPACES_ACCUEIL = [
-  ["logement", "Particuliers", "Ménage régulier ou ponctuel, vitres, canapés et textiles, avec 50 % de crédit d'impôt déduit tout de suite.", "#/reserver", "Estimer mon prix"],
+  ["logement", "Particuliers", "Ménage régulier ou ponctuel, vitres, canapés et textiles, avec 50 % de crédit d'impôt déduit tout de suite.", "#/estimer", "Estimer mon prix"],
   ["location", "Conciergeries et multi-biens", "Agenda relié à Airbnb et Booking, ménages entre deux voyageurs, photo de la boîte à clés et carte de tous vos biens.", "#/compte/pro", "Créer mon espace Pro"],
   ["cleaneurs", "Cleaneurs", "Missions près de chez vous, itinéraire, déroulé guidé et paiement sécurisé. 3 mois de formule Pro offerts aux inscrits jusqu'au 31 janvier 2027.", "#/devenir-cleaneur", "Devenir Cleaneur"],
 ];
@@ -287,7 +287,7 @@ function pageAccueil() {
   <section class="bloc bloc-doux"><div class="conteneur">
     ${titreSection("Nos prestations", "Le prix s'affiche dès que vous décrivez votre besoin.", "Prestations")}
     <div class="grille-3">${RACCOURCIS_VITRINE.map(([id, nom, sous]) => `
-      <a class="carte prestation revele" data-teinte="${teinte(rubrique(id).icone)}" href="#/reserver/${id}">${icone(rubrique(id).icone, { tuile: true })}<h3>${nom}</h3><p class="muet">${sous}</p><span class="aller">Estimer ›</span></a>`).join("")}</div>
+      <a class="carte prestation revele" data-teinte="${teinte(rubrique(id).icone)}" href="#/estimer/${id}">${icone(rubrique(id).icone, { tuile: true })}<h3>${nom}</h3><p class="muet">${sous}</p><span class="aller">Estimer ›</span></a>`).join("")}</div>
     <p class="centre" style="margin-top:26px"><a class="bouton secondaire" href="#/prestations">Voir toutes les prestations ›</a></p>
   </div></section>
   <section class="bloc"><div class="conteneur">
@@ -310,7 +310,7 @@ function pageAccueil() {
   </div></section>
   ${estPrelancement() ? `<section class="appel-2026"><div class="conteneur appel-grille"><div class="revele"><span class="pastille-lancement sombre"><i></i>J-${joursAvantLancement()}</span>
       <h2>Prêts pour le 31 décembre ?</h2><p>Inscrivez-vous maintenant : les premiers inscrits sont prévenus en priorité.</p>
-      <div class="boutons"><a class="bouton clair" href="#/reserver">Estimer mon prix</a></div></div>
+      <div class="boutons"><a class="bouton clair" href="#/estimer">Estimer mon prix</a></div></div>
       <div class="revele" id="inscription">${formulaireInscription()}</div></div></section>` : ""}`;
 }
 
@@ -320,7 +320,7 @@ function brancherExpress(racine) {
   if (!f) return;
   f.onsubmit = e => {
     e.preventDefault();
-    location.hash = f.rubrique.value ? `#/reserver/${f.rubrique.value}` : "#/reserver";
+    location.hash = f.rubrique.value ? `#/estimer/${f.rubrique.value}` : "#/estimer";
   };
 }
 
@@ -360,7 +360,7 @@ function pagePrestations() {
   return `<section class="fond-cleaneroo" style="padding:32px 0 56px">${decor([[90, 20, 90], [72, 70, 44]], [])}
     <div class="conteneur"><h1>Nos prestations</h1><div class="trait-corail"></div><p>${RUBRIQUES.length} univers de nettoyage, un seul parcours de réservation.</p></div></section>
   <section class="bloc" style="padding-top:28px"><div class="conteneur"><div class="grille-3">${RUBRIQUES.map(r => `
-    <a class="carte prestation" href="#/reserver/${r.id}">${icone(r.icone, { tuile: true })}<h3>${r.nom}</h3>
+    <a class="carte prestation" href="#/estimer/${r.id}">${icone(r.icone, { tuile: true })}<h3>${r.nom}</h3>
       <p class="muet" style="margin:4px 0 8px">${r.sousTitre}</p>
       <span class="tampon">${pastille(r)}</span></a>`).join("")}</div></div></section>`;
 }
@@ -565,10 +565,10 @@ async function afficherPage() {
   if (espace && espacePrecedent && espace !== espacePrecedent) transitionVitre();
   if (espace) espacePrecedent = espace;
   // Accès Cleaneur : l'accueil, les prestations, l'estimation et « Mes prestations » mènent à son espace.
-  if (document.body.classList.contains("acces-cleaneur") && ["", "prestations", "reserver", "mes-demandes", "mes-biens"].includes(route)) { location.replace("#/compte/cleaneur"); return; }
+  if (document.body.classList.contains("acces-cleaneur") && ["", "prestations", "reserver", "estimer", "mes-demandes", "mes-biens"].includes(route)) { location.replace("#/compte/cleaneur"); return; }
   compterPage(route, param);
   marquerActif();
-  document.body.classList.toggle("sans-rappel", route === "reserver");
+  document.body.classList.toggle("sans-rappel", route === "reserver" || route === "estimer");
   // Pages qui attendent le serveur : animation de chargement pendant l'attente.
   if (route === "messages") { window.scrollTo(0, 0); vue.innerHTML = pageChargement(); traduire(vue); await pageMessages(vue, chemin.split("/").slice(1).join("/")); return; }
   if (route === "notifications") { window.scrollTo(0, 0); vue.innerHTML = pageChargement(); traduire(vue); await pageNotifications(vue, param); return; }
@@ -581,6 +581,7 @@ async function afficherPage() {
     return;
   }
   if (route === "reserver") { ouvrirReservation(vue, param || null, chemin.split("/")[2] || ""); window.scrollTo(0, 0); return; }
+  if (route === "estimer") { ouvrirSimulateur(vue, param || null); window.scrollTo(0, 0); return; }
   if (route === "inscription" && param) { vue.innerHTML = pageInscription(param); brancherInscription(vue); traduire(vue); window.scrollTo(0, 0); return; }
   if (route === "suivi-demo") {
     vue.innerHTML = pageSuiviDemo();

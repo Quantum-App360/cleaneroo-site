@@ -26,7 +26,7 @@ export function typeEspace(p) {
 }
 
 const LIENS = {
-  visiteur: [["#/prestations", "Prestations"], ["#/reserver", "Estimer mon prix"], ["#/comment-ca-marche", "Comment ça marche"], ["#/devenir-cleaneur", "Devenir Cleaneur"]],
+  visiteur: [["#/prestations", "Prestations"], ["#/estimer", "Estimer mon prix"], ["#/comment-ca-marche", "Comment ça marche"], ["#/devenir-cleaneur", "Devenir Cleaneur"]],
   // L'essentiel, selon l'espace ouvert ; on change d'espace depuis le bouton du compte (à droite).
   particulier: [["#/tableau", "Mon suivi"], ["#/mes-demandes", "Mes demandes"], ["#/mes-biens", "Mes biens"]],
   pro: [["#/compte/pro", "Agenda"], ["#/mes-demandes", "Mes demandes"], ["#/mes-biens", "Mes biens"]],

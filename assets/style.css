@@ -1814,3 +1814,16 @@ body.avec-decor main, body.avec-decor #vue, body.avec-decor footer { position: r
   .bulle-decor, .eponge-decor .mousse { display: none; }
   .etoile-decor { opacity: .6; }
 }
+
+/* Simulateur « Estimer mon prix » (12 novembre 2026) : menu des prestations, prix détaillé, barre de prix en bas. */
+.simulateur .choix-prestation { display: flex; align-items: center; gap: 12px; margin: 0; }
+.simulateur .choix-prestation select { flex: 1; min-height: 52px; font-size: 16px; font-weight: 600; }
+.simulateur .resultat-simulation { border: 2px solid var(--turquoise); scroll-margin-top: 90px; }
+.simulateur .prix-simulation { font-size: 40px; line-height: 1.1; font-weight: 800; color: var(--primaire); margin: 4px 0; }
+.simulateur .barre-prix { display: flex; align-items: center; gap: 12px; background: var(--surface); border: 1.5px solid var(--separateur); border-radius: 18px; padding: 8px 8px 8px 16px; box-shadow: 0 8px 24px rgba(12, 47, 51, .10); }
+.simulateur .prix-barre { display: flex; flex-direction: column; line-height: 1.15; text-decoration: none; color: inherit; min-width: 0; }
+.simulateur .prix-barre span { font-size: 12px; color: var(--texte-2, #5b6f70); }
+.simulateur .prix-barre b { font-size: 22px; font-weight: 800; color: var(--primaire); white-space: nowrap; }
+.simulateur .prix-barre .lien { color: var(--primaire); text-decoration: underline; }
+.simulateur .barre-prix .bouton.plein { flex: 1; min-width: 0; }
+@media (max-width: 560px) { .simulateur .prix-simulation { font-size: 32px; } .simulateur .prix-barre b { font-size: 19px; } .simulateur .barre-prix .bouton.plein { font-size: 14px; padding: 0 12px; } .simulateur .choix-prestation .tuile-ico { display: none; } }

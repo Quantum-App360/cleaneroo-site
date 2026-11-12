@@ -116,11 +116,63 @@ let adresseCherchee = ""; // dernière adresse saisie placée sur la carte
 let racine = null;
 let envoi = false;
 
-function sauver() { try { localStorage.setItem(CLE_BROUILLON, JSON.stringify(b)); } catch { /* rien */ } }
+function sauver() { try { localStorage.setItem(sim ? CLE_SIMULATION : CLE_BROUILLON, JSON.stringify(b)); } catch { /* rien */ } }
+/* Simulateur « Estimer mon prix » (12 novembre 2026) : toutes les prestations dans un menu, les questions qui font le prix,
+   le prix détaillé mis à jour à chaque choix. Sans compte ni connexion : tout est calculé dans le navigateur.
+   « Réserver avec ces choix » reprend la simulation à l'étape 2 de la réservation. Même écran dans l'appli (Simulateur.kt). */
+let sim = false;
+const CLE_SIMULATION = "cleaneroo-simulation";
+export function ouvrirSimulateur(conteneur, rubriqueId) {
+  racine = conteneur; sim = true;
+  const ancien = lire(CLE_SIMULATION, null);
+  const id = rubrique(rubriqueId) ? rubriqueId : ancien?.rubriqueId && rubrique(ancien.rubriqueId) ? ancien.rubriqueId : "home";
+  b = ancien && ancien.rubriqueId === id ? ancien : nouveauBrouillon(id, ancien?.espace || "personnel");
+  b = { ...b, etape: 2, espace: partiePour(id, b.espace), abonnePro: !!profilMemorise()?.abonnePro };
+  photos = []; vuesPrises = {}; photoBoite = null;
+  rendre();
+}
+function rendreSimulation() {
+  const p = partie(b.espace), r = rubrique(b.rubriqueId);
+  const est = calculer(entreeEstimation(b, b.espace === "personnel", null));
+  const lignes = est.devisObligatoire ? "" : est.lignes.map(l => { const inclus = l.montantC === 0 && l.note === "inclus";
+    return `<div class="ligne-montant"><span>${esc(l.libelle)}${l.note && !inclus ? `<span class="note-ligne">${l.note}</span>` : ""}</span><span>${inclus ? "Inclus" : euros(l.montantC)}</span></div>`; }).join("");
+  const prix = est.devisObligatoire
+    ? `<h3 style="color:var(--primaire);margin:0">Sur devis</h3><p class="muet" style="margin:4px 0 0">Un professionnel qualifié évalue votre besoin et vous propose un devis. Aucun engagement.</p>`
+    : `${lignes}<div class="ligne-montant total"><span>Prix de la prestation</span><span>${euros(est.totalC)}</span></div>
+       ${est.fraisServicePct ? `<div class="ligne-montant"><span>${tr("Frais de service Cleaneroo")} (${est.fraisServicePct} %)</span><span>${euros(est.fraisServiceC)}</span></div>
+         <div class="ligne-montant total"><span>${tr("Total à payer")}</span><span>${euros(est.totalAPayerC)}</span></div>` : ""}
+       ${est.creditImpotC ? `<div class="ligne-montant" style="color:var(--succes);font-weight:700"><span>soit ${euros(est.apresCreditImpotC)} après crédit d'impôt</span></div>` : ""}`;
+  racine.innerHTML = `<section class="bloc" style="padding-top:28px"><div class="etroit simulateur">
+    <h1>Estimer mon prix</h1>
+    <p class="muet">Choisissez une prestation et vos options : le prix se met à jour à chaque choix. Sans inscription et sans engagement.</p>
+    ${titre("Pour qui ?")}
+    <div class="segments trois">${PARTIES.map(x => `<button type="button" data-espace="${x.id}" class="${p.id === x.id ? "choisi" : ""}">${x.nom}</button>`).join("")}</div>
+    <p class="petit" style="margin:6px 0 0">${p.detail}</p>
+    ${titre("Prestation")}
+    <label class="champ choix-prestation">${icone(r.icone, { tuile: true })}<select id="sim-rubrique" aria-label="Prestation">
+      ${p.rubriques.map(id => `<option value="${id}" ${id === b.rubriqueId ? "selected" : ""}>${esc(rubrique(id).nom)} · ${esc(rubrique(id).sousTitre)}</option>`).join("")}</select></label>
+    ${questionnaire(false)}
+    ${titre("Code postal (facultatif)")}
+    <div class="carte">${champTexte("Le prix peut varier selon la ville", "codePostal", b.codePostal || "", "text", 'inputmode="numeric" maxlength="5" placeholder="Ex. : 83600"')}
+      ${/^[0-9]{5}$/.test(b.codePostal || "") && pctZone(b.codePostal) ? `<p class="petit" style="margin:0"><b>${libelleZone(pctZone(b.codePostal))}</b></p>` : ""}</div>
+    <div class="carte resultat-simulation" id="resultat-simulation" style="margin-top:22px">
+      <p class="surtitre">Votre prix estimé</p>
+      <p class="prix-simulation">${est.devisObligatoire ? "Sur devis" : euros(est.fraisServicePct ? est.totalAPayerC : est.totalC)}</p>
+      <p class="muet" style="margin:0 0 12px">${icone(r.icone)} ${esc(r.nom)}${est.dureeMin ? ` · ${duree(est.dureeMin)}` : ""}${est.nombreCleaneurs === 2 ? " · 2 Cleaneurs" : ""}</p>
+      ${prix}
+      <p class="petit">Prix maximum : le montant final ne peut pas le dépasser sans votre accord. Le jour et l'heure choisis ensuite peuvent encore le baisser (créneau malin −${REGLES.CRENEAU_MALIN_PCT} %).</p>
+      ${estPrelancement() ? `<p class="petit"><b>Lancement le 31 décembre 2026.</b> ${MESSAGE_LANCEMENT}</p>` : ""}
+    </div>
+    <div class="barre-actions"><div class="barre-prix">
+      <a class="prix-barre" href="#resultat-simulation" data-voir-prix><span>Votre prix estimé</span><b>${est.devisObligatoire ? "Sur devis" : euros(est.fraisServicePct ? est.totalAPayerC : est.totalC)}</b><span class="lien">Voir le détail</span></a>
+      <button type="button" class="bouton plein" id="sim-reserver">${estPrelancement() ? "Pré-réserver avec ces choix" : "Réserver avec ces choix"}</button></div></div>
+  </div></section>`;
+  traduire(racine);
+}
 function charger() { try { return JSON.parse(localStorage.getItem(CLE_BROUILLON) || "null"); } catch { return null; } }
 
 export function ouvrirReservation(conteneur, rubriqueId, option = "") {
-  racine = conteneur;
+  racine = conteneur; sim = false;
   const ancien = charger();
   const rapide = option === "rapide";
   if (rubriqueId && rubrique(rubriqueId)) b = !rapide && ancien && ancien.rubriqueId === rubriqueId ? ancien : nouveauBrouillon(rubriqueId, ancien?.espace, rapide);
@@ -204,9 +256,27 @@ function etape1() {
 }
 
 function etape2() {
+  let h = questionnaire();
+  h += blocAccueil();
+  const accueilOk = accueilValide(b);
+  const tachesOk = b.rubriqueId !== "car" || b.taches.length > 0;
+  const panierOk = b.rubriqueId !== "textiles" || (b.panier || []).length > 0;
+  const chantierOk = b.rubriqueId !== "construction" || !!b.artisansPartis;
+  const equipementsOk = b.rubriqueId !== "kitchen" || minutesEquipements(b) > 0;
+  const joursOk = !(formuleDe(b)?.genre === "REGULIER" && b.frequence === "plusieurs") || (b.jours || []).length >= REGLES.JOURS_MIN_PLUSIEURS_PAR_SEMAINE;
+  const ok = accueilOk && tachesOk && panierOk && joursOk && chantierOk && equipementsOk;
+  return h + actions(ok, ok ? "" : !equipementsOk ? "Ajoutez au moins un équipement."
+    : !chantierOk ? "Cochez « Les artisans auront quitté les lieux » pour continuer."
+    : !panierOk ? "Ajoutez chaque élément au panier."
+    : !joursOk ? "Choisissez au moins deux jours de passage."
+    : !tachesOk ? "Choisissez au moins une tâche." : "Précisez l'accueil du Cleaneur pour continuer.");
+}
+
+/** Questions qui font le prix (étape 2 de la réservation, et simulateur « Estimer mon prix » sans l'en-tête). */
+function questionnaire(enTete = true) {
   const r = rubrique(b.rubriqueId);
   const formules = formulesPour(r);
-  let h = `<h2>${icone(r.icone)} ${r.nom}</h2><p class="muet">Décrivez le besoin</p>`;
+  let h = enTete ? `<h2>${icone(r.icone)} ${r.nom}</h2><p class="muet">Décrivez le besoin</p>` : "";
   if (b.rubriqueId === "special") {
     h += `<div class="note" style="margin-top:14px">Prix fixé à l'avance selon le type d'intervention et la surface : forfait, puis prix au m² au-delà.</div>`
       + (TARIFS_SPECIAUX[b.typeLieuId]?.certibiocide ? `<div class="note" style="margin-top:8px">Intervention réalisée par un Cleaneur titulaire du Certibiocide « nuisibles », vérifié avant activation.</div>` : "");
@@ -297,19 +367,7 @@ function etape2() {
   if (b.rubriqueId === "office" || b.rubriqueId === "commerce") h += `<div class="carte" style="margin-top:14px">${caseCocher("Les lieux seront vides pendant l'intervention", "lieuxVides", !!b.lieuxVides)}</div>`;
   if (b.rubriqueId === "event") h += horairesEvenement();
   if (b.rubriqueId === "moving") h += `<div class="carte" style="margin-top:14px">${caseCocher("Le logement sera entièrement vide (meubles et cartons sortis)", "lieuxVides", !!b.lieuxVides)}</div>`;
-  h += blocAccueil();
-  const accueilOk = accueilValide(b);
-  const tachesOk = b.rubriqueId !== "car" || b.taches.length > 0;
-  const panierOk = b.rubriqueId !== "textiles" || (b.panier || []).length > 0;
-  const chantierOk = b.rubriqueId !== "construction" || !!b.artisansPartis;
-  const equipementsOk = b.rubriqueId !== "kitchen" || minutesEquipements(b) > 0;
-  const joursOk = !(formuleDe(b)?.genre === "REGULIER" && b.frequence === "plusieurs") || (b.jours || []).length >= REGLES.JOURS_MIN_PLUSIEURS_PAR_SEMAINE;
-  const ok = accueilOk && tachesOk && panierOk && joursOk && chantierOk && equipementsOk;
-  return h + actions(ok, ok ? "" : !equipementsOk ? "Ajoutez au moins un équipement."
-    : !chantierOk ? "Cochez « Les artisans auront quitté les lieux » pour continuer."
-    : !panierOk ? "Ajoutez chaque élément au panier."
-    : !joursOk ? "Choisissez au moins deux jours de passage."
-    : !tachesOk ? "Choisissez au moins une tâche." : "Précisez l'accueil du Cleaneur pour continuer.");
+  return h;
 }
 
 /** Téléphone : au moins 10 chiffres (Validation.telephoneValide dans l'appli). */
@@ -660,13 +718,14 @@ function appliquerParrainage() {
 }
 
 function rendre() {
+  if (sim) return rendreSimulation();
   appliquerParrainage();
   const etape = b ? b.etape : 1;
   let est = null;
   if (b && b.rubriqueId && etape > 1) est = calculer(entreeEstimation(b, b.espace === "personnel", debutChoisi()));
   racine.innerHTML = `<section class="bloc" style="padding-top:28px"><div class="etroit">
     <div class="tete-etape petit">${etape > 1 ? `<button type="button" class="retour-haut" data-retour>‹ Retour</button>` : ""}<span>Étape ${etape} sur 5</span>
-      ${est && !est.devisObligatoire ? `<b style="color:var(--primaire)">Total estimé ${euros(est.totalC)}</b>` : ""}</div>
+      ${est && !est.devisObligatoire ? `<b style="color:var(--primaire)">${est.fraisServicePct ? `${tr("Total à payer")} ${euros(est.totalAPayerC)}` : `Total estimé ${euros(est.totalC)}`}</b>` : ""}</div>
     <div class="progression">${[1, 2, 3, 4, 5].map(i => `<span class="${i <= etape ? "fait" : ""}"></span>`).join("")}</div>
     ${[etape1, etape2, etape3, etape4, etape5][etape - 1]()}
   </div></section>`;
@@ -696,11 +755,21 @@ function rendre() {
 
 document.addEventListener("click", async e => {
   if (!racine || !racine.contains(e.target)) return;
+  if (sim && e.target.closest("[data-voir-prix]")) { e.preventDefault(); return racine.querySelector("#resultat-simulation")?.scrollIntoView({ behavior: "smooth", block: "start" }); }
   const t = e.target.closest("button, [data-rubrique]");
   if (!t) return;
   const ds = t.dataset;
   if (ds.retirerPhotoBoite !== undefined) { photoBoite = null; return rendre(); }
   if (ds.geoloc !== undefined) return geolocaliser();
+  if (sim && ds.espace) {
+    const p = partie(ds.espace);
+    b = p.rubriques.includes(b.rubriqueId) ? { ...b, espace: p.id } : { ...nouveauBrouillon(p.rubriques[0], p.id), etape: 2 };
+    sauver(); return rendre();
+  }
+  if (sim && t.id === "sim-reserver") {
+    try { localStorage.setItem(CLE_BROUILLON, JSON.stringify({ ...b, etape: 2 })); } catch { /* rien */ }
+    sim = false; location.hash = `#/reserver/${b.rubriqueId}`; return;
+  }
   if (ds.espace) { b = b ? { ...b, espace: ds.espace } : { espace: ds.espace, etape: 1 }; sauver(); return rendre(); }
   if (ds.rubrique) { b = b?.rubriqueId === ds.rubrique ? { ...b, etape: 2 } : nouveauBrouillon(ds.rubrique, b?.espace || "personnel"); sauver(); noterEtape(); rendre(); return window.scrollTo(0, 0); }
   if (ds.retour !== undefined) return retour();
@@ -780,6 +849,7 @@ document.addEventListener("click", async e => {
 document.addEventListener("change", e => {
   if (!racine || !racine.contains(e.target)) return;
   const ds = e.target.dataset;
+  if (sim && e.target.id === "sim-rubrique") { b = { ...nouveauBrouillon(e.target.value, b.espace), etape: 2, codePostal: b.codePostal || "" }; sauver(); return rendre(); }
   if (ds.texte) { b = { ...b, [ds.texte]: e.target.value }; sauver(); return rendre(); }  // (logementId gardé : seule la saisie d'une nouvelle adresse le vide)
   if (ds.case === "lavageDraps") return maj({ lavageDraps: e.target.checked, lits: litsDe(b) });
   if (ds.case) return maj({ [ds.case]: e.target.checked });
