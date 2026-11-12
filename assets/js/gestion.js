@@ -1,6 +1,7 @@
 // Écran de gestion Cleaneroo : réservé aux comptes « admin » (règles de sécurité de la base).
 // Équivalent de « Administration (démo) » de l'application : vérifier, publier, confirmer, faire avancer ou refuser une demande.
 import { decorTableau } from "./commun.js";
+import "./oeil.js";   // œil pour afficher le mot de passe
 import { nomsAttestations } from "./formations.js";
 import { blocDossierAdmin } from "./dossier.js";
 import { supabase, secteursARecruter, dossiersCleaneurs, documentsDe, deciderDossier, deciderDocument, lienDocument, DOCUMENTS_CLEANEUR } from "./donnees.js";

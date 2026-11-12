@@ -893,6 +893,9 @@ const T = [
   ["Prochain versement :", "Next payout:", "Prossimo versamento:", "Próximo pago:"],
   ["chaque vendredi, pour les missions validées jusqu'au mercredi minuit.", "every Friday, for jobs approved by Wednesday midnight.", "ogni venerdì, per le missioni convalidate entro mercoledì a mezzanotte.", "cada viernes, por las misiones validadas hasta el miércoles a medianoche."],
   // Notes des clients par les Cleaneurs (11 novembre 2026)
+  // Œil du mot de passe (12 novembre 2026)
+  ["Afficher le mot de passe", "Show password", "Mostra la password", "Mostrar la contraseña"],
+  ["Masquer le mot de passe", "Hide password", "Nascondi la password", "Ocultar la contraseña"],
   // Simulateur « Estimer mon prix » (12 novembre 2026)
   ["Choisissez une prestation et vos options : le prix se met à jour à chaque choix. Sans inscription et sans engagement.", "Choose a service and your options: the price updates with every choice. No sign-up, no commitment.", "Scegli un servizio e le tue opzioni: il prezzo si aggiorna a ogni scelta. Senza registrazione e senza impegno.", "Elige un servicio y tus opciones: el precio se actualiza con cada elección. Sin registro y sin compromiso."],
   ["Code postal (facultatif)", "Postcode (optional)", "CAP (facoltativo)", "Código postal (opcional)"],
