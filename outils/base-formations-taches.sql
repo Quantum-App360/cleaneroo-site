@@ -1,0 +1,4 @@
+-- Formations selon les tâches (12 novembre 2026, comme l'appli de Vincent) — appliqué (migration « formations_selon_taches »).
+-- qualifs_requises(rubrique, type_lieu, taches) ajoute : hauteur (hauteur, toiture), machines (autolaveuse, décapage, balayage),
+-- polissage (polissage, optiques), biocides (surfaces/cabinets, office médical, spécial hors nuisibles).
+-- qualifie(d) lit d.details->'taches'. Même règle : REGLES.qualificationsRequises (regles.js) et Regles.qualificationsRequises (Regles.kt).

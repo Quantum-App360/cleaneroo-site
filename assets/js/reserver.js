@@ -54,7 +54,7 @@ function memoriserCommande(b) {
 function avecLogement(br, l) {
   if (!l) return br;
   const dims = ["home", "rental"].includes(br.rubriqueId) ? { typeLogementId: l.typeLogementId, surface: l.surface, chambres: l.chambres, sdb: l.sdb, niveaux: l.niveaux } : {};
-  return { ...br, ...dims, ...Object.fromEntries(CHAMPS_LOGEMENT.map(k => [k, l[k] || ""])), logementId: l.id, code: "",
+  return { ...br, ...dims, ...Object.fromEntries(CHAMPS_LOGEMENT.map(k => [k, l[k] || ""])), logementId: l.id, code: "", guide: Array.isArray(l.guide) ? l.guide : [],
     lat: Number.isFinite(l.lat) ? l.lat : null, lon: Number.isFinite(l.lon) ? l.lon : null };
 }
 
@@ -833,7 +833,7 @@ async function envoyer() {
   envoi = true; rendre();
   try {
     const acces = { TIERS: { nom: b.tiersNom, telephone: b.tiersTel }, BOITE: { emplacement: b.boiteEmplacement, code: b.code }, AUTONOME: { code: b.code } }[b.accueil] || {};
-    const details = { ...b }; ["prenom", "nom", "email", "telephone", "rue", "codePostal", "ville", "code", "tiersNom", "tiersTel", "boiteEmplacement", "cgv", "etape", "logementId"].forEach(k => delete details[k]);
+    const details = { ...b }; ["prenom", "nom", "email", "telephone", "rue", "codePostal", "ville", "code", "tiersNom", "tiersTel", "boiteEmplacement", "cgv", "etape"].forEach(k => delete details[k]);
     details.lignes = est.lignes;
     details.langue = langue;
     details.fraisServicePct = est.fraisServicePct; details.fraisServiceC = est.fraisServiceC;   // frais de service Cleaneroo (à part)   // langue des SMS et des messages : celle de la réservation

@@ -1,7 +1,7 @@
 // Formations et qualifications des Cleaneurs (12 novembre 2026, reprises de l'appli iPhone de Vincent).
 // 20 modules : 14 se valident par un quiz (corrigé par le serveur, qui seul connaît les bonnes réponses),
 // 6 réglementés se valident sur attestation (document vérifié par l'administration).
-// Une mission n'est proposée qu'aux Cleaneurs qualifiés pour sa prestation (REGLES.QUALIFICATIONS_REQUISES).
+// Une mission n'est proposée qu'aux Cleaneurs qualifiés pour sa prestation, son type de lieu et ses tâches (qualificationsRequises).
 // Textes en 4 langues : assets/data/formations.json, fabriqué par outils/formations/generer.py (même fichier dans l'appli).
 // Même écran dans l'appli (Formations.kt). Base : outils/base-formations.sql.
 import { supabase, deposerDocument } from "./donnees.js";

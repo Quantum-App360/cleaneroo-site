@@ -1,0 +1,5 @@
+-- Équipe et propriétaires (12 novembre 2026, comme l'appli de Vincent) — appliqué (migrations « equipe_proprietaires » et « equipe_notifications »).
+-- Table equipe_membres (conciergerie_id, email, role GESTIONNAIRE/ASSISTANT/PROPRIETAIRE, biens text[], membre_id, statut INVITE/ACTIF),
+-- RLS sans accès direct. Fonctions : inviter_membre(email, role, biens) (notifie l'invité s'il a un compte), retirer_membre(id),
+-- mon_equipe(), mes_equipes(), accepter_equipe(id), vue_proprietaire(id) → biens + ménages (sans codes d'accès ;
+-- propriétaire : seulement ses biens, par details.logementId ou par l'adresse).

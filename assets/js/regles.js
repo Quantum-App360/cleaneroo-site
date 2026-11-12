@@ -159,6 +159,7 @@ export const REGLES = {
   AVIS_DELAI_JOURS: 14,
   TOLERANCE_RETARD_MIN: 30,
   RAYON_ARRIVEE_KM: 1.0,
+  CONNEXION_GOOGLE: false,   // passer à true une fois le fournisseur Google activé dans Supabase (comme Regles.CONNEXION_GOOGLE)
   // Propositions des Cleaneurs (base-propositions.sql) : remise et hausse maximales, note minimale d'une hausse, propositions par demande.
   PROPOSITION_REMISE_MAX_PCT: 10,
   PROPOSITION_HAUSSE_MAX_PCT: 50,
@@ -289,7 +290,7 @@ export const indemniteAccesC = prixC => Math.min(REGLES.INDEMNITE_MAX_C, Math.ma
  * Formations exigées pour une prestation (12 novembre 2026, reprises de l'appli de Vincent). Copie de qualifs_requises
  * (outils/base-formations.sql) et de Regles.qualificationsRequises (appli). typeLieuId : type de lieu de la demande.
  */
-export function qualificationsRequises(rubriqueId, typeLieuId = "") {
+export function qualificationsRequises(rubriqueId, typeLieuId = "", taches = []) {
   const t = typeLieuId || "";
   const selon = {
     home: ["domicile"], rental: ["domicile", "location"], moving: ["domicile"], car: ["auto"], textiles: ["textiles"],
@@ -298,7 +299,12 @@ export function qualificationsRequises(rubriqueId, typeLieuId = "") {
     windows: ["vitres"], outdoor: ["exterieurs"], event: ["evenementiel"],
     special: ["cafards", "punaises", "rats", "guepes"].includes(t) ? ["nuisibles"] : ["specialise"],
   }[rubriqueId] || [];
-  return ["socle", ...selon];
+  // Selon les tâches cochées (comme l'appli de Vincent) : hauteur, machines, polissage, désinfection professionnelle.
+  const t2 = taches || [], a = l => l.some(x => t2.includes(x));
+  const plus = [...(a(["hauteur", "toiture"]) ? ["hauteur"] : []), ...(a(["autolaveuse", "decapage", "balayage"]) ? ["machines"] : []),
+    ...(a(["polissage", "optiques"]) ? ["polissage"] : []),
+    ...(a(["surfaces", "cabinets"]) || (rubriqueId === "office" && t === "medical") || (rubriqueId === "special" && !["cafards", "punaises", "rats", "guepes"].includes(t)) ? ["biocides"] : [])];
+  return [...new Set(["socle", ...selon, ...plus])];
 }
 
 /**

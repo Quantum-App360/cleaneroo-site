@@ -10,6 +10,7 @@ import { afficherCarte, coordonnees } from "./cartes.js";
 import { chargeur } from "./commun.js";
 import { blocFormulesCleaneur } from "./formules-cleaneur.js";
 import { preremplir } from "./reserver.js";
+import { editeurGuide, brancherGuides } from "./guides.js";
 export { brancherMissions, demanderGeoloc } from "./missions.js";
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -132,7 +133,8 @@ export function ongletPro(p, biens) {
           <form data-form-cal="${esc(l.id)}" novalidate style="margin-top:10px">
             <label class="champ">Nom du bien<input name="nom" maxlength="60" value="${esc(l.nom)}" placeholder="${esc(tr("Ex. : Studio Vieux-Port"))}"></label>
             ${SOURCES.map(([id, nom]) => `<label class="champ">Lien du calendrier ${nom}<input name="${id}" type="url" inputmode="url" maxlength="600" placeholder="https://…ics" value="${esc((l.calendriers || []).find(c => c.source === id)?.url)}"></label>`).join("")}
-            <p class="erreur" data-erreur-cal></p><button class="bouton plein" type="submit">Enregistrer</button></form></details></div>`;
+            <p class="erreur" data-erreur-cal></p><button class="bouton plein" type="submit">Enregistrer</button></form></details>
+        ${editeurGuide(l)}</div>`;
     }).join("") : `<div class="vide-compte"><p class="muet">Aucun bien enregistré pour l'instant.</p><p class="petit">Ajoutez vos biens dans « Mes prestations » ou lors d'une réservation.</p></div>`}</div>
     <p class="petit" id="aucun-bien" hidden>Aucun bien ne correspond à votre recherche.</p>
     <div class="boutons"><a class="bouton secondaire" href="#/mes-demandes">＋ Ajouter un bien</a><a class="bouton secondaire" href="#/reserver/rental">Réserver un ménage de location</a></div>
@@ -166,6 +168,7 @@ export function brancherPro(vue, p, biens, demandes, { majProfil, recharger }) {
     try { await enregistrerBien({ ...l, nom: f.nom.value.trim(), calendriers }); recharger(); }
     catch { err.textContent = tr("Le service est momentanément indisponible. Réessayez dans quelques minutes."); }
   });
+  brancherGuides(vue, biens, recharger);
   remplirAgenda(vue, biens, demandes, recharger).then(prochains => trierBiens(vue, biens, prochains));
   carteDesBiens(vue.querySelector("#carte-biens"), biens);
   trierBiens(vue, biens, {});

@@ -14,6 +14,8 @@ import { formulaireProposition, brancherPropositions } from "./propositions.js";
 import { blocConsommablesCleaneur } from "./consommables.js";
 import { zoneSignature, signaturesDe } from "./signature.js";
 import { blocCeQuiMeManque } from "./dossier.js";
+import { blocGuideMission, brancherGuidesMissions } from "./guides.js";
+import { boutonBon, brancherBons } from "./demande-actions.js";
 import { blocCreneaux, scoresMissions, distances } from "./creneaux.js";
 import { preparationCleaneur } from "./espaces.js";
 import { icone } from "./icones.js";
@@ -338,6 +340,7 @@ function carteMission(m) {
       <button type="button" class="lien-bouton" style="color:var(--erreur)" data-annuler-mission="${esc(m.reference)}">Annuler la mission</button></div>` : ""}
     ${m.statut !== "CONFIRMEE" ? friseMission(m) : ""}
     ${blocAcces(m)}
+    ${blocGuideMission(m)}
     ${m.statut === "EN_ROUTE" ? `<p class="petit partage-actif" style="margin:8px 0 0">📍 Position partagée avec le client pendant le trajet</p>` : ""}
     ${["SUR_PLACE", "EN_COURS"].includes(m.statut) ? `<div class="controle-mission" data-controle="${esc(m.reference)}"></div>` : ""}
     ${m.statut === "SUR_PLACE" ? blocAccesImpossible(m) : ""}
@@ -345,6 +348,7 @@ function carteMission(m) {
     ${m.statut === "EN_COURS" ? `<div data-signature-cleaneur="${esc(m.reference)}"></div>` : ""}
     ${blocRetardCleaneur(m)}
     <div class="boutons" style="margin-top:10px">
+      ${boutonBon(m.reference)}
       ${bouton ? `<button type="button" class="bouton" data-etape="${esc(m.reference)}">${bouton}</button>` : ""}
       <a class="bouton secondaire" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${m.rue} ${m.code_postal} ${m.ville}`)}">Itinéraire</a>
     </div><p class="erreur" data-erreur-mission style="margin:6px 0 0"></p></div>`;
@@ -450,6 +454,7 @@ export async function brancherMissions(vue, p) {
     <p class="petit" style="margin-top:0">Missions en ligne pour les prestations que vous proposez et pour lesquelles vous êtes formé. Le premier Cleaneur qui la prend l'obtient.</p>
     <p class="petit" style="margin-top:0">${tr("Les plus proches et celles qui comblent vos trous de planning d'abord.")}</p>
     ${dispo.length ? dispo.map(carteDisponible).join("") : vide("Aucune mission disponible pour l'instant.", p.dossier === "VALIDE" || p.role === "admin" ? "" : "Votre dossier doit être validé pour voir et prendre des missions.")}
+    <div id="missions-incompatibles"></div>
     ${p.role === "admin" ? `<div id="selfies-admin" class="selfies-admin"></div><div id="avertissements-admin"></div>` : ""}`;
   traduire(boite);
   brancherTableau(boite, miennes, () => brancherMissions(vue, p));
@@ -459,6 +464,18 @@ export async function brancherMissions(vue, p) {
   remplirNotesClients(boite);
   if (p.role === "admin") { blocSelfiesAdmin(boite.querySelector("#selfies-admin")); blocAvertissementsAdmin(boite.querySelector("#avertissements-admin")); }
   brancherRetards(boite);
+  brancherGuidesMissions(boite);
+  brancherBons(boite);
+  // Missions incompatibles, avec la raison (comme l'appli de Vincent).
+  supabase.rpc("missions_incompatibles").then(({ data }) => {
+    const z = boite.querySelector("#missions-incompatibles");
+    if (!z || !data?.length) return;
+    const RAISONS = { qualification: "Formation à valider (Mes formations)", fermee: "Pendant une de vos périodes fermées", assurance: "Activité non couverte par votre RC Pro" };
+    z.innerHTML = `<details class="carte" style="margin-top:12px"><summary><b>${tr("Missions incompatibles")} (${data.length})</b></summary>
+      <p class="petit">${tr("Ces missions ne vous sont pas notifiées : vous ne pourriez pas les assurer.")}</p>
+      ${data.map(x => `<p class="petit" style="margin:6px 0">${esc(rubrique(x.rubrique_id)?.nom || "")} · ${esc(x.ville)}${x.creneau ? " · " + esc(dateLongue(new Date(x.creneau))) : ""}<br><b>${tr(RAISONS[x.raison] || x.raison)}</b></p>`).join("")}</details>`;
+    traduire(z);
+  });
   boite.querySelectorAll("[data-consommables]").forEach(c => blocConsommablesCleaneur(c, c.dataset.consommables));
   // Signature du compte rendu, obligatoire avant « J'ai terminé ».
   boite.querySelectorAll("[data-signature-cleaneur]").forEach(async z => {

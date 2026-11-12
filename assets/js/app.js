@@ -8,12 +8,13 @@ import { euros, duree, dateLongue, dateHeure, heure, estPrelancement, joursAvant
 traduireCatalogue(RUBRIQUES, TYPES_LIEU);
 import { ouvrirReservation, modeles, logements, nomLogement } from "./reserver.js";
 import { supabase, suivre, annuler, memoriser, inscrire } from "./donnees.js";
-import { blocRetardClient } from "./retards.js";
+import { blocRetardClient, blocRemplacementClient } from "./retards.js";
 import { pageNotifications } from "./notifications.js";
 import { pageMessages } from "./messages.js";
 import { blocPropositionsClient } from "./propositions.js";
 import { blocConsommablesClient } from "./consommables.js";
 import { blocFavori } from "./favoris.js";
+import { blocModifier, boutonBon, brancherBons } from "./demande-actions.js";
 import { transitionVitre } from "./vitre.js";
 import { compterPage } from "./compteur.js";
 import { suivreEnDirect, demoSuivi } from "./suivi-live.js";
@@ -483,6 +484,7 @@ async function pageDemande(ref, jeton) {
   <section class="bloc" style="padding-top:28px"><div class="etroit">
     <div class="progression">${ETAPES_SUIVI.map((_, i) => `<span class="${d.statut !== "ANNULEE" && i <= idx ? "fait" : ""}"></span>`).join("")}</div>
     <div class="note" style="margin-bottom:14px">${etat}</div>
+    ${["PUBLIEE", "CONFIRMEE"].includes(d.statut) ? `<div id="remplacement-client"></div>` : ""}
     ${d.statut === "PUBLIEE" && d.choix_cleaneur !== "directe" ? `<div id="propositions-client"></div>` : ""}
     ${["CONFIRMEE", "EN_ROUTE"].includes(d.statut) ? `<div id="retard-client"></div>` : ""}
     ${d.statut === "EN_ROUTE" ? `<div id="presence-client"></div>` : ""}
@@ -503,6 +505,8 @@ async function pageDemande(ref, jeton) {
     ${d.rubrique_id === "special" ? `<div class="carte" style="margin-bottom:12px"><b>Dossier pour mon assurance</b>
       <p class="petit" style="margin:4px 0 8px">Préparez l'e-mail pour votre assureur : référence, adresse, date et montant de l'intervention, avec le lien vers le compte rendu et les photos.</p>
       <a class="bouton secondaire" href="${mailAssurance(d, lien)}">Préparer l'e-mail à mon assureur</a></div>` : ""}
+    ${annulable ? `<div id="modifier-demande"></div>` : ""}
+    ${d.statut !== "ANNULEE" ? `<div class="boutons" style="margin:10px 0" id="bon-client">${boutonBon(ref, jeton)}</div>` : ""}
     ${annulable ? `<button type="button" class="bouton danger plein" id="annuler-demande">Annuler la demande</button>
       <p class="petit">Annulation gratuite : aucun Cleaneur n'est encore confirmé.</p>` : ""}
     ${d.rubrique_id === "rental" && ["EN_COURS", "A_VALIDER", "TERMINEE"].includes(d.statut) ? `<div id="consommables-client"></div>` : ""}
@@ -597,8 +601,11 @@ async function afficherPage() {
     const rendu = document.getElementById("compte-rendu-pieces");
     if (rendu) compteRenduPieces(rendu, decodeURIComponent(ref || ""));
     // Présence du Cleaneur à confirmer (sa position n'a pas pu confirmer l'arrivée).
+    blocModifier(document.getElementById("modifier-demande"), demandeAffichee || {}, decodeURIComponent(ref || ""), decodeURIComponent(jeton || ""), () => afficher());
+    brancherBons(document.getElementById("bon-client"));
     const fav = document.getElementById("favori-client");
     if (fav) blocFavori(fav, decodeURIComponent(ref || ""), fav.dataset.rubrique);
+    blocRemplacementClient(document.getElementById("remplacement-client"), decodeURIComponent(ref || ""), decodeURIComponent(jeton || ""));
     blocConsommablesClient(document.getElementById("consommables-client"), decodeURIComponent(ref || ""), decodeURIComponent(jeton || ""));
     blocPropositionsClient(document.getElementById("propositions-client"), decodeURIComponent(ref || ""), decodeURIComponent(jeton || ""));
     blocRetardClient(document.getElementById("retard-client"), decodeURIComponent(ref || ""), decodeURIComponent(jeton || ""));

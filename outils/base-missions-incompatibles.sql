@@ -1,0 +1,3 @@
+-- Missions incompatibles (12 novembre 2026, comme l'appli de Vincent) — appliqué (migration « missions_incompatibles ») :
+-- missions_incompatibles() : missions de ses prestations ni proposées ni notifiées au Cleaneur, avec la raison
+-- (qualification, fermee, assurance). Affichées à part sur son tableau de bord (site et appli).

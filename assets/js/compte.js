@@ -8,6 +8,7 @@ import { afficherFactures } from "./factures.js";
 import { blocActivite } from "./activite.js";
 import { blocContrat } from "./dossier.js";
 import { blocAbonnementPro, brancherAbonnementPro } from "./abonnement-pro.js";
+import { blocEquipe } from "./equipe.js";
 import { blocInvitationsPro, brancherInvitationsPro, blocCodeInvitation, brancherCodeInvitation } from "./invitations.js";
 import { RUBRIQUES, rubrique, TYPES_LOGEMENT } from "./catalogue.js";
 import { euros, dateLongue, heure, REGLES, sirenSiretValide } from "./regles.js";
@@ -102,7 +103,7 @@ export async function pageCompte(vue, param) {
       <p class="petit" style="margin:4px 0 10px">Demandes, inscriptions et dossiers des Cleaneurs (documents, validation).</p>
       <a class="bouton secondaire" href="gestion.html">Ouvrir le tableau de bord</a></div>` : ""}
     ${statuts.length > 1 ? barreOnglets(onglet, statuts) : ""}
-    <div class="contenu-onglet">${contenu}${onglet === "cleaneur" && cleaneur ? `<div id="mon-activite"></div>` : ""}${onglet !== "cleaneur" || cleaneur ? `<div data-factures="${onglet === "particulier" ? "personnel" : onglet}"></div>` : ""}${blocParrainage(parrain, onglet)}</div>
+    <div class="contenu-onglet">${contenu}${onglet !== "cleaneur" ? `<div id="equipe"></div>` : ""}${onglet === "cleaneur" && cleaneur ? `<div id="mon-activite"></div>` : ""}${onglet !== "cleaneur" || cleaneur ? `<div data-factures="${onglet === "particulier" ? "personnel" : onglet}"></div>` : ""}${blocParrainage(parrain, onglet)}</div>
     ${manquants.length ? `<details class="carte ajout-espace" id="ajout-espace" style="margin-top:16px"><summary>Ajouter un espace</summary>
       <p class="petit" style="margin:8px 0 10px">Chaque espace reste séparé : vous passez de l'un à l'autre avec les onglets en haut de votre compte.</p>
       ${manquants.map(x => `<button type="button" class="carte ligne-compte" data-ajouter-statut="${x}">${icone(NOMS_STATUTS[x][2], { tuile: true })}
@@ -123,7 +124,8 @@ export async function pageCompte(vue, param) {
   traduire(vue);
   if (vue.querySelector("#form-profil")) brancherProfil(vue, p, onglet === "cleaneur" && cleaneur);
   brancherParrainage(vue, parrain, () => pageCompte(vue, onglet));
-  afficherFactures(vue.querySelector("[data-factures]"));   // onglet « Factures » de l'espace
+  afficherFactures(vue.querySelector("[data-factures]"));
+  blocEquipe(vue.querySelector("#equipe"), onglet === "pro", biens);   // Équipe et propriétaires   // onglet « Factures » de l'espace
   if (onglet === "cleaneur" && cleaneur) { brancherDossier(vue, p); brancherMissions(vue, p); brancherFormulesCleaneur(vue, p, () => pageCompte(vue, "cleaneur")); brancherCodeInvitation(vue); blocActivite(vue.querySelector("#mon-activite"), p); }
   if (onglet === "pro") { brancherPro(vue, p, biens, demandes, { majProfil, recharger: () => pageCompte(vue) }); brancherInvitationsPro(vue); brancherAbonnementPro(vue, () => { majLienCompte(); pageCompte(vue, "pro"); }); }
   // Ajouter un espace : Particulier ou Cleaneur tout de suite ; Pro avec la société (raison sociale + SIRET/SIREN).
@@ -157,6 +159,8 @@ export async function pageCompte(vue, param) {
     if (d) { d.open = true; setTimeout(() => { d.scrollIntoView({ behavior: "smooth", block: "center" }); vue.querySelector(`[data-ajouter-statut="${voulu}"]`)?.click(); }, 300); }
   }
   vue.querySelector("#devenir-cleaneur")?.addEventListener("click", e => ajouter("cleaneur", e.target));
+  vue.querySelector("#connexion-google")?.addEventListener("click", () =>
+    supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: location.origin + location.pathname + "#/compte" } }));
   vue.querySelector("#deconnexion-compte").onclick = async () => { await deconnecter(); majLienCompte(); location.hash = "#/compte"; pageCompte(vue); };
   // Suppression du compte (confirmation « SUPPRIMER », comme l'appli de Vincent et l'appli Android).
   const champSuppr = vue.querySelector("#confirmer-suppression"), boutonSuppr = vue.querySelector("#supprimer-compte");
@@ -203,6 +207,7 @@ function ecranConnexion(vue, mode, message = "", ok = false, roleDefaut = "clien
       <p class="erreur" id="erreur-compte" style="margin:10px 0 0"></p>
       <button class="bouton plein" type="submit" style="margin-top:12px">${creer ? "Créer mon compte" : "Se connecter"}</button>
       ${creer ? "" : `<button class="lien-bouton" type="button" id="mdp-oublie">Mot de passe oublié ?</button>`}
+      ${REGLES.CONNEXION_GOOGLE ? `<button class="bouton secondaire plein" type="button" id="connexion-google" style="margin-top:10px">Continuer avec Google</button>` : ""}
     </form></div></section>`;
   traduire(vue);
   vue.querySelectorAll("[data-mode]").forEach(b => b.onclick = () => ecranConnexion(vue, b.dataset.mode, "", false, roleDefaut));

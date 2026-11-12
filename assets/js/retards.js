@@ -51,3 +51,21 @@ export async function blocRetardClient(boite, reference, jeton) {
     else { e.target.disabled = false; boite.querySelector("[data-erreur-retard]").textContent = tr("Le service est momentanément indisponible. Réessayez dans quelques minutes."); }
   });
 }
+
+/** Remplacement en cours (le Cleaneur ne peut plus venir) : accepté d'office jusqu'à 60 min après l'heure prévue ;
+ *  le client peut refuser dans les 15 min (annulation sans frais + avoir de 15 €). */
+export async function blocRemplacementClient(boite, reference, jeton) {
+  if (!boite) return;
+  const { data: r } = await supabase.rpc("remplacement_en_cours", { p_reference: reference, p_jeton: jeton || null });
+  if (!r || !boite.isConnected) return;
+  boite.innerHTML = `<div class="carte" style="margin-bottom:14px;border:1px solid var(--corail,#FA8C66)"><b>🔄 ${tr("Nous cherchons un autre Cleaneur")}</b>
+    <p class="petit" style="margin:4px 0 0">${tr("Votre Cleaneur ne peut plus venir. Un remplaçant est accepté d'office s'il arrive au plus tard à")} ${heure(r.limite)}.
+      ${tr("Sinon, la prestation est annulée sans frais et vous recevez un avoir de 15 €.")}</p>
+    ${r.refusable ? `<button type="button" class="bouton secondaire" style="margin-top:8px" data-refuser-remplacement>${tr("Je préfère annuler (sans frais, avoir de 15 €)")}</button>` : ""}</div>`;
+  traduire(boite);
+  boite.querySelector("[data-refuser-remplacement]")?.addEventListener("click", async e => {
+    e.target.disabled = true;
+    await supabase.rpc("refuser_remplacement", { p_reference: reference, p_jeton: jeton || null });
+    location.reload();
+  });
+}

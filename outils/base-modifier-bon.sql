@@ -1,0 +1,5 @@
+-- Modifier une demande publiée et bon d'intervention (12 novembre 2026, comme l'appli de Vincent) — appliqué
+-- (migrations « modifier_demande » et « bon_intervention »).
+-- modifier_demande(reference, jeton, creneau, remarque) : seulement VERIFICATION/PUBLIEE sans Cleaneur, créneau ≥ maintenant + 3 h ;
+--   repasse en VERIFICATION, propositions EN_ATTENTE → CLOTUREE, Cleaneurs concernés notifiés. Remarque vide = inchangée.
+-- bon_intervention(reference, jeton) : client (lien ou compte), Cleaneur de la mission ou admin ; sans codes d'accès.
