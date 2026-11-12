@@ -9,6 +9,7 @@ import { blocActivite } from "./activite.js";
 import { blocContrat } from "./dossier.js";
 import { blocAbonnementPro, brancherAbonnementPro } from "./abonnement-pro.js";
 import { blocEquipe } from "./equipe.js";
+import { installerSousOnglets } from "./sous-onglets.js";
 import { blocInvitationsPro, brancherInvitationsPro, blocCodeInvitation, brancherCodeInvitation } from "./invitations.js";
 import { RUBRIQUES, rubrique, TYPES_LOGEMENT } from "./catalogue.js";
 import { euros, dateLongue, heure, REGLES, sirenSiretValide } from "./regles.js";
@@ -128,6 +129,8 @@ export async function pageCompte(vue, param) {
   blocEquipe(vue.querySelector("#equipe"), onglet === "pro", biens);   // Équipe et propriétaires   // onglet « Factures » de l'espace
   if (onglet === "cleaneur" && cleaneur) { brancherDossier(vue, p); brancherMissions(vue, p); brancherFormulesCleaneur(vue, p, () => pageCompte(vue, "cleaneur")); brancherCodeInvitation(vue); blocActivite(vue.querySelector("#mon-activite"), p); }
   if (onglet === "pro") { brancherPro(vue, p, biens, demandes, { majProfil, recharger: () => pageCompte(vue) }); brancherInvitationsPro(vue); brancherAbonnementPro(vue, () => { majLienCompte(); pageCompte(vue, "pro"); }); }
+  // Onglets à l'intérieur des espaces Cleaneur et Pro (la page ne défile plus sur des dizaines d'écrans).
+  if ((onglet === "cleaneur" && cleaneur) || onglet === "pro") installerSousOnglets(vue, onglet);
   // Ajouter un espace : Particulier ou Cleaneur tout de suite ; Pro avec la société (raison sociale + SIRET/SIREN).
   const ajouter = async (statut, bouton) => {
     if (bouton) bouton.disabled = true;

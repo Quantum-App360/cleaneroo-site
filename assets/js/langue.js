@@ -901,6 +901,12 @@ const T = [
   ["50 % de crédit d'impôt sur le ménage à domicile, selon conditions (Cleaneur déclaré « services à la personne »), remboursé par les impôts grâce à l'attestation fiscale envoyée chaque mois.", "50 % tax credit on home cleaning, subject to conditions (Cleaner registered for personal services), refunded by the tax office with the tax certificate sent every month.", "50 % di credito d'imposta sulle pulizie domestiche, secondo le condizioni (Cleaner dichiarato per i servizi alla persona), rimborsato dal fisco con l'attestazione fiscale inviata ogni mese.", "50 % de crédito fiscal en la limpieza del hogar, según condiciones (Cleaner declarado de servicios a la persona), reembolsado por Hacienda con el certificado fiscal enviado cada mes."],
   ["Déclaration « services à la personne » (SAP)", "“Personal services” registration (SAP)", "Dichiarazione «servizi alla persona» (SAP)", "Declaración de «servicios a la persona» (SAP)"],
   ["Facultative : elle permet à vos clients particuliers de bénéficier de 50 % de crédit d'impôt (ménage, vitres, textiles au domicile). Récépissé de déclaration SAP (nova.entreprises.gouv.fr).", "Optional: it lets your private clients benefit from a 50 % tax credit (cleaning, windows, textiles at home). SAP registration receipt (nova.entreprises.gouv.fr).", "Facoltativa: permette ai tuoi clienti privati di beneficiare del 50 % di credito d'imposta (pulizie, vetri, tessili a domicilio). Ricevuta della dichiarazione SAP (nova.entreprises.gouv.fr).", "Opcional: permite a tus clientes particulares beneficiarse de un 50 % de crédito fiscal (limpieza, cristales, textiles en el domicilio). Resguardo de la declaración SAP (nova.entreprises.gouv.fr)."],
+  // Onglets des espaces (12 novembre 2026)
+  ["Planning", "Schedule", "Pianificazione", "Planificación"],
+  ["Mon dossier", "My file", "Il mio fascicolo", "Mi expediente"],
+  ["Activité", "Activity", "Attività", "Actividad"],
+  ["Équipe", "Team", "Team", "Equipo"],
+  ["Rubriques de l'espace", "Space sections", "Sezioni dello spazio", "Secciones del espacio"],
   // Pages légales (12 novembre 2026)
   ["Compte", "Account", "Account", "Cuenta"],
   ["Prix et frais", "Price and fees", "Prezzo e spese", "Precio y gastos"],
@@ -958,7 +964,8 @@ const T = [
   // Attestations fiscales et relevés comptables (12 novembre 2026)
   ["Relevés comptables", "Accounting statements", "Estratti contabili", "Extractos contables"],
   ["Chaque mois, toutes vos factures en un document pour votre comptabilité (PDF et tableau).", "Every month, all your invoices in one document for your accounts (PDF and spreadsheet).", "Ogni mese, tutte le tue fatture in un unico documento per la contabilità (PDF e tabella).", "Cada mes, todas tus facturas en un documento para tu contabilidad (PDF y tabla)."],
-  ["Tableau", "Spreadsheet", "Tabella", "Tabla"],
+  ["Tableur", "Spreadsheet", "Foglio di calcolo", "Hoja de cálculo"],
+  ["Tableau", "Dashboard", "Panoramica", "Panel"],
   ["Attestations fiscales (crédit d'impôt)", "Tax certificates (tax credit)", "Attestazioni fiscali (credito d'imposta)", "Certificados fiscales (crédito fiscal)"],
   ["Cleaneroo n'avance pas le crédit d'impôt : déclarez vos dépenses de services à la personne, les impôts vous remboursent 50 %. Une attestation par mois, et une pour l'année à joindre à votre déclaration.", "Cleaneroo does not advance the tax credit: declare your personal-services spending and the tax office refunds 50 %. One certificate per month, and one for the year to attach to your tax return.", "Cleaneroo non anticipa il credito d'imposta: dichiara le spese per servizi alla persona e il fisco ti rimborsa il 50 %. Un'attestazione al mese e una annuale da allegare alla dichiarazione.", "Cleaneroo no adelanta el crédito fiscal: declara tus gastos de servicios a la persona y Hacienda te reembolsa el 50 %. Un certificado al mes y uno anual para adjuntar a tu declaración."],
   ["Année", "Year", "Anno", "Año"],

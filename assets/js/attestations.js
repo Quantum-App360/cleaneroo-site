@@ -27,7 +27,7 @@ export function blocAttestations(liste, espace) {
   if (espace === "pro") return `<div class="carte attestations" style="margin-top:12px"><b>📊 ${tr("Relevés comptables")}</b>
     <p class="petit" style="margin:4px 0 8px">${tr("Chaque mois, toutes vos factures en un document pour votre comptabilité (PDF et tableau).")}</p>
     ${mois.map(([a, m]) => `<div class="ligne-attestation"><span>${esc(nomMois(a, m))}</span>
-      <button type="button" class="bouton secondaire" data-releve="${a}-${m}">PDF</button><button type="button" class="lien-bouton" data-releve-csv="${a}-${m}">${tr("Tableau")}</button></div>`).join("")}</div>`;
+      <button type="button" class="bouton secondaire" data-releve="${a}-${m}">PDF</button><button type="button" class="lien-bouton" data-releve-csv="${a}-${m}">${tr("Tableur")}</button></div>`).join("")}</div>`;
   const annees = [...new Set(mois.map(([a]) => a))];
   return `<div class="carte attestations" style="margin-top:12px"><b>🧾 ${tr("Attestations fiscales (crédit d'impôt)")}</b>
     <p class="petit" style="margin:4px 0 8px">${tr("Cleaneroo n'avance pas le crédit d'impôt : déclarez vos dépenses de services à la personne, les impôts vous remboursent 50 %. Une attestation par mois, et une pour l'année à joindre à votre déclaration.")}</p>
