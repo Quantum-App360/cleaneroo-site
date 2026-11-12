@@ -893,6 +893,21 @@ const T = [
   ["Prochain versement :", "Next payout:", "Prossimo versamento:", "Próximo pago:"],
   ["chaque vendredi, pour les missions validées jusqu'au mercredi minuit.", "every Friday, for jobs approved by Wednesday midnight.", "ogni venerdì, per le missioni convalidate entro mercoledì a mezzanotte.", "cada viernes, por las misiones validadas hasta el miércoles a medianoche."],
   // Notes des clients par les Cleaneurs (11 novembre 2026)
+  // Périodes fermées du Cleaneur (12 novembre 2026)
+  ["Mes périodes fermées", "My closed periods", "I miei periodi chiusi", "Mis periodos cerrados"],
+  ["Vacances, obligation familiale, rendez-vous… Pendant ces périodes, aucune mission ne vous est proposée ni notifiée.", "Holidays, family commitments, appointments… During these periods, no jobs are offered or notified to you.", "Vacanze, impegni familiari, appuntamenti… In questi periodi non ti viene proposta né notificata alcuna missione.", "Vacaciones, obligaciones familiares, citas… Durante estos periodos no se te propone ni notifica ningún servicio."],
+  ["Vacances", "Holidays", "Vacanze", "Vacaciones"],
+  ["Obligation familiale", "Family commitment", "Impegno familiare", "Obligación familiar"],
+  ["Rendez-vous médical", "Medical appointment", "Appuntamento medico", "Cita médica"],
+  ["Formation", "Training", "Formazione", "Formación"],
+  ["du", "from", "dal", "del"],
+  ["Du", "From", "Dal", "Desde"],
+  ["Au", "To", "Al", "Hasta"],
+  ["Rouvrir cette période", "Reopen this period", "Riapri questo periodo", "Reabrir este periodo"],
+  ["Fermer une période", "Close a period", "Chiudi un periodo", "Cerrar un periodo"],
+  ["Fermer cette période", "Close this period", "Chiudi questo periodo", "Cerrar este periodo"],
+  ["Choisissez une date de fin après la date de début (un an au plus).", "Choose an end date after the start date (one year at most).", "Scegli una data di fine successiva a quella di inizio (al massimo un anno).", "Elige una fecha de fin posterior a la de inicio (un año como máximo)."],
+  ["Cette mission tombe pendant une de vos périodes fermées.", "This job falls during one of your closed periods.", "Questa missione cade in uno dei tuoi periodi chiusi.", "Este servicio coincide con uno de tus periodos cerrados."],
   // Suppression du compte (12 novembre 2026)
   ["Supprimer mon compte", "Delete my account", "Elimina il mio account", "Eliminar mi cuenta"],
   ["Ce qui sera supprimé :", "What will be deleted:", "Cosa verrà eliminato:", "Lo que se eliminará:"],
