@@ -164,7 +164,9 @@ export const REGLES = {
   PROPOSITION_HAUSSE_MAX_PCT: 50,
   PROPOSITION_NOTE_MIN: 20,
   PROPOSITIONS_MAX: 5,
-  MISSION_TEST_C: 4000,   // mission test rémunérée par Cleaneroo avant l'activation (base-dossier-complet.sql)
+  MISSION_TEST_C: 4000,
+  // Créneaux disponibles du Cleaneur (grille) et score de recommandation des missions (repris de Vincent).
+  CRENEAUX_DEBUT_H: 6, CRENEAUX_FIN_H: 22,   // mission test rémunérée par Cleaneroo avant l'activation (base-dossier-complet.sql)
   RETARD_TOLERE_MIN: 30,   // retard annoncé toléré ; au-delà, le client peut annuler sans frais (base-retards.sql)
   VITESSE_MOYENNE_KMH: 35,
   MARGE_TRAJET_MIN: 10,
@@ -335,6 +337,19 @@ export function verifierProposition(estimationC, prixC, raison = "", note = "") 
 
 /** Portefeuille : net de l'année = prestations − commissions + pourboires + primes − moins-values (centimes). */
 export const netPortefeuille = p => (p.prestations_c || 0) - (p.commissions_c || 0) + (p.pourboires_c || 0) + (p.primes_c || 0) - (p.moins_values_c || 0);
+
+/**
+ * Score de recommandation d'une mission (copie de MissionsRegles.score dans l'appli, repris de Vincent) :
+ * distance (40 − 1,2 × km), enchaînement ≤ 60 min (25) sinon créneau ouvert (12), proximité dans le temps (15 − 2 × jours),
+ * gain net par heure (÷ 150, 20 au plus), + 100 si mission d'urgence. Compatibilité affichée sur 100.
+ */
+export function scoreMission({ km = 15, enchainementMin = null, dansCreneaux = false, jours = 7, netParHeureC = 0, urgence = false }) {
+  const distance = Math.max(0, 40 - 1.2 * km);
+  const planning = enchainementMin != null && enchainementMin <= 60 ? 25 : dansCreneaux ? 12 : 0;
+  const temps = Math.max(0, 15 - 2 * jours);
+  const gain = Math.min(20, netParHeureC / 150);
+  return Math.round(distance + planning + temps + gain + (urgence ? 100 : 0));
+}
 
 export function dateVersement(d = new Date()) {
   const iso = ((d.getDay() + 6) % 7) + 1;   // lundi = 1 … dimanche = 7

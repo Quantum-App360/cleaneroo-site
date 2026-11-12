@@ -14,6 +14,7 @@ import { formulaireProposition, brancherPropositions } from "./propositions.js";
 import { blocConsommablesCleaneur } from "./consommables.js";
 import { zoneSignature, signaturesDe } from "./signature.js";
 import { blocCeQuiMeManque } from "./dossier.js";
+import { blocCreneaux, scoresMissions } from "./creneaux.js";
 import { preparationCleaneur } from "./espaces.js";
 import { icone } from "./icones.js";
 import { traduire, tr } from "./langue.js";
@@ -379,11 +380,12 @@ function carteDisponible(m) {
     <div class="corps"><div class="haut"><h3>${m.urgence ? `<span class="tampon urgence">🚨 Urgence</span> ` : ""}${r.nom}</h3><b>${m.sur_devis ? tr("Sur devis") : euros(m.estimation_c)}</b></div>
       ${m.urgence && m.prime_urgence_c ? `<p class="petit" style="margin:2px 0 0;color:var(--succes);font-weight:700">+ ${euros(m.prime_urgence_c)} de prime d'urgence</p>` : ""}
       <p class="muet" style="margin:2px 0 0">${quand(m)} · ${duree(m.duree_min)}${m.nombre_cleaneurs === 2 ? " · 2 Cleaneurs" : ""}</p>
-      <p class="petit" style="margin:2px 0 0">${esc(m.code_postal)} ${esc(m.ville)}</p><p class="petit" data-note-client="${esc(m.reference)}" style="margin:2px 0 0"></p><p class="erreur" data-erreur-prendre style="margin:4px 0 0"></p></div>
+      <p class="petit" style="margin:2px 0 0">${esc(m.code_postal)} ${esc(m.ville)}${scores.has(m.reference) ? ` · <b style="color:var(--primaire)">${tr("Compatibilité")} ${Math.min(100, scores.get(m.reference))}/100</b>` : ""}</p><p class="petit" data-note-client="${esc(m.reference)}" style="margin:2px 0 0"></p><p class="erreur" data-erreur-prendre style="margin:4px 0 0"></p></div>
     ${m.choix_cleaneur === "directe" ? `<button type="button" class="bouton" data-prendre="${esc(m.reference)}">Prendre la mission</button>`
       : formulaireProposition(m, mesPropositions.find(x => x.reference === m.reference))}</div>`;
 }
 let mesPropositions = [];
+let scores = new Map();
 
 const vide = (t, plus = "") => `<div class="vide-compte"><p class="muet">${t}</p>${plus ? `<p class="petit">${plus}</p>` : ""}</div>`;
 
@@ -416,6 +418,9 @@ export async function brancherMissions(vue, p) {
   const [penalites, docs, tableau] = await Promise.all([p.role === "admin" ? null : mesPenalites().catch(() => null),
     mesDocuments().catch(() => []), tableauCleaneur().catch(() => null)]);
   if (!document.body.contains(boite)) return;
+  // Recommandation : les mieux placées d'abord (distance, enchaînement, créneaux, délai, gain horaire).
+  scores = await scoresMissions(dispo, miennes, p, tableau?.formule).catch(() => new Map());
+  dispo.sort((a, b) => (scores.get(b.reference) || 0) - (scores.get(a.reference) || 0));
   const auj = new Date().toDateString();
   const duJour = miennes.filter(m => m.statut !== "CONFIRMEE" || (m.creneau && new Date(m.creneau).toDateString() === auj));
   const plusTard = miennes.filter(m => !duJour.includes(m));
@@ -440,15 +445,17 @@ export async function brancherMissions(vue, p) {
     <div id="niveau-cleaneur"></div>
     <div id="formations-cleaneur"></div>
     <div id="periodes-fermees"></div>
+    <div id="creneaux-cleaneur"></div>
     <h2 class="titre-section" id="missions-disponibles">${icone("position", { tuile: true })}Missions disponibles</h2>
     <p class="petit" style="margin-top:0">Missions en ligne pour les prestations que vous proposez et pour lesquelles vous êtes formé. Le premier Cleaneur qui la prend l'obtient.</p>
+    <p class="petit" style="margin-top:0">${tr("Les plus proches et celles qui comblent vos trous de planning d'abord.")}</p>
     ${dispo.length ? dispo.map(carteDisponible).join("") : vide("Aucune mission disponible pour l'instant.", p.dossier === "VALIDE" || p.role === "admin" ? "" : "Votre dossier doit être validé pour voir et prendre des missions.")}
     ${p.role === "admin" ? `<div id="selfies-admin" class="selfies-admin"></div><div id="avertissements-admin"></div>` : ""}`;
   traduire(boite);
   brancherTableau(boite, miennes, () => brancherMissions(vue, p));
   blocNoterClients(boite.querySelector("#noter-clients")).then(() => blocAvisRecus(boite.querySelector("#avis-recus")));
   if (p.role !== "admin") blocCeQuiMeManque(boite.querySelector("#ce-qui-manque"));
-  if (p.role !== "admin") { blocFormations(boite.querySelector("#formations-cleaneur")); blocPeriodes(boite.querySelector("#periodes-fermees")); blocNiveau(boite.querySelector("#niveau-cleaneur")); }
+  if (p.role !== "admin") { blocFormations(boite.querySelector("#formations-cleaneur")); blocPeriodes(boite.querySelector("#periodes-fermees")); blocNiveau(boite.querySelector("#niveau-cleaneur")); blocCreneaux(boite.querySelector("#creneaux-cleaneur"), p); }
   remplirNotesClients(boite);
   if (p.role === "admin") { blocSelfiesAdmin(boite.querySelector("#selfies-admin")); blocAvertissementsAdmin(boite.querySelector("#avertissements-admin")); }
   brancherRetards(boite);

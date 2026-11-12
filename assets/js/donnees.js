@@ -250,7 +250,7 @@ export async function monProfil() {
   if (error) throw new Error(error.message);
   return data ? { ...data, email: s.user.email } : null;
 }
-const CHAMPS_PROFIL = ["prenom", "nom", "telephone", "code_postal", "ville", "siret", "societe", "prestations", "zone_km", "zone_lat", "zone_lon", "espace"];
+const CHAMPS_PROFIL = ["prenom", "nom", "telephone", "code_postal", "ville", "siret", "societe", "prestations", "zone_km", "zone_lat", "zone_lon", "espace", "disponibilites"];
 export async function majProfil(champs) {
   const s = await session();
   const maj = Object.fromEntries(Object.entries(champs).filter(([k]) => CHAMPS_PROFIL.includes(k)));

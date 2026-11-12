@@ -893,6 +893,14 @@ const T = [
   ["Prochain versement :", "Next payout:", "Prossimo versamento:", "Próximo pago:"],
   ["chaque vendredi, pour les missions validées jusqu'au mercredi minuit.", "every Friday, for jobs approved by Wednesday midnight.", "ogni venerdì, per le missioni convalidate entro mercoledì a mezzanotte.", "cada viernes, por las misiones validadas hasta el miércoles a medianoche."],
   // Notes des clients par les Cleaneurs (11 novembre 2026)
+  // Créneaux disponibles et recommandation des missions (12 novembre 2026)
+  ["Mes créneaux disponibles", "My available slots", "Le mie fasce disponibili", "Mis franjas disponibles"],
+  ["h ouvertes par semaine", "h open per week", "h aperte a settimana", "h abiertas por semana"],
+  ["Touchez les heures où vous êtes disponible : les missions qui y tombent passent en tête de vos recommandations.", "Tap the hours when you are available: jobs in those hours move to the top of your recommendations.", "Tocca le ore in cui sei disponibile: le missioni in quelle ore passano in cima ai tuoi consigli.", "Toca las horas en las que estás disponible: los servicios en esas horas pasan al principio de tus recomendaciones."],
+  ["Lundi au vendredi, 8 h - 18 h", "Monday to Friday, 8 am - 6 pm", "Da lunedì a venerdì, 8-18", "De lunes a viernes, 8 h - 18 h"],
+  ["Créneaux enregistrés.", "Slots saved.", "Fasce salvate.", "Franjas guardadas."],
+  ["Compatibilité", "Match", "Compatibilità", "Compatibilidad"],
+  ["Les plus proches et celles qui comblent vos trous de planning d'abord.", "The closest ones and those filling gaps in your schedule first.", "Prima le più vicine e quelle che riempiono i buchi del tuo programma.", "Primero los más cercanos y los que rellenan huecos de tu agenda."],
   // Portefeuille du Cleaneur (12 novembre 2026)
   ["Portefeuille de l'année", "This year's wallet", "Portafoglio dell'anno", "Monedero del año"],
   ["Pourboires", "Tips", "Mance", "Propinas"],
