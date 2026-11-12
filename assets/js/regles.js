@@ -164,6 +164,9 @@ export const REGLES = {
   PROPOSITION_HAUSSE_MAX_PCT: 50,
   PROPOSITION_NOTE_MIN: 20,
   PROPOSITIONS_MAX: 5,
+  // Frais de déplacement proposés par le Cleaneur (indicatifs, toujours acceptés par le client) : inclus jusqu'à 15 km,
+  // 8 € jusqu'à 30 km, 15 € jusqu'à 50 km, au-delà 0,30 €/km aller-retour, 60 € au plus.
+  FRAIS_DEPLACEMENT: { inclusKm: 15, palier1Km: 30, palier1C: 800, palier2Km: 50, palier2C: 1500, parKmC: 30, maxC: 6000 },
   MISSION_TEST_C: 4000,
   // Créneaux disponibles du Cleaneur (grille) et score de recommandation des missions (repris de Vincent).
   CRENEAUX_DEBUT_H: 6, CRENEAUX_FIN_H: 22,   // mission test rémunérée par Cleaneroo avant l'activation (base-dossier-complet.sql)
@@ -349,6 +352,15 @@ export function scoreMission({ km = 15, enchainementMin = null, dansCreneaux = f
   const temps = Math.max(0, 15 - 2 * jours);
   const gain = Math.min(20, netParHeureC / 150);
   return Math.round(distance + planning + temps + gain + (urgence ? 100 : 0));
+}
+
+/** Frais de déplacement indicatifs pour une distance (km) — copie de MissionsRegles.fraisDeplacement (appli). */
+export function fraisDeplacementC(km) {
+  const f = REGLES.FRAIS_DEPLACEMENT;
+  if (km <= f.inclusKm) return 0;
+  if (km <= f.palier1Km) return f.palier1C;
+  if (km <= f.palier2Km) return f.palier2C;
+  return Math.min(f.maxC, Math.round(km * 2 * f.parKmC));
 }
 
 export function dateVersement(d = new Date()) {

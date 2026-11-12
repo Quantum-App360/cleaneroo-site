@@ -14,7 +14,7 @@ import { formulaireProposition, brancherPropositions } from "./propositions.js";
 import { blocConsommablesCleaneur } from "./consommables.js";
 import { zoneSignature, signaturesDe } from "./signature.js";
 import { blocCeQuiMeManque } from "./dossier.js";
-import { blocCreneaux, scoresMissions } from "./creneaux.js";
+import { blocCreneaux, scoresMissions, distances } from "./creneaux.js";
 import { preparationCleaneur } from "./espaces.js";
 import { icone } from "./icones.js";
 import { traduire, tr } from "./langue.js";
@@ -382,7 +382,7 @@ function carteDisponible(m) {
       <p class="muet" style="margin:2px 0 0">${quand(m)} · ${duree(m.duree_min)}${m.nombre_cleaneurs === 2 ? " · 2 Cleaneurs" : ""}</p>
       <p class="petit" style="margin:2px 0 0">${esc(m.code_postal)} ${esc(m.ville)}${scores.has(m.reference) ? ` · <b style="color:var(--primaire)">${tr("Compatibilité")} ${Math.min(100, scores.get(m.reference))}/100</b>` : ""}</p><p class="petit" data-note-client="${esc(m.reference)}" style="margin:2px 0 0"></p><p class="erreur" data-erreur-prendre style="margin:4px 0 0"></p></div>
     ${m.choix_cleaneur === "directe" ? `<button type="button" class="bouton" data-prendre="${esc(m.reference)}">Prendre la mission</button>`
-      : formulaireProposition(m, mesPropositions.find(x => x.reference === m.reference))}</div>`;
+      : formulaireProposition(m, mesPropositions.find(x => x.reference === m.reference), distances.get(m.reference) ?? null)}</div>`;
 }
 let mesPropositions = [];
 let scores = new Map();

@@ -893,6 +893,18 @@ const T = [
   ["Prochain versement :", "Next payout:", "Prossimo versamento:", "Próximo pago:"],
   ["chaque vendredi, pour les missions validées jusqu'au mercredi minuit.", "every Friday, for jobs approved by Wednesday midnight.", "ogni venerdì, per le missioni convalidate entro mercoledì a mezzanotte.", "cada viernes, por las misiones validadas hasta el miércoles a medianoche."],
   // Notes des clients par les Cleaneurs (11 novembre 2026)
+  // Propositions : déplacement, chevauchement, enchaînement (12 novembre 2026)
+  ["Frais de déplacement (€)", "Travel costs (€)", "Spese di trasferta (€)", "Gastos de desplazamiento (€)"],
+  ["Déplacement : inclus jusqu'à 15 km, puis 8 € jusqu'à 30 km, 15 € jusqu'à 50 km, 60 € au plus. Mettez 0 pour vous positionner sans frais et augmenter vos chances.", "Travel: included up to 15 km, then €8 up to 30 km, €15 up to 50 km, €60 at most. Enter 0 to apply with no travel costs and improve your chances.", "Trasferta: inclusa fino a 15 km, poi 8 € fino a 30 km, 15 € fino a 50 km, 60 € al massimo. Metti 0 per proporti senza spese e aumentare le tue possibilità.", "Desplazamiento: incluido hasta 15 km, luego 8 € hasta 30 km, 15 € hasta 50 km, 60 € como máximo. Pon 0 para proponerte sin gastos y aumentar tus posibilidades."],
+  ["Les frais de déplacement ne peuvent pas dépasser 60 €.", "Travel costs cannot exceed €60.", "Le spese di trasferta non possono superare 60 €.", "Los gastos de desplazamiento no pueden superar 60 €."],
+  ["Ce créneau chevauche une de vos missions confirmées (30 min de trajet comprises).", "This slot overlaps one of your confirmed jobs (including 30 min of travel).", "Questa fascia si sovrappone a una delle tue missioni confermate (30 min di tragitto compresi).", "Esta franja coincide con uno de tus servicios confirmados (30 min de trayecto incluidos)."],
+  ["Vous avez déjà une proposition en attente sur un créneau qui chevauche celui-ci.", "You already have a pending proposal on an overlapping slot.", "Hai già una proposta in attesa su una fascia che si sovrappone a questa.", "Ya tienes una propuesta pendiente en una franja que coincide con esta."],
+  ["dont", "including", "di cui", "de los cuales"],
+  ["de déplacement", "for travel", "di trasferta", "de desplazamiento"],
+  ["Sans frais de déplacement", "No travel costs", "Senza spese di trasferta", "Sin gastos de desplazamiento"],
+  ["Cleaneur en mission juste avant : j'accepte le risque d'un léger retard", "Cleaneur on another job just before: I accept the risk of a slight delay", "Cleaneur in missione subito prima: accetto il rischio di un leggero ritardo", "Cleaneur en otro servicio justo antes: acepto el riesgo de un ligero retraso"],
+  ["Proposition expirée", "Proposal expired", "Proposta scaduta", "Propuesta caducada"],
+  ["Le client n'a pas répondu à temps : vous êtes libéré de ce créneau.", "The customer did not reply in time: you are free on this slot.", "Il cliente non ha risposto in tempo: sei libero da questa fascia.", "El cliente no ha respondido a tiempo: quedas libre en esta franja."],
   // Alerte de mission en demi-écran (12 novembre 2026)
   ["Documents", "Documents", "Documenti", "Documentos"],
   ["Nouvelle mission près de chez vous", "New job near you", "Nuova missione vicino a te", "Nuevo servicio cerca de ti"],

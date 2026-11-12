@@ -45,14 +45,19 @@ export function blocCreneaux(boite, profil) {
       .grille-creneaux button.ouvert{background:var(--primaire,#1F8A80);border-color:var(--primaire,#1F8A80)}`; document.head.appendChild(s); }
 }
 
+/** Distance (km) de chaque mission disponible depuis le centre de la zone du Cleaneur (calculée avec les scores). */
+export const distances = new Map();
+
 /** Score de chaque mission disponible (Map référence → score) : distance depuis le centre de la zone, enchaînement, créneaux… */
 export async function scoresMissions(dispo, miennes, profil, formule) {
   const centre = profil?.zone_lat ? { lat: profil.zone_lat, lon: profil.zone_lon } : null;
   const taux = (formule === "pro" ? REGLES.COMMISSION_PRO_PB : REGLES.COMMISSION_GRATUIT_PB) / 10000;
   const scores = new Map();
+  distances.clear();
   await Promise.all(dispo.map(async m => {
     const pos = centre ? await coordonnees("", m.code_postal, m.ville).catch(() => null) : null;
     const km = pos ? distanceKm(centre, pos) : 15;
+    if (pos) distances.set(m.reference, km);
     const debut = m.creneau ? new Date(m.creneau) : null;
     let enchainementMin = null;
     if (debut) for (const x of miennes) {

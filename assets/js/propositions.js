@@ -3,7 +3,7 @@
 // le client compare et choisit. Règles : REGLES.PROPOSITION_* et verifierProposition (regles.js, copie dans Regles.kt).
 // Même écran dans l'appli (Propositions.kt). Base : outils/base-propositions.sql.
 import { supabase } from "./donnees.js";
-import { REGLES, euros, verifierProposition } from "./regles.js";
+import { REGLES, euros, verifierProposition, fraisDeplacementC } from "./regles.js";
 import { tr, traduire } from "./langue.js";
 import { esc } from "./commun.js";
 import { badgeNiveau } from "./niveaux.js";
@@ -17,10 +17,13 @@ export const MESSAGES_PROPOSITION = {
   devis: "Au-delà de 50 % de plus que l'estimation, la prestation passe sur devis.", justification: "Une hausse se justifie : choisissez une raison et écrivez au moins 20 caractères pour le client.",
   raison: "Choisissez la raison de votre remise.", complet: "Cette demande a déjà reçu 5 propositions.", ouverture: "Les missions commencent le 1er janvier 2027.",
   dossier: "Votre dossier doit être validé pour proposer.", indisponible: "Cette mission n'est plus disponible.",
+  frais: "Les frais de déplacement ne peuvent pas dépasser 60 €.", planning: "Ce créneau chevauche une de vos missions confirmées (30 min de trajet comprises).",
+  chevauchement: "Vous avez déjà une proposition en attente sur un créneau qui chevauche celui-ci.",
   assurance: "Votre RC Pro ne couvre pas cette activité : mettez-la à jour dans votre dossier." };
 
 /** Formulaire « Proposer » d'une mission en mode candidatures (Cleaneur). */
-export function formulaireProposition(m, mienne) {
+export function formulaireProposition(m, mienne, km = null) {
+  const frais = km == null ? 0 : fraisDeplacementC(km);
   const prix = (mienne?.prix_c ?? m.estimation_c) / 100;
   return `<details class="proposition-cleaneur"${mienne ? "" : ""}><summary class="bouton">${tr(mienne ? "Modifier ma proposition" : "Proposer mes conditions")}</summary>
     ${mienne ? `<p class="petit">${tr("Proposition envoyée")} : <b>${euros(mienne.prix_c)}</b> · ${tr(mienne.statut === "EN_ATTENTE" ? "en attente du client" : mienne.statut === "EXPIREE" ? "expirée" : "close")}</p>` : ""}
@@ -31,10 +34,12 @@ export function formulaireProposition(m, mienne) {
         <optgroup label="${tr("Hausse")}">${RAISONS_HAUSSE.map(([v, t]) => `<option value="${v}">${tr(t)}</option>`).join("")}</optgroup></select></label>
       <label class="champ">${tr("Autre horaire (facultatif)")}<input type="datetime-local" data-horaire></label>
       <label class="champ">${tr("Temps en plus (minutes)")}<input type="number" min="0" max="240" step="15" value="0" data-temps></label>
+      <label class="champ">${tr("Frais de déplacement (€)")}${km != null ? ` <span class="petit">(${Math.round(km)} km)</span>` : ""}<input type="number" min="0" max="60" step="1" value="${frais / 100}" data-frais></label>
     </div>
     <label class="champ">${tr("Note pour le client (obligatoire si vous demandez plus)")}<textarea rows="2" maxlength="500" data-note></textarea></label>
     <label class="champ">${tr("Ce que vous n'incluez pas (facultatif)")}<input maxlength="300" data-exclusions placeholder="${tr("ex. vitres au-delà de 3 m")}"></label>
     <p class="petit">${tr("Remise jusqu'à 10 % ; hausse jusqu'à 50 %, toujours justifiée. La commission Cleaneroo reste calculée sur l'estimation.")}</p>
+    <p class="petit">${tr("Déplacement : inclus jusqu'à 15 km, puis 8 € jusqu'à 30 km, 15 € jusqu'à 50 km, 60 € au plus. Mettez 0 pour vous positionner sans frais et augmenter vos chances.")}</p>
     <div class="boutons"><button type="button" class="bouton" data-proposer="${esc(m.reference)}">${tr("Envoyer ma proposition")}</button>
       ${mienne?.statut === "EN_ATTENTE" ? `<button type="button" class="bouton secondaire" data-retirer-proposition="${esc(m.reference)}">${tr("Retirer ma proposition")}</button>` : ""}</div>
     <p class="petit" data-resultat-proposition></p></details>`;
@@ -49,7 +54,8 @@ export function brancherPropositions(boite, recharger) {
     b.disabled = true;
     const { data } = await supabase.rpc("proposer", { p_reference: b.dataset.proposer, p_prix_c: Math.round(Number(String(v("[data-prix]")).replace(",", ".")) * 100),
       p_raison: v("[data-raison]"), p_note: v("[data-note]"), p_temps_sup_min: Number(v("[data-temps]")) || 0,
-      p_autre_horaire: horaire ? new Date(horaire).toISOString() : null, p_exclusions: v("[data-exclusions]") });
+      p_autre_horaire: horaire ? new Date(horaire).toISOString() : null, p_exclusions: v("[data-exclusions]"),
+      p_frais_c: Math.round((Number(String(v("[data-frais]")).replace(",", ".")) || 0) * 100) });
     b.disabled = false;
     res.textContent = tr(MESSAGES_PROPOSITION[data] || "Le service est momentanément indisponible. Réessayez dans quelques minutes.");
     res.style.color = data === "ok" ? "var(--succes)" : "var(--erreur)";
@@ -78,11 +84,13 @@ export async function blocPropositionsClient(boite, reference, jeton) {
       return `<div class="carte proposition-client" data-id="${esc(p.id)}">
         <div class="tete-prop"><b>${esc(p.prenom || "")}</b>${badgeNiveau(p.niveau)}</div>
         <p class="petit" style="margin:2px 0">${p.nb_avis ? `⭐ ${String(p.note).replace(".", ",")} · ${p.nb_avis} ${tr("avis")}` : tr("Nouveau sur Cleaneroo · aucun avis")}</p>
-        <p class="prix-prop">${euros(p.prix_c)}</p>
+        <p class="prix-prop">${euros(p.prix_c + (p.frais_c || 0))}</p>
+        ${p.frais_c ? `<p class="petit" style="margin:0">${tr("dont")} ${euros(p.frais_c)} ${tr("de déplacement")}</p>` : `<p class="petit" style="margin:0">${tr("Sans frais de déplacement")}</p>`}
         ${ecart ? `<p class="petit" style="margin:0;color:${ecart < 0 ? "var(--succes)" : "var(--corail-texte,#C2552F)"}">${ecart < 0 ? "−" : "+"}${euros(Math.abs(ecart))} ${tr("par rapport à l'estimation")} · ${tr(nomRaison(p.raison))}</p>` : `<p class="petit" style="margin:0">${tr("Au prix estimé")}</p>`}
         ${p.note_cleaneur ? `<p class="petit"><i>« ${esc(p.note_cleaneur)} »</i></p>` : ""}
         ${p.temps_sup_min ? `<p class="petit">⏱ +${p.temps_sup_min} min ${tr("prévues")}</p>` : ""}
         ${p.autre_horaire ? `<p class="petit">🕘 ${tr("Propose un autre horaire :")} <b>${heure(p.autre_horaire)}</b></p>` : ""}
+        ${p.enchainement ? `<label class="petit case-prop"><input type="checkbox" data-risque> ${tr("Cleaneur en mission juste avant : j'accepte le risque d'un léger retard")}</label>` : ""}
         ${p.exclusions ? `<label class="petit case-prop"><input type="checkbox" data-exclusion> ${tr("J'accepte l'exclusion :")} ${esc(p.exclusions)}</label>` : ""}
         <label class="petit case-prop"><input type="checkbox" data-cgv> ${tr("J'accepte les conditions générales de vente et la politique d'annulation")}</label>
         <p class="petit muet">${tr("Répondez sous")} ${minutes} min</p>
@@ -93,10 +101,11 @@ export async function blocPropositionsClient(boite, reference, jeton) {
   styles();
   boite.querySelectorAll("[data-choisir]").forEach(b => b.onclick = async () => {
     const c = b.closest(".proposition-client"), err = c.querySelector("[data-erreur-prop]");
-    if (!c.querySelector("[data-cgv]").checked || (c.querySelector("[data-exclusion]") && !c.querySelector("[data-exclusion]").checked)) {
+    if (!c.querySelector("[data-cgv]").checked || (c.querySelector("[data-exclusion]") && !c.querySelector("[data-exclusion]").checked)
+        || (c.querySelector("[data-risque]") && !c.querySelector("[data-risque]").checked)) {
       err.textContent = tr("Cochez les cases pour confirmer votre choix."); return; }
     b.disabled = true;
-    const { data } = await supabase.rpc("accepter_proposition", { p_id: b.dataset.choisir, p_jeton: jeton || null });
+    const { data } = await supabase.rpc("accepter_proposition", { p_id: b.dataset.choisir, p_jeton: jeton || null, p_accepte_risque: !!c.querySelector("[data-risque]")?.checked });
     if (data === "ok") { location.reload(); return; }
     b.disabled = false;
     err.textContent = tr(data === "expiree" ? "Cette proposition a expiré." : data === "deja_prise" ? "Un Cleaneur est déjà confirmé." : "Le service est momentanément indisponible. Réessayez dans quelques minutes.");
