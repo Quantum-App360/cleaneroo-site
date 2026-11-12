@@ -161,6 +161,9 @@ export const REGLES = {
   RAYON_ARRIVEE_KM: 1.0,
   // Société éditrice (mentions légales, documents) : à compléter dès l'immatriculation ; vide = « publiées avant l'ouverture ».
   SOCIETE: { nom: "", adresse: "", siret: "", directeur: "" },
+  // Médiateur de la consommation choisi (12 novembre 2026) : CM2C, 48 € pour 3 ans puis 36 € par médiation à distance (gratuit pour le
+  // client). Passer actif à true une fois l'adhésion faite (après la création de la SAS, avant l'ouverture).
+  MEDIATEUR: { actif: false, nom: "CM2C (Centre de la Médiation de la Consommation de Conciliateurs de Justice)", adresse: "49 rue de Ponthieu, 75008 Paris", site: "www.cm2c.net" },
   CONNEXION_GOOGLE: true,    // fournisseur Google activé dans Supabase le 12 novembre 2026 (comme Regles.CONNEXION_GOOGLE)
   // Propositions des Cleaneurs (base-propositions.sql) : remise et hausse maximales, note minimale d'une hausse, propositions par demande.
   PROPOSITION_REMISE_MAX_PCT: 10,
