@@ -132,7 +132,7 @@ const NOTIFS = {
   fr: [
     [["position", "{p} est en route", "Arrivée dans {n} min"], ["sur-place", "{p} est sur place", "Arrivée confirmée par géolocalisation"], ["termine", "{p} a terminé", "Toutes les tâches sont cochées"]],
     [["photo", "Compte rendu reçu", "{n} photos avant / après"], ["avis", "Nouvel avis {e}", "« Impeccable, merci {p} ! »"], ["valide", "Tâches validées", "{n} tâches cochées et horodatées"]],
-    [["paiement", "Payé après validation", "Crédit d'impôt déduit : −50 %"], ["instantane", "Prix affiché tout de suite", "Sans devis ni attente"], ["calendrier", "Réservé en 2 minutes", "{v} · créneau confirmé"]],
+    [["paiement", "Payé après validation", "Crédit d'impôt : 50 % selon conditions"], ["instantane", "Prix affiché tout de suite", "Sans devis ni attente"], ["calendrier", "Réservé en 2 minutes", "{v} · créneau confirmé"]],
   ],
   en: [
     [["position", "{p} is on the way", "Arriving in {n} min"], ["sur-place", "{p} is on site", "Arrival confirmed by geolocation"], ["termine", "{p} has finished", "Every task is ticked"]],
@@ -193,7 +193,7 @@ function blocRecommander() {
 
 /* ------------------------------------------------------------------ Accueil 2026 : clair, structuré, un espace pour chacun */
 const ESPACES_ACCUEIL = [
-  ["logement", "Particuliers", "Ménage régulier ou ponctuel, vitres, canapés et textiles, avec 50 % de crédit d'impôt déduit tout de suite.", "#/estimer", "Estimer mon prix"],
+  ["logement", "Particuliers", "Ménage régulier ou ponctuel, vitres, canapés et textiles, avec 50 % de crédit d'impôt selon conditions.", "#/estimer", "Estimer mon prix"],
   ["location", "Conciergeries et multi-biens", "Agenda relié à Airbnb et Booking, ménages entre deux voyageurs, photo de la boîte à clés et carte de tous vos biens.", "#/compte/pro", "Créer mon espace Pro"],
   ["cleaneurs", "Cleaneurs", "Missions près de chez vous, itinéraire, déroulé guidé et paiement sécurisé. 3 mois de formule Pro offerts aux inscrits jusqu'au 31 janvier 2027.", "#/devenir-cleaneur", "Devenir Cleaneur"],
 ];
@@ -310,7 +310,7 @@ function pageAccueil() {
     <div class="revele" style="margin-top:34px">${blocReassurance()}</div>
     <div class="credit revele">
       <div class="pastille-credit">−50 %</div>
-      <div><h3>Le propre, à moitié prix.</h3><p>50 % de crédit d'impôt sur le ménage à domicile, déduit tout de suite avec l'avance immédiate.</p></div>
+      <div><h3>Le propre, à moitié prix.</h3><p>50 % de crédit d'impôt sur le ménage à domicile, selon conditions (Cleaneur déclaré « services à la personne »), remboursé par les impôts grâce à l'attestation fiscale envoyée chaque mois.</p></div>
     </div>
   </div></section>
   ${estPrelancement() && !connecte() ? `<section class="appel-2026"><div class="conteneur appel-grille"><div class="revele"><span class="pastille-lancement sombre"><i></i>J-${joursAvantLancement()}</span>

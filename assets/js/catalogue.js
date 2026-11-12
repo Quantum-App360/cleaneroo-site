@@ -127,7 +127,7 @@ export const nombreEtapesLocation = (choisies, perso, chambres, sdb) =>
 /* ---- fin location ---- */
 
 export const RUBRIQUES = [
-  { id: "home", nom: "Logement", sousTitre: "Ménage ponctuel ou régulier", icone: "logement", tauxHoraireC: 2690, salissureSurTemps: true,
+  { id: "home", nom: "Ménage du logement", sousTitre: "Ménage ponctuel ou régulier", icone: "logement", tauxHoraireC: 2690, salissureSurTemps: true,
     inclus: "Dépoussiérage des surfaces accessibles, aspiration et lavage des sols, cuisine, salle de bain et WC, poubelles, lits faits.",
     formules: [F("ponctuel", "Ménage ponctuel", "Un ménage complet, une seule fois.", 25, 120),
       F("regulier", "Entretien régulier", "Chaque semaine ou tous les 15 jours, idéalement avec le même Cleaneur.", 30, 90),
@@ -540,9 +540,9 @@ export function pastille(r) {
 }
 
 export const RACCOURCIS_VITRINE = [
-  ["home", "Ménage", "Ponctuel ou régulier"], ["rental", "Location saisonnière", "Entre deux voyageurs"],
-  ["textiles", "Canapé", "Shampoing, détachage"], ["windows", "Vitres", "Fenêtres et baies"],
-  ["car", "Voiture", "Intérieur, extérieur — À la carte"], ["office", "Bureaux", "Cabinets et agences"],
+  ["home", "Ménage du logement", "Ponctuel ou régulier"], ["rental", "Location saisonnière", "Entre deux voyageurs"],
+  ["textiles", "Canapés et textiles", "Shampoing, détachage"], ["windows", "Vitres et vitrines", "Fenêtres et baies"],
+  ["car", "Véhicules", "Intérieur, extérieur — à la carte"], ["office", "Bureaux et cabinets", "Cabinets et agences"],
 ];
 export const RUBRIQUES_CREDIT_IMPOT = ["home", "windows", "textiles"];
 

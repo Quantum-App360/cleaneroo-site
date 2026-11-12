@@ -124,9 +124,9 @@ export async function pageTableau(vue) {
       </article>
     </div>
     <div class="grille-raccourcis tableau-raccourcis">
-      <a class="carte raccourci" href="#/mes-demandes">${icone("calendrier", { tuile: true })}<b>${tr("Mes demandes")}</b><span class="petit">${tr("En cours, à venir, passées")}</span></a>
+      <a class="carte raccourci" href="#/mes-demandes">${icone("calendrier", { tuile: true })}<b>${tr("Mes prestations")}</b><span class="petit">${tr("En cours, à venir, passées")}</span></a>
       <a class="carte raccourci" href="#/mes-biens">${icone("logement", { tuile: true })}<b>${tr("Mes biens")}</b><span class="petit">${biens.length} ${tr(biens.length > 1 ? "adresses" : "adresse")}</span></a>
-      <a class="carte raccourci" href="${pro ? "#/compte/pro" : "#/compte"}">${icone(pro ? "location" : "avis", { tuile: true })}<b>${tr(pro ? "Agenda" : "Mon compte")}</b><span class="petit">${tr(pro ? "Séjours et ménages à programmer" : "Profil et espaces")}</span></a>
+      <a class="carte raccourci" href="${pro ? "#/compte/pro" : "#/compte"}">${icone(pro ? "location" : "avis", { tuile: true })}<b>${tr(pro ? "Agenda" : "Mon espace")}</b><span class="petit">${tr(pro ? "Séjours et ménages à programmer" : "Profil et espaces")}</span></a>
     </div>
     <p class="petit direct" style="margin-top:14px"><i></i>${tr("Mis à jour en temps réel")} · <a href="#/vitrine">${tr("Voir la page d'accueil du site")}</a></p>
   </div></section>`;

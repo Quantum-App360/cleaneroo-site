@@ -6,6 +6,7 @@ import { supabase } from "./donnees.js";
 import { euros, dateLongue } from "./regles.js";
 import { traduire, tr } from "./langue.js";
 import { icone } from "./icones.js";
+import { blocAttestations, brancherAttestations } from "./attestations.js";
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const TYPES = { prestation: "Prestation", frais: "Frais de service", commission: "Commission Cleaneroo" };
@@ -50,9 +51,10 @@ export async function afficherFactures(conteneur) {
   const espace = conteneur.dataset.factures;
   const liste = await mesFactures(espace).catch(() => []);
   if (!conteneur.isConnected) return;
-  conteneur.innerHTML = blocFactures(liste, espace);
+  conteneur.innerHTML = blocFactures(liste, espace) + blocAttestations(liste, espace);
   traduire(conteneur);
   brancherFactures(conteneur, liste);
+  brancherAttestations(conteneur);
 }
 
 /* ------------------------------------------------------------------ Facture imprimable (PDF) */

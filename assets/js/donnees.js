@@ -283,6 +283,7 @@ export const DOCUMENTS_CLEANEUR = [
   { type: "rc_pro", nom: "Assurance RC Pro", aide: "Attestation d'assurance responsabilité civile professionnelle en cours de validité.", obligatoire: true },
   { type: "urssaf", nom: "Attestation de vigilance URSSAF", aide: "À télécharger sur votre espace URSSAF, de moins de 6 mois.", obligatoire: true },
   { type: "certibiocide", nom: "Certibiocide « nuisibles »", aide: "Obligatoire pour la dératisation et la désinsectisation.", obligatoire: false },
+  { type: "sap", nom: "Déclaration « services à la personne » (SAP)", aide: "Facultative : elle permet à vos clients particuliers de bénéficier de 50 % de crédit d'impôt (ménage, vitres, textiles au domicile). Récépissé de déclaration SAP (nova.entreprises.gouv.fr).", obligatoire: false },
 ];
 export async function mesDocuments() {
   const { data, error } = await supabase.from("documents_cleaneur").select("*").order("cree_le", { ascending: false });

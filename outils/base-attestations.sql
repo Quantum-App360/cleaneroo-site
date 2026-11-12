@@ -1,0 +1,7 @@
+-- Attestations fiscales et relevés comptables (12 novembre 2026) — appliqué (migrations « document_sap », « attestation_fiscale »,
+-- « attestations_releves_mensuels »).
+-- Cleaneroo n'avance pas le crédit d'impôt. documents_cleaneur accepte le type 'sap' (déclaration services à la personne, facultative).
+-- attestation_fiscale(annee, mois) : factures de prestation du particulier (ménage du logement, textiles, vitres du logement),
+--   ligne éligible si le Cleaneur a une déclaration SAP acceptée ; total ouvrant droit (case 7DB).
+-- releve_comptable(annee, mois) : factures (prestation + frais) du client conciergerie/entreprise, totaux HT/TVA/TTC.
+-- prevenir_documents_du_mois() : cron « documents-du-mois » le 1er à 7 h : notification « attestation / relevé du mois prêt ».

@@ -76,7 +76,7 @@ export async function pageCompte(vue, param) {
   if (!s) return ecranConnexion(vue, ["creer", "cleaneur", "pro"].includes(param) ? "creer" : "connexion", "", false, param === "cleaneur" || param === "pro" ? param : "client");
   const [p, biens, demandes, parrain] = await Promise.all([monProfil().catch(() => null), synchroniserBiens().catch(() => []), demandesDuCompte().catch(() => []), monParrainage().catch(() => null)]);
   if (location.hash !== ici) return;
-  if (!p) { vue.innerHTML = `<section class="bloc"><div class="etroit">${titre("Mon compte")}<p class="erreur">${tr("Le service est momentanément indisponible. Réessayez dans quelques minutes.")}</p></div></section>`; traduire(vue); return; }
+  if (!p) { vue.innerHTML = `<section class="bloc"><div class="etroit">${titre("Mon espace")}<p class="erreur">${tr("Le service est momentanément indisponible. Réessayez dans quelques minutes.")}</p></div></section>`; traduire(vue); return; }
   memoriserCoordonnees(p);
   // Un espace par statut coché (particulier, pro, cleaneur ; cumulables) ; l'administrateur a les trois.
   const admin = p.role === "admin";
@@ -184,7 +184,7 @@ function memoriserCoordonnees(p) {
 function ecranConnexion(vue, mode, message = "", ok = false, roleDefaut = "client") {
   const creer = mode === "creer";
   vue.innerHTML = `<section class="bloc"><div class="etroit">
-    ${titre("Mon compte", "Préparez dès maintenant votre espace : profil, biens, demandes ou dossier Cleaneur. " + OUVERTURE)}
+    ${titre("Mon espace", "Préparez dès maintenant votre espace : profil, biens, demandes ou dossier Cleaneur. " + OUVERTURE)}
     <div class="segments" style="margin:6px 0 14px"><button type="button" data-mode="connexion" class="${creer ? "" : "choisi"}">Se connecter</button>
       <button type="button" data-mode="creer" class="${creer ? "choisi" : ""}">Créer un compte</button></div>
     <form class="carte" id="form-compte" novalidate>
@@ -505,10 +505,10 @@ export async function pageMesPrestations(vue, mode = "demandes", sous = null) {
         <button class="bouton plein" type="submit">Enregistrer ce bien</button></form></details>
     ${biens.length ? `<p style="margin-top:18px"><button type="button" class="lien-bouton" style="color:var(--erreur);padding:0" id="oublier">Oublier mes informations sur cet appareil</button></p>` : ""}
   </div></section>` : `<section class="bloc"><div class="etroit">
-    ${titre("Mes demandes")}
+    ${titre("Mes prestations")}
     <a class="bouton plein" href="#/reserver" data-choisir-prestation style="margin-bottom:10px">＋ Nouvelle demande</a>
     ${s ? "" : `<div class="note" style="margin:8px 0 6px"><span>Créez votre compte pour retrouver vos biens et vos prestations sur tous vos appareils et dans l'application. <a href="#/compte/creer">Créer mon compte</a> · <a href="#/compte">Se connecter</a></span></div>`}
-    <nav class="onglets-compte onglets-demandes" aria-label="Mes demandes">${ONGLETS_DEMANDES.map(([id, nom, ico]) => `<a href="#/mes-demandes/${id}" class="${id === actif ? "actif" : ""}" ${id === actif ? 'aria-current="page"' : ""}>${icone(ico)}<span>${nom}</span>${parOnglet[id].length ? `<em>${parOnglet[id].length}</em>` : ""}</a>`).join("")}</nav>
+    <nav class="onglets-compte onglets-demandes" aria-label="Mes prestations">${ONGLETS_DEMANDES.map(([id, nom, ico]) => `<a href="#/mes-demandes/${id}" class="${id === actif ? "actif" : ""}" ${id === actif ? 'aria-current="page"' : ""}>${icone(ico)}<span>${nom}</span>${parOnglet[id].length ? `<em>${parOnglet[id].length}</em>` : ""}</a>`).join("")}</nav>
     ${s ? `<p class="petit direct"><i></i>Mis à jour en temps réel</p>` : ""}
     ${parOnglet[actif].length ? parOnglet[actif].map(carte).join("") : vide(VIDES[actif], actif === "a-venir" ? OUVERTURE : "")}
     ${s ? "" : `<p class="petit" style="margin-top:18px">Vous avez réservé depuis un autre appareil ? Ouvrez le lien de suivi reçu après la réservation : la demande s'ajoutera ici.</p>`}

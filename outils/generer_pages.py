@@ -8,7 +8,7 @@
 #   - les traductions des textes locaux des villes dans assets/js/langue.js (bloc <villes-textes>).
 import io, json, os, re, html
 
-VERSION = "2026111239"          # ← une seule constante à changer à chaque mise en ligne (AAAAMMJJ + numéro du jour)
+VERSION = "2026111240"          # ← une seule constante à changer à chaque mise en ligne (AAAAMMJJ + numéro du jour)
 DATE_PLAN = "2026-11-06"        # date des pages dans sitemap.xml
 SITE = "https://cleaneroo.fr"
 
@@ -204,7 +204,7 @@ corps = """  <section class="fond-cleaneroo heros-page">
     <div data-reassurance></div>
   </div></section>"""
 ecrire("calculateur/index.html", gabarit("/calculateur/", "Combien coûte votre ménage ? Calculateur de prix · Cleaneroo",
-    "Calculez le prix de votre ménage, de votre location saisonnière, de vos vitres ou de votre canapé : prix immédiat, crédit d'impôt déduit, payé après validation.", corps))
+    "Calculez le prix de votre ménage, de votre location saisonnière, de vos vitres ou de votre canapé : prix immédiat, crédit d'impôt de 50 % selon conditions, payé après validation.", corps))
 
 # ------------------------------------------------------------------ Comparatifs (faits vérifiables uniquement : cases concurrent à remplir après contrôle)
 for c in CONCURRENTS:
