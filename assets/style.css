@@ -1299,6 +1299,8 @@ body { background:
 .flottant-1 { left: -10px; top: 46%; }
 .flottant-2 { right: -6px; bottom: 70px; animation-delay: -3s; }
 .flottant-2 b { font-size: 18px; color: var(--t); }
+.flottant-2 b small { display: block; font-size: 12px; font-weight: 600; opacity: .75; }
+.pastille-credit .ico { width: 34px; height: 34px; }
 @keyframes forme { 0%, 100% { border-radius: 42% 58% 63% 37% / 45% 40% 60% 55%; transform: rotate(0); } 50% { border-radius: 58% 42% 40% 60% / 55% 60% 40% 45%; transform: rotate(8deg); } }
 @keyframes flotte-forme { 0%, 100% { translate: 0 0; } 50% { translate: 0 -10px; } }
 

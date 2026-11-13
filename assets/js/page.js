@@ -34,7 +34,7 @@ const EXEMPLES = [
   ["windows", { formuleId: "ponctuel", typeLieuId: "fenetres_logement", fenetres: 8 }, "Vitres · 8 fenêtres"],
   ["textiles", { formuleId: "canape", panier: [{ elementId: "canape_droit", tailleId: "t20", quantite: 1 }] }, "Canapé droit · 1,5 à 2 m"],
 ];
-const apresCredit = est => (est.creditImpotC ? `<p class="apres-credit">soit ${euros(est.apresCreditImpotC)} après crédit d'impôt de 50 %</p>` : "");
+const apresCredit = est => (est.creditImpotC ? `<p class="apres-credit">soit ${euros(est.apresCreditImpotC)} après crédit d'impôt, si éligible</p>` : "");
 
 function blocExemples() {
   return `<div class="grille-3 exemples">${EXEMPLES.map(([id, champs, libelle], i) => {

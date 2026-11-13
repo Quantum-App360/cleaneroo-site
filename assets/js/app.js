@@ -115,7 +115,7 @@ const bullesMontantes = () => MONTANTES.map(([x, t, d, r]) =>
 
 /* Le ménage à l'ancienne face au ménage digitalisé. */
 const COMPARAISON = [
-  ["Prix", "Devis, attente, négociation", "Prix affiché tout de suite, crédit d'impôt compris"],
+  ["Prix", "Devis, attente, négociation", "Prix affiché tout de suite, sans surprise"],
   ["Réservation", "Appels, messages, relances", "2 minutes en ligne, 3 clics la fois suivante"],
   ["Qui vient chez vous", "On ne sait pas vraiment", "Cleaneur vérifié : identité, SIRET, assurance, selfie du jour"],
   ["Arrivée", "On attend sans nouvelles", "Suivi en direct, arrivée confirmée par géolocalisation"],
@@ -123,7 +123,7 @@ const COMPARAISON = [
   ["Paiement", "À l'avance ou en espèces", "Seulement après votre validation"],
   ["En cas de souci", "Votre parole contre la sienne", "Litige en 48 h et Garantie Cleaneroo"],
 ];
-const CHIFFRES = [["2 min", "pour réserver"], [String(RUBRIQUES.length), "prestations"], ["−50 %", "de crédit d'impôt"], ["0 €", "avant validation"]];
+const CHIFFRES = [["2 min", "pour réserver"], [String(RUBRIQUES.length), "prestations"], ["100 %", "digitalisé"], ["0 €", "avant validation"]];
 
 /* ------------------------------------------------------------------ Scène du héros : étoiles et notifications vivantes */
 /* Prénoms parmi les plus donnés en France ces dernières années : changent à chaque notification. */
@@ -135,22 +135,22 @@ const NOTIFS = {
   fr: [
     [["position", "{p} est en route", "Arrivée dans {n} min"], ["sur-place", "{p} est sur place", "Arrivée confirmée par géolocalisation"], ["termine", "{p} a terminé", "Toutes les tâches sont cochées"]],
     [["photo", "Compte rendu reçu", "{n} photos avant / après"], ["avis", "Nouvel avis {e}", "« Impeccable, merci {p} ! »"], ["valide", "Tâches validées", "{n} tâches cochées et horodatées"]],
-    [["paiement", "Payé après validation", "Crédit d'impôt : 50 % selon conditions"], ["instantane", "Prix affiché tout de suite", "Sans devis ni attente"], ["calendrier", "Réservé en 2 minutes", "{v} · créneau confirmé"]],
+    [["paiement", "Payé après validation", "Crédit d'impôt selon éligibilité"], ["instantane", "Prix affiché tout de suite", "Sans devis ni attente"], ["calendrier", "Réservé en 2 minutes", "{v} · créneau confirmé"]],
   ],
   en: [
     [["position", "{p} is on the way", "Arriving in {n} min"], ["sur-place", "{p} is on site", "Arrival confirmed by geolocation"], ["termine", "{p} has finished", "Every task is ticked"]],
     [["photo", "Report received", "{n} before / after photos"], ["avis", "New review {e}", "“Spotless, thank you {p}!”"], ["valide", "Tasks approved", "{n} tasks ticked and time-stamped"]],
-    [["paiement", "Paid after approval", "Tax credit deducted: −50%"], ["instantane", "Price shown instantly", "No quote, no waiting"], ["calendrier", "Booked in 2 minutes", "{v} · slot confirmed"]],
+    [["paiement", "Paid after approval", "Tax credit subject to eligibility"], ["instantane", "Price shown instantly", "No quote, no waiting"], ["calendrier", "Booked in 2 minutes", "{v} · slot confirmed"]],
   ],
   it: [
     [["position", "{p} è in arrivo", "Arrivo tra {n} min"], ["sur-place", "{p} è sul posto", "Arrivo confermato dalla geolocalizzazione"], ["termine", "{p} ha finito", "Tutti i compiti sono spuntati"]],
     [["photo", "Report ricevuto", "{n} foto prima / dopo"], ["avis", "Nuova recensione {e}", "«Impeccabile, grazie {p}!»"], ["valide", "Compiti convalidati", "{n} compiti spuntati e con orario"]],
-    [["paiement", "Pagato dopo la convalida", "Credito d'imposta detratto: −50%"], ["instantane", "Prezzo subito visibile", "Senza preventivo né attesa"], ["calendrier", "Prenotato in 2 minuti", "{v} · fascia confermata"]],
+    [["paiement", "Pagato dopo la convalida", "Credito d'imposta secondo idoneità"], ["instantane", "Prezzo subito visibile", "Senza preventivo né attesa"], ["calendrier", "Prenotato in 2 minuti", "{v} · fascia confermata"]],
   ],
   es: [
     [["position", "{p} está en camino", "Llega en {n} min"], ["sur-place", "{p} está en el lugar", "Llegada confirmada por geolocalización"], ["termine", "{p} ha terminado", "Todas las tareas marcadas"]],
     [["photo", "Informe recibido", "{n} fotos antes / después"], ["avis", "Nueva reseña {e}", "«Impecable, ¡gracias {p}!»"], ["valide", "Tareas validadas", "{n} tareas marcadas con hora"]],
-    [["paiement", "Pagado tras validar", "Crédito fiscal deducido: −50 %"], ["instantane", "Precio al instante", "Sin presupuesto ni esperas"], ["calendrier", "Reservado en 2 minutos", "{v} · franja confirmada"]],
+    [["paiement", "Pagado tras validar", "Crédito fiscal según elegibilidad"], ["instantane", "Precio al instante", "Sin presupuesto ni esperas"], ["calendrier", "Reservado en 2 minutos", "{v} · franja confirmada"]],
   ],
 };
 const hasard = l => l[Math.floor(Math.random() * l.length)];
@@ -196,13 +196,13 @@ function blocRecommander() {
 
 /* ------------------------------------------------------------------ Accueil 2026 : clair, structuré, un espace pour chacun */
 const ESPACES_ACCUEIL = [
-  ["logement", "Particuliers", "Ménage régulier ou ponctuel, vitres, canapés et textiles, avec 50 % de crédit d'impôt selon conditions.", "#/estimer", "Estimer mon prix"],
+  ["logement", "Particuliers", "Ménage régulier ou ponctuel, vitres, canapés et textiles, avec crédit d'impôt selon éligibilité.", "#/estimer", "Estimer mon prix"],
   ["location", "Conciergeries et multi-biens", "Agenda relié à Airbnb et Booking, ménages entre deux voyageurs, photo de la boîte à clés et carte de tous vos biens.", "#/compte/pro", "Créer mon espace Pro"],
   ["cleaneurs", "Cleaneurs", "Missions près de chez vous, itinéraire, déroulé guidé et paiement sécurisé. 3 mois de formule Pro offerts aux inscrits jusqu'au 31 janvier 2027.", "#/devenir-cleaneur", "Devenir Cleaneur"],
 ];
 /* Inscription inspirante (visiteur) : un espace par profil, chacun avec son avantage offert. Même bloc dans l'appli (Vitrine.kt). */
 const INSCRIPTION_ESPACES = () => [
-  ["logement", "Particulier", "Votre ménage, sans y penser.", ["Prix affiché tout de suite", "Suivi du Cleaneur en direct", "−50 % de crédit d'impôt"],
+  ["logement", "Particulier", "Votre ménage, sans y penser.", ["Prix affiché tout de suite", "Suivi du Cleaneur en direct", "Crédit d'impôt selon éligibilité"],
     `${euros(REGLES.PARRAINAGE_FILLEUL_C)} ${tr("offerts avec un code de parrainage")}`, "#/compte/creer"],
   ["location", "Conciergerie ou plusieurs biens", "Vos locations, toujours prêtes.", ["Agenda relié à Airbnb et Booking", "Ménages entre deux voyageurs", "Compte rendu photo de chaque logement"],
     `${REGLES.ABONNEMENT_PRO_MOIS_OFFERTS} ${tr("mois d'abonnement offert")}`, "#/compte/pro"],
@@ -276,13 +276,13 @@ function pageAccueil() {
           <button class="bouton" type="submit">Commencer</button>
         </form>
         ${blocRecommander()}
-        <ul class="preuves"><li>${icone("garantie")}Cleaneurs vérifiés</li><li>${icone("paiement")}Payé après validation</li><li>${icone("credit-impot")}−50 % de crédit d'impôt</li></ul>
+        <ul class="preuves"><li>${icone("garantie")}Cleaneurs vérifiés</li><li>${icone("paiement")}Payé après validation</li><li>${icone("credit-impot")}Crédit d'impôt selon éligibilité</li></ul>
       </div>
       <div class="heros-visuel" aria-hidden="true">
         <span class="forme forme-1"></span><span class="forme forme-2"></span><span class="forme forme-3"></span>
         ${maquetteAppli(m)}
         <div class="flottant flottant-1" data-teinte="menthe">${icone("garantie", { tuile: true })}<b>Cleaneurs vérifiés</b></div>
-        <div class="flottant flottant-2" data-teinte="soleil">${icone("credit-impot", { tuile: true })}<b>−50 %</b></div>
+        <div class="flottant flottant-2" data-teinte="soleil">${icone("credit-impot", { tuile: true })}<b>Crédit d'impôt<small>selon éligibilité</small></b></div>
       </div>
     </div>
   </section>
@@ -312,8 +312,8 @@ function pageAccueil() {
     ${blocEtapes()}
     <div class="revele" style="margin-top:34px">${blocReassurance()}</div>
     <div class="credit revele">
-      <div class="pastille-credit">−50 %</div>
-      <div><h3>Le propre, à moitié prix.</h3><p>50 % de crédit d'impôt sur le ménage à domicile, selon conditions (Cleaneur déclaré « services à la personne »), remboursé par les impôts grâce à l'attestation fiscale envoyée chaque mois.</p></div>
+      <div class="pastille-credit">${icone("credit-impot")}</div>
+      <div><h3>Crédit d'impôt selon éligibilité</h3><p>Possible si le Cleaneur est déclaré « services à la personne » : le ménage, les vitres et les textiles à votre domicile peuvent alors ouvrir droit à un crédit d'impôt, selon votre situation et dans la limite des plafonds légaux. L'attestation fiscale des prestations éligibles vous est envoyée chaque mois.</p></div>
     </div>
   </div></section>
   ${estPrelancement() && !connecte() ? `<section class="appel-2026"><div class="conteneur appel-grille"><div class="revele"><span class="pastille-lancement sombre"><i></i>J-${joursAvantLancement()}</span>
@@ -383,7 +383,7 @@ function pageComment() {
       <a class="carte ligne-compte" href="#/suivi-demo" style="grid-column:1/-1">${icone("position", { tuile: true })}
         <div class="corps"><h3 style="margin:0">Suivez votre Cleaneur en direct</h3><p class="muet" style="margin:2px 0 0">Sur une carte, jusqu'à chez vous, comme une livraison. Voir la démonstration.</p></div><span class="aller" aria-hidden="true">›</span></a>
       <div class="carte"><h3>Vos garanties</h3><div class="trait-corail"></div>
-        <p class="muet" style="margin:0">Débit seulement après validation · Garantie Cleaneroo · Crédit d'impôt de 50 % · Cleaneurs vérifiés · Annulation gratuite jusqu'à 48 h avant.</p></div>
+        <p class="muet" style="margin:0">Débit seulement après validation · Garantie Cleaneroo · Crédit d'impôt selon éligibilité · Cleaneurs vérifiés · Annulation gratuite jusqu'à 48 h avant.</p></div>
     </div>
     <img src="assets/img/affiche.jpg" alt="Affiche « Comment ça marche ? »" loading="lazy" style="width:min(620px,100%);margin:36px auto 0;border-radius:18px;box-shadow:var(--ombre)">
   </div></section>`;

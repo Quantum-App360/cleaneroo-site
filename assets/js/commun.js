@@ -63,7 +63,7 @@ export const ETAPES = [
   ["cleaneurs", "Choisissez votre Cleaneur", "Des Cleaneurs vérifiés (identité, SIRET, assurance) se proposent. Comparez prix, note et distance : c'est vous qui choisissez."],
   ["position", "Suivez l'intervention en direct", "« En route », arrivée confirmée par géolocalisation, selfie du jour : vous savez qui vient, et quand."],
   ["photo", "Recevez le compte rendu", "Tâches cochées et horodatées, photos avant / après, signature du Cleaneur : tout est dans votre espace."],
-  ["valide", "Validez, puis payez", "Vous n'êtes débité qu'après avoir validé. Crédit d'impôt de 50 % selon conditions ; pourboire et avis si vous le souhaitez."],
+  ["valide", "Validez, puis payez", "Vous n'êtes débité qu'après avoir validé. Crédit d'impôt selon éligibilité ; pourboire et avis si vous le souhaitez."],
 ];
 /** Les 3 étapes essentielles (pages ville) : réserver, suivre, valider puis payer. */
 export const ETAPES_COURTES = [ETAPES[0], ETAPES[2], ETAPES[4]];

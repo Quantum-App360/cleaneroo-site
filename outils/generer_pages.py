@@ -204,7 +204,7 @@ corps = """  <section class="fond-cleaneroo heros-page">
     <div data-reassurance></div>
   </div></section>"""
 ecrire("calculateur/index.html", gabarit("/calculateur/", "Combien coûte votre ménage ? Calculateur de prix · Cleaneroo",
-    "Calculez le prix de votre ménage, de votre location saisonnière, de vos vitres ou de votre canapé : prix immédiat, crédit d'impôt de 50 % selon conditions, payé après validation.", corps))
+    "Calculez le prix de votre ménage, de votre location saisonnière, de vos vitres ou de votre canapé : prix immédiat, crédit d'impôt selon éligibilité, payé après validation.", corps))
 
 # ------------------------------------------------------------------ Comparatifs (faits vérifiables uniquement : cases concurrent à remplir après contrôle)
 for c in CONCURRENTS:
