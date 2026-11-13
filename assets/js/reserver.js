@@ -15,7 +15,7 @@ import { profilMemorise } from "./entete.js";
 import { icone } from "./icones.js";
 import { blocReassurance } from "./commun.js";
 import { monParrainage } from "./parrainage.js";
-import { session } from "./donnees.js";
+import { session, monProfil, majProfil } from "./donnees.js";
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const CLE_BROUILLON = "cleaneroo-brouillon";
@@ -146,6 +146,12 @@ function avecLogementDepart(br, id) {
   return { ...br, logementDepart: "", logementId: "", rue: "", codePostal: "", ville: "", accueil: "", tiersNom: "", tiersTel: "", boiteEmplacement: "", code: "", lat: null, lon: null };
 }
 
+/** « Réserver ici » (Mon suivi, Mes biens) : la réservation s'ouvre avec ce logement déjà choisi. */
+export function reserverPourLogement(id) {
+  ecrire(CLE_BROUILLON, { etape: 1, espace: "personnel", logementDepart: id });
+  if (location.hash === "#/reserver") dispatchEvent(new HashChangeEvent("hashchange")); else location.hash = "#/reserver";
+}
+
 function sauver() { try { localStorage.setItem(sim ? CLE_SIMULATION : CLE_BROUILLON, JSON.stringify(b)); } catch { /* rien */ } }
 /* Simulateur « Estimer mon prix » (12 novembre 2026) : toutes les prestations dans un menu, les questions qui font le prix,
    le prix détaillé mis à jour à chaque choix. Sans compte ni connexion : tout est calculé dans le navigateur.
@@ -206,7 +212,7 @@ export function ouvrirReservation(conteneur, rubriqueId, option = "") {
   const ancien = charger();
   const rapide = option === "rapide";
   if (rubriqueId && rubrique(rubriqueId)) b = !rapide && ancien && ancien.rubriqueId === rubriqueId ? ancien : nouveauBrouillon(rubriqueId, ancien?.espace, rapide);
-  else b = ancien && ancien.etape > 1 ? ancien : null;
+  else b = ancien && (ancien.etape > 1 || ancien.logementDepart !== undefined) ? ancien : null;
   if (b?.rubriqueId) b = { ...b, espace: partiePour(b.rubriqueId, b.espace) };
   // Conciergerie abonnée : 0 % de frais de service (profil mémorisé par l'en-tête).
   if (b) b = { ...b, abonnePro: !!profilMemorise()?.abonnePro };
@@ -614,9 +620,18 @@ function joursProposes() {
 }
 const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 function debutChoisi() {
-  if (estPrelancement() || !b.jour || b.heure < 0 || b.flexible) return null;
+  if (!b.jour || b.heure < 0 || b.flexible) return null;
   const [a, m, j] = b.jour.split("-").map(Number);
   return new Date(a, m - 1, j, b.heure, 0, 0);
+}
+
+let changerLogement = false;   // étape 4 : liste des logements dépliée pour en changer
+/** Étape 4 : logement choisi à l'étape 1, rappelé en une ligne (« Changer » rouvre la liste). */
+function logementChoisiEtape4() {
+  const l = b.logementId && logements().find(x => x.id === b.logementId);
+  if (!l || changerLogement) return "";
+  return `<div class="logement-choisi">${icone("logement")} <b>${esc(nomLogement(l))}</b> <span class="petit">${esc(l.rue)}, ${esc(l.codePostal)} ${esc(l.ville)}</span>
+    <button type="button" class="lien-bouton" data-changer-logement>${tr("Changer")}</button></div>`;
 }
 
 function etape4() {
@@ -640,7 +655,8 @@ function etape4() {
   const manque = !adresseOk ? "Vérifiez l'adresse pour continuer."
     : !tient ? "Le ménage ne tient pas entre le départ et l'arrivée suivante : avancez le départ ou retardez l'arrivée." : !creneauOk ? "Choisissez un créneau." : "";
   return `<h2>Adresse et créneau</h2>
-    ${logements().length ? `${titre("Choisissez un logement déjà renseigné")}${logements().map(l => `<button type="button" class="option ${b.logementId === l.id ? "choisi" : ""}" data-logement="${l.id}">${esc(nomLogement(l))}<span class="detail">${esc(l.rue)}, ${esc(l.codePostal)} ${esc(l.ville)}</span></button>`).join("")}
+    ${logementChoisiEtape4()}
+    ${logements().length && (!b.logementId || changerLogement) ? `${titre("Choisissez un logement déjà renseigné")}${logements().map(l => `<button type="button" class="option ${b.logementId === l.id ? "choisi" : ""}" data-logement="${l.id}">${esc(nomLogement(l))}<span class="detail">${esc(l.rue)}, ${esc(l.codePostal)} ${esc(l.ville)}</span></button>`).join("")}
       <button type="button" class="option ${b.logementId ? "" : "choisi"}" data-logement="">+ Ajouter une nouvelle adresse</button>` : ""}
     <div class="carte ${b.logementId ? "masque" : ""}" style="margin-top:14px">
       <button type="button" class="bouton secondaire plein bouton-geoloc" data-geoloc>${icone("position")}<span>Me géolocaliser</span></button>
@@ -652,8 +668,8 @@ function etape4() {
     ${Number.isFinite(b.lat) ? `<div class="carte-adresse" id="carte-adresse" role="img" aria-label="Carte de l'adresse"></div>
       <p class="petit" style="margin:6px 0 0">${b.logementId ? "Position enregistrée du logement." : "Déplacez le repère sur l'entrée du logement si besoin."}</p>` : ""}
     ${/^[0-9]{5}$/.test(b.codePostal) && pctZone(b.codePostal) ? `<div class="note" style="margin-top:10px"><span><b>${libelleZone(pctZone(b.codePostal))}</b> · <span>prix adaptés à votre ville</span></span></div>` : ""}
-    ${estPrelancement() ? "" : titre("Touchez un créneau dans le planning")}
-    ${estPrelancement() ? `<div class="note" style="margin-top:14px">Les réservations ouvrent le <b>31 décembre 2026</b>. Envoyez votre pré-réservation dès maintenant : nous vous recontacterons en priorité pour fixer le créneau.</div>` : `
+    ${titre(estPrelancement() ? "Date souhaitée (facultatif)" : "Touchez un créneau dans le planning")}
+    ${estPrelancement() ? `<div class="note" style="margin:0 0 10px">Les réservations ouvrent le <b>31 décembre 2026</b>. Choisissez une date à partir du 1er janvier 2027 si vous le souhaitez : nous la confirmerons en priorité. Sinon, cochez « Je suis flexible ».</div>` : ""}${`
     <div class="carte">${caseCocher("Je suis flexible", "flexible", b.flexible, "Vous recevez des candidatures sur 7 jours")}</div>
     ${b.flexible ? "" : `<div class="jours" style="margin-top:12px">${joursProposes().map(d => `<button type="button" data-jour="${iso(d)}" class="${b.jour === iso(d) ? "choisi" : ""}">${dateCourte(d)}</button>`).join("")}</div>
       ${jourDate ? `<div class="creneaux" style="margin-top:12px">${creneaux}</div>
@@ -856,8 +872,10 @@ document.addEventListener("click", async e => {
     const base = enCours ? b.taches.filter(id => !enCours.tacheIds.includes(id)) : b.taches;
     return maj({ taches: [...new Set([...base, ...p.tacheIds])] });
   }
+  if (ds.changerLogement !== undefined) { changerLogement = true; return rendre(); }
   if (ds.logement !== undefined) {
     const l = logements().find(x => x.id === ds.logement);
+    changerLogement = false;
     return maj(l ? avecLogement(b, l) : { logementId: "", rue: "", codePostal: "", ville: "", accueil: "", tiersNom: "", tiersTel: "", boiteEmplacement: "", code: "", lat: null, lon: null });
   }
   if (ds.retirer !== undefined) return maj({ tachesPerso: b.tachesPerso.filter((_, i) => i !== +ds.retirer) });
@@ -963,7 +981,7 @@ async function envoyer() {
     const envoi1 = await envoyerDemande({
       rubrique_id: b.rubriqueId, details, estimation_c: est.totalC, credit_impot_c: est.creditImpotC, duree_min: est.dureeMin,
       remise_parrainage_c: n === 0 ? est.remiseParrainageC : 0, cagnotte_c: n === 0 ? est.cagnotteC : 0,
-      nombre_cleaneurs: est.nombreCleaneurs, sur_devis: est.devisObligatoire, creneau: d ? d.toISOString() : null, flexible: b.flexible || estPrelancement(), prelancement: estPrelancement(),
+      nombre_cleaneurs: est.nombreCleaneurs, sur_devis: est.devisObligatoire, creneau: d ? d.toISOString() : null, flexible: b.flexible || (estPrelancement() && !d), prelancement: estPrelancement(),
       choix_cleaneur: estPrelancement() ? "candidatures" : b.choixCleaneur, espace: b.espace, prenom: b.prenom.trim(), nom: b.nom.trim(), email: b.email.trim(), telephone: b.telephone.trim(),
       rue: b.rue.trim(), code_postal: b.codePostal.trim(), ville: b.ville.trim(), accueil: b.accueil || "PRESENT", acces,
       remarque: (dates.length > 1 ? `Passage ${n + 1}/${dates.length}. ` : "") + b.remarque.trim(),
@@ -971,6 +989,8 @@ async function envoyer() {
     premiere = premiere || envoi1;
     }
     const { reference, jeton } = premiere;
+    const tel = b.telephone.trim();
+    if (tel) session().then(x => x ? monProfil() : null).then(p => { if (p && !p.telephone) majProfil({ telephone: tel }); }).catch(() => null);
     memoriserCommande(b);
     try { localStorage.removeItem(CLE_BROUILLON); } catch { /* rien */ }
     envoi = false; b = null; photos = []; photoBoite = null; infosParrain = null;

@@ -503,7 +503,12 @@ async function pageDemande(ref, jeton) {
       <p style="margin:0"><b>Quand :</b> ${d.creneau ? dateHeure(new Date(d.creneau)) : "Flexible, candidatures sur 7 jours"}</p>
       <p style="margin:6px 0 0"><b>Où :</b> ${esc(d.rue)}, ${esc(d.code_postal)} ${esc(d.ville)}</p>
       <p style="margin:6px 0 0"><b>Durée estimée :</b> ${duree(d.duree_min)}${d.nombre_cleaneurs === 2 ? " · 2 Cleaneurs" : ""}</p>
-      <p style="margin:6px 0 0"><b>Prix :</b> ${d.sur_devis ? "sur devis" : euros(d.estimation_c)}${d.credit_impot_c ? ` · après crédit d'impôt ${euros(d.estimation_c - d.credit_impot_c)}` : ""}</p>
+      ${(() => { // Même décompte qu'à l'étape 5 : prestation, frais de service, remises, total à payer, après crédit d'impôt.
+        if (d.sur_devis) return `<p style="margin:6px 0 0"><b>Prix :</b> sur devis</p>`;
+        const frais = Number(d.details?.fraisServiceC) || 0, remise = (Number(d.remise_parrainage_c) || 0) + (Number(d.cagnotte_c) || 0);
+        const total = d.estimation_c + frais - remise;
+        return `<p style="margin:6px 0 0"><b>Prix :</b> ${euros(d.estimation_c)}${frais ? ` · ${tr("frais de service")} ${euros(frais)}` : ""}${remise ? ` · ${tr("remise")} −${euros(remise)}` : ""}</p>
+          <p style="margin:6px 0 0"><b>${tr("Total à payer")} :</b> ${euros(total)}${d.credit_impot_c ? ` · ${euros(total - d.credit_impot_c)} ${tr("après crédit d'impôt, si éligible")}` : ""}</p>`; })()}
       <p style="margin:6px 0 0"><b>Choix du Cleaneur :</b> ${d.choix_cleaneur === "directe" ? "réservation directe" : "parmi les candidatures"}</p>
     </div>
     <div class="carte teintee" style="margin-bottom:12px"><b>Votre lien de suivi</b>

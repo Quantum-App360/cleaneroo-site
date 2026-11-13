@@ -21,7 +21,7 @@ import {
   DOCUMENTS_CLEANEUR, mesDocuments, deposerDocument, retirerDocument, lienDocument, soumettreDossier,
   demandesDuCompte, mesDemandes, synchroniserBiens, enregistrerBien, supprimerBien,
 } from "./donnees.js";
-import { oublierMesInformations } from "./reserver.js";
+import { oublierMesInformations, reserverPourLogement } from "./reserver.js";
 import { rendreEntete, memoriserProfil } from "./entete.js";
 import { ONGLETS, ongletParDefaut, espaceDu, statutsDu, NOMS_ESPACES, barreOnglets, ongletParticulier, ongletPro, ongletEntreprise, brancherSociete, brancherPro, ongletCleaneur, brancherMissions, demanderGeoloc } from "./espaces.js";
 
@@ -138,7 +138,7 @@ export async function pageCompte(vue, param) {
   if (onglet === "entreprise") brancherSociete(vue, majProfil, () => pageCompte(vue, "entreprise"));
   if (onglet === "pro") { brancherPro(vue, p, biens, demandes, { majProfil, recharger: () => pageCompte(vue) }); brancherInvitationsPro(vue); brancherAbonnementPro(vue, () => { majLienCompte(); pageCompte(vue, "pro"); }); }
   // Onglets à l'intérieur des espaces Cleaneur et Pro (la page ne défile plus sur des dizaines d'écrans).
-  if ((onglet === "cleaneur" && cleaneur) || onglet === "pro") installerSousOnglets(vue, onglet);
+  if ((onglet === "cleaneur" && cleaneur) || onglet === "pro" || onglet === "particulier") installerSousOnglets(vue, onglet);
   // Ajouter un espace : Particulier ou Cleaneur tout de suite ; Pro avec la société (raison sociale + SIRET/SIREN).
   const ajouter = async (statut, bouton) => {
     if (bouton) bouton.disabled = true;
@@ -468,6 +468,9 @@ export async function afficherAccesCleaneur(racine) {
 
 const FINIES = ["TERMINEE", "ANNULEE"];
 
+/** Nom d'un logement : celui donné, sinon « Type · Ville ». */
+const nomDuBien = l => l.nom || `${tr((TYPES_LOGEMENT.find(t => t.id === l.typeLogementId) || {}).nom || "Adresse")} · ${l.ville}`;
+
 /** Écoute en temps réel de « Mes demandes » (arrêtée dès qu'on change de page). */
 let arretEcoute = null;
 export function arreterEcouteDemandes() { if (arretEcoute) arretEcoute(); arretEcoute = null; }
@@ -498,7 +501,7 @@ export async function pageMesPrestations(vue, mode = "demandes", sous = null) {
     const teinte = d.statut === "TERMINEE" ? " vert" : d.statut === "ANNULEE" ? " gris" : "";
     return `<a class="carte ligne-compte" href="#/demande/${esc(d.reference)}/${esc(d.jeton)}">${icone(r.icone, { tuile: true })}
       <div class="corps"><div class="haut"><h3>${r.nom}</h3><span class="tampon${teinte}">${STATUTS[d.statut] || d.statut}</span></div>
-      <p class="muet">${date} · ${esc(d.ville)}</p>
+      <p class="muet">${date} · ${esc((() => { const l = biens.find(x => (x.rue || "").trim().toLowerCase() === (d.rue || "").trim().toLowerCase() && x.codePostal === (d.code_postal || d.codePostal)); return l ? nomDuBien(l) : d.ville; })())}</p>
       <p class="petit">Réf. ${esc(d.reference)} · ${d.sur_devis ? "Sur devis" : `estimé ${euros(d.estimation_c)}`}</p></div><span class="aller" aria-hidden="true">›</span></a>`;
   };
   const vide = (t, plus = "") => `<div class="vide-compte"><p class="muet">${t}</p>${plus ? `<p class="petit">${plus}</p>` : ""}</div>`;
@@ -507,11 +510,14 @@ export async function pageMesPrestations(vue, mode = "demandes", sous = null) {
   vue.innerHTML = mode === "biens" ? `<section class="bloc"><div class="etroit">
     ${titre("Mes biens")}
     <p class="petit" style="margin-top:0">Vos adresses déjà renseignées : elles sont proposées automatiquement à la réservation.</p>
-    ${biens.length ? biens.map(l => `<div class="carte ligne-compte">${icone("position", { tuile: true })}
-      <div class="corps"><b><span>${esc((TYPES_LOGEMENT.find(t => t.id === l.typeLogementId) || {}).nom || tr("Adresse"))}</span> · ${esc(l.ville)}</b><div class="petit">${esc(l.rue)}, ${esc(l.codePostal)} ${esc(l.ville)}${l.surface ? `<span> · ${l.surface} m²</span>` : ""}${l.chambres != null ? `<span> · ${l.chambres} ch.</span>` : ""}</div></div>
-      <button type="button" class="lien-bouton" style="color:var(--erreur)" data-retirer-bien="${esc(l.id)}">Retirer</button></div>`).join("") : vide("Aucun bien enregistré pour l'instant.")}
-    <details class="carte" style="margin-top:6px"><summary style="cursor:pointer;font-weight:700">＋ Ajouter un bien</summary>
+    ${biens.length ? biens.map(l => `<div class="carte ligne-compte bien-particulier">${icone("logement", { tuile: true })}
+      <div class="corps"><b>${esc(nomDuBien(l))}</b><div class="petit">${esc(l.rue)}, ${esc(l.codePostal)} ${esc(l.ville)}${l.surface ? ` · ${l.surface} m²` : ""}${l.chambres ? ` · ${l.chambres} ${tr("ch.")}` : ""}${l.sdb ? ` · ${l.sdb} ${tr("sdb")}` : ""}</div>
+        <div class="actions-bien"><button type="button" class="bouton petit" data-reserver-bien="${esc(l.id)}">${tr("Réserver ici")}</button>
+          <button type="button" class="lien-bouton" data-modifier-bien="${esc(l.id)}">${tr("Modifier")}</button>
+          <button type="button" class="lien-bouton" style="color:var(--erreur)" data-retirer-bien="${esc(l.id)}">${tr("Retirer")}</button></div></div></div>`).join("") : vide("Aucun bien enregistré pour l'instant.", "Un ou plusieurs logements : enregistrez-les une fois, ils sont proposés à chaque réservation.")}
+    <details class="carte" style="margin-top:6px" id="ajout-bien"><summary style="cursor:pointer;font-weight:700" id="titre-form-bien">＋ Ajouter un bien</summary>
       <form id="form-bien" novalidate style="margin-top:12px">
+        <label class="champ">Nom (facultatif)<input name="nom" maxlength="60" placeholder="${esc(tr("Ex. : Appartement du centre, Maison de vacances"))}"></label>
         <label class="champ">Type<select name="typeLogementId">${TYPES_LOGEMENT.map(t => `<option value="${t.id}">${t.nom}</option>`).join("")}</select></label>
         <label class="champ">Adresse<input name="rue" maxlength="200" autocomplete="street-address"></label>
         <div class="grille-2"><label class="champ">Code postal<input name="codePostal" inputmode="numeric" maxlength="5" autocomplete="postal-code"></label>
@@ -550,11 +556,23 @@ export async function pageMesPrestations(vue, mode = "demandes", sous = null) {
     const err = vue.querySelector("#erreur-bien");
     if (f.rue.value.trim().length < 3 || !/^[0-9]{5}$/.test(f.codePostal.value.trim()) || !f.ville.value.trim()) { err.textContent = tr("Indiquez l'adresse, le code postal et la ville."); return; }
     const t = TYPES_LOGEMENT.find(x => x.id === f.typeLogementId.value);
-    await enregistrerBien({ id: "l" + Date.now(), typeLogementId: t.id, surface: Number(f.surface.value) || t.surface, chambres: Number(f.chambres.value) || 0,
+    const ancien = biens.find(x => x.id === f.dataset.modifier) || {};
+    await enregistrerBien({ ...ancien, id: ancien.id || "l" + Date.now(), nom: f.nom.value.trim(), typeLogementId: t.id, surface: Number(f.surface.value) || t.surface, chambres: Number(f.chambres.value) || 0,
       sdb: Number(f.sdb.value) || 0, niveaux: t.niveaux, rue: f.rue.value.trim(), codePostal: f.codePostal.value.trim(), ville: f.ville.value.trim(),
-      accueil: "PRESENT", tiersNom: "", tiersTel: "", boiteEmplacement: "" }).catch(() => null);
+      accueil: ancien.accueil || "PRESENT", tiersNom: ancien.tiersNom || "", tiersTel: ancien.tiersTel || "", boiteEmplacement: ancien.boiteEmplacement || "" }).catch(() => null);
     pageMesPrestations(vue, "biens");
   };
+  // Modifier un bien : le formulaire se remplit avec ses informations.
+  vue.querySelectorAll("[data-modifier-bien]").forEach(b => b.onclick = () => {
+    const l = biens.find(x => x.id === b.dataset.modifierBien); if (!l) return;
+    f.dataset.modifier = l.id; f.nom.value = l.nom || ""; f.typeLogementId.value = l.typeLogementId || "appartement";
+    f.rue.value = l.rue || ""; f.codePostal.value = l.codePostal || ""; f.ville.value = l.ville || "";
+    f.surface.value = l.surface || ""; f.chambres.value = l.chambres ?? ""; f.sdb.value = l.sdb ?? "";
+    vue.querySelector("#titre-form-bien").textContent = `✏️ ${tr("Modifier")} · ${nomDuBien(l)}`;
+    f.querySelector("[type=submit]").textContent = tr("Enregistrer les modifications");
+    const d = vue.querySelector("#ajout-bien"); d.open = true; d.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+  vue.querySelectorAll("[data-reserver-bien]").forEach(b => b.onclick = () => reserverPourLogement(b.dataset.reserverBien));
   vue.querySelectorAll("[data-retirer-bien]").forEach(b => b.onclick = async () => {
     if (!confirm(tr("Retirer ce bien ?"))) return;
     await supprimerBien(b.dataset.retirerBien).catch(() => null);

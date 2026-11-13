@@ -1976,3 +1976,11 @@ body.avec-decor main, body.avec-decor #vue, body.avec-decor footer { position: r
 .mission-jour .etat-texte { font-size: 12px; font-weight: 700; }
 .mission-jour .aller { color: var(--primaire); font-weight: 800; }
 .ajout-ligne input[name=parMenage] { width: 80px; margin: 0; }
+
+/* Espace Particulier refondu (13 novembre 2026) */
+.bien-particulier .corps { flex: 1; min-width: 0; }
+.actions-bien { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin-top: 8px; }
+.logements-suivi { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; }
+.logement-suivi { display: flex; align-items: center; gap: 12px; padding: 12px 14px; }
+.logement-suivi .corps { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.logement-choisi .lien-bouton { margin-left: auto; }

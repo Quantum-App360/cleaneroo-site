@@ -9,6 +9,10 @@ const GROUPES = {
     regles: [["#selfie-jour, .tableau-cleaneur, #noter-clients", "aujourdhui"], ["#avis-recus, #niveau-cleaneur, #mon-activite, #formules-cleaneur, [data-factures], .parrainage, .bloc-parrainage", "activite"],
       ["#ce-qui-manque, #formations-cleaneur, #bloc-invitation", "dossier"], ["#periodes-fermees, #creneaux-cleaneur", "planning"],
       ["#missions-disponibles, #missions-incompatibles, .deroule-mission", "missions"]] },
+  // Particulier (13 novembre 2026) : le compte en trois rubriques (le suivi est dans « Mon suivi »).
+  particulier: { onglets: [["profil", "Mes informations"], ["factures", "Factures"], ["parrainage", "Parrainage"]],
+    defaut: "profil", details: null,
+    regles: [[".acces-particulier, #form-profil, #equipe", "profil"], ["[data-factures]", "factures"], [".parrainage, .bloc-parrainage", "parrainage"]] },
   // Conciergerie (13 novembre 2026) : poste de pilotage, planning, biens, ménages, équipe, rapports, compte.
   pro: { onglets: [["aujourdhui", "Aujourd'hui"], ["planning", "Planning"], ["biens", "Biens"], ["menages", "Ménages"], ["equipe", "Équipe"], ["rapports", "Rapports"], ["compte", "Compte"]],
     defaut: "aujourdhui", details: null,

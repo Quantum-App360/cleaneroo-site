@@ -51,21 +51,12 @@ const nomBien = l => l.nom || `${(TYPES_LOGEMENT.find(t => t.id === l.typeLogeme
 /* ------------------------------------------------------------------ Particulier */
 
 export function ongletParticulier(p, biens, demandes) {
-  const prochaine = demandes.filter(d => !["TERMINEE", "ANNULEE"].includes(d.statut))
-    .sort((a, b) => new Date(a.creneau || a.cree_le) - new Date(b.creneau || b.cree_le))[0];
-  const r = prochaine && rubrique(prochaine.rubrique_id);
-  return `<div class="carte mise-en-avant">
-      <span class="surtitre">Ma prochaine prestation</span>
-      ${prochaine ? `<div class="ligne-compte" style="padding:0;box-shadow:none;border:0;background:none;margin-top:10px">${icone(r.icone, { tuile: true })}
-        <div class="corps"><h3 style="margin:0">${r.nom}</h3><p class="muet" style="margin:2px 0 0">${prochaine.creneau ? dateLongue(new Date(prochaine.creneau)) : tr("Date à fixer")} · ${esc(prochaine.ville)}</p></div></div>
-        <div class="boutons"><a class="bouton" href="#/demande/${esc(prochaine.reference)}/${esc(prochaine.jeton)}">Suivre ma prestation</a><a class="bouton secondaire" href="#/reserver" data-choisir-prestation>Réserver une prestation</a></div>`
-      : `<p class="muet" style="margin:8px 0 0">Aucune prestation prévue pour l'instant.</p>
-        <div class="boutons"><a class="bouton" href="#/reserver" data-choisir-prestation>Réserver une prestation</a></div>`}
-    </div>
-    <div class="grille-raccourcis">
-      <a class="carte raccourci" href="#/mes-demandes">${icone("calendrier", { tuile: true })}<b>Mes prestations</b><span class="petit">À venir et passées</span></a>
-      <a class="carte raccourci" href="#/mes-demandes">${icone("logement", { tuile: true })}<b>Mes biens</b><span class="petit">${biens.length} adresse${biens.length > 1 ? "s" : ""} enregistrée${biens.length > 1 ? "s" : ""}</span></a>
-      <a class="carte raccourci" href="#/reserver" data-choisir-prestation>${icone("instantane", { tuile: true })}<b>Nouvelle demande</b><span class="petit">Prix immédiat</span></a>
+  // Refonte (13 novembre 2026) : un seul tableau de bord, « Mon suivi » ; « Mon espace » rassemble le compte (informations, factures, parrainage).
+  const aVenir = demandes.filter(d => !["TERMINEE", "ANNULEE"].includes(d.statut)).length;
+  return `<div class="grille-raccourcis acces-particulier">
+      <a class="carte raccourci" href="#/tableau">${icone("sur-place", { tuile: true })}<b>Mon suivi</b><span class="petit">Ma prochaine prestation en direct</span></a>
+      <a class="carte raccourci" href="#/mes-demandes">${icone("calendrier", { tuile: true })}<b>Mes prestations</b><span class="petit">${aVenir} ${tr(aVenir > 1 ? "à venir" : "à venir")}</span></a>
+      <a class="carte raccourci" href="#/mes-biens">${icone("logement", { tuile: true })}<b>Mes biens</b><span class="petit">${biens.length} ${tr(biens.length > 1 ? "logements" : "logement")}</span></a>
     </div>
 `;
 }
