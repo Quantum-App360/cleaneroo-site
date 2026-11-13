@@ -4,6 +4,7 @@ import { decorTableau } from "./commun.js";
 import "./oeil.js";   // œil pour afficher le mot de passe
 import { nomsAttestations } from "./formations.js";
 import { blocDossierAdmin } from "./dossier.js";
+import { blocSelfiesAdmin, blocAvertissementsAdmin } from "./missions.js";
 import { supabase, deconnecter, secteursARecruter, dossiersCleaneurs, documentsDe, deciderDossier, deciderDocument, lienDocument, DOCUMENTS_CLEANEUR } from "./donnees.js";
 import { rubrique } from "./catalogue.js";
 import { icone } from "./icones.js";
@@ -78,7 +79,7 @@ let onglet = "demandes";
 
 /** Rubriques du back-office : identifiant, nom, icône. */
 const RUBRIQUES_BO = [["demandes", "Demandes", "calendrier"], ["inscriptions", "Inscriptions au lancement", "avis"], ["dossiers", "Dossiers Cleaneurs", "cleaneurs"],
-  ["litiges", "Litiges", "garantie"], ["support", "Support", "telephone"], ["secteurs", "Secteurs à recruter", "position"], ["visites", "Visites", "instantane"]];
+  ["litiges", "Litiges", "garantie"], ["controle", "Contrôle des Cleaneurs", "photo"], ["support", "Support", "telephone"], ["secteurs", "Secteurs à recruter", "position"], ["visites", "Visites", "instantane"]];
 let compteurs = {};
 /** Chiffres clés (en tête et pastilles du menu), relus à chaque changement de rubrique. */
 async function chargerCompteurs() {
@@ -166,6 +167,15 @@ async function listeInscriptions() {
 const ETAT_DOSSIER = { BROUILLON: "À compléter", A_VERIFIER: "À vérifier", VALIDE: "Validé", REFUSE: "À corriger" };
 const NOM_DOC = Object.fromEntries(DOCUMENTS_CLEANEUR.map(d => [d.type, d.nom]));
 nomsAttestations().then(n => Object.assign(NOM_DOC, n));
+/** Contrôle des Cleaneurs (13 novembre 2026, déplacé de l'espace Cleaneur) : selfies du jour à comparer à la pièce d'identité, avertissements. */
+async function listeControle() {
+  vue.innerHTML = `${titreBO()}<p class="muet">Selfies des 7 derniers jours à comparer à la pièce d'identité, et avertissements : au 3e, le Cleaneur est banni.</p>
+    <div id="selfies-admin" class="selfies-admin"></div><div id="avertissements-admin"></div>`;
+  brancherOnglets();
+  blocSelfiesAdmin(vue.querySelector("#selfies-admin"));
+  blocAvertissementsAdmin(vue.querySelector("#avertissements-admin"));
+}
+
 async function listeDossiers() {
   let data;
   try { data = await dossiersCleaneurs(); } catch (e) { vue.innerHTML = `${titreBO()}<p class="erreur">${esc(e.message)}</p>`; brancherOnglets(); return; }
@@ -346,6 +356,7 @@ async function liste() {
   if (onglet === "secteurs") return listeSecteurs();
   if (onglet === "litiges") return listeLitiges();
   if (onglet === "support") return listeSupport();
+  if (onglet === "controle") return listeControle();
   const { data, error } = await supabase.from("demandes").select("*").order("cree_le", { ascending: false }).limit(300);
   if (error) { vue.innerHTML = `<p class="erreur">${esc(error.message)}</p>`; return; }
   const compte = s => data.filter(d => d.statut === s).length;
@@ -380,6 +391,8 @@ async function detail(d) {
       <dt>Créneau</dt><dd>${d.creneau ? `${dateLongue(new Date(d.creneau))} à ${heure(new Date(d.creneau).getHours())}` : "Flexible (7 jours)"} · ${d.choix_cleaneur === "directe" ? "réservation directe" : "candidatures"}</dd>
       <dt>Accès</dt><dd>${ACCUEIL[d.accueil] || d.accueil}${acces.nom ? ` · ${esc(acces.nom)} ${esc(acces.telephone)}` : ""}${acces.emplacement ? ` · ${esc(acces.emplacement)}` : ""}${acces.code ? ` · code : ${esc(acces.code)}` : ""}</dd>
       <dt>Estimation</dt><dd>${d.sur_devis ? "Sur devis" : euros(d.estimation_c)} · ${duree(d.duree_min)}${d.nombre_cleaneurs === 2 ? " · 2 Cleaneurs" : ""}${d.credit_impot_c ? ` · crédit d'impôt ${euros(d.credit_impot_c)}` : ""}</dd>
+      ${d.sur_devis ? "" : (() => { const frais = Number(det.fraisServiceC) || 0, remise = Number(d.remise_parrainage_c) || 0, cagnotte = Number(d.cagnotte_c) || 0;
+        return `<dt>Total à payer par le client</dt><dd>${euros(d.estimation_c + frais - remise - cagnotte)}${frais ? ` · dont frais de service ${euros(frais)} (${det.fraisServicePct || 0} %)` : ""}${remise ? ` · remise de parrainage −${euros(remise)}` : ""}${cagnotte ? ` · cagnotte −${euros(cagnotte)}` : ""}</dd>`; })()}
       <dt>Détail</dt><dd>${(det.lignes || []).map(l => `${esc(l.libelle)} : ${euros(l.montantC)}`).join("<br>") || "—"}</dd>
       ${taches.length ? `<dt>Tâches</dt><dd>${taches.map(esc).join(", ")}</dd>` : ""}
       ${(det.tachesPerso || []).length ? `<dt>Demandes particulières</dt><dd>${det.tachesPerso.map(esc).join(" · ")}</dd>` : ""}
@@ -393,7 +406,7 @@ async function detail(d) {
       ${!["TERMINEE", "ANNULEE"].includes(d.statut) ? `<button class="bouton danger" id="annuler">Annuler la demande</button>` : ""}
     </div>
     ${datePassee ? `<p class="erreur" style="margin-top:8px">La date de cette demande est déjà passée : elle ne peut plus être mise en ligne. Annulez-la (le client n'est pas facturé).</p>` : ""}
-    <p class="petit">Prochainement : candidatures des Cleaneurs, messages et compte rendu photo (étape 2 du site).</p>`;
+`;
   const maj = async champs => {
     const { error } = await supabase.from("demandes").update(champs).eq("id", d.id);
     if (error) return alert(messageErreur(error));

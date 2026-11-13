@@ -227,7 +227,7 @@ export function blocPenalites(p) {
 }
 
 /** Administration : avertir un Cleaneur, lever un bannissement. */
-async function blocAvertissementsAdmin(boite) {
+export async function blocAvertissementsAdmin(boite) {
   const liste = await avertissementsCleaneurs().catch(() => []);
   if (!boite.isConnected) return;
   boite.innerHTML = `<h2 class="titre-section">⚠️ ${tr("Avertissements des Cleaneurs")}</h2>
@@ -271,7 +271,7 @@ async function envoyerSelfie(input, err) {
 }
 
 /** Administration : selfies récents à côté de la pièce d'identité, pour confirmer que c'est la même personne. */
-async function blocSelfiesAdmin(boite) {
+export async function blocSelfiesAdmin(boite) {
   const liste = await selfiesAVerifier().catch(() => []);
   if (!boite.isConnected) return;
   boite.innerHTML = `<h2 class="titre-section">🤳 ${tr("Selfies des Cleaneurs (7 derniers jours)")}</h2>
@@ -455,14 +455,13 @@ export async function brancherMissions(vue, p) {
     <p class="petit" style="margin-top:0">${tr("Les plus proches et celles qui comblent vos trous de planning d'abord.")}</p>
     ${dispo.length ? dispo.map(carteDisponible).join("") : vide("Aucune mission disponible pour l'instant.", p.dossier === "VALIDE" || p.role === "admin" ? "" : "Votre dossier doit être validé pour voir et prendre des missions.")}
     <div id="missions-incompatibles"></div>
-    ${p.role === "admin" ? `<div id="selfies-admin" class="selfies-admin"></div><div id="avertissements-admin"></div>` : ""}`;
+`;
   traduire(boite);
   brancherTableau(boite, miennes, () => brancherMissions(vue, p));
   blocNoterClients(boite.querySelector("#noter-clients")).then(() => blocAvisRecus(boite.querySelector("#avis-recus")));
   if (p.role !== "admin") blocCeQuiMeManque(boite.querySelector("#ce-qui-manque"));
   if (p.role !== "admin") { blocFormations(boite.querySelector("#formations-cleaneur")); blocPeriodes(boite.querySelector("#periodes-fermees")); blocNiveau(boite.querySelector("#niveau-cleaneur")); blocCreneaux(boite.querySelector("#creneaux-cleaneur"), p); }
   remplirNotesClients(boite);
-  if (p.role === "admin") { blocSelfiesAdmin(boite.querySelector("#selfies-admin")); blocAvertissementsAdmin(boite.querySelector("#avertissements-admin")); }
   brancherRetards(boite);
   brancherGuidesMissions(boite);
   brancherBons(boite);
