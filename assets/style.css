@@ -1915,3 +1915,50 @@ body.avec-decor main, body.avec-decor #vue, body.avec-decor footer { position: r
 .pastille.ok-cal::before { content: ""; }
 .pastille.autre { background: var(--creux); color: var(--texte2); }
 .piege { position: absolute !important; left: -9999px !important; width: 1px; height: 1px; opacity: 0; }
+
+/* Conciergerie : poste de pilotage, ménages, rapports, stock et incidents (13 novembre 2026) */
+.alertes-concierge { display: grid; gap: 8px; margin-bottom: 14px; }
+.alerte-concierge { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 14px; background: var(--surface); box-shadow: var(--ombre); border-left: 4px solid #E9A23B; }
+.alerte-concierge.urgent { border-left-color: #D2563C; background: #FFF4F0; }
+.alerte-concierge.ok { border-left-color: var(--succes, #1E9E6A); }
+.alerte-concierge span { flex: 1; }
+.grille-rotations { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 760px) { .grille-rotations { grid-template-columns: 1fr; } }
+.jour-rotations h3 { margin: 0 0 8px; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.rotation { border-left: 4px solid var(--c); padding: 8px 0 8px 12px; margin: 8px 0; }
+.rot-bien { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.rot-flux { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-top: 6px; }
+.rot-etape { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 999px; background: var(--creux); font-size: 13px; }
+.rot-etape.menage { color: #fff; background: var(--succes, #1E9E6A); }
+.rot-etape.menage .ico { width: 14px; height: 14px; }
+.rot-etape.menage.etat-PUBLIEE, .rot-etape.menage.etat-VERIFICATION { background: #E9A23B; }
+.rot-etape.menage.etat-CONFIRMEE { background: var(--primaire); }
+.rot-etape.menage.etat-EN_ROUTE { background: #3F7FD8; }
+.rot-etape.menage.etat-SUR_PLACE, .rot-etape.menage.etat-EN_COURS { background: #7A5BD6; }
+.filtres-menages { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 12px; }
+.filtres-menages .segments { margin: 0; }
+.filtres-menages select { max-width: 260px; margin: 0; }
+.liste-menages { display: grid; gap: 8px; }
+.ligne-menage { display: flex; align-items: center; gap: 12px; text-decoration: none; color: inherit; padding: 12px 14px; }
+.ligne-menage .corps { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.ligne-menage .droite { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; font-size: 13px; }
+.entete-rapport { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+.entete-rapport b { font-size: 18px; text-transform: capitalize; }
+.entete-rapport .espace { flex: 1; }
+.table-rapport { display: grid; gap: 0; background: var(--surface); border-radius: 14px; box-shadow: var(--ombre); overflow-x: auto; margin-top: 12px; }
+.table-rapport .tr { display: grid; grid-template-columns: minmax(140px, 2fr) repeat(5, minmax(70px, 1fr)); gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--separateur); align-items: center; font-size: 14px; min-width: 620px; }
+.table-rapport .tr.entete { font-weight: 800; color: var(--texte2); background: var(--creux); }
+.jauge-occ { display: inline-block; width: 46px; height: 6px; border-radius: 99px; background: var(--creux); vertical-align: middle; overflow: hidden; }
+.jauge-occ i { display: block; height: 100%; background: var(--primaire); border-radius: 99px; }
+.outil-bien { margin-top: 8px; }
+.outil-bien summary { cursor: pointer; font-weight: 700; }
+.ligne-stock { display: grid; grid-template-columns: 1fr auto auto auto; gap: 10px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--separateur); }
+.ligne-stock.bas span:first-child { color: #B4501C; font-weight: 700; }
+.ligne-stock .qte { display: inline-flex; align-items: center; gap: 8px; }
+.ligne-stock .pas { width: 32px; height: 32px; border-radius: 10px; border: 1px solid var(--separateur); background: var(--surface); cursor: pointer; font-size: 18px; }
+.ajout-ligne { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; }
+.ajout-ligne input[name=nom], .ajout-ligne input[name=texte] { flex: 1 1 200px; margin: 0; }
+.ajout-ligne input[type=number] { width: 80px; margin: 0; }
+.ligne-incident { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px; padding: 8px 0; border-bottom: 1px solid var(--separateur); }
+.ligne-incident.resolu { opacity: .6; }
+.ligne-incident .actions { display: flex; gap: 12px; }

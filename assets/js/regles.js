@@ -3,6 +3,8 @@ import { langue, LOCALE } from "./langue.js";
 // Valeurs métier : copie EXACTE de app/.../Regles.kt (application Android). Toute modification se fait des deux côtés.
 // Montants en centimes, durées en minutes.
 export const REGLES = {
+  // Conciergerie : seuil d'alerte par défaut d'un article du stock d'un bien (13 novembre 2026).
+  STOCK_SEUIL_DEFAUT: 2,
   COMMISSION_BASE_PB: 1500,
   DELAI_MIN_RESERVATION_H: 24,
   PLANNING_HEURE_DEBUT: 5,

@@ -9,10 +9,12 @@ const GROUPES = {
     regles: [["#selfie-jour, .tableau-cleaneur, #noter-clients", "aujourdhui"], ["#avis-recus, #niveau-cleaneur, #mon-activite, #formules-cleaneur, [data-factures], .parrainage, .bloc-parrainage", "activite"],
       ["#ce-qui-manque, #formations-cleaneur, #bloc-invitation", "dossier"], ["#periodes-fermees, #creneaux-cleaneur", "planning"],
       ["#missions-disponibles, #missions-incompatibles, .deroule-mission", "missions"]] },
-  pro: { onglets: [["tableau", "Tableau"], ["agenda", "Agenda"], ["biens", "Mes biens"], ["equipe", "Équipe"], ["compte", "Compte"]],
-    defaut: "tableau", details: null,
-    regles: [[".entete-pro, .grille-raccourcis, #chiffres-pro, #a-programmer", "tableau"], ["#semaine-pro, #agenda-pro", "agenda"],
-      ["#carte-biens, #liste-biens, #aucun-bien, .aide-ical", "biens"], ["#liste-invitations, #equipe", "equipe"],
+  // Conciergerie (13 novembre 2026) : poste de pilotage, planning, biens, ménages, équipe, rapports, compte.
+  pro: { onglets: [["aujourdhui", "Aujourd'hui"], ["planning", "Planning"], ["biens", "Biens"], ["menages", "Ménages"], ["equipe", "Équipe"], ["rapports", "Rapports"], ["compte", "Compte"]],
+    defaut: "aujourdhui", details: null,
+    regles: [[".entete-pro, .grille-raccourcis, #chiffres-pro, #pro-aujourdhui, #a-programmer", "aujourdhui"], ["#semaine-pro, #agenda-pro", "planning"],
+      ["#carte-biens, #liste-biens, #aucun-bien, .aide-ical, .outils-biens", "biens"], ["#pro-menages, #titre-menages", "menages"], ["#pro-rapports, #titre-rapports", "rapports"],
+      ["#liste-invitations, #equipe", "equipe"],
       ["#abonnement-pro, [data-factures], .parrainage, .bloc-parrainage", "compte"], ["details:has(#form-profil)", "compte"]] },
 };
 const CLE = e => `cleaneroo-sous-onglet-${e}`;

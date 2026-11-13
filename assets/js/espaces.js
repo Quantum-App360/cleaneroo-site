@@ -12,6 +12,7 @@ import { blocFormulesCleaneur } from "./formules-cleaneur.js";
 import { preremplir } from "./reserver.js";
 import { editeurGuide, brancherGuides } from "./guides.js";
 import { editeurEtapesPhoto, brancherEtapesPhoto, etapesPhotoDe, etapesPersoDe } from "./etapes-bien.js";
+import { editeurStock, editeurIncidents, brancherOutilsBiens, blocAujourdhui, blocMenages, blocRapports, stockBas, incidentsDe } from "./conciergerie.js";
 export { brancherMissions, demanderGeoloc } from "./missions.js";
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -163,6 +164,9 @@ export function ongletPro(p, biens) {
       <a class="carte raccourci" href="#liste-biens">${icone("logement", { tuile: true })}<b>Mes biens</b><span class="petit">Calendriers, accès, étapes photo</span></a>
       <a class="carte raccourci" href="#liste-invitations">${icone("cleaneurs", { tuile: true })}<b>Mes Cleaneurs</b><span class="petit">Inviter vos habitués</span></a>
     </div>
+    <h2 class="titre-section">${icone("sur-place", { tuile: true })}Aujourd'hui et demain</h2>
+    <p class="petit" style="margin-top:0">Alertes et rotations : départs, ménages, arrivées. Tout ce qui demande votre attention, au même endroit.</p>
+    <div id="pro-aujourdhui">${chargeur("Lecture de vos calendriers…", { petit: true, variante: "vitre" })}</div>
     <h2 class="titre-section">${icone("calendrier", { tuile: true })}Planning de la semaine</h2>
     <p class="petit" style="margin-top:0">Chaque bien, jour par jour : départs, arrivées et ménages. Touchez un départ orange pour programmer son ménage.</p>
     <div class="carte planning-semaine" id="semaine-pro">${chargeur("Lecture de vos calendriers…", { petit: true, variante: "vitre" })}</div>
@@ -190,10 +194,15 @@ export function ongletPro(p, biens) {
             <label class="champ">Nom du bien<input name="nom" maxlength="60" value="${esc(l.nom)}" placeholder="${esc(tr("Ex. : Studio Vieux-Port"))}"></label>
             ${SOURCES.map(([id, nom]) => `<label class="champ">Lien du calendrier ${nom}<input name="${id}" type="url" inputmode="url" maxlength="600" placeholder="https://…ics" value="${esc((l.calendriers || []).find(c => c.source === id)?.url)}"></label>`).join("")}
             <p class="erreur" data-erreur-cal></p><button class="bouton plein" type="submit">Enregistrer</button></form></details>
-        ${editeurGuide(l)}${editeurEtapesPhoto(l)}</div>`;
+        ${editeurGuide(l)}${editeurEtapesPhoto(l)}${editeurStock(l)}${editeurIncidents(l)}</div>`;
     }).join("") : `<div class="vide-compte"><p class="muet">Aucun bien enregistré pour l'instant.</p><p class="petit">Ajoutez vos biens dans « Mes prestations » ou lors d'une réservation.</p></div>`}</div>
     <p class="petit" id="aucun-bien" hidden>Aucun bien ne correspond à votre recherche.</p>
     <div class="boutons"><a class="bouton secondaire" href="#/mes-demandes">＋ Ajouter un bien</a><a class="bouton secondaire" href="#/reserver/rental">Réserver un ménage de location</a></div>
+    <h2 class="titre-section" id="titre-menages">${icone("termine", { tuile: true })}Tous les ménages</h2>
+    <div id="pro-menages">${chargeur("Chargement…", { petit: true })}</div>
+    <h2 class="titre-section" id="titre-rapports">${icone("avis", { tuile: true })}Rapports mensuels</h2>
+    <p class="petit" style="margin-top:0">Par bien : séjours, nuits occupées, taux d'occupation, ménages et leur coût. À exporter ou imprimer pour vos propriétaires.</p>
+    <div id="pro-rapports">${chargeur("Lecture de vos calendriers…", { petit: true })}</div>
     <details class="carte aide-ical"><summary>Où trouver le lien de mon calendrier ?</summary>
       <p><b>Airbnb</b> : Annonces › votre annonce › Disponibilités › Synchroniser les calendriers › Exporter le calendrier. Copiez le lien.</p>
       <p><b>Booking.com</b> : Extranet › Tarifs et disponibilités › Synchronisation des calendriers › Exporter le calendrier. Copiez le lien.</p>
@@ -234,6 +243,7 @@ export function brancherPro(vue, p, biens, demandes, { majProfil, recharger }) {
   });
   brancherGuides(vue, biens, recharger);
   brancherEtapesPhoto(vue, biens, recharger);
+  brancherOutilsBiens(vue, biens, recharger);
   remplirAgenda(vue, biens, demandes, recharger).then(prochains => trierBiens(vue, biens, prochains));
   carteDesBiens(vue.querySelector("#carte-biens"), biens);
   trierBiens(vue, biens, {});
@@ -313,6 +323,12 @@ async function remplirAgenda(vue, biens, demandes, recharger) {
     e.textContent = `${tr("Prochain départ")} : ${j ? dateCourte(jourDe(j)) : tr("aucun")}`; });
   const menageDe = (bienId, jour) => { const l = bienDe(bienId); return l && demandes.find(d => d.statut !== "ANNULEE" && memeAdresse(d, l) && d.creneau && iso(new Date(d.creneau)) === jour); };
   planningSemaine(vue.querySelector("#semaine-pro"), biens, uniques, menageDe, auj, couleurBien);
+  const ordreBiens = biens.slice().sort((a, b) => nomBien(a).localeCompare(nomBien(b), "fr", { sensitivity: "base", numeric: true }));
+  const couleurDe = id => couleurBien(ordreBiens.findIndex(l => l.id === id));
+  const programmerMenage = (bienId, jour) => { preremplir({ bienId, jour }); location.hash = "#/reserver/rental"; };
+  blocAujourdhui(vue.querySelector("#pro-aujourdhui"), { biens, sejours: uniques, demandes, menageDe, erreurs, nomBien, couleur: couleurDe, programmer: programmerMenage });
+  blocMenages(vue.querySelector("#pro-menages"), { biens, demandes, nomBien });
+  blocRapports(vue.querySelector("#pro-rapports"), { biens, sejours: uniques, demandes, nomBien, societe: vue.querySelector(".entete-pro h2")?.textContent || "" });
   const programmer = b => b.onclick = () => { preremplir({ bienId: b.dataset.programmer, jour: b.dataset.jour }); location.hash = "#/reserver/rental"; };
 
   const liste = vue.querySelector("#a-programmer");
