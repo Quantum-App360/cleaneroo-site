@@ -12,7 +12,7 @@ export const supabase = createClient(CONFIG.supabaseUrl, CONFIG.supabaseCle);
 // Demandes faites depuis ce navigateur : référence + jeton secret du lien de suivi.
 const CLE_LOCALE = "cleaneroo-mes-demandes";
 function lireLocal() { try { return JSON.parse(localStorage.getItem(CLE_LOCALE) || "[]"); } catch { return []; } }
-function ecrireLocal(l) { try { localStorage.setItem(CLE_LOCALE, JSON.stringify(l.slice(0, 50))); } catch { /* navigation privée */ } }
+function ecrireLocal(l) { marquerDonneesInvite(); try { localStorage.setItem(CLE_LOCALE, JSON.stringify(l.slice(0, 50))); } catch { /* navigation privée */ } }
 
 /** Référence lisible, comme dans l'application : CLN-XXXX-XXXX. */
 export function nouvelleReference() {
@@ -208,9 +208,30 @@ export function memoriser(reference, jeton, rubriqueId) {
 
 const retour = vers => `${location.origin}${location.pathname}?vers=${vers}`;
 
+/* Données gardées sur cet appareil (biens, coordonnées, dernières commandes, demandes suivies, brouillons) : elles n'appartiennent qu'à un
+   seul compte (13 novembre 2026). Si un autre compte se connecte sur le même appareil, elles sont effacées ; à la déconnexion aussi. */
+const CLE_PROPRIETAIRE = "cleaneroo-donnees-de";
+const CLES_PERSONNELLES = ["cleaneroo-logements", "cleaneroo-profil", "cleaneroo-modeles", "cleaneroo-brouillon", "cleaneroo-mes-demandes",
+  "cleaneroo-prerempli", "cleaneroo-simulation", "cleaneroo-agenda"];
+export function oublierDonneesLocales() {
+  [...CLES_PERSONNELLES, CLE_PROPRIETAIRE].forEach(k => { try { localStorage.removeItem(k); sessionStorage.removeItem(k); } catch { /* navigation privée */ } });
+}
+/** Données écrites sans être connecté : marquées « invité », elles pourront être rattachées au compte qui se connecte ensuite. */
+export function marquerDonneesInvite() {
+  try { if (!localStorage.getItem(CLE_PROPRIETAIRE)) localStorage.setItem(CLE_PROPRIETAIRE, "invite"); } catch { /* navigation privée */ }
+}
+function rattacherDonneesLocales(idCompte) {
+  let proprietaire = null;
+  try { proprietaire = localStorage.getItem(CLE_PROPRIETAIRE); } catch { /* navigation privée */ }
+  // Données d'un autre compte, ou d'origine inconnue (avant cette protection) : effacées. Seules celles d'un invité sont gardées.
+  if (proprietaire !== idCompte && proprietaire !== "invite") oublierDonneesLocales();
+  try { localStorage.setItem(CLE_PROPRIETAIRE, idCompte); } catch { /* navigation privée */ }
+}
+
 /** Session en cours (null si personne n'est connecté). */
 export async function session() {
   const { data } = await supabase.auth.getSession();
+  if (data.session) rattacherDonneesLocales(data.session.user.id);
   return data.session || null;
 }
 
@@ -233,7 +254,7 @@ export async function connecter(email, mdp) {
   if (!error) return "ok";
   return /not confirmed/i.test(error.message) ? "confirmer" : "incorrect";
 }
-export const deconnecter = () => supabase.auth.signOut();
+export async function deconnecter() { await supabase.auth.signOut(); oublierDonneesLocales(); }
 export async function mdpOublie(email) {
   const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: retour("mdp") });
   if (error) throw new Error(error.message);
@@ -332,7 +353,7 @@ export async function demandesDuCompte() {
 /* « Mes biens » : adresses enregistrées, synchronisées entre l'appareil (parcours de réservation) et le compte. */
 const CLE_BIENS = "cleaneroo-logements";
 const lireBiensLocaux = () => { try { return JSON.parse(localStorage.getItem(CLE_BIENS) || "[]"); } catch { return []; } };
-const ecrireBiensLocaux = l => { try { localStorage.setItem(CLE_BIENS, JSON.stringify(l)); } catch { /* rien */ } };
+const ecrireBiensLocaux = l => { marquerDonneesInvite(); try { localStorage.setItem(CLE_BIENS, JSON.stringify(l)); } catch { /* rien */ } };
 const sansCode = ({ code, ...reste }) => reste;
 /** Réunit les biens de cet appareil et ceux du compte ; les deux côtés repartent avec la même liste. */
 export async function synchroniserBiens() {
@@ -343,8 +364,13 @@ export async function synchroniserBiens() {
   if (error) return locaux;
   const distants = data.map(r => ({ ...r.donnees, id: r.id }));
   const nouveaux = locaux.filter(l => !distants.some(d => d.id === l.id));
-  if (nouveaux.length) await supabase.from("biens").upsert(nouveaux.map(l => ({ id: l.id, client_id: s.user.id, donnees: sansCode(l) })));
-  const tous = [...nouveaux, ...distants];
+  // Biens saisis sur cet appareil avant la connexion : rattachés au compte, sauf s'ils appartiennent déjà à un autre compte (alors oubliés ici).
+  const gardes = [];
+  for (const l of nouveaux) {
+    const { error: e } = await supabase.from("biens").insert({ id: l.id, client_id: s.user.id, donnees: sansCode(l) });
+    if (!e) gardes.push(l);
+  }
+  const tous = [...gardes, ...distants];
   ecrireBiensLocaux(tous);
   return tous;
 }

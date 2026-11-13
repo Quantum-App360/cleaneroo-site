@@ -4,7 +4,7 @@ import { decorTableau } from "./commun.js";
 import "./oeil.js";   // œil pour afficher le mot de passe
 import { nomsAttestations } from "./formations.js";
 import { blocDossierAdmin } from "./dossier.js";
-import { supabase, secteursARecruter, dossiersCleaneurs, documentsDe, deciderDossier, deciderDocument, lienDocument, DOCUMENTS_CLEANEUR } from "./donnees.js";
+import { supabase, deconnecter, secteursARecruter, dossiersCleaneurs, documentsDe, deciderDossier, deciderDocument, lienDocument, DOCUMENTS_CLEANEUR } from "./donnees.js";
 import { rubrique } from "./catalogue.js";
 import { icone } from "./icones.js";
 import { euros, duree, heure, dateLongue } from "./regles.js";
@@ -405,7 +405,7 @@ async function detail(d) {
   document.getElementById("annuler")?.addEventListener("click", () => confirm("Annuler cette demande ?") && maj({ statut: "ANNULEE" }));
 }
 
-document.getElementById("deconnexion").addEventListener("click", async e => { e.preventDefault(); await supabase.auth.signOut(); location.reload(); });
+document.getElementById("deconnexion").addEventListener("click", async e => { e.preventDefault(); await deconnecter(); location.reload(); });
 demarrer();
 
 // Décor animé en fond (étoiles, bulles, éponge qui mousse), comme le tableau de bord du compte.

@@ -7,7 +7,7 @@ import { PARTIES, partie, partiePour, TARIFS_SPECIAUX, RUBRIQUES, rubrique, form
 import { calculer, entreeEstimation, SALISSURE, disponibilite, meilleurPack, tachesChiffrees, formuleDe, passagesPlanifies, datesPassages,
   etapesDe, consommablesDe, menageTientEntreVoyageurs, frequenceDe, minutesEquipements, prixIndicatifEquipement, heuresEvenement, litsDe } from "./estimation.js";
 import { REGLES, euros, duree, heure, dateCourte, dateLongue, estPrelancement, MESSAGE_LANCEMENT, DATE_PREMIERES_INTERVENTIONS, pctZone, libelleZone } from "./regles.js";
-import { envoyerDemande, secteurCouvert, rejoindreAttente, enregistrerBien, synchroniserBiens } from "./donnees.js";
+import { envoyerDemande, secteurCouvert, rejoindreAttente, enregistrerBien, synchroniserBiens, marquerDonneesInvite } from "./donnees.js";
 import { etapesPhotoDe, etapesPersoDe } from "./etapes-bien.js";
 import { maPosition, adresseDe, chercherAdresse, afficherCarte } from "./cartes.js";
 import { traduire, langue, tr } from "./langue.js";
@@ -25,7 +25,7 @@ const CLE_BROUILLON = "cleaneroo-brouillon";
    Jamais le code d'accès ni le créneau. « Oublier mes informations » dans Mes prestations efface tout. */
 const CLE_PROFIL = "cleaneroo-profil", CLE_LOGEMENTS = "cleaneroo-logements", CLE_MODELES = "cleaneroo-modeles";
 const lire = (cle, defaut) => { try { return JSON.parse(localStorage.getItem(cle) || "null") ?? defaut; } catch { return defaut; } };
-const ecrire = (cle, v) => { try { localStorage.setItem(cle, JSON.stringify(v)); } catch { /* rien */ } };
+const ecrire = (cle, v) => { marquerDonneesInvite(); try { localStorage.setItem(cle, JSON.stringify(v)); } catch { /* rien */ } };
 export const profil = () => lire(CLE_PROFIL, null);
 export const logements = () => lire(CLE_LOGEMENTS, []);
 /** Dernières commandes, la plus récente d'abord : [{ rubriqueId, quand, logementId, ... }]. */
