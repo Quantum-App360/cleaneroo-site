@@ -7,7 +7,8 @@ import { PARTIES, partie, partiePour, TARIFS_SPECIAUX, RUBRIQUES, rubrique, form
 import { calculer, entreeEstimation, SALISSURE, disponibilite, meilleurPack, tachesChiffrees, formuleDe, passagesPlanifies, datesPassages,
   etapesDe, consommablesDe, menageTientEntreVoyageurs, frequenceDe, minutesEquipements, prixIndicatifEquipement, heuresEvenement, litsDe } from "./estimation.js";
 import { REGLES, euros, duree, heure, dateCourte, dateLongue, estPrelancement, MESSAGE_LANCEMENT, DATE_PREMIERES_INTERVENTIONS, pctZone, libelleZone } from "./regles.js";
-import { envoyerDemande, secteurCouvert, rejoindreAttente } from "./donnees.js";
+import { envoyerDemande, secteurCouvert, rejoindreAttente, enregistrerBien, synchroniserBiens } from "./donnees.js";
+import { etapesPhotoDe, etapesPersoDe } from "./etapes-bien.js";
 import { maPosition, adresseDe, chercherAdresse, afficherCarte } from "./cartes.js";
 import { traduire, langue, tr } from "./langue.js";
 import { profilMemorise } from "./entete.js";
@@ -43,6 +44,11 @@ function memoriserCommande(b) {
   const log = { ...(ancien || {}), id: ancien?.id || "l" + Date.now(), typeLogementId: b.typeLogementId, surface: b.surface, chambres: b.chambres, sdb: b.sdb, niveaux: b.niveaux,
     ...Object.fromEntries(CHAMPS_LOGEMENT.map(k => [k, String(b[k] ?? "").trim()])),
     ...(Number.isFinite(b.lat) ? { lat: b.lat, lon: b.lon } : {}) };
+  // Location saisonnière : les étapes à valider en photo sont gardées avec le logement (et dans le compte).
+  if (b.rubriqueId === "rental" && b.memoriserEtapes !== false) {
+    log.etapesPhoto = { etapes: etapesDe(b), perso: b.etapesPerso || [] };
+    if (b.logementId === log.id || ancien) enregistrerBien(log).catch(() => null);
+  }
   ecrire(CLE_LOGEMENTS, [log, ...liste.filter(l => !meme(l))].slice(0, REGLES.BIENS_MAX));
   const modele = Object.fromEntries(Object.entries(b).filter(([k]) => !PRIVES.includes(k)));
   // « Mémoriser ces étapes pour ce logement » décoché : les étapes ne sont pas reprises la prochaine fois.
@@ -54,7 +60,9 @@ function memoriserCommande(b) {
 function avecLogement(br, l) {
   if (!l) return br;
   const dims = ["home", "rental"].includes(br.rubriqueId) ? { typeLogementId: l.typeLogementId, surface: l.surface, chambres: l.chambres, sdb: l.sdb, niveaux: l.niveaux } : {};
-  return { ...br, ...dims, ...Object.fromEntries(CHAMPS_LOGEMENT.map(k => [k, l[k] || ""])), logementId: l.id, code: "", guide: Array.isArray(l.guide) ? l.guide : [],
+  // Étapes à valider en photo fixées pour ce bien (espace Pro) : reprises en location saisonnière.
+  const etapes = br.rubriqueId === "rental" && l.etapesPhoto ? { etapesChoisies: etapesPhotoDe(l), etapesPerso: etapesPersoDe(l) } : {};
+  return { ...br, ...dims, ...etapes, ...Object.fromEntries(CHAMPS_LOGEMENT.map(k => [k, l[k] || ""])), logementId: l.id, code: "", guide: Array.isArray(l.guide) ? l.guide : [],
     lat: Number.isFinite(l.lat) ? l.lat : null, lon: Number.isFinite(l.lon) ? l.lon : null };
 }
 
@@ -210,6 +218,9 @@ export function ouvrirReservation(conteneur, rubriqueId, option = "") {
   history.replaceState({ ...(history.state || {}), cleanerooEtape: 1 }, "");
   for (let i = 2; i <= n; i++) history.pushState({ cleanerooEtape: i }, "");
   rendre();
+  // Compte connecté : les biens du compte (autre appareil, « Mes biens ») sont proposés eux aussi.
+  const avant = logements().length;
+  session().then(s => s ? synchroniserBiens() : null).then(l => { if (l && l.length !== avant && racine === conteneur && b && !sim) rendre(); }).catch(() => null);
 }
 
 /** Nouvelle étape vers l'avant : une entrée d'historique de plus. */
@@ -286,6 +297,9 @@ function questionnaire(enTete = true) {
   const r = rubrique(b.rubriqueId);
   const formules = formulesPour(r);
   let h = enTete ? `<h2>${icone(r.icone)} ${r.nom}</h2><p class="muet">Décrivez le besoin</p>` : "";
+  // Logement déjà renseigné (réservation ou « Mes biens ») : choisi dès le début, sa description et son adresse sont reprises.
+  if (enTete && logements().length) h += titre("Votre logement") + logements().map(l => `<button type="button" class="option ${b.logementId === l.id ? "choisi" : ""}" data-logement="${esc(l.id)}">${esc(nomLogement(l))}<span class="detail">${esc(l.rue)}, ${esc(l.codePostal)} ${esc(l.ville)}</span></button>`).join("")
+    + `<button type="button" class="option ${b.logementId ? "" : "choisi"}" data-logement="">+ Nouveau logement</button>`;
   if (b.rubriqueId === "special") {
     h += `<div class="note" style="margin-top:14px">Prix fixé à l'avance selon le type d'intervention et la surface : forfait, puis prix au m² au-delà.</div>`
       + (TARIFS_SPECIAUX[b.typeLieuId]?.certibiocide ? `<div class="note" style="margin-top:8px">Intervention réalisée par un Cleaneur titulaire du Certibiocide « nuisibles », vérifié avant activation.</div>` : "");

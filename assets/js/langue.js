@@ -894,6 +894,14 @@ const T = [
   ["chaque vendredi, pour les missions validées jusqu'au mercredi minuit.", "every Friday, for jobs approved by Wednesday midnight.", "ogni venerdì, per le missioni convalidate entro mercoledì a mezzanotte.", "cada viernes, por las misiones validadas hasta el miércoles a medianoche."],
   // Notes des clients par les Cleaneurs (11 novembre 2026)
   ["‹ Retour au site", "‹ Back to the site", "‹ Torna al sito", "‹ Volver al sitio"],
+  // Étapes à valider en photo par bien, logement choisi dès l'étape 2 (13 novembre 2026)
+  ["Étapes de ménage à valider en photo", "Cleaning steps to confirm with a photo", "Fasi di pulizia da convalidare con foto", "Pasos de limpieza a validar con foto"],
+  ["Choisissez ce que le Cleaneur doit prouver par une photo dans ce logement. Ces étapes sont reprises à chaque ménage de location de ce bien ; les étapes payantes s'ajoutent au prix affiché à la réservation.", "Choose what the Cleaneur must prove with a photo in this property. These steps are used for every rental cleaning of this property; paid steps are added to the price shown when booking.", "Scegli cosa il Cleaneur deve provare con una foto in questo alloggio. Queste fasi vengono riprese a ogni pulizia di affitto di questo immobile; le fasi a pagamento si aggiungono al prezzo mostrato alla prenotazione.", "Elige lo que el Cleaneur debe demostrar con una foto en este alojamiento. Estos pasos se aplican en cada limpieza de alquiler de este inmueble; los pasos de pago se suman al precio mostrado al reservar."],
+  ["Pièce", "Room", "Stanza", "Estancia"],
+  ["Enregistrer les étapes", "Save the steps", "Salva le fasi", "Guardar los pasos"],
+  ["Écrivez l'étape à ajouter.", "Write the step to add.", "Scrivi la fase da aggiungere.", "Escribe el paso que quieres añadir."],
+  ["Votre logement", "Your property", "Il tuo alloggio", "Tu alojamiento"],
+  ["+ Nouveau logement", "+ New property", "+ Nuovo alloggio", "+ Nuevo alojamiento"],
   // Crédit d'impôt « selon éligibilité » : plus de « −50 % » affiché comme une remise (13 novembre 2026)
   ["Crédit d'impôt selon éligibilité", "Tax credit subject to eligibility", "Credito d'imposta secondo idoneità", "Crédito fiscal según elegibilidad"],
   ["selon éligibilité", "subject to eligibility", "secondo idoneità", "según elegibilidad"],

@@ -1847,3 +1847,11 @@ body.avec-decor main, body.avec-decor #vue, body.avec-decor footer { position: r
 .appel-2026 .carte .erreur { color: var(--erreur); }
 .appel-2026 .carte label, .appel-2026 .carte button:not(.bouton):not(.choisi), .appel-2026 .carte .case { color: var(--texte); }
 .appel-2026 .carte a:not(.bouton) { color: var(--primaire); }
+/* Étapes à valider en photo, par bien (13 novembre 2026) */
+.etapes-photo { margin-top: 10px; }
+.etapes-photo summary { cursor: pointer; font-weight: 700; }
+.etapes-photo .etape-perso { display: flex; align-items: center; gap: 8px; padding: 6px 0; }
+.etapes-photo .etape-perso span { flex: 1; }
+.etapes-photo .ajout-etape-perso { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 8px; }
+.etapes-photo .ajout-etape-perso select { flex: 0 1 190px; margin: 0; }
+.etapes-photo .ajout-etape-perso input { flex: 1 1 180px; margin: 0; }

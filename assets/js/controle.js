@@ -64,7 +64,7 @@ export function piecesDe(rubriqueId, details = {}) {
   // Location saisonnière : étapes choisies, faites dans chaque chambre / salle de bain concernée
   if (rubriqueId === "rental") ETAPES_LOCATION.filter(e => (details.etapesChoisies || []).includes(e.id))
     .forEach(e => ajouter(e.piece === "entree" ? "entree" : e.piece, { id: `e_${e.id}`, nom: e.nom }, true));
-  (details.etapesPerso || []).forEach((t, i) => ajouter("entree", { id: `ep${i}`, nom: String(t).slice(0, 160) }));
+  (details.etapesPerso || []).forEach((t, i) => ajouter("entree", { id: `ep${i}`, nom: String(typeof t === "string" ? t : t?.texte || "").slice(0, 160) }));
   perso.forEach(t => ajouter("sejour", t));
   return pieces.map(({ type, ...p }) => p);
 }
