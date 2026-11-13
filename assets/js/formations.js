@@ -155,6 +155,7 @@ function attestation(zone, m, t, statut, apres) {
     REFUSEE: `<p class="erreur">${tr("Attestation refusée : document illisible ou non conforme. Envoyez une nouvelle version.")}</p>` }[statut] || "";
   zone.innerHTML = `<h3>📄 ${tr("Justificatifs officiels à fournir")}</h3>
     <p class="petit">${tr("Cette qualification ne s'obtient pas par un quiz : la réglementation exige une formation reconnue.")}</p>
+    <p class="petit"><b>${tr("Document exigé : l'attestation ou le certificat délivré par l'organisme de formation officiel (nom de l'organisme, date, intitulé de la formation, votre nom). Cleaneroo le vérifie avant d'activer la prestation.")}</b></p>
     <ul>${t.documents.map(d => `<li>${esc(d)}</li>`).join("")}</ul>
     ${etat}
     ${statut === "VALIDEE" || statut === "A_VERIFIER" ? "" : `<label class="bouton">${tr("Ajouter mon attestation (PDF ou photo)")}

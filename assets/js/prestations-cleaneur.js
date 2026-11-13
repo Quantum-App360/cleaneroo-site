@@ -58,7 +58,7 @@ export async function verrouillerPrestations(form, profil) {
     let texte = "";
     if (e.bloquee === "rc") texte = `🔒 ${tr("Non couverte par votre RC Pro")} (${tr(ACTIVITES_RC_PRO.find(a => a[0] === e.activite)?.[1] || e.activite)}). ${tr("Envoyez une attestation d'assurance qui couvre cette activité.")}`;
     else if (e.bloquee === "formation") texte = `🔒 ${tr("Après le Socle Cleaneroo")}`;
-    else if (e.bloquee === "attestation") texte = `🔒 ${tr("Attestation de formation obligatoire :")}`;
+    else if (e.bloquee === "attestation") texte = `🔒 ${tr("Prestation réglementée : attestation de l'organisme de formation officiel obligatoire :")}`;
     else if (e.modules.length && !c.checked) texte = `🎓 ${tr("Petit quiz de compétence à réussir en cochant :")}`;
     if (e.bloquee) { c.disabled = true; label.classList.add("prestation-bloquee"); }
     if (texte) label.insertAdjacentHTML("afterend", `<div class="etat-prestation ${e.bloquee ? "bloquee" : ""}">${texte} ${e.bloquee === "formation" ? "" : boutons}</div>`);

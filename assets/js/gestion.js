@@ -5,6 +5,7 @@ import "./oeil.js";   // œil pour afficher le mot de passe
 import { nomsAttestations } from "./formations.js";
 import { blocDossierAdmin } from "./dossier.js";
 import { blocSelfiesAdmin, blocAvertissementsAdmin } from "./controle-cleaneurs.js";
+import { verifierSiret, MESSAGES_SIRET } from "./siret-officiel.js";
 import { supabase, deconnecter, secteursARecruter, dossiersCleaneurs, documentsDe, deciderDossier, deciderDocument, lienDocument, DOCUMENTS_CLEANEUR } from "./donnees.js";
 import { rubrique } from "./catalogue.js";
 import { icone } from "./icones.js";
@@ -208,6 +209,7 @@ async function detailDossier(d) {
       <dt>Contact</dt><dd><a href="mailto:${esc(d.email)}">${esc(d.email)}</a>${d.telephone ? ` · <a href="tel:${esc(d.telephone)}">${esc(d.telephone)}</a>` : ""}</dd>
       <dt>Secteur</dt><dd>${esc(d.code_postal)} ${esc(d.ville)} · ${d.zone_km} km</dd>
       <dt>SIRET</dt><dd>${d.siret ? `${esc(d.siret)} · <a href="https://annuaire-entreprises.data.gouv.fr/etablissement/${esc(d.siret)}" target="_blank" rel="noopener">vérifier dans l'annuaire des entreprises</a>` : "—"}</dd>
+      <dt>Contrôle officiel du SIRET</dt><dd id="controle-siret">${d.siret ? "Vérification sur le registre officiel…" : "Aucun SIRET renseigné."}</dd>
       <dt>Prestations</dt><dd>${(d.prestations || []).map(id => esc(rubrique(id)?.nom || id)).join(", ") || "—"}</dd>
       ${d.dossier_motif ? `<dt>Motif envoyé</dt><dd>${esc(d.dossier_motif)}</dd>` : ""}
     </dl></div>
@@ -223,6 +225,11 @@ async function detailDossier(d) {
       ${d.dossier !== "VALIDE" ? `<button class="bouton" id="valider">Valider le dossier (offre de lancement)</button>` : `<button class="bouton secondaire" id="invalider">Annuler la validation</button>`}
       ${d.dossier !== "REFUSE" ? `<button class="bouton danger" id="refuser">Demander une correction</button>` : ""}
     </div>`;
+  if (d.siret) verifierSiret(d.siret, d.prenom, d.nom).then(v => {
+    const c = vue.querySelector("#controle-siret"); if (!c) return;
+    const icones = { verifie: "✅", non_diffusible: "🟠", indisponible: "⏳" };
+    c.innerHTML = `${icones[v.etat] || "❌"} ${esc(MESSAGES_SIRET[v.etat] || v.etat)}${v.nomOfficiel ? ` · <b>${esc(v.nomOfficiel)}</b>` : ""}`;
+  });
   const recharger = async () => { const liste = await dossiersCleaneurs().catch(() => []); const n = liste.find(x => x.id === d.id); n ? detailDossier(n) : listeDossiers(); };
   document.getElementById("retour").onclick = listeDossiers;
   blocDossierAdmin(document.getElementById("dossier-admin"), d.id, recharger);

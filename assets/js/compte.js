@@ -11,6 +11,7 @@ import { blocAbonnementPro, brancherAbonnementPro } from "./abonnement-pro.js";
 import { blocEquipe } from "./equipe.js";
 import { installerSousOnglets } from "./sous-onglets.js";
 import { verrouillerPrestations } from "./prestations-cleaneur.js";
+import { verifierSiret, MESSAGES_SIRET, SIRET_REFUSE } from "./siret-officiel.js";
 import { blocInvitationsPro, brancherInvitationsPro, blocCodeInvitation, brancherCodeInvitation } from "./invitations.js";
 import { RUBRIQUES, rubrique, TYPES_LOGEMENT } from "./catalogue.js";
 import { euros, dateLongue, heure, REGLES, sirenSiretValide } from "./regles.js";
@@ -374,6 +375,13 @@ function brancherProfil(vue, p, cleaneur) {
     if (cleaneur) {
       const siret = f.siret.value.replace(/\D/g, "");
       if (siret && siret.length !== 14) { err.textContent = tr("Le numéro SIRET compte 14 chiffres."); return; }
+      // SIRET contrôlé sur le registre officiel : existant, actif et au nom du Cleaneur (contre les faux comptes).
+      if (siret) {
+        err.textContent = tr("Vérification du SIRET sur le registre officiel…");
+        const v = await verifierSiret(siret, champs.prenom, champs.nom);
+        if (SIRET_REFUSE.includes(v.etat)) { err.textContent = `${tr(MESSAGES_SIRET[v.etat])}${v.nomOfficiel ? ` (${v.nomOfficiel})` : ""}`; return; }
+        err.textContent = v.etat === "verifie" ? "" : tr(MESSAGES_SIRET[v.etat]);
+      }
       Object.assign(champs, { siret, zone_km: Number(f.zone_km.value) || REGLES.ZONE_KM_DEFAUT,
         prestations: [...f.querySelectorAll("[name=prestation]:checked")].map(c => c.value) });
       // Centre de la zone d'intervention : sert à savoir quels secteurs sont couverts (« Être prévenu »).
