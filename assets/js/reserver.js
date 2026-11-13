@@ -133,6 +133,19 @@ let adresseCherchee = ""; // dernière adresse saisie placée sur la carte
 let racine = null;
 let envoi = false;
 
+/** Logement choisi à l'étape 1 : identifiant, "" pour un nouveau logement. Par défaut : celui du brouillon, sinon le premier enregistré. */
+function logementDepart() {
+  if (b && b.logementDepart !== undefined) return b.logementDepart;
+  if (b?.logementId) return b.logementId;
+  return logements()[0]?.id ?? "";
+}
+/** Applique le logement de l'étape 1 au brouillon (ou vide l'adresse pour un nouveau logement). */
+function avecLogementDepart(br, id) {
+  const l = id ? logements().find(x => x.id === id) : null;
+  if (l) return { ...avecLogement(br, l), logementDepart: id };
+  return { ...br, logementDepart: "", logementId: "", rue: "", codePostal: "", ville: "", accueil: "", tiersNom: "", tiersTel: "", boiteEmplacement: "", code: "", lat: null, lon: null };
+}
+
 function sauver() { try { localStorage.setItem(sim ? CLE_SIMULATION : CLE_BROUILLON, JSON.stringify(b)); } catch { /* rien */ } }
 /* Simulateur « Estimer mon prix » (12 novembre 2026) : toutes les prestations dans un menu, les questions qui font le prix,
    le prix détaillé mis à jour à chaque choix. Sans compte ni connexion : tout est calculé dans le navigateur.
@@ -262,7 +275,12 @@ const champTexte = (lib, champ, val, type = "text", extra = "") => `<label class
 
 /* ------------------------------------------------------------------ Étapes */
 function etape1() {
+  // Logement choisi en premier (13 novembre 2026) : adresse, description et étapes photo sont reprises dans toute la réservation.
+  const depart = logementDepart();
+  const choixLogement = logements().length ? titre("Pour quel logement ?") + logements().map(l => `<button type="button" class="option ${depart === l.id ? "choisi" : ""}" data-logement-depart="${esc(l.id)}">${esc(nomLogement(l))}<span class="detail">${esc(l.rue)}, ${esc(l.codePostal)} ${esc(l.ville)}</span></button>`).join("")
+    + `<button type="button" class="option ${depart === "" ? "choisi" : ""}" data-logement-depart="">+ Nouveau logement</button>` : "";
   return `<h1>Que souhaitez-vous nettoyer ?</h1><p class="muet">Choisissez votre prestation : le prix s'affiche dès que vous décrivez votre besoin.</p>
+    ${choixLogement}
     ${titre("Pour qui ?")}
     <div class="segments trois">${PARTIES.map(p => `<button type="button" data-espace="${p.id}" class="${partie(b?.espace).id === p.id ? "choisi" : ""}">${p.nom}</button>`).join("")}</div>
     <p class="petit" style="margin:6px 0 0">${partie(b?.espace).detail}</p>
@@ -298,8 +316,9 @@ function questionnaire(enTete = true) {
   const formules = formulesPour(r);
   let h = enTete ? `<h2>${icone(r.icone)} ${r.nom}</h2><p class="muet">Décrivez le besoin</p>` : "";
   // Logement déjà renseigné (réservation ou « Mes biens ») : choisi dès le début, sa description et son adresse sont reprises.
-  if (enTete && logements().length) h += titre("Votre logement") + logements().map(l => `<button type="button" class="option ${b.logementId === l.id ? "choisi" : ""}" data-logement="${esc(l.id)}">${esc(nomLogement(l))}<span class="detail">${esc(l.rue)}, ${esc(l.codePostal)} ${esc(l.ville)}</span></button>`).join("")
-    + `<button type="button" class="option ${b.logementId ? "" : "choisi"}" data-logement="">+ Nouveau logement</button>`;
+  // Logement choisi à l'étape 1 : rappelé ici (on peut en changer en revenant à l'étape 1).
+  const logChoisi = enTete && b.logementId && logements().find(l => l.id === b.logementId);
+  if (logChoisi) h += `<p class="logement-choisi">${icone("logement")} <b>${esc(nomLogement(logChoisi))}</b> <span class="petit">${esc(logChoisi.rue)}, ${esc(logChoisi.codePostal)} ${esc(logChoisi.ville)}</span></p>`;
   if (b.rubriqueId === "special") {
     h += `<div class="note" style="margin-top:14px">Prix fixé à l'avance selon le type d'intervention et la surface : forfait, puis prix au m² au-delà.</div>`
       + (TARIFS_SPECIAUX[b.typeLieuId]?.certibiocide ? `<div class="note" style="margin-top:8px">Intervention réalisée par un Cleaneur titulaire du Certibiocide « nuisibles », vérifié avant activation.</div>` : "");
@@ -794,7 +813,13 @@ document.addEventListener("click", async e => {
     sim = false; location.hash = `#/reserver/${b.rubriqueId}`; return;
   }
   if (ds.espace) { b = b ? { ...b, espace: ds.espace } : { espace: ds.espace, etape: 1 }; sauver(); return rendre(); }
-  if (ds.rubrique) { b = b?.rubriqueId === ds.rubrique ? { ...b, etape: 2 } : nouveauBrouillon(ds.rubrique, b?.espace || "personnel"); sauver(); noterEtape(); rendre(); return window.scrollTo(0, 0); }
+  if (ds.logementDepart !== undefined) { b = { ...(b || { etape: 1, espace: "personnel" }), logementDepart: ds.logementDepart }; sauver(); return rendre(); }
+  if (ds.rubrique) {
+    const dep = logementDepart();
+    const nb = b?.rubriqueId === ds.rubrique ? { ...b, etape: 2 } : nouveauBrouillon(ds.rubrique, b?.espace || "personnel");
+    b = logements().length ? avecLogementDepart(nb, dep) : nb;
+    sauver(); noterEtape(); rendre(); return window.scrollTo(0, 0);
+  }
   if (ds.retour !== undefined) return retour();
   if (ds.champ) {
     let v = ds.valeur;

@@ -894,6 +894,7 @@ const T = [
   ["chaque vendredi, pour les missions validées jusqu'au mercredi minuit.", "every Friday, for jobs approved by Wednesday midnight.", "ogni venerdì, per le missioni convalidate entro mercoledì a mezzanotte.", "cada viernes, por las misiones validadas hasta el miércoles a medianoche."],
   // Notes des clients par les Cleaneurs (11 novembre 2026)
   ["‹ Retour au site", "‹ Back to the site", "‹ Torna al sito", "‹ Volver al sitio"],
+  ["Pour quel logement ?", "Which property?", "Per quale alloggio?", "¿Para qué alojamiento?"],
   // Quatre espaces : Particulier, Entreprise, Conciergerie, Cleaneur ; planning de la conciergerie (13 novembre 2026)
   ["Entreprise ou professionnel", "Business or professional", "Azienda o professionista", "Empresa o profesional"],
   ["Je réserve le ménage de mes bureaux, commerces ou locaux (SIRET ou SIREN demandé).", "I book cleaning for my offices, shops or premises (SIRET or SIREN required).", "Prenoto le pulizie dei miei uffici, negozi o locali (SIRET o SIREN richiesto).", "Reservo la limpieza de mis oficinas, comercios o locales (SIRET o SIREN obligatorio)."],
