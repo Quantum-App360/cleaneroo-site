@@ -204,16 +204,16 @@ function blocRecommander() {
 const ESPACES_ACCUEIL = [
   ["logement", "Particuliers", "Ménage régulier ou ponctuel, vitres, canapés et textiles, avec crédit d'impôt selon éligibilité.", "#/estimer", "Estimer mon prix"],
   ["bureaux", "Entreprises", "Bureaux, commerces, cabinets et parties communes : ménage réservé en deux minutes, facturé à votre société.", "#/compte/entreprise", "Créer mon espace Entreprise"],
-  ["location", "Conciergeries et multi-biens", "Planning de vos biens relié à Airbnb et Booking, ménages entre deux voyageurs, stock, incidents et rapports pour vos propriétaires.", "#/compte/pro", "Créer mon espace Conciergerie"],
+  ["location", "Conciergeries et SCI", "Planning de vos biens relié à Airbnb et Booking, ménages entre deux voyageurs, stock, incidents et rapports pour vos propriétaires.", "#/compte/pro", "Créer mon espace Conciergerie"],
   ["cleaneurs", "Cleaneurs", "Missions près de chez vous, itinéraire, déroulé guidé et paiement sécurisé. 3 mois de formule Pro offerts aux inscrits jusqu'au 31 janvier 2027.", "#/devenir-cleaneur", "Devenir Cleaneur"],
 ];
 /* Inscription inspirante (visiteur) : un espace par profil, chacun avec son avantage offert. Même bloc dans l'appli (Vitrine.kt). */
 const INSCRIPTION_ESPACES = () => [
-  ["logement", "Particulier", "Votre ménage, sans y penser.", ["Prix affiché tout de suite", "Suivi du Cleaneur en direct", "Crédit d'impôt selon éligibilité"],
+  ["logement", "Particulier", "Votre ménage, sans y penser.", ["Prix affiché tout de suite", "Un ou plusieurs logements, tous dans votre espace", "Suivi du Cleaneur en direct", "Crédit d'impôt selon éligibilité"],
     `${euros(REGLES.PARRAINAGE_FILLEUL_C)} ${tr("offerts avec un code de parrainage")}`, "#/compte/creer"],
   ["bureaux", "Entreprise", "Vos locaux, toujours impeccables.", ["Bureaux, commerces et cabinets", "Factures au nom de votre société", "Cleaneurs vérifiés et assurés"],
     `${euros(REGLES.PARRAINAGE_FILLEUL_C)} ${tr("offerts avec un code de parrainage")}`, "#/compte/entreprise"],
-  ["location", "Conciergerie ou plusieurs biens", "Vos locations, toujours prêtes.", ["Agenda relié à Airbnb et Booking", "Ménages entre deux voyageurs", "Compte rendu photo de chaque logement"],
+  ["location", "Conciergerie ou SCI", "Vos locations, toujours prêtes.", ["Agenda relié à Airbnb et Booking", "Ménages entre deux voyageurs", "Compte rendu photo de chaque logement"],
     `${REGLES.ABONNEMENT_PRO_MOIS_OFFERTS} ${tr("mois d'abonnement offert")}`, "#/compte/pro"],
   ["cleaneurs", "Cleaneur", "Vos missions, votre liberté.", ["Missions près de chez vous", "Paiement sécurisé après chaque mission", "Itinéraire et déroulé guidé"],
     `${REGLES.OFFRE_LANCEMENT_MOIS} ${tr("mois de formule Pro offerts")}`, "#/compte/cleaneur"],

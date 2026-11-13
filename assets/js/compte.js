@@ -38,9 +38,10 @@ const DOSSIER = {
 const ROLES = { client: "Client", cleaneur: "Cleaneur", admin: "Administrateur" };
 /** Statuts cochés à l'inscription : [étiquette, titre, icône, description]. */
 const NOMS_STATUTS = {
-  particulier: ["Particulier", "Particulier", "logement", "Je cherche un ménage pour chez moi."],
+  // Un particulier qui a plusieurs logements reste Particulier : il les enregistre tous dans « Mes biens » (13 novembre 2026).
+  particulier: ["Particulier", "Particulier", "logement", "Je cherche un ménage pour mon logement, ou pour plusieurs."],
   entreprise: ["Entreprise", "Entreprise ou professionnel", "bureaux", "Je réserve le ménage de mes bureaux, commerces ou locaux (SIRET ou SIREN demandé)."],
-  pro: ["Conciergerie", "Conciergerie, SCI ou plusieurs biens", "location", "Je gère des locations saisonnières ou plusieurs logements (SIRET ou SIREN demandé)."],
+  pro: ["Conciergerie", "Conciergerie ou SCI", "location", "Je gère des locations saisonnières pour des propriétaires ou au nom d'une société (SIRET ou SIREN demandé)."],
   cleaneur: ["Cleaneur", "Cleaneur", "cleaneurs", "Je propose mes services en auto-entrepreneur."],
 };
 const titre = (t, sous = "") => `<h1>${t}</h1><div class="trait-corail"></div>${sous ? `<p class="muet">${sous}</p>` : ""}`;
@@ -152,7 +153,9 @@ export async function pageCompte(vue, param) {
     const x = b.dataset.ajouterStatut;
     // Entreprise ou Conciergerie : la société est demandée, sauf si elle est déjà renseignée.
     if ((x === "pro" || x === "entreprise") && !(p.societe && sirenSiretValide(p.siret_societe || ""))) {
-      const fa = vue.querySelector("#form-ajout-pro"); fa.dataset.statut = x; fa.classList.remove("masque"); fa.querySelector("[name=societe]").focus(); return; }
+      const fa = vue.querySelector("#form-ajout-pro"); fa.dataset.statut = x; fa.classList.remove("masque");
+      fa.querySelector("[type=submit]").textContent = tr(x === "entreprise" ? "Ajouter l'espace Entreprise" : "Ajouter l'espace Conciergerie");
+      fa.querySelector("[name=societe]").focus(); return; }
     const noms = { cleaneur: "Cleaneur", particulier: "Particulier", entreprise: "Entreprise", pro: "Conciergerie" };
     if (!confirm(`${tr("Ajouter l'espace")} ${tr(noms[x])} ${tr("à votre compte ? Vos autres espaces sont conservés.")}`)) return;
     ajouter(x, b);

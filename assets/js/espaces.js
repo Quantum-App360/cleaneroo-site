@@ -1,4 +1,4 @@
-// Espaces du compte : « Particulier », « Entreprise » (bureaux, commerces), « Conciergerie » (statut pro : multi-biens, agenda iCal, planning) et « Cleaneur ».
+// Espaces du compte : « Particulier », « Entreprise » (bureaux, commerces), « Conciergerie » (statut pro : conciergeries et SCI, agenda iCal, planning) et « Cleaneur ».
 // Mêmes écrans que l'application (EspacesCompte.kt). Les valeurs métier sont dans regles.js.
 import { TYPES_LOGEMENT, rubrique } from "./catalogue.js";
 import { REGLES, euros, dateLongue, dateCourte, sirenSiretValide } from "./regles.js";
@@ -16,7 +16,7 @@ import { editeurStock, editeurIncidents, brancherOutilsBiens, blocAujourdhui, bl
 export { brancherMissions, demanderGeoloc } from "./missions.js";
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-// Quatre espaces (13 novembre 2026) : Particulier, Entreprise (bureaux, commerces), Conciergerie (statut « pro » : locations, plusieurs biens), Cleaneur.
+// Quatre espaces (13 novembre 2026) : Particulier, Entreprise (bureaux, commerces), Conciergerie (statut « pro » : conciergeries et SCI), Cleaneur.
 export const ONGLETS = [["particulier", "Particulier", "logement"], ["entreprise", "Entreprise", "bureaux"], ["pro", "Conciergerie", "location"], ["cleaneur", "Cleaneur", "cleaneurs"]];
 
 /**
@@ -146,7 +146,7 @@ async function sejoursDes(biens) {
 export function ongletPro(p, biens) {
   const relies = biens.filter(l => (l.calendriers || []).some(c => c.url)).length;
   return `<div class="entete-pro carte">
-      <div><span class="surtitre">Espace Conciergerie · Locations saisonnières et multi-biens</span>
+      <div><span class="surtitre">Espace Conciergerie · Locations saisonnières et SCI</span>
         <h2 style="margin:6px 0 2px">${p.societe ? esc(p.societe) : tr("Votre conciergerie")}</h2>
         <p class="petit" style="margin:0">Vos biens, les séjours de vos voyageurs et chaque ménage entre deux départs, pilotés d'un seul écran.</p></div>
       ${formulaireSociete(p)}
