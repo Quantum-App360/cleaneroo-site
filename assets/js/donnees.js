@@ -254,7 +254,13 @@ export async function connecter(email, mdp) {
   if (!error) return "ok";
   return /not confirmed/i.test(error.message) ? "confirmer" : "incorrect";
 }
-export async function deconnecter() { await supabase.auth.signOut(); oublierDonneesLocales(); }
+/** Déconnexion : si le serveur refuse (session déjà expirée…), la session est quand même effacée de cet appareil. */
+export async function deconnecter() {
+  const { error } = await supabase.auth.signOut().catch(e => ({ error: e }));
+  if (error) await supabase.auth.signOut({ scope: "local" }).catch(() => null);
+  try { Object.keys(localStorage).filter(k => /^sb-.*-auth-token$/.test(k)).forEach(k => localStorage.removeItem(k)); } catch { /* navigation privée */ }
+  oublierDonneesLocales();
+}
 export async function mdpOublie(email) {
   const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: retour("mdp") });
   if (error) throw new Error(error.message);

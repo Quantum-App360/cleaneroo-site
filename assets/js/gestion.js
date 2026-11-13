@@ -27,6 +27,7 @@ async function demarrer() {
   document.getElementById("deconnexion").classList.remove("masque");
   const { data: estAdmin } = await supabase.rpc("est_admin");
   if (!estAdmin) {
+    document.querySelector(".bo")?.classList.add("sans-menu");
     vue.innerHTML = `<h1>Accès réservé</h1><div class="trait-corail"></div>
       <p class="muet">Votre compte (${esc(data.session.user.email)}) est bien créé, mais il n'a pas encore les droits d'administration Cleaneroo.</p>`;
     return;
