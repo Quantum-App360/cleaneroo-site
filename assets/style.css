@@ -1962,3 +1962,8 @@ body.avec-decor main, body.avec-decor #vue, body.avec-decor footer { position: r
 .ligne-incident { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px; padding: 8px 0; border-bottom: 1px solid var(--separateur); }
 .ligne-incident.resolu { opacity: .6; }
 .ligne-incident .actions { display: flex; gap: 12px; }
+
+/* Quatre espaces sur l'accueil (13 novembre 2026) */
+.cartes-inspirantes { grid-template-columns: repeat(4, 1fr); gap: 16px; }
+@media (max-width: 1100px) { .cartes-inspirantes { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 600px) { .cartes-inspirantes { grid-template-columns: 1fr; } }

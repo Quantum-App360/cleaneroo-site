@@ -203,13 +203,16 @@ function blocRecommander() {
 /* ------------------------------------------------------------------ Accueil 2026 : clair, structuré, un espace pour chacun */
 const ESPACES_ACCUEIL = [
   ["logement", "Particuliers", "Ménage régulier ou ponctuel, vitres, canapés et textiles, avec crédit d'impôt selon éligibilité.", "#/estimer", "Estimer mon prix"],
-  ["location", "Conciergeries et multi-biens", "Agenda relié à Airbnb et Booking, ménages entre deux voyageurs, photo de la boîte à clés et carte de tous vos biens.", "#/compte/pro", "Créer mon espace Pro"],
+  ["bureaux", "Entreprises", "Bureaux, commerces, cabinets et parties communes : ménage réservé en deux minutes, facturé à votre société.", "#/compte/entreprise", "Créer mon espace Entreprise"],
+  ["location", "Conciergeries et multi-biens", "Planning de vos biens relié à Airbnb et Booking, ménages entre deux voyageurs, stock, incidents et rapports pour vos propriétaires.", "#/compte/pro", "Créer mon espace Conciergerie"],
   ["cleaneurs", "Cleaneurs", "Missions près de chez vous, itinéraire, déroulé guidé et paiement sécurisé. 3 mois de formule Pro offerts aux inscrits jusqu'au 31 janvier 2027.", "#/devenir-cleaneur", "Devenir Cleaneur"],
 ];
 /* Inscription inspirante (visiteur) : un espace par profil, chacun avec son avantage offert. Même bloc dans l'appli (Vitrine.kt). */
 const INSCRIPTION_ESPACES = () => [
   ["logement", "Particulier", "Votre ménage, sans y penser.", ["Prix affiché tout de suite", "Suivi du Cleaneur en direct", "Crédit d'impôt selon éligibilité"],
     `${euros(REGLES.PARRAINAGE_FILLEUL_C)} ${tr("offerts avec un code de parrainage")}`, "#/compte/creer"],
+  ["bureaux", "Entreprise", "Vos locaux, toujours impeccables.", ["Bureaux, commerces et cabinets", "Factures au nom de votre société", "Cleaneurs vérifiés et assurés"],
+    `${euros(REGLES.PARRAINAGE_FILLEUL_C)} ${tr("offerts avec un code de parrainage")}`, "#/compte/entreprise"],
   ["location", "Conciergerie ou plusieurs biens", "Vos locations, toujours prêtes.", ["Agenda relié à Airbnb et Booking", "Ménages entre deux voyageurs", "Compte rendu photo de chaque logement"],
     `${REGLES.ABONNEMENT_PRO_MOIS_OFFERTS} ${tr("mois d'abonnement offert")}`, "#/compte/pro"],
   ["cleaneurs", "Cleaneur", "Vos missions, votre liberté.", ["Missions près de chez vous", "Paiement sécurisé après chaque mission", "Itinéraire et déroulé guidé"],
@@ -294,8 +297,8 @@ function pageAccueil() {
   </section>
   <section class="bandeau-chiffres"><div class="conteneur">${CHIFFRES.map(([n, l], i) => `<div data-teinte="${["turquoise", "corail", "soleil", "lilas"][i]}"><b>${n}</b><span>${l}</span></div>`).join("")}</div></section>
   ${connecte() ? `<section class="bloc"><div class="conteneur">
-    ${titreSection("Un espace pour chacun", "Particuliers, conciergeries et Cleaneurs : chacun a son espace, pensé pour son usage.", "Pour qui ?")}
-    <div class="grille-3 espaces-accueil">${ESPACES_ACCUEIL.map(([ico, titre, texte, lien, action]) => `
+    ${titreSection("Un espace pour chacun", "Particuliers, entreprises, conciergeries et Cleaneurs : chacun a son espace, pensé pour son usage.", "Pour qui ?")}
+    <div class="grille-4 espaces-accueil">${ESPACES_ACCUEIL.map(([ico, titre, texte, lien, action]) => `
       <a class="carte espace-carte revele" data-teinte="${teinte(ico)}" href="${lien}">${icone(ico, { tuile: true })}<h3>${titre}</h3><p class="muet">${texte}</p><span class="aller">${action} ›</span></a>`).join("")}</div>
   </div></section>` : blocInscriptionInspirante()}
   <section class="bloc bloc-doux"><div class="conteneur">
