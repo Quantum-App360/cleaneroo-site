@@ -74,7 +74,7 @@ export async function pageCompte(vue, param) {
   const s = await session();
   if (location.hash !== ici) return;
   if (param === "mdp" && s) return ecranNouveauMdp(vue);
-  if (!s) return ecranConnexion(vue, ["creer", "cleaneur", "pro"].includes(param) ? "creer" : "connexion", "", false, param === "cleaneur" || param === "pro" ? param : "client");
+  if (!s) return ecranConnexion(vue, ["creer", "particulier", "cleaneur", "pro"].includes(param) ? "creer" : "connexion", "", false, param === "cleaneur" || param === "pro" ? param : "client");
   const [p, biens, demandes, parrain] = await Promise.all([monProfil().catch(() => null), synchroniserBiens().catch(() => []), demandesDuCompte().catch(() => []), monParrainage().catch(() => null)]);
   if (location.hash !== ici) return;
   if (!p) { vue.innerHTML = `<section class="bloc"><div class="etroit">${titre("Mon espace")}<p class="erreur">${tr("Le service est momentanément indisponible. Réessayez dans quelques minutes.")}</p></div></section>`; traduire(vue); return; }
@@ -123,6 +123,7 @@ export async function pageCompte(vue, param) {
       <button type="button" class="bouton danger" id="supprimer-compte" disabled>Supprimer définitivement mon compte</button></details>
   </div></section>`;
   traduire(vue);
+  if (voulu && !statuts.includes(voulu)) { const aj = vue.querySelector("#ajout-espace"); if (aj) { aj.open = true; aj.scrollIntoView({ block: "center" }); } }
   if (vue.querySelector("#form-profil")) brancherProfil(vue, p, onglet === "cleaneur" && cleaneur);
   brancherParrainage(vue, parrain, () => pageCompte(vue, onglet));
   afficherFactures(vue.querySelector("[data-factures]"));

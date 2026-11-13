@@ -2,6 +2,7 @@
 import { champCodeParrain, memoriserCodeParrain } from "./parrainage.js";
 import { RUBRIQUES, RACCOURCIS_VITRINE, rubrique, TYPES_LIEU, pastille } from "./catalogue.js";
 import { traduire, traduireCatalogue, selecteurLangue, tr, langue } from "./langue.js";
+import { barreOnglets } from "./espaces.js";
 import { euros, duree, dateLongue, dateHeure, heure, estPrelancement, joursAvantLancement, MESSAGE_LANCEMENT, REGLES } from "./regles.js";
 
 // Langue : catalogue traduit avant tout affichage.
@@ -568,6 +569,10 @@ async function afficherPage() {
   if (document.body.classList.contains("acces-cleaneur") && ["", "prestations", "reserver", "estimer", "mes-demandes", "mes-biens"].includes(route)) { location.replace("#/compte/cleaneur"); return; }
   compterPage(route, param);
   marquerActif();
+  // Barre des espaces sur l'accueil (entre le logo et le bandeau de lancement) : Particulier, Pro, Cleaneur.
+  // Connecté : ouvre son espace (ou propose de l'ajouter) ; sinon : création du compte adéquat. Même barre dans l'appli (Vitrine.kt).
+  const barre = document.getElementById("barre-espaces");
+  if (barre) { barre.innerHTML = route === "" ? `<div class="barre-espaces"><div class="conteneur">${barreOnglets(null)}</div></div>` : ""; traduire(barre); }
   document.body.classList.toggle("sans-rappel", route === "reserver" || route === "estimer");
   // Pages qui attendent le serveur : animation de chargement pendant l'attente.
   if (route === "messages") { window.scrollTo(0, 0); vue.innerHTML = pageChargement(); traduire(vue); await pageMessages(vue, chemin.split("/").slice(1).join("/")); return; }
