@@ -926,6 +926,16 @@ const T = [
   ["Ajouter l'espace Entreprise", "Add the Business space", "Aggiungi lo spazio Azienda", "Añadir el espacio Empresa"],
   ["Ajouter l'espace Conciergerie", "Add the Concierge space", "Aggiungi lo spazio Conciergeria", "Añadir el espacio Conserjería"],
   ["Espace Conciergerie · Locations saisonnières et SCI", "Concierge space · Holiday rentals and property companies", "Spazio Conciergeria · Affitti brevi e società immobiliari", "Espacio Conserjería · Alquileres vacacionales y sociedades inmobiliarias"],
+  // Guides vidéo des espaces (13 novembre 2026)
+  ["Guide vidéo", "Video guide", "Video guida", "Guía en vídeo"],
+  ["vidéo en français", "video in French", "video in francese", "vídeo en francés"],
+  ["Regarder la vidéo", "Watch the video", "Guarda il video", "Ver el vídeo"],
+  ["Regarder", "Watch", "Guarda", "Ver"],
+  ["Masquer", "Hide", "Nascondi", "Ocultar"],
+  ["Votre ménage en 2 minutes", "Your cleaning in 2 minutes", "La tua pulizia in 2 minuti", "Tu limpieza en 2 minutos"],
+  ["Choisir, décrire, réserver, suivre en direct puis valider : tout le parcours en 40 secondes.", "Choose, describe, book, follow live, then approve: the whole journey in 40 seconds.", "Scegli, descrivi, prenota, segui in diretta e poi convalida: tutto il percorso in 40 secondi.", "Elegir, describir, reservar, seguir en directo y validar: todo el recorrido en 40 segundos."],
+  ["Votre première mission, pas à pas", "Your first job, step by step", "La tua prima missione, passo dopo passo", "Tu primera misión, paso a paso"],
+  ["Trouver une mission, vous proposer, être guidé le jour J puis être payé : tout en 40 secondes.", "Find a job, apply, be guided on the day, then get paid: all in 40 seconds.", "Trova una missione, candidati, fatti guidare il giorno stesso e ricevi il pagamento: tutto in 40 secondi.", "Encontrar una misión, proponerte, ser guiado el día D y cobrar: todo en 40 segundos."],
   // Contrôle du SIRET sur le registre officiel, formations réglementées (13 novembre 2026)
   ["Vérification du SIRET sur le registre officiel…", "Checking the SIRET number in the official register…", "Verifica del SIRET nel registro ufficiale…", "Comprobando el SIRET en el registro oficial…"],
   ["SIRET vérifié sur le registre officiel : entreprise active, à votre nom.", "SIRET verified in the official register: active business, in your name.", "SIRET verificato nel registro ufficiale: impresa attiva, a tuo nome.", "SIRET verificado en el registro oficial: empresa activa, a tu nombre."],

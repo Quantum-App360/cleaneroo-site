@@ -7,6 +7,7 @@ import { traduire, tr, LOCALE } from "./langue.js";
 import { DOCUMENTS_CLEANEUR, enregistrerBien, lireCalendrier } from "./donnees.js";
 import { couleurBien, voies, morceau, erreurSejour, sejoursGardes, nuits, versIcs, sourceCalendrier } from "./agenda.js";
 import { afficherCarte, coordonnees } from "./cartes.js";
+import { guideVideo } from "./guide-video.js";
 import { chargeur } from "./commun.js";
 import { blocFormulesCleaneur } from "./formules-cleaneur.js";
 import { preremplir } from "./reserver.js";
@@ -74,7 +75,7 @@ export function ongletEntreprise(p, biens, demandes) {
     .sort((a, b) => new Date(a.creneau || a.cree_le) - new Date(b.creneau || b.cree_le));
   const prochaine = enCours[0], r = prochaine && rubrique(prochaine.rubrique_id);
   const faites = demandes.filter(d => d.statut === "TERMINEE" && estEntreprise(d)).length;
-  return `<div class="entete-pro entete-entreprise carte">
+  return `${guideVideo("client", "entreprise")}<div class="entete-pro entete-entreprise carte">
       <div><span class="surtitre">Espace Entreprise · Bureaux, commerces et locaux</span>
         <h2 style="margin:6px 0 2px">${p.societe ? esc(p.societe) : tr("Votre entreprise")}</h2>
         <p class="petit" style="margin:0">Le ménage de vos locaux, réservé en deux minutes, suivi en direct et facturé à votre société.</p></div>
@@ -136,7 +137,7 @@ async function sejoursDes(biens) {
 
 export function ongletPro(p, biens) {
   const relies = biens.filter(l => (l.calendriers || []).some(c => c.url)).length;
-  return `<div class="entete-pro carte">
+  return `${guideVideo("client", "conciergerie")}<div class="entete-pro carte">
       <div><span class="surtitre">Espace Conciergerie · Locations saisonnières et SCI</span>
         <h2 style="margin:6px 0 2px">${p.societe ? esc(p.societe) : tr("Votre conciergerie")}</h2>
         <p class="petit" style="margin:0">Vos biens, les séjours de vos voyageurs et chaque ménage entre deux départs, pilotés d'un seul écran.</p></div>
@@ -554,7 +555,7 @@ export function preparationCleaneur(p, docs) {
 }
 
 export function ongletCleaneur(p, docs, { dossier, profil }) {
-  if (p.role === "client") return `<div class="carte mise-en-avant"><span class="surtitre">Espace Cleaneur</span>
+  if (p.role === "client") return `${guideVideo("cleaneur", "devenir")}<div class="carte mise-en-avant"><span class="surtitre">Espace Cleaneur</span>
       <h2 style="margin:6px 0 4px">Devenez Cleaneur en auto-entrepreneur</h2>
       <p class="muet" style="margin:0 0 6px">Missions près de chez vous, à votre rythme, déroulé guidé et paiement sécurisé.</p>
       <ul class="petit" style="margin:0 0 10px;padding-left:18px"><li>Statut d'auto-entrepreneur (micro-entreprise) avec un numéro SIRET</li>
@@ -563,6 +564,7 @@ export function ongletCleaneur(p, docs, { dossier, profil }) {
       <button type="button" class="bouton" id="devenir-cleaneur">Ajouter l'espace Cleaneur</button></div>`;
   const admin = p.role === "admin";
   return `${admin ? `<p style="margin:0 0 10px"><span class="tampon">Accès administrateur</span></p>` : ""}
+    ${guideVideo("cleaneur", "cleaneur")}
     <div id="missions-cleaneur">${chargeur("Chargement de vos missions…")}</div>
     <h2 class="titre-section">${icone("paiement", { tuile: true })}Ma formule</h2>
     ${blocFormulesCleaneur(p)}

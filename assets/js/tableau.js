@@ -1,5 +1,6 @@
 // Accueil « vivant » du compte connecté (Particulier, Pro, administrateur) : la prochaine prestation en direct
 // et la boîte « À faire » (tout ce qui attend le client). Se met à jour en temps réel. Même écran dans l'appli (AccueilVivant.kt).
+import { guideVideo } from "./guide-video.js";
 import { badgeNiveau } from "./niveaux.js";
 import { reserverPourLogement } from "./reserver.js";
 import { decorTableau } from "./commun.js";
@@ -103,6 +104,7 @@ export async function pageTableau(vue) {
         <h1>${tr("Bonjour")} ${esc(profil?.prenom || "")}</h1></div>
       <a class="bouton" href="#/reserver" data-choisir-prestation>＋ ${tr("Réserver")}</a>
     </div>
+    ${guideVideo("client", "particulier")}
     <div class="tableau-grille">
       <article class="carte vivant${enDirect ? " en-direct" : ""}${d ? "" : " vide"}" data-teinte="${d ? (enDirect ? "corail" : "turquoise") : "lilas"}">
         ${d ? `<div class="vivant-haut"><span class="pastille-etat">${enDirect ? `<i></i>${tr("En direct")}` : esc(tr("Ma prochaine prestation"))}</span>

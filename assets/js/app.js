@@ -11,6 +11,7 @@ import { ouvrirReservation, ouvrirSimulateur, modeles, logements, nomLogement, b
 import { calculer, entreeEstimation } from "./estimation.js";
 import { supabase, suivre, annuler, memoriser, inscrire } from "./donnees.js";
 import { blocRetardClient, blocRemplacementClient } from "./retards.js";
+import { guideVideo } from "./guide-video.js";
 import { pageNotifications } from "./notifications.js";
 import { pageMessages } from "./messages.js";
 import { blocPropositionsClient } from "./propositions.js";
@@ -385,7 +386,7 @@ function pagePrestations() {
 function pageComment() {
   return `<section class="fond-cleaneroo" style="padding:40px 0 90px">${decor([[90, 20, 90], [4, 60, 60]], [])}
     <div class="conteneur"><h1>Comment ça marche ?</h1><div class="trait-corail"></div><p>Du clic à la validation, tout se passe en ligne.</p></div></section>
-  <section class="bloc"><div class="conteneur">${blocEtapes()}
+  <section class="bloc"><div class="conteneur"><div class="grille-2 etroit" style="margin-bottom:24px">${guideVideo("client", "page-comment-client")}${guideVideo("cleaneur", "page-comment-cleaneur")}</div>${blocEtapes()}
     <div class="grille-2 etroit" style="margin-top:28px">
       <div class="carte fond-cleaneroo" style="border:0"><h3>Côté Cleaneur</h3><div class="trait-corail"></div>
         <p style="margin:0">Je pars, puis j'arrive (géolocalisé) · Selfie du jour · Tâches et photos guidées · Signature et compte rendu · Paiement après validation.</p></div>
@@ -423,7 +424,7 @@ function pageDevenir() {
   return `<section class="fond-cleaneroo" style="padding:40px 0 90px">${decor([[90, 20, 90], [4, 60, 60]], [])}
     <div class="conteneur"><h1>Devenir Cleaneur</h1><div class="trait-corail"></div><p>Travaillez à votre rythme, près de chez vous.</p>
       <div class="etiquettes"><span class="etiquette">Missions proches</span><span class="etiquette">Compte rendu guidé</span><span class="etiquette">Paiement sécurisé</span></div></div></section>
-  <section class="bloc"><div class="etroit"><div data-acces-cleaneur></div>${exempleRevenu()}${blocOffreCleaneurs()}${etapes.map((t, i) => `<div class="carte" style="margin-bottom:10px"><b style="color:var(--corail-texte)">${i + 1}.</b> ${t}</div>`).join("")}
+  <section class="bloc"><div class="etroit"><div data-acces-cleaneur></div>${guideVideo("cleaneur", "page-devenir")}${exempleRevenu()}${blocOffreCleaneurs()}${etapes.map((t, i) => `<div class="carte" style="margin-bottom:10px"><b style="color:var(--corail-texte)">${i + 1}.</b> ${t}</div>`).join("")}
     <div style="margin-top:18px">${formulaireInscription("cleaneur", true)}</div>
   </div></section>`;
 }

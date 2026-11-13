@@ -1984,3 +1984,24 @@ body.avec-decor main, body.avec-decor #vue, body.avec-decor footer { position: r
 .logement-suivi { display: flex; align-items: center; gap: 12px; padding: 12px 14px; }
 .logement-suivi .corps { flex: 1; display: flex; flex-direction: column; min-width: 0; }
 .logement-choisi .lien-bouton { margin-left: auto; }
+
+/* Guides vidéo en tête des espaces (13 novembre 2026) */
+.guide-video { display: flex; gap: 14px; align-items: center; margin: 0 0 16px; padding: 12px; }
+.guide-video-vignette { position: relative; flex: none; width: 74px; height: 131px; padding: 0; border: 0; border-radius: 12px; overflow: hidden; cursor: pointer; background: var(--fond-doux, #eef6f5); box-shadow: 0 2px 10px rgba(16, 60, 56, .12); }
+.guide-video-vignette img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.guide-video-play { position: absolute; inset: 0; margin: auto; width: 34px; height: 34px; border-radius: 50%; background: rgba(255, 255, 255, .92); color: var(--primaire); display: grid; place-items: center; font-size: 14px; padding-left: 3px; box-shadow: 0 2px 8px rgba(0, 0, 0, .18); transition: transform .2s; }
+.guide-video-vignette:hover .guide-video-play { transform: scale(1.1); }
+.guide-video-corps { min-width: 0; }
+.guide-video-corps .surtitre { display: block; margin-bottom: 2px; }
+.guide-video-corps b { display: inline; font-size: 16px; }
+.guide-video-actions { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.guide-video-actions .bouton { min-height: 40px; padding: 0 16px; font-size: 14px; }
+.guide-video-actions .lien-bouton { min-height: 40px; color: var(--texte-doux, #5b6b68); font-weight: 500; }
+.guide-video-lien { margin: 0 0 8px; }
+.guide-video-lien .lien-bouton { min-height: 36px; padding: 0; }
+.guide-video-fenetre { position: fixed; inset: 0; z-index: 100000; background: rgba(8, 24, 22, .82); display: grid; place-items: center; padding: 16px; animation: guideApparait .2s ease; }
+.guide-video-cadre { position: relative; width: min(380px, 100%); }
+.guide-video-cadre video { display: block; width: 100%; max-height: calc(100vh - 90px); aspect-ratio: 480 / 848; object-fit: contain; border-radius: 18px; background: transparent; }
+.guide-video-fermer { position: absolute; top: -12px; right: -12px; z-index: 1; width: 40px; height: 40px; border-radius: 50%; border: 0; background: #fff; color: #14302b; font-size: 16px; cursor: pointer; box-shadow: 0 2px 10px rgba(0, 0, 0, .3); }
+@media (max-width: 480px) { .guide-video-fermer { top: 6px; right: 6px; } }
+@keyframes guideApparait { from { opacity: 0; } to { opacity: 1; } }
