@@ -10,6 +10,7 @@ import { blocContrat } from "./dossier.js";
 import { blocAbonnementPro, brancherAbonnementPro } from "./abonnement-pro.js";
 import { blocEquipe } from "./equipe.js";
 import { installerSousOnglets } from "./sous-onglets.js";
+import { verrouillerPrestations } from "./prestations-cleaneur.js";
 import { blocInvitationsPro, brancherInvitationsPro, blocCodeInvitation, brancherCodeInvitation } from "./invitations.js";
 import { RUBRIQUES, rubrique, TYPES_LOGEMENT } from "./catalogue.js";
 import { euros, dateLongue, heure, REGLES, sirenSiretValide } from "./regles.js";
@@ -127,6 +128,8 @@ export async function pageCompte(vue, param) {
   traduire(vue);
   if (voulu && !statuts.includes(voulu)) { const aj = vue.querySelector("#ajout-espace"); if (aj) { aj.open = true; aj.scrollIntoView({ block: "center" }); } }
   if (vue.querySelector("#form-profil")) brancherProfil(vue, p, onglet === "cleaneur" && cleaneur);
+  // Prestations du Cleaneur : bloquées sans formation obligatoire ou hors RC Pro, quiz de compétence en cochant.
+  if (onglet === "cleaneur" && cleaneur) verrouillerPrestations(vue.querySelector("#form-profil"), p);
   brancherParrainage(vue, parrain, () => pageCompte(vue, onglet));
   afficherFactures(vue.querySelector("[data-factures]"));
   blocEquipe(vue.querySelector("#equipe"), onglet === "pro", biens);   // Équipe et propriétaires   // onglet « Factures » de l'espace

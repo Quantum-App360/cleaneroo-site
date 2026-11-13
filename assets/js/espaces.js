@@ -298,7 +298,8 @@ async function remplirAgenda(vue, biens, demandes, recharger) {
   // Prochain départ affiché sur chaque fiche de bien.
   vue.querySelectorAll("[data-prochain]").forEach(e => { const j = prochains[e.dataset.prochain];
     e.textContent = `${tr("Prochain départ")} : ${j ? dateCourte(jourDe(j)) : tr("aucun")}`; });
-  planningSemaine(vue.querySelector("#semaine-pro"), biens, uniques, menagePrevu, auj, couleurBien);
+  const menageDe = (bienId, jour) => { const l = bienDe(bienId); return l && demandes.find(d => d.statut !== "ANNULEE" && memeAdresse(d, l) && d.creneau && iso(new Date(d.creneau)) === jour); };
+  planningSemaine(vue.querySelector("#semaine-pro"), biens, uniques, menageDe, auj, couleurBien);
   const programmer = b => b.onclick = () => { preremplir({ bienId: b.dataset.programmer, jour: b.dataset.jour }); location.hash = "#/reserver/rental"; };
 
   const liste = vue.querySelector("#a-programmer");
@@ -316,6 +317,19 @@ async function remplirAgenda(vue, biens, demandes, recharger) {
   // Couleur de chaque bien : rang dans l'ordre alphabétique (la même dans l'appli).
   const ordre = biens.slice().sort((a, b) => nomBien(a).localeCompare(nomBien(b), "fr", { sensitivity: "base", numeric: true }));
   const couleur = id => couleurBien(ordre.findIndex(l => l.id === id));
+  // Ménages prévus d'un jour (demandes), pour leurs icônes de prestation et leur état.
+  const demandesDuJour = j => demandes.filter(x => x.statut !== "ANNULEE" && x.creneau && iso(new Date(x.creneau)) === j
+    && biens.some(l => (!filtreBien || l.id === filtreBien) && memeAdresse(x, l)));
+  const ETATS = { VERIFICATION: "En vérification", PUBLIEE: "Recherche d'un Cleaneur", CONFIRMEE: "Cleaneur confirmé", EN_ROUTE: "Cleaneur en route",
+    SUR_PLACE: "Cleaneur sur place", EN_COURS: "Ménage en cours", A_VALIDER: "À valider", TERMINEE: "Terminé" };
+  const iconePresta = (x, classe = "") => `<i class="b-menage b-presta etat-${esc(x.statut)} ${classe}" title="${esc(`${rubrique(x.rubrique_id)?.nom || ""} · ${tr(ETATS[x.statut] || "")}`)}">${icone(rubrique(x.rubrique_id)?.icone || "termine")}</i>`;
+  const ligneMenage = x => {
+    const l = biens.find(b => memeAdresse(x, b));
+    return `<div class="evt evt-menage" style="--c:${couleur(l?.id)}">${iconePresta(x, "grand")}
+      <div class="evt-corps"><div class="evt-haut"><b>${esc(rubrique(x.rubrique_id)?.nom || tr("Ménage prévu"))}</b><span class="evt-bien">${l ? esc(nomBien(l)) : ""}</span></div>
+        <div class="petit muet"><span>${new Date(x.creneau).toLocaleTimeString(LOCALE, { hour: "2-digit", minute: "2-digit" })}</span> · <span class="etat-texte etat-${esc(x.statut)}">${tr(ETATS[x.statut] || "")}</span></div></div>
+      <div class="evt-actions">${x.reference && x.jeton ? `<a class="lien-bouton" href="#/demande/${esc(x.reference)}/${esc(x.jeton)}">${tr("Suivre")}</a>` : ""}</div></div>`;
+  };
   const menagesDu = j => biens.filter(l => (!filtreBien || l.id === filtreBien) && demandes.some(x => x.statut !== "ANNULEE" && memeAdresse(x, l) && x.creneau && iso(new Date(x.creneau)) === j));
   const nomSource = s => s.source === "manuel" ? tr("Saisi à la main") : (SOURCES.find(x => x[0] === s.source)?.[1] || tr("Calendrier"));
   const qui = s => [s.voyageur, s.personnes ? `${s.personnes} ${tr(s.personnes > 1 ? "personnes" : "personne")}` : ""].filter(Boolean).join(" · ");
@@ -341,7 +355,7 @@ async function remplirAgenda(vue, biens, demandes, recharger) {
     sel.filter(s => s.fin === j).forEach(s => r.push(ligne("depart", s, bienDe(s.bienId))));
     sel.filter(s => s.debut === j).forEach(s => r.push(ligne("arrivee", s, bienDe(s.bienId))));
     if (avecEnCours) sel.filter(s => s.debut < j && j < s.fin).forEach(s => r.push(ligne("encours", s, bienDe(s.bienId))));
-    menagesDu(j).forEach(l => r.push(ligne("menage", null, l)));
+    demandesDuJour(j).forEach(x => r.push(ligneMenage(x)));
     return r;
   };
 
@@ -434,19 +448,20 @@ async function remplirAgenda(vue, biens, demandes, recharger) {
         const d = iso(new Date(premier.getFullYear(), premier.getMonth(), j));
         const ici = ranges.map(s => ({ s, m: morceau(s, d) })).filter(x => x.m);
         const visibles = ici.filter(x => x.s.voie < REGLES.AGENDA_VOIES_MAX), caches = ici.length - visibles.length;
-        const menages = menagesDu(d).length;
+        const menages = menagesDu(d).length, prestas = demandesDuJour(d);
+        const sansMenage = sel.some(s => s.fin === d && d >= debut && !menagePrevu(s.bienId, d));
         const dep = sel.filter(s => s.fin === d).length, arr = sel.filter(s => s.debut === d).length;
         const resume = [dep && `${dep} ${tr("Départ")}`, arr && `${arr} ${tr("Arrivée")}`, menages && tr("Ménage prévu")].filter(Boolean).join(", ");
         cases += `<button type="button" class="jour${d === debut ? " aujourdhui" : ""}${d === jourChoisi ? " choisi" : ""}${d < debut ? " passe" : ""}" data-jour="${d}" aria-label="${esc(dateLongue(jourDe(d)))}${resume ? ` · ${esc(resume)}` : ""}">
           <span class="num">${j}</span>
           ${visibles.map(({ s, m }) => `<i class="barre ${m}" style="--c:${couleur(s.bienId)};--v:${s.voie}" title="${esc(nomBien(bienDe(s.bienId)))}"></i>`).join("")}
-          <span class="badges">${menages ? `<i class="b-menage" title="${esc(tr("Ménage prévu"))}">${icone("termine")}</i>` : ""}${caches > 0 ? `<i class="b-plus">+${caches}</i>` : ""}</span></button>`;
+          <span class="badges">${prestas.slice(0, 2).map(x => iconePresta(x)).join("")}${prestas.length > 2 ? `<i class="b-plus">+${prestas.length - 2}</i>` : ""}${sansMenage ? `<i class="b-depart" title="${esc(tr("Départ sans ménage"))}">!</i>` : ""}${caches > 0 ? `<i class="b-plus">+${caches}</i>` : ""}</span></button>`;
       }
       const sj = jourChoisi && jourChoisi.slice(0, 7) === iso(premier).slice(0, 7) ? jourChoisi : null;
       const detail = sj ? evenementsDu(sj, sel, true) : [];
       corps = `<div class="agenda-grille" role="grid">${jours.map(j => `<div class="jour-sem">${j}</div>`).join("")}${cases}</div>
         <div class="agenda-legende petit">${(filtreBien ? ordre.filter(l => l.id === filtreBien) : ordre).slice(0, 8).map(l => `<span><i class="barre-leg" style="--c:${couleur(l.id)}"></i>${esc(nomBien(l))}</span>`).join("")}
-          <span><i class="b-menage">${icone("termine")}</i>Ménage prévu</span></div>
+          <span><i class="b-menage b-presta">${icone("logement")}</i>Ménage prévu (icône de la prestation)</span><span><i class="b-depart">!</i>Départ sans ménage</span></div>
         ${sj ? `<div class="agenda-detail"><div class="agenda-detail-haut"><b>${dateLongue(jourDe(sj))}</b>
             ${biens.length ? `<button type="button" class="lien-bouton" data-ajout="${sj}">＋ Ajouter un séjour</button>` : ""}</div>
           ${detail.length ? detail.join("") : `<p class="muet petit" style="margin:4px 0 0">Rien de prévu ce jour.</p>`}</div>`
@@ -543,7 +558,7 @@ export function ongletCleaneur(p, docs, { dossier, profil }) {
 
 /* ------------------------------------------------------------------ Planning de la semaine (conciergerie, 13 novembre 2026) */
 /** Une ligne par bien, une colonne par jour : séjour en cours, arrivée, départ (vert : ménage prévu ; orange : à programmer). */
-export function planningSemaine(boite, biens, sejours, menagePrevu, auj, couleur) {
+export function planningSemaine(boite, biens, sejours, menageDe, auj, couleur) {
   if (!boite) return;
   if (!biens.length) { boite.innerHTML = `<div class="vide-compte"><p class="muet">${tr("Ajoutez votre premier bien pour voir son planning.")}</p></div>`; return; }
   const jours = Array.from({ length: 7 }, (_, i) => plusJours(auj, i));
@@ -553,7 +568,8 @@ export function planningSemaine(boite, biens, sejours, menagePrevu, auj, couleur
     const j = iso(d), dep = sejours.find(s => s.bienId === l.id && s.fin === j), arr = sejours.find(s => s.bienId === l.id && s.debut === j);
     const occupe = sejours.some(s => s.bienId === l.id && s.debut < j && j < s.fin);
     const marques = [];
-    if (dep) marques.push(menagePrevu(l.id, j) ? `<span class="pl-menage" title="${esc(tr("Ménage prévu"))}">✓ ${tr("Ménage")}</span>`
+    const m = dep && menageDe(l.id, j);
+    if (dep) marques.push(m ? `<span class="pl-menage etat-${esc(m.statut)}" title="${esc(rubrique(m.rubrique_id)?.nom || tr("Ménage prévu"))}">${icone(rubrique(m.rubrique_id)?.icone || "termine")} ${tr("Ménage")}</span>`
       : `<button type="button" class="pl-programmer" data-programmer="${esc(l.id)}" data-jour="${j}" title="${esc(tr("Programmer le ménage"))}">${tr("Départ")} ›</button>`);
     if (arr) marques.push(`<span class="pl-arrivee">${tr("Arrivée")}</span>`);
     return `<td class="${occupe || arr ? "pl-occupe" : ""}">${marques.join("")}</td>`;

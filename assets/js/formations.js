@@ -16,6 +16,21 @@ const ICONES = { socle: "🛡️", domicile: "🏠", location: "🔑", vitres: "
   biocides: "🧪", nuisibles: "🐞", electrique: "⚡", specialise: "🦺" };
 const RUBRIQUES_TOUTES = ["home", "rental", "moving", "car", "textiles", "construction", "kitchen", "office", "commerce", "communal", "windows", "outdoor", "event", "special"];
 
+/** Renvois vers des vidéos et fiches officielles gratuites (INRS, organisme public de prévention), par module (13 novembre 2026).
+ *  [titre, lien, "video" | "fiche"]. Même liste dans l'appli (Formations.kt). */
+const INRS_NETTOYAGE = ["C'est du propre ! (INRS, vidéo 12 min)", "https://www.inrs.fr/media.html?refINRS=DV+0325", "video"];
+const INRS_FICHE_NETTOYAGE = ["Risques liés au nettoyage (INRS, fiche ED 6503)", "https://www.inrs.fr/dam/jcr:b604ce2b-b338-499d-a2e1-65f425580437/ed6503.pdf", "fiche"];
+const INRS_CHIMIQUE = ["Mesures d'hygiène contre les risques chimiques (INRS)", "https://www.inrs.fr/risques/chimiques/mesures-hygiene.html", "fiche"];
+const INRS_HAUTEUR = ["Napo dans… Le travail en hauteur (INRS, vidéo 11 min)", "https://www.inrs.fr/media.html?refINRS=DV+0411", "video"];
+export const RESSOURCES = {
+  socle: [INRS_NETTOYAGE, INRS_FICHE_NETTOYAGE, INRS_CHIMIQUE], domicile: [INRS_NETTOYAGE, INRS_FICHE_NETTOYAGE], location: [INRS_NETTOYAGE],
+  "locaux-pro": [INRS_NETTOYAGE, INRS_FICHE_NETTOYAGE], vitres: [INRS_HAUTEUR], hauteur: [INRS_HAUTEUR], exterieurs: [INRS_HAUTEUR],
+  bionettoyage: [INRS_CHIMIQUE], biocides: [INRS_CHIMIQUE], "remise-etat": [INRS_FICHE_NETTOYAGE, INRS_CHIMIQUE], "cuisine-pro": [INRS_CHIMIQUE],
+};
+/** Liens « Pour aller plus loin » d'un module. */
+export const blocRessources = id => (RESSOURCES[id] || []).length ? `<div class="bloc-formation ressources"><b>🎬 ${tr("Vidéos et fiches de formation")}</b>
+  <ul>${RESSOURCES[id].map(([t, url, type]) => `<li><a href="${url}" target="_blank" rel="noopener">${type === "video" ? "▶" : "📄"} ${esc(tr(t))}</a></li>`).join("")}</ul></div>` : "";
+
 let catalogue = null;
 /** Catalogue des formations (une seule lecture par page). */
 export async function chargerFormations() {
@@ -80,6 +95,7 @@ function ouvrir(fenetre, m, statut, apres) {
       ${liste("Les bons gestes", "✋", t.gestes, "gestes")}
       ${liste("Les bons produits", "🧴", t.produits, "produits")}
       ${liste("Sécurité", "⚠️", t.securite, "securite")}
+      ${blocRessources(m.id)}
       <div class="validation-formation"></div>
     </div>`;
   traduire(fenetre.querySelector(".haut-formation"));
@@ -88,6 +104,14 @@ function ouvrir(fenetre, m, statut, apres) {
   fenetre.querySelector(".corps-formation").querySelectorAll(".bloc-formation b, .petit").forEach(e => traduire(e));
   fenetre.showModal();
   fenetre.scrollTop = 0;
+}
+
+/** Ouvre la fiche d'un module (et son quiz) depuis n'importe quel écran. */
+export function ouvrirFormation(m, statut, apres = () => {}) {
+  styles();
+  let f = document.getElementById("fenetre-formation-globale");
+  if (!f) { f = document.createElement("dialog"); f.className = "fenetre-formation"; f.id = "fenetre-formation-globale"; document.body.appendChild(f); }
+  ouvrir(f, m, statut, apres);
 }
 
 function quiz(zone, m, t, statut, apres) {

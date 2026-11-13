@@ -1893,3 +1893,22 @@ body.avec-decor main, body.avec-decor #vue, body.avec-decor footer { position: r
 .logement-choisi { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin: 12px 0 0; padding: 10px 14px; border-radius: 14px;
   background: color-mix(in srgb, var(--primaire) 8%, var(--surface)); border: 1px solid color-mix(in srgb, var(--primaire) 25%, transparent); }
 .logement-choisi .ico { width: 20px; height: 20px; color: var(--primaire); }
+/* Agenda : icône de la prestation de chaque ménage, animée selon son état (13 novembre 2026) */
+.b-presta { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 7px; background: var(--succes, #1E9E6A); color: #fff; animation: presta-arrive .45s cubic-bezier(.2,1.4,.4,1) both; }
+.b-presta .ico { width: 13px; height: 13px; }
+.b-presta.grand { width: 38px; height: 38px; border-radius: 12px; flex: none; }
+.b-presta.grand .ico { width: 22px; height: 22px; }
+.b-presta.etat-PUBLIEE, .b-presta.etat-VERIFICATION { background: #E9A23B; }
+.b-presta.etat-CONFIRMEE { background: var(--primaire); }
+.b-presta.etat-EN_ROUTE { background: #3F7FD8; animation: presta-arrive .45s both, presta-route 1.2s ease-in-out .45s infinite; }
+.b-presta.etat-SUR_PLACE, .b-presta.etat-EN_COURS { background: #7A5BD6; animation: presta-arrive .45s both, presta-pulse 1.6s ease-in-out .45s infinite; }
+.b-presta.etat-A_VALIDER { background: var(--corail, #FA8C66); }
+.b-presta.etat-TERMINEE { background: #9AA9AD; }
+.b-depart { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: #FFE6D6; color: #B4501C; font-style: normal; font-weight: 800; font-size: 12px; animation: presta-pulse 2s ease-in-out infinite; }
+.pl-menage .ico { width: 13px; height: 13px; vertical-align: -2px; }
+.etat-texte.etat-EN_COURS, .etat-texte.etat-SUR_PLACE { color: #7A5BD6; font-weight: 700; }
+.etat-texte.etat-EN_ROUTE { color: #3F7FD8; font-weight: 700; }
+@keyframes presta-arrive { from { transform: scale(.3) rotate(-25deg); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes presta-route { 0%, 100% { transform: translateX(-1px); } 50% { transform: translateX(2px); } }
+@keyframes presta-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(122, 91, 214, .45); } 50% { box-shadow: 0 0 0 5px rgba(122, 91, 214, 0); } }
+@media (prefers-reduced-motion: reduce) { .b-presta, .b-depart { animation: none !important; } }
