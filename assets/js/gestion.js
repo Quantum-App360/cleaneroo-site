@@ -31,10 +31,12 @@ async function demarrer() {
       <p class="muet">Votre compte (${esc(data.session.user.email)}) est bien créé, mais il n'a pas encore les droits d'administration Cleaneroo.</p>`;
     return;
   }
+  document.querySelector(".bo")?.classList.remove("sans-menu");
   liste();
 }
 
 function ecranConnexion(message = "") {
+  document.querySelector(".bo")?.classList.add("sans-menu");
   vue.innerHTML = `<h1>Tableau de bord</h1><div class="trait-corail"></div>
     <p class="muet">Espace réservé à l'équipe Cleaneroo.</p>
     <form class="carte" id="connexion">
@@ -66,19 +68,54 @@ const AIDE_CONTROLE = {
   rc_pro: "À contrôler : assureur, numéro de contrat, date de fin, activités couvertes (ménage à domicile, locaux professionnels, vitres…).",
 };
 
+/** Inscription suspecte : lien dans le message, ville sans rapport avec le code postal français, téléphone invalide. */
+const suspect = i => /(https?:\/\/|www\.|\b[a-z0-9-]+\.(online|xyz|top|site|click|link|ru|id|info|biz|shop|store|live|icu)\b)/i.test(`${i.message || ""} ${i.prenom || ""} ${i.nom || ""}`) ? "Lien suspect"
+  : i.telephone && !/^(\+33|0)[1-9]\d{8}$/.test(String(i.telephone).replace(/[\s.-]/g, "")) ? "Téléphone invalide" : "";
 const TYPES_INSCRIPTION = { client: "Client", cleaneur: "Cleaneur", conciergerie: "Conciergerie", rappel: "À rappeler" };
 const CRENEAUX_RAPPEL = { matin: "le matin", midi: "à midi", apres_midi: "l'après-midi", soir: "en soirée" };
 let onglet = "demandes";
 
-const ongletsHtml = () => `<div class="segments" style="margin:6px 0 4px;flex-wrap:wrap;border-radius:22px">
-  <button type="button" data-onglet="demandes" class="${onglet === "demandes" ? "choisi" : ""}">Demandes</button>
-  <button type="button" data-onglet="inscriptions" class="${onglet === "inscriptions" ? "choisi" : ""}">Inscriptions au lancement</button>
-  <button type="button" data-onglet="dossiers" class="${onglet === "dossiers" ? "choisi" : ""}">Dossiers Cleaneurs</button>
-  <button type="button" data-onglet="litiges" class="${onglet === "litiges" ? "choisi" : ""}">Litiges</button>
-  <button type="button" data-onglet="support" class="${onglet === "support" ? "choisi" : ""}">Support</button>
-  <button type="button" data-onglet="secteurs" class="${onglet === "secteurs" ? "choisi" : ""}">Secteurs à recruter</button>
-  <button type="button" data-onglet="visites" class="${onglet === "visites" ? "choisi" : ""}">Visites</button></div>`;
-const brancherOnglets = () => vue.querySelectorAll("[data-onglet]").forEach(bt => bt.onclick = () => { onglet = bt.dataset.onglet; liste(); });
+/** Rubriques du back-office : identifiant, nom, icône. */
+const RUBRIQUES_BO = [["demandes", "Demandes", "calendrier"], ["inscriptions", "Inscriptions au lancement", "avis"], ["dossiers", "Dossiers Cleaneurs", "cleaneurs"],
+  ["litiges", "Litiges", "garantie"], ["support", "Support", "telephone"], ["secteurs", "Secteurs à recruter", "position"], ["visites", "Visites", "instantane"]];
+let compteurs = {};
+/** Chiffres clés (en tête et pastilles du menu), relus à chaque changement de rubrique. */
+async function chargerCompteurs() {
+  const nb = async q => { const { count } = await q; return count ?? null; };
+  const depuis7j = new Date(Date.now() - 7 * 864e5).toISOString();
+  const [aVerifier, enLigne, inscrits, inscrits7, litiges, dossiers] = await Promise.all([
+    nb(supabase.from("demandes").select("id", { count: "exact", head: true }).eq("statut", "VERIFICATION")),
+    nb(supabase.from("demandes").select("id", { count: "exact", head: true }).in("statut", ["PUBLIEE", "CONFIRMEE", "EN_ROUTE", "SUR_PLACE", "EN_COURS", "A_VALIDER"])),
+    nb(supabase.from("inscriptions").select("id", { count: "exact", head: true })),
+    nb(supabase.from("inscriptions").select("id", { count: "exact", head: true }).gte("cree_le", depuis7j)),
+    nb(supabase.from("litiges").select("id", { count: "exact", head: true }).eq("statut", "OUVERT")),
+    dossiersCleaneurs().then(l => l.filter(d => d.dossier === "A_VERIFIER").length).catch(() => null),
+  ]);
+  compteurs = { aVerifier, enLigne, inscrits, inscrits7, litiges, dossiers };
+  dessinerNav(); dessinerKpi();
+}
+function dessinerNav() {
+  const nav = document.getElementById("bo-nav");
+  if (!nav) return;
+  const badge = { demandes: compteurs.aVerifier, inscriptions: compteurs.inscrits7, dossiers: compteurs.dossiers, litiges: compteurs.litiges };
+  nav.innerHTML = `<div class="bo-marque">Back-office</div>` + RUBRIQUES_BO.map(([id, nom, ico]) => `<button type="button" data-onglet="${id}" class="${onglet === id ? "choisi" : ""}">
+    ${icone(ico)}<span>${nom}</span>${badge[id] ? `<span class="badge ${id === "inscriptions" ? "calme" : ""}">${badge[id]}</span>` : ""}</button>`).join("");
+  nav.querySelectorAll("[data-onglet]").forEach(bt => bt.onclick = () => { onglet = bt.dataset.onglet; liste(); window.scrollTo(0, 0); });
+}
+function dessinerKpi() {
+  const k = document.getElementById("bo-kpi");
+  if (!k) return;
+  const v = x => x ?? "…";
+  k.innerHTML = [["demandes", v(compteurs.aVerifier), "Demandes à vérifier", compteurs.aVerifier > 0], ["demandes", v(compteurs.enLigne), "Prestations en cours", false],
+    ["inscriptions", v(compteurs.inscrits), `Inscrits au lancement · +${v(compteurs.inscrits7)} en 7 j`, false], ["dossiers", v(compteurs.dossiers), "Dossiers à vérifier", compteurs.dossiers > 0],
+    ["litiges", v(compteurs.litiges), "Litiges ouverts", compteurs.litiges > 0]]
+    .map(([id, n, t, alerte]) => `<button type="button" class="kpi ${alerte ? "alerte" : ""}" data-kpi="${id}"><b>${n}</b><span>${t}</span></button>`).join("");
+  k.querySelectorAll("[data-kpi]").forEach(b => b.onclick = () => { onglet = b.dataset.kpi; if (onglet === "demandes") filtre = "VERIFICATION"; liste(); });
+}
+/** Titre de la rubrique ouverte (remplace l'ancienne rangée d'onglets, le menu est à gauche). */
+const ongletsHtml = () => "";
+const titreBO = () => `<h1 class="bo-titre">${RUBRIQUES_BO.find(r => r[0] === onglet)?.[1] || "Back-office"}</h1><div class="trait-corail"></div>`;
+const brancherOnglets = () => { dessinerNav(); vue.querySelectorAll("[data-onglet]").forEach(bt => bt.onclick = () => { onglet = bt.dataset.onglet; liste(); }); };
 
 async function listeInscriptions() {
   const { data, error } = await supabase.from("inscriptions").select("*").order("cree_le", { ascending: false }).limit(1000);
@@ -92,12 +129,13 @@ async function listeInscriptions() {
     a.href = URL.createObjectURL(new Blob(["﻿" + texte], { type: "text/csv;charset=utf-8" }));
     a.download = "inscriptions-cleaneroo.csv"; a.click();
   };
-  vue.innerHTML = `<h1>Tableau de bord</h1><div class="trait-corail"></div>${ongletsHtml()}
+  vue.innerHTML = `${titreBO()}
     <p class="muet">${data.length} inscrits · ${n("client")} clients · ${n("cleaneur")} Cleaneurs · ${n("conciergerie")} conciergeries · ${n("rappel")} à rappeler</p>
     <p class="note">Offre de lancement : <b>${data.filter(i => i.type === "cleaneur" && i.valide_le).length}</b> dossier(s) Cleaneur validé(s) · 3 mois de formule Pro offerts aux Cleaneurs inscrits jusqu'au 31 janvier 2027 (sans limite de places).</p>
     <button class="bouton secondaire" id="export">Télécharger la liste (Excel)</button>
     <div style="margin-top:14px">${data.map(i => `<div class="carte" style="margin-bottom:10px">
-      <b>${esc(i.prenom)} ${esc(i.nom)}</b> <span class="tampon">${TYPES_INSCRIPTION[i.type]}</span>
+      <b>${esc(i.prenom)} ${esc(i.nom)}</b> <span class="tampon">${TYPES_INSCRIPTION[i.type]}</span>${suspect(i) ? ` <span class="tampon spam">⚠ ${suspect(i)}</span>` : ""}
+      <button type="button" class="lien-bouton" style="float:right;color:var(--erreur)" data-spam="${i.id}">Supprimer (spam)</button>
       <div class="petit">${i.type === "rappel" ? `${esc(i.profil)} · à rappeler ${CRENEAUX_RAPPEL[i.creneau] || ""}` : `<a href="mailto:${esc(i.email)}">${esc(i.email)}</a>`}${i.telephone ? ` · <a href="tel:${esc(i.telephone)}">${esc(i.telephone)}</a>` : ""} · ${esc(i.code_postal)} ${esc(i.ville)} · ${dateLongue(new Date(i.cree_le))}</div>
       ${i.message ? `<p class="muet" style="margin:6px 0 0">${esc(i.message)}</p>` : ""}
       ${i.type === "cleaneur" ? (i.valide_le
@@ -105,6 +143,13 @@ async function listeInscriptions() {
         : `<button type="button" class="bouton secondaire" style="margin-top:8px" data-valider="${i.id}" data-valeur="oui">Valider le dossier (offre de lancement)</button>`) : ""}</div>`).join("") || `<p class="muet">Aucune inscription pour l'instant.</p>`}</div>`;
   brancherOnglets();
   document.getElementById("export").onclick = csv;
+  vue.querySelectorAll("[data-spam]").forEach(bt => bt.onclick = async () => {
+    if (!confirm("Supprimer définitivement cette inscription (spam) ?")) return;
+    bt.disabled = true;
+    const { error } = await supabase.from("inscriptions").delete().eq("id", bt.dataset.spam);
+    if (error) { alert(error.message); bt.disabled = false; return; }
+    listeInscriptions();
+  });
   // Validation d'un dossier Cleaneur : une place de l'offre de lancement est attribuée (ordre de validation).
   vue.querySelectorAll("[data-valider]").forEach(bt => bt.onclick = async () => {
     const oui = bt.dataset.valeur === "oui";
@@ -122,9 +167,9 @@ const NOM_DOC = Object.fromEntries(DOCUMENTS_CLEANEUR.map(d => [d.type, d.nom]))
 nomsAttestations().then(n => Object.assign(NOM_DOC, n));
 async function listeDossiers() {
   let data;
-  try { data = await dossiersCleaneurs(); } catch (e) { vue.innerHTML = `<h1>Tableau de bord</h1><div class="trait-corail"></div>${ongletsHtml()}<p class="erreur">${esc(e.message)}</p>`; brancherOnglets(); return; }
+  try { data = await dossiersCleaneurs(); } catch (e) { vue.innerHTML = `${titreBO()}<p class="erreur">${esc(e.message)}</p>`; brancherOnglets(); return; }
   const n = e => data.filter(d => d.dossier === e).length;
-  vue.innerHTML = `<h1>Tableau de bord</h1><div class="trait-corail"></div>${ongletsHtml()}
+  vue.innerHTML = `${titreBO()}
     <p class="muet">${data.length} compte(s) Cleaneur · ${n("A_VERIFIER")} à vérifier · ${n("VALIDE")} validé(s) · ${n("BROUILLON")} en préparation · ${n("REFUSE")} à corriger</p>
     ${data.map(d => `<div class="carte ligne-demande" data-dossier="${d.id}"><div><b>${esc(d.prenom)} ${esc(d.nom)}</b>
       <div class="petit">${esc(d.email)} · ${esc(d.code_postal)} ${esc(d.ville)}${d.dossier_soumis_le ? ` · envoyé le ${dateLongue(new Date(d.dossier_soumis_le))}` : ""}</div></div>
@@ -196,7 +241,7 @@ async function detailDossier(d) {
 const APPAREILS = { mobile: "Téléphone", tablette: "Tablette", ordinateur: "Ordinateur" };
 async function listeVisites() {
   const { data: st, error } = await supabase.rpc("statistiques_visites");
-  if (error) { vue.innerHTML = `<h1>Tableau de bord</h1><div class="trait-corail"></div>${ongletsHtml()}<p class="erreur">${esc(error.message)}</p>`; brancherOnglets(); return; }
+  if (error) { vue.innerHTML = `${titreBO()}<p class="erreur">${esc(error.message)}</p>`; brancherOnglets(); return; }
   const [jour, semaine, mois, total] = st.periodes;
   const tuile = (titre, p) => `<div class="carte" style="text-align:center"><div class="petit">${titre}</div>
     <div style="font-size:30px;font-weight:800;color:var(--primaire)">${p.visites}</div><div class="petit">visiteurs uniques · ${p.pages} pages vues</div>
@@ -212,7 +257,7 @@ async function listeVisites() {
   const debut = new Date(st.par_jour[0].jour + "T12:00:00"), fin = new Date(st.par_jour.at(-1).jour + "T12:00:00");
   const appareils = Object.entries(st.appareils);
   const totalApp = appareils.reduce((a, [, n]) => a + n, 0) || 1;
-  vue.innerHTML = `<h1>Tableau de bord</h1><div class="trait-corail"></div>${ongletsHtml()}
+  vue.innerHTML = `${titreBO()}
     <p class="muet">Compteur sans cookie ni donnée personnelle. Une même adresse IP compte une seule visite par jour, même avec plusieurs onglets, rechargements ou connexions (l’adresse n’est jamais enregistrée : seule une empreinte qui change chaque jour est gardée).</p>
     <div class="grille-3" style="grid-template-columns:repeat(auto-fit,minmax(170px,1fr))">${tuile("Aujourd'hui", jour)}${tuile("7 derniers jours", semaine)}${tuile("30 derniers jours", mois)}${tuile("Depuis le début", total)}</div>
     <div class="carte" style="margin-top:14px"><b>30 derniers jours</b>
@@ -231,7 +276,7 @@ async function listeVisites() {
 async function listeSupport() {
   const { data, error } = await supabase.rpc("fils_support");
   if (error) { vue.innerHTML = `<p class="erreur">${esc(error.message)}</p>`; return; }
-  vue.innerHTML = `<h1>Tableau de bord</h1><div class="trait-corail"></div>${ongletsHtml()}
+  vue.innerHTML = `${titreBO()}
     <p class="muet">${data.filter(f => f.non_lus).length} conversation(s) en attente de réponse · ${data.length} au total.</p>
     ${data.length ? data.map(f => `<a class="carte" style="display:flex;justify-content:space-between;gap:12px;margin-bottom:10px;text-decoration:none;color:inherit" target="_blank" rel="noopener"
       href="./#/messages/${encodeURIComponent(f.fil)}"><span><b>${esc([f.prenom, f.nom].filter(Boolean).join(" ") || "Compte supprimé")}</b><br><span class="petit">${esc(f.dernier || "")}</span></span>
@@ -249,7 +294,7 @@ async function listeLitiges() {
   await Promise.all(data.flatMap(l => l.photos || []).map(async c => {
     const { data: u } = await supabase.storage.from("photos-demandes").createSignedUrl(c, 3600); liens[c] = u?.signedUrl || ""; }));
   const ouverts = data.filter(l => l.statut === "OUVERT").length;
-  vue.innerHTML = `<h1>Tableau de bord</h1><div class="trait-corail"></div>${ongletsHtml()}
+  vue.innerHTML = `${titreBO()}
     <p class="muet">${ouverts} signalement(s) à examiner · ${data.length} au total. Réponse au client sous 72 h ; indemnisation sous 5 jours ouvrés.</p>
     ${data.map(l => `<div class="carte" style="margin-bottom:12px">
       <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><b>${esc(l.reference)} · ${l.genre === "DOMMAGE" ? "Dommage" : { INCOMPLETE: "Prestation incomplète", NON_CONFORME: "Prestation non conforme", AUTRE: "Autre" }[l.motif]}</b>
@@ -282,7 +327,7 @@ async function listeSecteurs() {
   let lignes;
   try { lignes = await secteursARecruter(); } catch (e) { vue.innerHTML = `<p class="erreur">${esc(e.message)}</p>`; return; }
   const total = k => lignes.reduce((t, l) => t + (l[k] || 0), 0);
-  vue.innerHTML = `<h1>Tableau de bord</h1><div class="trait-corail"></div>${ongletsHtml()}
+  vue.innerHTML = `${titreBO()}
     <p class="muet">${total("en_attente")} client(s) en attente · ${total("pre_reservations")} pré-réservation(s) · ${total("a_prevenir")} client(s) à prévenir (un Cleaneur couvre maintenant leur secteur)</p>
     <p class="note">Après le lancement, une prestation ne se réserve que si un Cleaneur validé la propose et couvre l'adresse. Sinon le client laisse ses coordonnées : recrutez en priorité dans les villes du haut de la liste.</p>
     <div style="margin-top:14px">${lignes.map(l => `<div class="carte" style="margin-bottom:10px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap">
@@ -293,6 +338,7 @@ async function listeSecteurs() {
 }
 
 async function liste() {
+  chargerCompteurs().catch(() => null);
   if (onglet === "inscriptions") return listeInscriptions();
   if (onglet === "dossiers") return listeDossiers();
   if (onglet === "visites") return listeVisites();
@@ -303,7 +349,7 @@ async function liste() {
   if (error) { vue.innerHTML = `<p class="erreur">${esc(error.message)}</p>`; return; }
   const compte = s => data.filter(d => d.statut === s).length;
   const affichees = filtre === "TOUTES" ? data : data.filter(d => d.statut === filtre);
-  vue.innerHTML = `<h1>Tableau de bord</h1><div class="trait-corail"></div>${ongletsHtml()}
+  vue.innerHTML = `${titreBO()}
     <div class="filtres">${["VERIFICATION", "PUBLIEE", "CONFIRMEE", "EN_COURS", "A_VALIDER", "TERMINEE", "ANNULEE", "TOUTES"].map(s =>
       `<button type="button" data-filtre="${s}" class="${filtre === s ? "choisi" : ""}">${s === "TOUTES" ? `Toutes (${data.length})` : `${STATUTS[s]} (${compte(s)})`}</button>`).join("")}</div>
     ${affichees.length ? affichees.map(d => {

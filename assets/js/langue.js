@@ -899,6 +899,7 @@ const T = [
   ["Validez-la pour débloquer vos prestations : fiche à lire et petit quiz.", "Complete it to unlock your services: a short guide and a quick quiz.", "Convalidala per sbloccare i tuoi servizi: una scheda da leggere e un breve quiz.", "Valídala para desbloquear tus servicios: una ficha que leer y un breve cuestionario."],
   ["Suivre la formation", "Take the training", "Segui la formazione", "Hacer la formación"],
   ["Après le Socle Cleaneroo", "After the Cleaneroo Foundation", "Dopo la Base Cleaneroo", "Tras la Base Cleaneroo"],
+  ["Les liens ne sont pas acceptés dans le message.", "Links are not allowed in the message.", "I link non sono ammessi nel messaggio.", "No se admiten enlaces en el mensaje."],
   // Synchronisation des calendriers iCal (13 novembre 2026)
   ["synchronisation…", "syncing…", "sincronizzazione…", "sincronizando…"],
   ["site non accepté", "site not accepted", "sito non accettato", "sitio no aceptado"],

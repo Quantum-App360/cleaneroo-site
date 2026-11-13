@@ -1914,3 +1914,4 @@ body.avec-decor main, body.avec-decor #vue, body.avec-decor footer { position: r
 @media (prefers-reduced-motion: reduce) { .b-presta, .b-depart { animation: none !important; } }
 .pastille.ok-cal::before { content: ""; }
 .pastille.autre { background: var(--creux); color: var(--texte2); }
+.piege { position: absolute !important; left: -9999px !important; width: 1px; height: 1px; opacity: 0; }

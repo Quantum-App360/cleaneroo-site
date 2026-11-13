@@ -28,7 +28,7 @@ import { icone, teinte, ICONES_RUBRIQUES, ICONES_INTERFACE } from "./icones.js";
 import { pageTableau, arreterTableau } from "./tableau.js";
 import { compteRenduPieces } from "./controle-ecran.js";
 import { blocFormulesCleaneur, brancherFormulesCleaneur } from "./formules-cleaneur.js";
-import { blocEtapes, blocReassurance, installerRappel, bandeauLancement, pageChargement, decorTableau } from "./commun.js";
+import { blocEtapes, blocReassurance, installerRappel, bandeauLancement, pageChargement, decorTableau, surveillerFormulaire, envoiRobot, CONTIENT_LIEN } from "./commun.js";
 import "./fond-anime.js";
 import "./oeil.js";
 import "./choix-prestation.js";   // fenêtre animée « Réserver une prestation »   // œil pour afficher le mot de passe
@@ -53,7 +53,7 @@ const TYPES_INSCRIPTION = [["client", "Je cherche un nettoyage"], ["cleaneur", "
 
 /** fixe : le type est imposé (page Devenir Cleaneur) et le choix « Je cherche un nettoyage / Je gère des locations » n'est pas montré. */
 function formulaireInscription(typeDefaut = "client", fixe = false) {
-  return `<form class="carte" id="form-inscription" novalidate>
+  return `<form class="carte" id="form-inscription" novalidate><input class="piege" name="site_web" tabindex="-1" autocomplete="off" aria-hidden="true">
     <h3>Inscrivez-vous pour le lancement</h3>
     <p class="muet" style="margin:4px 0 14px">Ouverture le <b>31 décembre 2026</b>. ${MESSAGE_LANCEMENT} Les premiers inscrits sont prévenus en priorité.</p>
     ${fixe ? "" : `<div class="choix" style="margin-bottom:14px">${TYPES_INSCRIPTION.map(([id, lib]) =>
@@ -76,6 +76,7 @@ function formulaireInscription(typeDefaut = "client", fixe = false) {
 export function brancherInscription(racine) {
   const f = racine.querySelector("#form-inscription");
   if (!f) return;
+  surveillerFormulaire(f);
   f.querySelectorAll("[data-type-inscription]").forEach(b => b.onclick = () => {
     f.querySelectorAll("[data-type-inscription]").forEach(x => x.classList.toggle("choisi", x === b));
     f.type.value = b.dataset.typeInscription;
@@ -88,7 +89,11 @@ export function brancherInscription(racine) {
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v.email)) return err.textContent = tr("Adresse e-mail invalide.");
     if (!/^[0-9]{5}$/.test(v.code_postal)) return err.textContent = tr("Code postal à 5 chiffres.");
     if (!f.consentement.checked) return err.textContent = tr("Cochez la case pour que nous puissions vous prévenir.");
+    if (v.telephone.trim() && !/^(\+33|0)[1-9]\d{8}$/.test(v.telephone.replace(/[\s.-]/g, ""))) return err.textContent = tr("Indiquez un numéro de téléphone à 10 chiffres.");
+    if (CONTIENT_LIEN.test(`${v.message} ${v.prenom} ${v.nom}`)) return err.textContent = tr("Les liens ne sont pas acceptés dans le message.");
     err.textContent = "";
+    // Robot : on affiche le remerciement, sans rien enregistrer.
+    if (envoiRobot(f)) { f.innerHTML = `<h3>${tr("Merci, vous êtes inscrit ✓")}</h3>`; return; }
     const bouton = f.querySelector("button[type=submit]");
     bouton.disabled = true; bouton.textContent = tr("Inscription…");
     try {

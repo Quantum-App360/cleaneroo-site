@@ -9,6 +9,16 @@ import { traduire } from "./langue.js";
 
 export const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
+/* ------------------------------------------------------------------ Anti-spam des formulaires publics (13 novembre 2026)
+   Un robot remplit tous les champs, va très vite et colle des liens : champ piège invisible, délai minimal, liens refusés.
+   La base refait les mêmes contrôles (outils/base-anti-spam.sql), car un robot peut écrire sans passer par la page. */
+export const CONTIENT_LIEN = /(https?:\/\/|www\.|\b[a-z0-9-]+\.(online|xyz|top|site|click|link|ru|id|info|biz|shop|store|live|icu|cfd|sbs|win|bond|vip)\b)/i;
+const ouvertsLe = new WeakMap();
+/** À appeler quand le formulaire s'affiche. */
+export const surveillerFormulaire = f => ouvertsLe.set(f, Date.now());
+/** Vrai si l'envoi ressemble à un robot : champ piège rempli ou envoi en moins de 3 secondes. */
+export const envoiRobot = f => !!f.querySelector("[name=site_web]")?.value || Date.now() - (ouvertsLe.get(f) || 0) < 3000;
+
 /* ------------------------------------------------------------------ Pré-lancement (ouverture le 31 décembre 2026) */
 export function bandeauLancement() {
   if (!estPrelancement()) return "";
@@ -96,7 +106,7 @@ function fenetreRappel() {
   const radios = (nom, liste) => `<div class="segments">${liste.map(([v, l], i) =>
     `<label><input type="radio" name="${nom}" value="${v}" ${i === 0 ? "checked" : ""}><span>${l}</span></label>`).join("")}</div>`;
   return `<dialog class="fenetre-rappel" id="fenetre-rappel" aria-labelledby="titre-rappel">
-    <form id="form-rappel" novalidate>
+    <form id="form-rappel" novalidate><input class="piege" name="site_web" tabindex="-1" autocomplete="off" aria-hidden="true">
       <button type="button" class="fermer" data-fermer aria-label="Fermer">${icone("menu").replace('d="M4 7h16M4 12h16M4 17h16"', 'd="M6 6l12 12M18 6 6 18"')}</button>
       <h2 id="titre-rappel">${icone("telephone")} Être rappelé</h2>
       <p class="muet">Laissez votre numéro : nous vous rappelons au créneau de votre choix.</p>
@@ -120,7 +130,7 @@ export function installerRappel(villeParDefaut = "") {
   traduire(d); traduire(document.querySelector(".rappel-mobile")); traduire(document.querySelector(".rappel-entete") || document.createElement("i"));
   document.addEventListener("click", e => {
     const b = e.target.closest("[data-rappel]");
-    if (b) { if (b.dataset.ville && !f.ville.value) f.ville.value = b.dataset.ville; erreur.hidden = true; d.showModal(); f.prenom.focus(); }
+    if (b) { if (b.dataset.ville && !f.ville.value) f.ville.value = b.dataset.ville; erreur.hidden = true; surveillerFormulaire(f); d.showModal(); f.prenom.focus(); }
     if (e.target.closest("[data-fermer]") || e.target === d) d.close();
   });
   f.addEventListener("submit", async e => {
@@ -130,6 +140,8 @@ export function installerRappel(villeParDefaut = "") {
       !f.accord.checked ? "Cochez la case pour accepter d'être rappelé." : "";
     const montrer = t => { erreur.textContent = t; erreur.hidden = false; traduire(erreur); };
     if (faute) return montrer(faute);
+    // Robot : on fait comme si tout allait bien, sans rien enregistrer.
+    if (envoiRobot(f)) { f.innerHTML = `<button type="button" class="fermer" data-fermer aria-label="Fermer">×</button><h2>${icone("valide")} ${CRENEAUX.find(c => c[0] === f.creneau.value)?.[2] || ""}</h2>`; return; }
     const bouton = f.querySelector("[type=submit]"); bouton.disabled = true;
     try {
       await inscrire({ type: "rappel", prenom: f.prenom.value.trim(), telephone: tel, profil: f.profil.value, creneau: f.creneau.value,
