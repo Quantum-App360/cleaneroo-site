@@ -72,13 +72,16 @@ export function ongletParticulier(p, biens, demandes) {
 /* ------------------------------------------------------------------ Entreprise : bureaux, commerces, cabinets (13 novembre 2026) */
 
 /** Prestations proposées aux entreprises, dans l'ordre des raccourcis. */
+/** Prestations propres aux entreprises (pour compter leurs demandes ; même liste dans l'appli). */
+const RUBRIQUES_ENTREPRISE = ["office", "commerce", "communal", "kitchen", "construction", "event"];
+const estEntreprise = d => d.espace === "professionnel" || RUBRIQUES_ENTREPRISE.includes(d.rubrique_id);
 const RACCOURCIS_ENTREPRISE = [["office", "Bureaux et cabinets"], ["commerce", "Commerces et entrepôts"], ["communal", "Immeubles et parties communes"], ["windows", "Vitres"]];
 
 export function ongletEntreprise(p, biens, demandes) {
-  const enCours = demandes.filter(d => !["TERMINEE", "ANNULEE"].includes(d.statut) && d.espace === "professionnel")
+  const enCours = demandes.filter(d => !["TERMINEE", "ANNULEE"].includes(d.statut) && estEntreprise(d))
     .sort((a, b) => new Date(a.creneau || a.cree_le) - new Date(b.creneau || b.cree_le));
   const prochaine = enCours[0], r = prochaine && rubrique(prochaine.rubrique_id);
-  const faites = demandes.filter(d => d.statut === "TERMINEE" && d.espace === "professionnel").length;
+  const faites = demandes.filter(d => d.statut === "TERMINEE" && estEntreprise(d)).length;
   return `<div class="entete-pro entete-entreprise carte">
       <div><span class="surtitre">Espace Entreprise · Bureaux, commerces et locaux</span>
         <h2 style="margin:6px 0 2px">${p.societe ? esc(p.societe) : tr("Votre entreprise")}</h2>
