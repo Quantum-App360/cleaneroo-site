@@ -54,6 +54,9 @@ export function rendreEntete(p) {
   // Plusieurs statuts (ex. Cleaneur et Particulier) : un lien direct vers chaque autre espace.
   const autres = type === "admin" || type === "visiteur" ? [] : (p.statuts || []).filter(x => x !== type && NOM_ESPACE[x]).map(x => [`#/compte/${x}`, NOM_ESPACE[x]]);
   nav.innerHTML = [...LIENS[type], ...autres].map(lien).join("") + `<div class="nav-compte">${html}</div>`;
+  // Logo : une fois connecté, il ramène à son espace (et non à la page d'accueil du site, toujours accessible depuis « Mon suivi »).
+  const accueil = { visiteur: "#/", particulier: "#/tableau", entreprise: "#/compte/entreprise", pro: "#/compte/pro", cleaneur: "#/compte/cleaneur", admin: "#/tableau" }[type] || "#/";
+  document.querySelectorAll(".entete .marque").forEach(m => { m.setAttribute("href", b + accueil); m.setAttribute("aria-label", type === "visiteur" ? "Cleaneroo, accueil" : tr("Mon espace")); });
   document.body.dataset.espace = type;
   document.body.classList.toggle("acces-cleaneur", type === "cleaneur");
   traduire(nav); traduire(actions);
