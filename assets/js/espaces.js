@@ -12,7 +12,7 @@ import { blocFormulesCleaneur } from "./formules-cleaneur.js";
 import { preremplir } from "./reserver.js";
 import { editeurGuide, brancherGuides } from "./guides.js";
 import { editeurEtapesPhoto, brancherEtapesPhoto, etapesPhotoDe, etapesPersoDe } from "./etapes-bien.js";
-import { editeurStock, editeurIncidents, brancherOutilsBiens, blocAujourdhui, blocMenages, blocRapports, stockBas, incidentsDe } from "./conciergerie.js";
+import { editeurStock, editeurIncidents, brancherOutilsBiens, blocAujourdhui, blocMenages, blocRapports, stockBas, incidentsDe, consommerStock } from "./conciergerie.js";
 export { brancherMissions, demanderGeoloc } from "./missions.js";
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -244,6 +244,9 @@ export function brancherPro(vue, p, biens, demandes, { majProfil, recharger }) {
   brancherGuides(vue, biens, recharger);
   brancherEtapesPhoto(vue, biens, recharger);
   brancherOutilsBiens(vue, biens, recharger);
+  // Stock : chaque ménage terminé retire la consommation « par ménage » (une seule fois par ménage), puis l'espace se redessine.
+  const consommes = consommerStock(biens, demandes);
+  if (consommes.length) Promise.all(consommes.map(b => enregistrerBien(b))).then(recharger).catch(() => null);
   remplirAgenda(vue, biens, demandes, recharger).then(prochains => trierBiens(vue, biens, prochains));
   carteDesBiens(vue.querySelector("#carte-biens"), biens);
   trierBiens(vue, biens, {});

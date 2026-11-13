@@ -10,6 +10,7 @@ import { REGLES, euros, dateLongue, dateCourte } from "./regles.js";
 import { icone } from "./icones.js";
 import { tr, traduire, LOCALE } from "./langue.js";
 import { esc } from "./commun.js";
+import { versIcs } from "./agenda.js";
 
 const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 const jourDe = s => { const [a, m, j] = s.split("-").map(Number); return new Date(a, m - 1, j); };
@@ -23,6 +24,28 @@ export const ETATS = { VERIFICATION: "En vérification", PUBLIEE: "Recherche d'u
 /** Articles proposés au départ (consommables et linge). */
 export const STOCK_CONSEILLE = ["Papier toilette", "Gel douche et shampoing", "Savon pour les mains", "Liquide vaisselle", "Éponges", "Sacs poubelle",
   "Café, thé, sucre", "Produits ménagers", "Jeux de draps", "Serviettes de bain", "Torchons"];
+/** Quantité utilisée à chaque ménage, pour la liste conseillée (le linge est lavé, pas consommé). */
+const CONSO_CONSEILLEE = { "Papier toilette": 2, "Éponges": 1, "Sacs poubelle": 2, "Café, thé, sucre": 1 };
+
+/**
+ * Consommation automatique (13 novembre 2026) : chaque ménage terminé dans un bien retire de son stock la quantité « par ménage » de chaque article.
+ * Seuls les ménages terminés après l'ajout de l'article comptent, chacun une seule fois (références gardées dans stockDeduit). Fonction pure, testée.
+ * Renvoie les biens à enregistrer : [{ ...bien, stock, stockDeduit }].
+ */
+export function consommerStock(biens, demandes) {
+  return biens.map(b => {
+    const st = stockDe(b);
+    if (!st.some(a => Number(a.parMenage) > 0)) return null;
+    const deja = new Set(b.stockDeduit || []);
+    const faits = demandes.filter(d => d.statut === "TERMINEE" && d.reference && !deja.has(d.reference) && memeAdresse(d, b));
+    if (!faits.length) return null;
+    const stock = st.map(a => {
+      const n = faits.filter(d => !a.depuis || String(d.creneau || d.cree_le || "") >= a.depuis).length;
+      return n && Number(a.parMenage) > 0 ? { ...a, qte: Math.max(0, Number(a.qte) - n * Number(a.parMenage)) } : a;
+    });
+    return { ...b, stock, stockDeduit: [...deja, ...faits.map(d => d.reference)].slice(-300) };
+  }).filter(Boolean);
+}
 export const stockDe = l => Array.isArray(l?.stock) ? l.stock : [];
 export const incidentsDe = l => Array.isArray(l?.incidents) ? l.incidents : [];
 /** Articles sous le seuil d'alerte. Fonction pure, testée. */
@@ -34,15 +57,16 @@ export function editeurStock(l) {
   const st = stockDe(l), bas = stockBas(l);
   return `<details class="outil-bien" data-outil="stock-${esc(l.id)}" ${fichesOuvertes.has("stock-" + l.id) ? "open" : ""}>
     <summary>📦 ${tr("Stock et linge")} ${bas.length ? `<span class="tampon spam">${bas.length} ${tr(bas.length > 1 ? "articles à racheter" : "article à racheter")}</span>` : st.length ? `<span class="tampon vert">${tr("OK")}</span>` : ""}</summary>
-    <p class="petit">${tr("Ce qui doit être sur place pour les voyageurs. Une alerte apparaît dans « Aujourd'hui » quand un article passe sous son seuil.")}</p>
+    <p class="petit">${tr("Ce qui doit être sur place pour les voyageurs. Le stock baisse tout seul à chaque ménage terminé (quantité « par ménage ») ; une alerte apparaît dans « Aujourd'hui » quand un article passe sous son seuil.")}</p>
     ${st.length ? `<div class="table-stock">${st.map((a, i) => `<div class="ligne-stock ${bas.includes(a) ? "bas" : ""}"><span>${esc(tr(a.nom))}</span>
       <span class="qte"><button type="button" class="pas" data-stock="${esc(l.id)}:${i}:-1" aria-label="${esc(tr("Moins"))}">−</button><b>${Number(a.qte)}</b>
       <button type="button" class="pas" data-stock="${esc(l.id)}:${i}:1" aria-label="${esc(tr("Plus"))}">+</button></span>
-      <span class="petit">${tr("seuil")} ${Number(a.seuil ?? REGLES.STOCK_SEUIL_DEFAUT)}</span>
+      <span class="petit">${tr("seuil")} ${Number(a.seuil ?? REGLES.STOCK_SEUIL_DEFAUT)}${Number(a.parMenage) > 0 ? ` · −${Number(a.parMenage)} ${tr("par ménage")}` : ""}</span>
       <button type="button" class="lien-bouton" data-stock-retirer="${esc(l.id)}:${i}">${tr("Retirer")}</button></div>`).join("")}</div>`
       : `<button type="button" class="bouton secondaire" data-stock-conseille="${esc(l.id)}">${tr("Ajouter la liste conseillée")}</button>`}
     <form class="ajout-ligne" data-stock-ajout="${esc(l.id)}" novalidate><input class="texte" name="nom" maxlength="60" placeholder="${esc(tr("Article (ex. : capsules de café)"))}">
-      <input class="texte" name="qte" type="number" min="0" max="999" value="4" aria-label="${esc(tr("Quantité"))}"><input class="texte" name="seuil" type="number" min="0" max="99" value="${REGLES.STOCK_SEUIL_DEFAUT}" aria-label="${esc(tr("Seuil d'alerte"))}">
+      <input class="texte" name="qte" type="number" min="0" max="999" value="4" aria-label="${esc(tr("Quantité"))}"><input class="texte" name="seuil" type="number" min="0" max="99" value="${REGLES.STOCK_SEUIL_DEFAUT}" aria-label="${esc(tr("Seuil d'alerte"))}" title="${esc(tr("Seuil d'alerte"))}">
+      <input class="texte" name="parMenage" type="number" min="0" max="20" value="1" aria-label="${esc(tr("Utilisé par ménage"))}" title="${esc(tr("Utilisé par ménage"))}">
       <button class="lien-bouton" type="submit">${tr("Ajouter")}</button></form></details>`;
 }
 
@@ -73,13 +97,14 @@ export function brancherOutilsBiens(vue, biens, recharger) {
   });
   vue.querySelectorAll("[data-stock-conseille]").forEach(b => b.onclick = () => {
     const l = bien(b.dataset.stockConseille);
-    sauver(l, { stock: STOCK_CONSEILLE.map(nom => ({ nom, qte: 4, seuil: REGLES.STOCK_SEUIL_DEFAUT })) }, "stock-" + l.id);
+    const depuis = new Date().toISOString();
+    sauver(l, { stock: STOCK_CONSEILLE.map(nom => ({ nom, qte: 4, seuil: REGLES.STOCK_SEUIL_DEFAUT, parMenage: CONSO_CONSEILLEE[nom] || 0, depuis })) }, "stock-" + l.id);
   });
   vue.querySelectorAll("[data-stock-ajout]").forEach(f => f.onsubmit = e => {
     e.preventDefault();
     const l = bien(f.dataset.stockAjout), nom = f.nom.value.trim();
     if (!nom) return;
-    sauver(l, { stock: [...stockDe(l), { nom, qte: Number(f.qte.value) || 0, seuil: Number(f.seuil.value) || 0 }].slice(0, 60) }, "stock-" + l.id);
+    sauver(l, { stock: [...stockDe(l), { nom, qte: Number(f.qte.value) || 0, seuil: Number(f.seuil.value) || 0, parMenage: Number(f.parMenage.value) || 0, depuis: new Date().toISOString() }].slice(0, 60) }, "stock-" + l.id);
   });
   vue.querySelectorAll("[data-incident-ajout]").forEach(f => f.onsubmit = e => {
     e.preventDefault();
@@ -139,12 +164,35 @@ export function blocAujourdhui(boite, { biens, sejours, demandes, menageDe, erre
         ${dep && arr ? `<span class="tampon">${tr("Rotation le jour même")}</span>` : ""}
       </div></div>`;
   };
-  const jour = (j, titre) => { const r = biens.map(l => rotation(l, j)).filter(Boolean);
-    return `<div class="carte jour-rotations"><h3>${titre} <span class="petit">${dateLongue(jourDe(j))}</span></h3>${r.length ? r.join("") : `<p class="muet petit">${tr("Aucun départ ni arrivée.")}</p>`}</div>`; };
+  // Ménages programmés du jour (avec ou sans calendrier relié) : « Aujourd'hui · 3 ménages : X, Y, Z », état en direct et lien de suivi.
+  const menagesDuJour = j => demandes.filter(d => d.statut !== "ANNULEE" && d.creneau && iso(new Date(d.creneau)) === j && biens.some(b => memeAdresse(d, b)))
+    .sort((a, b) => a.creneau.localeCompare(b.creneau));
+  const ligneMission = d => { const b = biens.find(x => memeAdresse(d, x)), r = rubrique(d.rubrique_id);
+    return `<a class="mission-jour" href="#/demande/${esc(d.reference)}/${esc(d.jeton)}" style="--c:${couleur(b?.id)}">
+      <span class="b-menage b-presta etat-${esc(d.statut)}">${icone(r?.icone || "termine")}</span>
+      <span class="corps"><b>${esc(b ? nomBien(b) : d.ville)}</b><span class="petit">${new Date(d.creneau).toLocaleTimeString(LOCALE, { hour: "2-digit", minute: "2-digit" })} · ${esc(r?.nom || "")}</span></span>
+      <span class="etat-texte etat-${esc(d.statut)}">${tr(ETATS[d.statut] || "")}</span><span class="aller">›</span></a>`; };
+  const jour = (j, titre) => { const r = biens.map(l => rotation(l, j)).filter(Boolean), m = menagesDuJour(j);
+    return `<div class="carte jour-rotations"><h3>${titre} <span class="petit">${dateLongue(jourDe(j))}</span></h3>
+      ${m.length ? `<p class="resume-missions"><b>${m.length} ${tr(m.length > 1 ? "ménages" : "ménage")}</b> · ${m.map(d => esc(nomBien(biens.find(x => memeAdresse(d, x)) || { nom: d.ville }))).join(", ")}</p>
+        <div class="missions-jour">${m.map(ligneMission).join("")}</div>` : ""}
+      ${r.length ? r.join("") : m.length ? "" : `<p class="muet petit">${tr("Aucun ménage, départ ni arrivée.")}</p>`}</div>`; };
+  // Ajouter ses ménages à venir à son agenda (Google, Outlook, iPhone) : fichier .ics.
+  const aVenir = demandes.filter(d => !["ANNULEE", "TERMINEE"].includes(d.statut) && d.creneau && biens.some(b => memeAdresse(d, b)));
   boite.innerHTML = `<div class="alertes-concierge">${al.length ? al.map(a => `<div class="alerte-concierge ${a.niveau}">${{ depart: "⏰", stock: "📦", incident: "🛠️", calendrier: "📅" }[a.type]}
       <span>${texteAlerte(a)}</span>${a.type === "depart" ? `<button type="button" class="bouton petit" data-programmer="${esc(a.bienId)}" data-jour="${a.jour}">${tr("Programmer")}</button>` : ""}</div>`).join("")
     : `<div class="alerte-concierge ok">✅ <span>${tr("Tout est en ordre : chaque départ des prochaines 48 h a son ménage, aucun stock bas, aucun incident ouvert.")}</span></div>`}</div>
-    <div class="grille-rotations">${jour(auj, tr("Aujourd'hui"))}${jour(demain, tr("Demain"))}</div>`;
+    <div class="grille-rotations">${jour(auj, tr("Aujourd'hui"))}${jour(demain, tr("Demain"))}</div>
+    ${aVenir.length ? `<p style="margin:12px 0 0"><button type="button" class="bouton secondaire petit" data-agenda-ics>📅 ${tr("Ajouter mes ménages à mon agenda")} (${aVenir.length})</button>
+      <span class="petit muet"> ${tr("Google Agenda, Outlook ou iPhone")}</span></p>` : ""}`;
+  boite.querySelector("[data-agenda-ics]")?.addEventListener("click", () => {
+    const evts = aVenir.map(d => { const b = biens.find(x => memeAdresse(d, x)), jj = iso(new Date(d.creneau));
+      return { uid: `menage-${d.reference}`, debut: jj, fin: iso(plusJours(jourDe(jj), 1)),
+        titre: `${tr("Ménage Cleaneroo")} · ${b ? nomBien(b) : d.ville} · ${new Date(d.creneau).toLocaleTimeString(LOCALE, { hour: "2-digit", minute: "2-digit" })}`,
+        lieu: b ? `${b.rue}, ${b.codePostal} ${b.ville}` : d.ville, note: `${tr(ETATS[d.statut] || "")} · https://cleaneroo.fr/#/demande/${d.reference}/${d.jeton}` }; });
+    const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([versIcs(evts, new Date())], { type: "text/calendar" }));
+    a.download = "cleaneroo-menages.ics"; a.click();
+  });
   boite.querySelectorAll("[data-programmer]").forEach(b => b.onclick = () => programmer(b.dataset.programmer, b.dataset.jour));
   traduire(boite);
 }
