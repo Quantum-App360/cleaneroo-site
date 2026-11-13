@@ -1912,3 +1912,5 @@ body.avec-decor main, body.avec-decor #vue, body.avec-decor footer { position: r
 @keyframes presta-route { 0%, 100% { transform: translateX(-1px); } 50% { transform: translateX(2px); } }
 @keyframes presta-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(122, 91, 214, .45); } 50% { box-shadow: 0 0 0 5px rgba(122, 91, 214, 0); } }
 @media (prefers-reduced-motion: reduce) { .b-presta, .b-depart { animation: none !important; } }
+.pastille.ok-cal::before { content: ""; }
+.pastille.autre { background: var(--creux); color: var(--texte2); }

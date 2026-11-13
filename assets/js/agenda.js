@@ -75,3 +75,9 @@ export function versIcs(evenements, horodatage) {
   lignes.push("END:VCALENDAR");
   return lignes.map(plier).join("\r\n") + "\r\n";
 }
+
+/** Plateforme d'un lien de calendrier, reconnue d'après le lien lui-même (un lien Booking collé dans le champ Airbnb reste un lien Booking).
+ *  Même règle dans l'appli (Agenda.sourceDe). */
+export const sourceCalendrier = (url, choisi = "autre") => /(^|\.)booking\.com/i.test(hote(url)) ? "booking"
+  : /(^|\.)airbnb\./i.test(hote(url)) ? "airbnb" : choisi === "airbnb" || choisi === "booking" ? "autre" : choisi;
+const hote = url => { try { return new URL(url).hostname; } catch { return ""; } };

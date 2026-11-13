@@ -899,6 +899,14 @@ const T = [
   ["Validez-la pour débloquer vos prestations : fiche à lire et petit quiz.", "Complete it to unlock your services: a short guide and a quick quiz.", "Convalidala per sbloccare i tuoi servizi: una scheda da leggere e un breve quiz.", "Valídala para desbloquear tus servicios: una ficha que leer y un breve cuestionario."],
   ["Suivre la formation", "Take the training", "Segui la formazione", "Hacer la formación"],
   ["Après le Socle Cleaneroo", "After the Cleaneroo Foundation", "Dopo la Base Cleaneroo", "Tras la Base Cleaneroo"],
+  // Synchronisation des calendriers iCal (13 novembre 2026)
+  ["synchronisation…", "syncing…", "sincronizzazione…", "sincronizando…"],
+  ["site non accepté", "site not accepted", "sito non accettato", "sitio no aceptado"],
+  ["lien non valable", "invalid link", "link non valido", "enlace no válido"],
+  ["injoignable", "unreachable", "irraggiungibile", "inaccesible"],
+  ["séjours à venir", "upcoming stays", "soggiorni in arrivo", "estancias próximas"],
+  ["séjour à venir", "upcoming stay", "soggiorno in arrivo", "estancia próxima"],
+  ["Calendrier synchronisé", "Calendar synced", "Calendario sincronizzato", "Calendario sincronizado"],
   // Prestations du Cleaneur (formation, RC Pro, quiz), vidéos INRS, agenda animé (13 novembre 2026)
   ["Vidéos et fiches de formation", "Training videos and guides", "Video e schede di formazione", "Vídeos y fichas de formación"],
   ["C'est du propre ! (INRS, vidéo 12 min)", "C'est du propre ! (INRS, video in French, 12 min)", "C'est du propre ! (INRS, video in francese, 12 min)", "C'est du propre ! (INRS, vídeo en francés, 12 min)"],

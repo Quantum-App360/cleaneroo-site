@@ -5,7 +5,7 @@ import { REGLES, euros, dateLongue, dateCourte, sirenSiretValide } from "./regle
 import { icone } from "./icones.js";
 import { traduire, tr, LOCALE } from "./langue.js";
 import { DOCUMENTS_CLEANEUR, enregistrerBien, lireCalendrier } from "./donnees.js";
-import { couleurBien, voies, morceau, erreurSejour, sejoursGardes, nuits, versIcs } from "./agenda.js";
+import { couleurBien, voies, morceau, erreurSejour, sejoursGardes, nuits, versIcs, sourceCalendrier } from "./agenda.js";
 import { afficherCarte, coordonnees } from "./cartes.js";
 import { chargeur } from "./commun.js";
 import { blocFormulesCleaneur } from "./formules-cleaneur.js";
@@ -124,17 +124,22 @@ let filtreBien = "";         // agenda : un seul bien ou tous
 let vueAgenda = "mois";      // « mois » ou « liste »
 let jourChoisi = null;       // jour touché dans le calendrier (détail affiché dessous)
 
-/** Séjours de tous les biens : ceux des calendriers iCal et ceux saisis à la main ; erreurs par lien. */
+
+/** Séjours de tous les biens : ceux des calendriers iCal et ceux saisis à la main ; erreurs et séjours lus par lien. */
 async function sejoursDes(biens) {
-  const sejours = [], erreurs = {};
+  const sejours = [], erreurs = {}, lus = {};
   biens.forEach(l => (l.sejours || []).forEach(s => sejours.push({ ...s, bienId: l.id, source: "manuel" })));
   await Promise.all(biens.flatMap(l => (l.calendriers || []).filter(c => c.url).map(async c => {
     const r = await lireCalendrier(c.url).catch(() => ({ erreur: "inaccessible" }));
     if (r.erreur) { erreurs[c.url] = r.erreur; return; }
-    // Airbnb : « Not available » = dates bloquées par l'hôte, pas un voyageur. Booking marque toutes ses réservations « CLOSED ».
-    r.evenements.filter(e => !(c.source === "airbnb" && e.bloque)).forEach(e => sejours.push({ bienId: l.id, source: c.source, debut: e.debut, fin: e.fin }));
+    // Airbnb : « Not available » = dates bloquées par l'hôte, pas un voyageur. Booking marque toutes ses réservations « CLOSED » :
+    // la plateforme est donc reconnue d'après le lien, pas d'après le champ où il a été collé.
+    const src = sourceCalendrier(c.url, c.source);
+    const gardes = r.evenements.filter(e => !(src === "airbnb" && e.bloque));
+    lus[c.url] = gardes.filter(e => e.fin >= new Date().toISOString().slice(0, 10)).length;
+    gardes.forEach(e => sejours.push({ bienId: l.id, source: src, debut: e.debut, fin: e.fin }));
   })));
-  return { sejours, erreurs };
+  return { sejours, erreurs, lus };
 }
 
 export function ongletPro(p, biens) {
@@ -179,7 +184,7 @@ export function ongletPro(p, biens) {
           <div class="corps"><b>${esc(nomBien(l))}</b><div class="petit">${esc(l.rue)}, ${esc(l.codePostal)} ${esc(l.ville)}${l.surface ? `<span> · ${l.surface} m²</span>` : ""}${l.chambres ? `<span> · ${l.chambres} ch.</span>` : ""}</div>
           <div class="etat-bien"><span data-prochain="${esc(l.id)}">${tr("Prochain départ")} : …</span>
             <span>📸 ${(l.guide || []).length} ${tr("étapes d'accès")}</span><span>📷 ${etapesPhotoDe(l).length + etapesPersoDe(l).length} ${tr("étapes photo")}</span></div>
-          <div class="pastilles">${cals.length ? cals.map(c => `<span class="pastille ${c.source}" data-etat-cal="${esc(c.url)}">${SOURCES.find(s => s[0] === c.source)?.[1] || ""}</span>`).join("") : `<span class="pastille vide">Aucun calendrier relié</span>`}</div></div></div>
+          <div class="pastilles">${cals.length ? cals.map(c => { const src = sourceCalendrier(c.url, c.source); return `<span class="pastille ${src}" data-etat-cal="${esc(c.url)}" data-nom="${esc(SOURCES.find(s => s[0] === src)?.[1] || "")}">${SOURCES.find(s => s[0] === src)?.[1] || ""} · ${tr("synchronisation…")}</span>`; }).join("") : `<span class="pastille vide">Aucun calendrier relié</span>`}</div></div></div>
         <details><summary>${cals.length ? tr("Modifier le nom et les calendriers") : tr("Relier un calendrier")}</summary>
           <form data-form-cal="${esc(l.id)}" novalidate style="margin-top:10px">
             <label class="champ">Nom du bien<input name="nom" maxlength="60" value="${esc(l.nom)}" placeholder="${esc(tr("Ex. : Studio Vieux-Port"))}"></label>
@@ -214,7 +219,9 @@ export function brancherPro(vue, p, biens, demandes, { majProfil, recharger }) {
   vue.querySelectorAll("[data-form-cal]").forEach(f => f.onsubmit = async e => {
     e.preventDefault();
     const l = biens.find(x => x.id === f.dataset.formCal), err = f.querySelector("[data-erreur-cal]");
-    const calendriers = SOURCES.map(([id]) => ({ source: id, url: f[id].value.trim().replace(/^webcal:/i, "https:") })).filter(c => c.url);
+    const calendriers = SOURCES.map(([id]) => ({ source: id, url: f[id].value.trim().replace(/^webcal:/i, "https:") })).filter(c => c.url)
+      .map(c => ({ ...c, source: sourceCalendrier(c.url, c.source) }))
+      .filter((c, i, t) => t.findIndex(x => x.url === c.url) === i);
     if (calendriers.some(c => !/^https:\/\/\S+$/.test(c.url))) { err.textContent = tr("Collez le lien complet du calendrier (il commence par https://)."); return; }
     err.textContent = tr("Vérification du calendrier…");
     for (const c of calendriers) {
@@ -271,10 +278,16 @@ function trierBiens(vue, biens, prochains) {
 }
 
 async function remplirAgenda(vue, biens, demandes, recharger) {
-  const { sejours, erreurs } = await sejoursDes(biens);
+  const { sejours, erreurs, lus } = await sejoursDes(biens);
   if (!vue.querySelector("#agenda-pro")) return {};   // page quittée entre-temps
   // Calendriers injoignables : pastille rouge sur le bien.
-  vue.querySelectorAll("[data-etat-cal]").forEach(s => { if (erreurs[s.dataset.etatCal]) { s.classList.add("ko"); s.title = tr("Calendrier injoignable"); } });
+  // État de chaque calendrier : séjours à venir lus, ou injoignable (avec la raison).
+  vue.querySelectorAll("[data-etat-cal]").forEach(s => {
+    const u = s.dataset.etatCal, e = erreurs[u], n = lus[u] ?? 0;
+    if (e) { s.classList.add("ko"); s.textContent = `${s.dataset.nom} · ${tr(e === "site" ? "site non accepté" : e === "format" ? "lien non valable" : "injoignable")}`;
+      s.title = tr(e === "site" ? "Ce site de calendrier n'est pas encore accepté. Utilisez le lien Airbnb, Booking, Abritel ou Google." : e === "format" ? "Ce lien n'est pas un calendrier (.ics). Vérifiez que vous avez copié le lien d'export." : "Calendrier injoignable. Vérifiez le lien et réessayez."); }
+    else { s.classList.add("ok-cal"); s.textContent = `${s.dataset.nom} ✓ · ${n} ${tr(n > 1 ? "séjours à venir" : "séjour à venir")}`; s.title = tr("Calendrier synchronisé"); }
+  });
   const auj = new Date(); auj.setHours(0, 0, 0, 0);
   const fin = iso(plusJours(auj, REGLES.AGENDA_HORIZON_JOURS)), debut = iso(auj);
   const bienDe = id => biens.find(x => x.id === id);
