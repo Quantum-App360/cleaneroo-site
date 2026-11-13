@@ -4,7 +4,7 @@ import { decorTableau } from "./commun.js";
 import "./oeil.js";   // œil pour afficher le mot de passe
 import { nomsAttestations } from "./formations.js";
 import { blocDossierAdmin } from "./dossier.js";
-import { blocSelfiesAdmin, blocAvertissementsAdmin } from "./missions.js";
+import { blocSelfiesAdmin, blocAvertissementsAdmin } from "./controle-cleaneurs.js";
 import { supabase, deconnecter, secteursARecruter, dossiersCleaneurs, documentsDe, deciderDossier, deciderDocument, lienDocument, DOCUMENTS_CLEANEUR } from "./donnees.js";
 import { rubrique } from "./catalogue.js";
 import { icone } from "./icones.js";
