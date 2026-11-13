@@ -220,10 +220,10 @@ export async function session() {
  * Chaque statut n'ouvre que son espace ; la base vérifie tout (outils/base-statuts.sql).
  */
 export async function creerCompte({ email, mdp, statuts, prenom, nom, societe = "", siretSociete = "", codeParrain = "" }) {
-  const st = ["particulier", "pro", "cleaneur"].filter(x => statuts.includes(x));
+  const st = ["particulier", "entreprise", "pro", "cleaneur"].filter(x => statuts.includes(x));
   const { data, error } = await supabase.auth.signUp({ email, password: mdp,
     options: { data: { statuts: st, prenom, nom, societe, siret_societe: siretSociete.replace(/\D/g, ""), code_parrain: codeParrain.trim().toUpperCase().slice(0, 20),
-      role: st.includes("cleaneur") ? "cleaneur" : "client", espace: st.includes("pro") ? "pro" : "particulier" }, emailRedirectTo: retour("compte") } });
+      role: st.includes("cleaneur") ? "cleaneur" : "client", espace: st.includes("pro") ? "pro" : st.includes("entreprise") ? "entreprise" : "particulier" }, emailRedirectTo: retour("compte") } });
   if (error) throw new Error(error.message);
   return data.session ? "connecte" : "confirmer";
 }

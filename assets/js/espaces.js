@@ -1,7 +1,7 @@
-// Espaces du compte : onglets « Particulier », « Pro » (conciergeries et multi-biens, agenda iCal) et « Cleaneur » (missions).
+// Espaces du compte : « Particulier », « Entreprise » (bureaux, commerces), « Conciergerie » (statut pro : multi-biens, agenda iCal, planning) et « Cleaneur ».
 // Mêmes écrans que l'application (EspacesCompte.kt). Les valeurs métier sont dans regles.js.
 import { TYPES_LOGEMENT, rubrique } from "./catalogue.js";
-import { REGLES, euros, dateLongue, sirenSiretValide } from "./regles.js";
+import { REGLES, euros, dateLongue, dateCourte, sirenSiretValide } from "./regles.js";
 import { icone } from "./icones.js";
 import { traduire, tr, LOCALE } from "./langue.js";
 import { DOCUMENTS_CLEANEUR, enregistrerBien, lireCalendrier } from "./donnees.js";
@@ -11,11 +11,12 @@ import { chargeur } from "./commun.js";
 import { blocFormulesCleaneur } from "./formules-cleaneur.js";
 import { preremplir } from "./reserver.js";
 import { editeurGuide, brancherGuides } from "./guides.js";
-import { editeurEtapesPhoto, brancherEtapesPhoto } from "./etapes-bien.js";
+import { editeurEtapesPhoto, brancherEtapesPhoto, etapesPhotoDe, etapesPersoDe } from "./etapes-bien.js";
 export { brancherMissions, demanderGeoloc } from "./missions.js";
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-export const ONGLETS = [["particulier", "Particulier", "logement"], ["pro", "Pro", "bureaux"], ["cleaneur", "Cleaneur", "cleaneurs"]];
+// Quatre espaces (13 novembre 2026) : Particulier, Entreprise (bureaux, commerces), Conciergerie (statut « pro » : locations, plusieurs biens), Cleaneur.
+export const ONGLETS = [["particulier", "Particulier", "logement"], ["entreprise", "Entreprise", "bureaux"], ["pro", "Conciergerie", "location"], ["cleaneur", "Cleaneur", "cleaneurs"]];
 
 /**
  * Espaces du compte : un par statut coché (particulier, pro, cleaneur ; cumulables). profils.espace = l'espace ouvert,
@@ -32,7 +33,7 @@ export function ongletParDefaut(p, biens) {
   if (p.espace === "pro" || p.societe || biens.length >= REGLES.SEUIL_ESPACE_PRO_BIENS) return "pro";
   return "particulier";
 }
-export const NOMS_ESPACES = { particulier: "Mon espace Particulier", pro: "Mon espace Pro", cleaneur: "Mon espace Cleaneur" };
+export const NOMS_ESPACES = { particulier: "Mon espace Particulier", entreprise: "Mon espace Entreprise", pro: "Mon espace Conciergerie", cleaneur: "Mon espace Cleaneur" };
 
 export function barreOnglets(actif, ids = ONGLETS.map(o => o[0])) {
   return `<nav class="onglets-compte" aria-label="Mes espaces">${ONGLETS.filter(o => ids.includes(o[0])).map(([id, nom, ico]) =>
@@ -68,7 +69,51 @@ export function ongletParticulier(p, biens, demandes) {
 `;
 }
 
-/* ------------------------------------------------------------------ Pro : conciergeries et multi-propriétaires */
+/* ------------------------------------------------------------------ Entreprise : bureaux, commerces, cabinets (13 novembre 2026) */
+
+/** Prestations proposées aux entreprises, dans l'ordre des raccourcis. */
+const RACCOURCIS_ENTREPRISE = [["office", "Bureaux et cabinets"], ["commerce", "Commerces et entrepôts"], ["communal", "Immeubles et parties communes"], ["windows", "Vitres"]];
+
+export function ongletEntreprise(p, biens, demandes) {
+  const enCours = demandes.filter(d => !["TERMINEE", "ANNULEE"].includes(d.statut) && d.espace === "professionnel")
+    .sort((a, b) => new Date(a.creneau || a.cree_le) - new Date(b.creneau || b.cree_le));
+  const prochaine = enCours[0], r = prochaine && rubrique(prochaine.rubrique_id);
+  const faites = demandes.filter(d => d.statut === "TERMINEE" && d.espace === "professionnel").length;
+  return `<div class="entete-pro entete-entreprise carte">
+      <div><span class="surtitre">Espace Entreprise · Bureaux, commerces et locaux</span>
+        <h2 style="margin:6px 0 2px">${p.societe ? esc(p.societe) : tr("Votre entreprise")}</h2>
+        <p class="petit" style="margin:0">Le ménage de vos locaux, réservé en deux minutes, suivi en direct et facturé à votre société.</p></div>
+      ${formulaireSociete(p)}
+    </div>
+    <div class="tuiles-chiffres">
+      <div class="tuile-chiffre"><b>${enCours.length}</b><span>Prestations à venir</span></div>
+      <div class="tuile-chiffre"><b>${faites}</b><span>Prestations réalisées</span></div>
+      <div class="tuile-chiffre"><b>${biens.length}</b><span>Adresses enregistrées</span></div>
+    </div>
+    <div class="carte mise-en-avant">
+      <span class="surtitre">Ma prochaine prestation</span>
+      ${prochaine ? `<div class="ligne-compte" style="padding:0;box-shadow:none;border:0;background:none;margin-top:10px">${icone(r.icone, { tuile: true })}
+        <div class="corps"><h3 style="margin:0">${r.nom}</h3><p class="muet" style="margin:2px 0 0">${prochaine.creneau ? dateLongue(new Date(prochaine.creneau)) : tr("Date à fixer")} · ${esc(prochaine.ville)}</p></div></div>
+        <div class="boutons"><a class="bouton" href="#/demande/${esc(prochaine.reference)}/${esc(prochaine.jeton)}">Suivre ma prestation</a></div>`
+      : `<p class="muet" style="margin:8px 0 0">Aucune prestation prévue pour l'instant.</p>`}
+    </div>
+    <h2 class="titre-section">${icone("instantane", { tuile: true })}Réserver pour vos locaux</h2>
+    <div class="grille-raccourcis">${RACCOURCIS_ENTREPRISE.map(([id, nom]) => rubrique(id) ? `<a class="carte raccourci" href="#/reserver/${id}">${icone(rubrique(id).icone, { tuile: true })}<b>${nom}</b><span class="petit">${esc(rubrique(id).sousTitre)}</span></a>` : "").join("")}
+      <a class="carte raccourci" href="#/mes-demandes">${icone("calendrier", { tuile: true })}<b>Mes prestations</b><span class="petit">À venir et passées</span></a></div>
+    <p class="petit">Prix affiché tout de suite, Cleaneurs vérifiés, paiement après validation. Factures au nom de votre société, au format Factur-X.</p>`;
+}
+
+/** Raison sociale et SIRET/SIREN (partagés par les espaces Entreprise et Conciergerie). */
+function formulaireSociete(p) {
+  return `<details class="societe"><summary>Ma société</summary>
+        <form id="form-societe" novalidate style="margin-top:10px">
+          <label class="champ">Raison sociale<input name="societe" maxlength="120" value="${esc(p.societe)}" autocomplete="organization"></label>
+          <label class="champ">SIRET (14 chiffres) ou SIREN (9 chiffres)<input name="siret" inputmode="numeric" maxlength="17" value="${esc(p.siret_societe || "")}"></label>
+          <p class="erreur" id="erreur-societe"></p><button class="bouton plein" type="submit">Enregistrer</button></form>
+</details>`;
+}
+
+/* ------------------------------------------------------------------ Conciergerie (statut « pro ») : locations saisonnières et multi-propriétaires */
 
 const SOURCES = [["airbnb", "Airbnb"], ["booking", "Booking.com"], ["autre", "Autre calendrier"]];
 let moisAffiche = null;      // premier jour du mois de l'agenda
@@ -92,27 +137,27 @@ async function sejoursDes(biens) {
 export function ongletPro(p, biens) {
   const relies = biens.filter(l => (l.calendriers || []).some(c => c.url)).length;
   return `<div class="entete-pro carte">
-      <div><span class="surtitre">Espace Pro · Conciergeries et multi-propriétaires</span>
-        <h2 style="margin:6px 0 2px">${p.societe ? esc(p.societe) : tr("Votre activité de location")}</h2>
-        <p class="petit" style="margin:0">Tous vos biens, vos calendriers Airbnb et Booking et les ménages à programmer, au même endroit.</p></div>
-      <details class="societe"><summary>Ma société</summary>
-        <form id="form-societe" novalidate style="margin-top:10px">
-          <label class="champ">Raison sociale<input name="societe" maxlength="120" value="${esc(p.societe)}" autocomplete="organization"></label>
-          <label class="champ">SIRET (14 chiffres) ou SIREN (9 chiffres)<input name="siret" inputmode="numeric" maxlength="17" value="${esc(p.siret_societe || "")}"></label>
-          <p class="erreur" id="erreur-societe"></p><button class="bouton plein" type="submit">Enregistrer</button></form>
-</details>
+      <div><span class="surtitre">Espace Conciergerie · Locations saisonnières et multi-biens</span>
+        <h2 style="margin:6px 0 2px">${p.societe ? esc(p.societe) : tr("Votre conciergerie")}</h2>
+        <p class="petit" style="margin:0">Vos biens, les séjours de vos voyageurs et chaque ménage entre deux départs, pilotés d'un seul écran.</p></div>
+      ${formulaireSociete(p)}
     </div>
-    <div class="grille-raccourcis">
-      <a class="carte raccourci" href="#/mes-demandes">${icone("calendrier", { tuile: true })}<b>Mes prestations</b><span class="petit">À venir et passées</span></a>
-      <a class="carte raccourci" href="#/reserver/rental">${icone("location", { tuile: true })}<b>Ménage de location</b><span class="petit">Entre deux voyageurs</span></a>
-      <a class="carte raccourci" href="#/reserver" data-choisir-prestation>${icone("instantane", { tuile: true })}<b>Nouvelle demande</b><span class="petit">Prix immédiat</span></a>
-    </div>
-    <div class="tuiles-chiffres" id="chiffres-pro">
+    <div class="tuiles-chiffres tuiles-conciergerie" id="chiffres-pro">
       <div class="tuile-chiffre"><b>${biens.length}</b><span>Biens gérés</span></div>
-      <div class="tuile-chiffre"><b>${relies}</b><span>Calendriers reliés</span></div>
+      <div class="tuile-chiffre"><b>${relies}/${biens.length}</b><span>Calendriers reliés</span></div>
       <div class="tuile-chiffre"><b data-chiffre="departs">…</b><span>Départs sur ${REGLES.AGENDA_HORIZON_JOURS} jours</span></div>
+      <div class="tuile-chiffre succes"><b data-chiffre="couverts">…</b><span>Ménages prévus</span></div>
       <div class="tuile-chiffre alerte"><b data-chiffre="aprogrammer">…</b><span>Ménages à programmer</span></div>
     </div>
+    <div class="grille-raccourcis raccourcis-conciergerie">
+      <a class="carte raccourci" href="#/reserver/rental">${icone("location", { tuile: true })}<b>Programmer un ménage</b><span class="petit">Entre deux voyageurs</span></a>
+      <a class="carte raccourci" href="#agenda-pro">${icone("calendrier", { tuile: true })}<b>Ajouter un séjour</b><span class="petit">Sans calendrier relié</span></a>
+      <a class="carte raccourci" href="#liste-biens">${icone("logement", { tuile: true })}<b>Mes biens</b><span class="petit">Calendriers, accès, étapes photo</span></a>
+      <a class="carte raccourci" href="#liste-invitations">${icone("cleaneurs", { tuile: true })}<b>Mes Cleaneurs</b><span class="petit">Inviter vos habitués</span></a>
+    </div>
+    <h2 class="titre-section">${icone("calendrier", { tuile: true })}Planning de la semaine</h2>
+    <p class="petit" style="margin-top:0">Chaque bien, jour par jour : départs, arrivées et ménages. Touchez un départ orange pour programmer son ménage.</p>
+    <div class="carte planning-semaine" id="semaine-pro">${chargeur("Lecture de vos calendriers…", { petit: true, variante: "vitre" })}</div>
     <h2 class="titre-section">${icone("calendrier", { tuile: true })}Agenda des locations</h2>
     <p class="petit" style="margin-top:0">Les séjours de vos voyageurs, lus automatiquement dans vos calendriers Airbnb, Booking, Abritel… ou ajoutés à la main si vous n'utilisez pas de calendrier.</p>
     <div class="carte agenda-carte" id="agenda-pro">${chargeur("Lecture de vos calendriers…", { variante: "vitre" })}</div>
@@ -129,6 +174,8 @@ export function ongletPro(p, biens) {
       return `<div class="carte bien-pro" data-bien="${esc(l.id)}" data-texte="${esc(`${nomBien(l)} ${l.rue} ${l.codePostal} ${l.ville}`.toLowerCase())}">
         <div class="ligne-compte" style="padding:0;box-shadow:none;border:0;background:none">${icone("logement", { tuile: true })}
           <div class="corps"><b>${esc(nomBien(l))}</b><div class="petit">${esc(l.rue)}, ${esc(l.codePostal)} ${esc(l.ville)}${l.surface ? `<span> · ${l.surface} m²</span>` : ""}${l.chambres ? `<span> · ${l.chambres} ch.</span>` : ""}</div>
+          <div class="etat-bien"><span data-prochain="${esc(l.id)}">${tr("Prochain départ")} : …</span>
+            <span>📸 ${(l.guide || []).length} ${tr("étapes d'accès")}</span><span>📷 ${etapesPhotoDe(l).length + etapesPersoDe(l).length} ${tr("étapes photo")}</span></div>
           <div class="pastilles">${cals.length ? cals.map(c => `<span class="pastille ${c.source}" data-etat-cal="${esc(c.url)}">${SOURCES.find(s => s[0] === c.source)?.[1] || ""}</span>`).join("") : `<span class="pastille vide">Aucun calendrier relié</span>`}</div></div></div>
         <details><summary>${cals.length ? tr("Modifier le nom et les calendriers") : tr("Relier un calendrier")}</summary>
           <form data-form-cal="${esc(l.id)}" novalidate style="margin-top:10px">
@@ -146,8 +193,10 @@ export function ongletPro(p, biens) {
       <p class="petit">Le lien se termine souvent par « .ics ». Il ne donne accès qu'aux dates, jamais aux coordonnées de vos voyageurs.</p></details>`;
 }
 
-export function brancherPro(vue, p, biens, demandes, { majProfil, recharger }) {
+/** « Ma société » (espaces Entreprise et Conciergerie). */
+export function brancherSociete(vue, majProfil, recharger) {
   const fs = vue.querySelector("#form-societe");
+  if (!fs) return;
   fs.onsubmit = async e => {
     e.preventDefault();
     const siret = fs.siret.value.replace(/\D/g, "");
@@ -155,6 +204,10 @@ export function brancherPro(vue, p, biens, demandes, { majProfil, recharger }) {
     try { await majProfil({ societe: fs.societe.value.trim(), siret_societe: siret }); recharger(); }
     catch { vue.querySelector("#erreur-societe").textContent = tr("Le service est momentanément indisponible. Réessayez dans quelques minutes."); }
   };
+}
+
+export function brancherPro(vue, p, biens, demandes, { majProfil, recharger }) {
+  brancherSociete(vue, majProfil, recharger);
   vue.querySelectorAll("[data-form-cal]").forEach(f => f.onsubmit = async e => {
     e.preventDefault();
     const l = biens.find(x => x.id === f.dataset.formCal), err = f.querySelector("[data-erreur-cal]");
@@ -237,6 +290,12 @@ async function remplirAgenda(vue, biens, demandes, recharger) {
     .filter((s, i, t) => t.findIndex(x => x.bienId === s.bienId && x.fin === s.fin) === i);
   vue.querySelector('[data-chiffre="departs"]').textContent = new Set(departs.map(s => s.bienId + s.fin)).size;
   vue.querySelector('[data-chiffre="aprogrammer"]').textContent = aProgrammer.length;
+  const couverts = new Set(departs.filter(s => menagePrevu(s.bienId, s.fin)).map(s => s.bienId + s.fin)).size;
+  const tc = vue.querySelector('[data-chiffre="couverts"]'); if (tc) tc.textContent = couverts;
+  // Prochain départ affiché sur chaque fiche de bien.
+  vue.querySelectorAll("[data-prochain]").forEach(e => { const j = prochains[e.dataset.prochain];
+    e.textContent = `${tr("Prochain départ")} : ${j ? dateCourte(jourDe(j)) : tr("aucun")}`; });
+  planningSemaine(vue.querySelector("#semaine-pro"), biens, uniques, menagePrevu, auj, couleurBien);
   const programmer = b => b.onclick = () => { preremplir({ bienId: b.dataset.programmer, jour: b.dataset.jour }); location.hash = "#/reserver/rental"; };
 
   const liste = vue.querySelector("#a-programmer");
@@ -477,4 +536,27 @@ export function ongletCleaneur(p, docs, { dossier, profil }) {
     ${admin ? `<details class="carte"><summary>Essayer le dépôt de documents (comme un Cleaneur)</summary><div style="margin-top:12px">${dossier}</div></details>`
       : `<details class="carte" ${p.dossier === "VALIDE" ? "" : "open"}><summary>Mon dossier Cleaneur</summary><div style="margin-top:12px">${dossier}</div></details>`}
     <details class="carte"><summary>Mon profil et mon périmètre</summary>${profil}</details>`;
+}
+
+/* ------------------------------------------------------------------ Planning de la semaine (conciergerie, 13 novembre 2026) */
+/** Une ligne par bien, une colonne par jour : séjour en cours, arrivée, départ (vert : ménage prévu ; orange : à programmer). */
+export function planningSemaine(boite, biens, sejours, menagePrevu, auj, couleur) {
+  if (!boite) return;
+  if (!biens.length) { boite.innerHTML = `<div class="vide-compte"><p class="muet">${tr("Ajoutez votre premier bien pour voir son planning.")}</p></div>`; return; }
+  const jours = Array.from({ length: 7 }, (_, i) => plusJours(auj, i));
+  const ordre = biens.slice().sort((a, b) => nomBien(a).localeCompare(nomBien(b), "fr", { sensitivity: "base", numeric: true }));
+  const libJour = d => d.toLocaleDateString(LOCALE, { weekday: "short", day: "numeric" });
+  const cellule = (l, d) => {
+    const j = iso(d), dep = sejours.find(s => s.bienId === l.id && s.fin === j), arr = sejours.find(s => s.bienId === l.id && s.debut === j);
+    const occupe = sejours.some(s => s.bienId === l.id && s.debut < j && j < s.fin);
+    const marques = [];
+    if (dep) marques.push(menagePrevu(l.id, j) ? `<span class="pl-menage" title="${esc(tr("Ménage prévu"))}">✓ ${tr("Ménage")}</span>`
+      : `<button type="button" class="pl-programmer" data-programmer="${esc(l.id)}" data-jour="${j}" title="${esc(tr("Programmer le ménage"))}">${tr("Départ")} ›</button>`);
+    if (arr) marques.push(`<span class="pl-arrivee">${tr("Arrivée")}</span>`);
+    return `<td class="${occupe || arr ? "pl-occupe" : ""}">${marques.join("")}</td>`;
+  };
+  boite.innerHTML = `<div class="planning-defile"><table class="planning"><thead><tr><th>${tr("Bien")}</th>${jours.map((d, i) => `<th class="${i === 0 ? "pl-auj" : ""}">${libJour(d)}</th>`).join("")}</tr></thead>
+    <tbody>${ordre.map((l, i) => `<tr style="--c:${couleur(i)}"><th><span class="pl-pastille"></span>${esc(nomBien(l))}</th>${jours.map(d => cellule(l, d)).join("")}</tr>`).join("")}</tbody></table></div>
+    <p class="petit legende-planning"><span class="pl-menage">✓ ${tr("Ménage")}</span> ${tr("prévu")} · <span class="pl-programmer">${tr("Départ")} ›</span> ${tr("à programmer")} · <span class="pl-arrivee">${tr("Arrivée")}</span> · <span class="pl-occupe-ex"></span> ${tr("occupé")}</p>`;
+  boite.querySelectorAll("[data-programmer]").forEach(b => b.onclick = () => { preremplir({ bienId: b.dataset.programmer, jour: b.dataset.jour }); location.hash = "#/reserver/rental"; });
 }

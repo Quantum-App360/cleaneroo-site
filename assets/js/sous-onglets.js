@@ -11,7 +11,7 @@ const GROUPES = {
       ["#missions-disponibles, #missions-incompatibles, .deroule-mission", "missions"]] },
   pro: { onglets: [["tableau", "Tableau"], ["agenda", "Agenda"], ["biens", "Mes biens"], ["equipe", "Équipe"], ["compte", "Compte"]],
     defaut: "tableau", details: null,
-    regles: [[".entete-pro, .grille-raccourcis, #chiffres-pro, #a-programmer", "tableau"], ["#agenda-pro", "agenda"],
+    regles: [[".entete-pro, .grille-raccourcis, #chiffres-pro, #semaine-pro, #a-programmer", "tableau"], ["#agenda-pro", "agenda"],
       ["#carte-biens, #liste-biens, #aucun-bien, .aide-ical", "biens"], ["#liste-invitations, #equipe", "equipe"],
       ["#abonnement-pro, [data-factures], .parrainage, .bloc-parrainage", "compte"], ["details:has(#form-profil)", "compte"]] },
 };

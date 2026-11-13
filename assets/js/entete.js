@@ -22,18 +22,19 @@ export function memoriserProfil(p) {
 export function typeEspace(p) {
   if (!p) return "visiteur";
   if (p.role === "admin") return "admin";
-  return ["particulier", "pro", "cleaneur"].includes(p.espace) ? p.espace : "particulier";
+  return ["particulier", "entreprise", "pro", "cleaneur"].includes(p.espace) ? p.espace : "particulier";
 }
 
 const LIENS = {
   visiteur: [["#/prestations", "Prestations"], ["#/estimer", "Estimer mon prix"], ["#/comment-ca-marche", "Comment ça marche"], ["#/devenir-cleaneur", "Devenir Cleaneur"]],
   // L'essentiel, selon l'espace ouvert ; on change d'espace depuis le bouton du compte (à droite).
   particulier: [["#/tableau", "Mon suivi"], ["#/mes-demandes", "Mes prestations"], ["#/mes-biens", "Mes biens"]],
-  pro: [["#/compte/pro", "Agenda"], ["#/mes-demandes", "Mes prestations"], ["#/mes-biens", "Mes biens"]],
+  entreprise: [["#/compte/entreprise", "Mon espace"], ["#/mes-demandes", "Mes prestations"], ["#/prestations", "Prestations"]],
+  pro: [["#/compte/pro", "Planning"], ["#/mes-demandes", "Mes prestations"], ["#/mes-biens", "Mes biens"]],
   cleaneur: [["#/compte/cleaneur", "Mes missions"], ["#/comment-ca-marche", "Comment ça marche"]],
   admin: [["gestion.html", "Tableau de bord"], ["#/compte/cleaneur", "Missions"], ["#/mes-demandes", "Mes prestations"], ["#/mes-biens", "Mes biens"]],
 };
-const NOM_ESPACE = { particulier: "Espace Particulier", pro: "Espace Pro", cleaneur: "Espace Cleaneur", admin: "Administration" };
+const NOM_ESPACE = { particulier: "Espace Particulier", entreprise: "Espace Entreprise", pro: "Espace Conciergerie", cleaneur: "Espace Cleaneur", admin: "Administration" };
 
 /** Remplit la navigation et les actions de l'en-tête pour ce profil (null = visiteur). */
 export function rendreEntete(p) {
@@ -44,7 +45,7 @@ export function rendreEntete(p) {
   const initiale = (p?.prenom || "?").trim().charAt(0).toUpperCase() || "?";
   const html = type === "visiteur"
     ? `<a class="lien-connexion" href="${b}#/compte">Se connecter</a><a class="bouton bouton-entete" href="${b}#/compte/creer">Créer mon espace</a>`
-    : `${["particulier", "pro"].includes(type) ? `<a class="bouton bouton-entete" href="${b}#/reserver${type === "pro" ? "/rental" : ""}">Réserver</a>` : ""}
+    : `${["particulier", "entreprise", "pro"].includes(type) ? `<a class="bouton bouton-entete" href="${b}#/reserver${type === "pro" ? "/rental" : type === "entreprise" ? "/office" : ""}">Réserver</a>` : ""}
        <a class="cloche" href="${b}#/messages" title="${tr("Messages")}" aria-label="${tr("Messages")}">💬</a>
        <a class="cloche" href="${b}#/notifications" title="${tr("Notifications")}" aria-label="${tr("Notifications")}">🔔<span class="pastille-cloche" hidden></span></a>
        <a class="puce-compte" href="${b}#/compte" title="${tr("Mon espace")}"><span class="avatar">${initiale}</span><span class="qui"><b>${p.prenom || tr("Mon espace")}</b><small>${NOM_ESPACE[type]}</small></span></a>`;

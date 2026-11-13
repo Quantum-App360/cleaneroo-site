@@ -562,7 +562,7 @@ async function afficherPage() {
   const [route, param] = chemin.split("/");
   if (route === "gestion") { location.href = "gestion.html"; return; }
   // Changement d'espace (Particulier, Pro, Cleaneur) : transition « laveur de vitres », comme l'appli.
-  const espace = route === "compte" && ["particulier", "pro", "cleaneur"].includes(param) ? param : null;
+  const espace = route === "compte" && ["particulier", "entreprise", "pro", "cleaneur"].includes(param) ? param : null;
   if (espace && espacePrecedent && espace !== espacePrecedent) transitionVitre();
   if (espace) espacePrecedent = espace;
   // Accès Cleaneur : l'accueil, les prestations, l'estimation et « Mes prestations » mènent à son espace.
