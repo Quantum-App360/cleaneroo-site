@@ -53,3 +53,26 @@ export async function blocSelfiesAdmin(boite) {
   });
 }
 
+
+/* Salariés des sociétés de nettoyage (16 novembre 2026) : pièce d'identité à vérifier avant leur première mission. */
+export async function blocSalariesAdmin(boite) {
+  if (!boite) return;
+  const { supabase } = await import("./donnees.js");
+  const liste = await supabase.rpc("salaries_a_verifier").then(r => r.data || [], () => []);
+  if (!boite.isConnected) return;
+  boite.innerHTML = `<h2 class="titre-section">🪪 ${tr("Salariés des sociétés (identité)")}</h2>
+    ${liste.length ? liste.map(s => `<div class="carte" data-salarie-admin="${esc(s.id)}"><div class="paire">
+      <img alt="${esc(tr("Pièce d'identité"))}" ${s.identite ? `data-lien-identite="${esc(s.identite)}"` : ""}>
+      <div style="flex:1 1 180px"><b>${esc(`${s.prenom || ""} ${s.nom || ""}`.trim())}</b><p class="petit" style="margin:2px 0 6px">${esc(s.societe || "")} · ${tr({ A_VERIFIER: "À vérifier", ACTIF: "Actif", REFUSE: "Refusé" }[s.statut] || s.statut)}${s.identite ? "" : ` · ${tr("pièce d'identité pas encore envoyée")}`}</p>
+        ${s.statut === "A_VERIFIER" && s.identite ? `<div class="boutons" style="margin:0"><button type="button" class="bouton" data-decider-salarie="1">${tr("Identité vérifiée")}</button>
+          <button type="button" class="bouton secondaire" data-decider-salarie="0">${tr("Refuser")}</button></div>` : ""}</div></div></div>`).join("")
+      : `<div class="vide-compte"><p class="muet">${tr("Aucun salarié à vérifier.")}</p></div>`}`;
+  traduire(boite);
+  boite.querySelectorAll("[data-lien-identite]").forEach(async i => { try { i.src = await lienDocument(i.dataset.lienIdentite); } catch { /* rien */ } });
+  boite.querySelectorAll("[data-decider-salarie]").forEach(b => b.onclick = async () => {
+    const id = b.closest("[data-salarie-admin]").dataset.salarieAdmin, ok = b.dataset.deciderSalarie === "1";
+    const motif = ok ? "" : (prompt(tr("Motif du refus (visible par le salarié et son employeur) :")) ?? "");
+    await supabase.rpc("decider_salarie", { p_id: id, p_valide: ok, p_motif: motif }).then(() => null, () => null);
+    blocSalariesAdmin(boite);
+  });
+}

@@ -1,6 +1,6 @@
 // Parcours de réservation en 5 étapes : copie de Reservation.kt (application Android).
 // 1 prestation · 2 questionnaire · 3 photos · 4 adresse, accès et créneau · 5 estimation, coordonnées et envoi.
-import { PARTIES, partie, partiePour, PARTIE_DE_L_ESPACE, rubriquesProposees, TARIFS_SPECIAUX, RUBRIQUES, rubrique, formulesPour, TYPES_LIEU, TYPES_LOGEMENT, BESOINS_SPECIAUX, ACCUEIL, accueilAutonomeInterdit, photosObligatoires,
+import { PARTIES, partie, partiePour, PARTIE_DE_L_ESPACE, rubriquesProposees, categorieBien, categorieDeRubrique, categoriesDeRubrique, bienCompatible, typesDeCategorie, CATEGORIES_BIEN, TARIFS_SPECIAUX, RUBRIQUES, rubrique, formulesPour, TYPES_LIEU, TYPES_LOGEMENT, BESOINS_SPECIAUX, ACCUEIL, accueilAutonomeInterdit, photosObligatoires,
   ELEMENTS_TEXTILES, TAILLES_CANAPE, prixLigne, minutesLigne, libelleLigne, pastille,
   FREQUENCES, JOURS_SEMAINE, DERNIERS_NETTOYAGES, packsPour, remisePack,
   TACHES_A_TRAITER, TYPES_CHANTIER, equipementsPour, DELAIS_URGENCE, TYPES_IMMEUBLE, surfaceEffective, SELECTION_CONSEILLEE_VEHICULE, LIEUX_VEHICULE, FREQUENCES_VEHICULE, RUBRIQUES_LOGEMENT, vuesPhotos, vuesCompletes, PIECES_LOCATION, ETAPES_LOCATION, PACK_ETAPES_CONSEILLE, ETAPES_DEPART, prixEtapeLocationC, repetitionsEtape, CONSOMMABLES_LOCATION, PACK_CONSOMMABLES_CONSEILLE } from "./catalogue.js";
@@ -34,14 +34,29 @@ export function oublierMesInformations() { [CLE_PROFIL, CLE_LOGEMENTS, CLE_MODEL
 const CHAMPS_LOGEMENT = ["rue", "codePostal", "ville", "accueil", "tiersNom", "tiersTel", "boiteEmplacement"];
 const PRIVES = ["prenom", "nom", "email", "telephone", "code", "jour", "heure", "cgv", "etape", "sansPhotos", "flexible", ...CHAMPS_LOGEMENT];
 /** Libellé court d'une adresse enregistrée : « Appartement · Fréjus ». */
-export const nomLogement = l => l.nom ? `${l.nom} · ${l.ville}` : `${(TYPES_LOGEMENT.find(t => t.id === l.typeLogementId) || {}).nom || "Adresse"} · ${l.ville}`;
+export const nomLogement = l => {
+  const cat = categorieBien(l);
+  const type = cat === "logement" ? (TYPES_LOGEMENT.find(t => t.id === l.typeLogementId) || {}).nom : (typesDeCategorie(cat).find(t => t.id === (cat === "local" ? l.typeLocal : l.typeLieuId)) || {}).nom;
+  return l.nom ? `${l.nom} · ${l.ville}` : `${type || "Adresse"} · ${l.ville}`;
+};
+/** Icône d'un bien selon sa catégorie. */
+export const iconeBien = l => (CATEGORIES_BIEN.find(c => c[0] === categorieBien(l)) || CATEGORIES_BIEN[0])[2];
+const ADRESSES = ["logement", "local"];
+/** Biens enregistrés utilisables pour cette prestation (même catégorie). */
+const biensPour = rubriqueId => logements().filter(l => bienCompatible(rubriqueId, l));
 
 function memoriserCommande(b) {
   ecrire(CLE_PROFIL, { prenom: b.prenom.trim(), nom: b.nom.trim(), email: b.email.trim(), telephone: b.telephone.trim() });
   const liste = logements();
   const meme = l => l.rue.trim().toLowerCase() === b.rue.trim().toLowerCase() && l.codePostal === b.codePostal;
-  const ancien = liste.find(meme);
-  const log = { ...(ancien || {}), id: ancien?.id || "l" + Date.now(), typeLogementId: b.typeLogementId, surface: b.surface, chambres: b.chambres, sdb: b.sdb, niveaux: b.niveaux,
+  // Bien de la catégorie de la prestation (16 novembre 2026) : un bateau ou un véhicule n'est jamais fusionné avec un logement de même adresse.
+  const choisi = liste.find(l => l.id === b.logementId && bienCompatible(b.rubriqueId, l));
+  const cat = choisi ? categorieBien(choisi) : categorieDeRubrique(b.rubriqueId, b.espace);
+  const ancien = choisi || (ADRESSES.includes(cat) ? liste.find(l => categorieBien(l) === cat && meme(l)) : null);
+  const description = cat === "local" ? { categorie: "local" } : cat === "logement" ? { typeLogementId: b.typeLogementId, surface: b.surface, chambres: b.chambres, sdb: b.sdb, niveaux: b.niveaux }
+    : { categorie: cat, typeLieuId: b.typeLieuId, ...(cat === "vehicule" ? {} : { surface: b.surface }),
+        ...(cat === "bateau" ? { port: String(b.port || "").trim(), place: String(b.place || "").trim(), accesPonton: String(b.accesPonton || "").trim() } : {}) };
+  const log = { ...(ancien || {}), id: ancien?.id || "l" + Date.now(), ...description,
     ...Object.fromEntries(CHAMPS_LOGEMENT.map(k => [k, String(b[k] ?? "").trim()])),
     ...(Number.isFinite(b.lat) ? { lat: b.lat, lon: b.lon } : {}) };
   // Location saisonnière : les étapes à valider en photo sont gardées avec le logement (et dans le compte).
@@ -49,7 +64,7 @@ function memoriserCommande(b) {
     log.etapesPhoto = { etapes: etapesDe(b), perso: b.etapesPerso || [] };
     if (b.logementId === log.id || ancien) enregistrerBien(log).catch(() => null);
   }
-  ecrire(CLE_LOGEMENTS, [log, ...liste.filter(l => !meme(l))].slice(0, REGLES.BIENS_MAX));
+  ecrire(CLE_LOGEMENTS, [log, ...liste.filter(l => l.id !== log.id && !(ADRESSES.includes(cat) && categorieBien(l) === cat && meme(l)))].slice(0, REGLES.BIENS_MAX));
   const modele = Object.fromEntries(Object.entries(b).filter(([k]) => !PRIVES.includes(k)));
   // « Mémoriser ces étapes pour ce logement » décoché : les étapes ne sont pas reprises la prochaine fois.
   if (b.rubriqueId === "rental" && b.memoriserEtapes === false) { delete modele.etapesChoisies; delete modele.etapesPerso; delete modele.consommablesChoisis; }
@@ -58,7 +73,18 @@ function memoriserCommande(b) {
 
 /** Applique une adresse enregistrée au brouillon (adresse et accès ; le code est redemandé). */
 function avecLogement(br, l) {
-  if (!l) return br;
+  // Un bien d'une autre catégorie n'est jamais repris (un appartement dans une réservation de bateau, par exemple).
+  if (!l || !bienCompatible(br.rubriqueId, l)) return br;
+  const cat = categorieBien(l);
+  if (cat === "local") return { ...br, ...Object.fromEntries(CHAMPS_LOGEMENT.map(k => [k, l[k] || ""])), logementId: l.id, code: "", guide: Array.isArray(l.guide) ? l.guide : [],
+    lat: Number.isFinite(l.lat) ? l.lat : null, lon: Number.isFinite(l.lon) ? l.lon : null };
+  if (cat !== "logement") {
+    const types = typesDeCategorie(cat).map(t => t.id);
+    return { ...br, ...Object.fromEntries(CHAMPS_LOGEMENT.map(k => [k, l[k] || ""])), logementId: l.id, code: "", guide: [], modifierLogement: false,
+      ...(types.includes(l.typeLieuId) ? { typeLieuId: l.typeLieuId } : {}), ...(Number(l.surface) > 0 && cat !== "vehicule" ? { surface: Number(l.surface) } : {}),
+      ...(cat === "bateau" ? { port: l.port || "", place: l.place || "", accesPonton: l.accesPonton || "" } : {}),
+      lat: Number.isFinite(l.lat) ? l.lat : null, lon: Number.isFinite(l.lon) ? l.lon : null };
+  }
   // Description du logement reprise (ménage, location, déménagement) quand elle est connue : elle n'est plus redemandée.
   const dims = ["home", "rental", "moving"].includes(br.rubriqueId) && Number(l.surface) > 0
     ? { typeLogementId: l.typeLogementId || "appartement", surface: l.surface, chambres: l.chambres ?? 0, sdb: l.sdb || 1, niveaux: l.niveaux || 1, modifierLogement: false } : {};
@@ -111,7 +137,7 @@ function brouillonInitialSansFavori(rubriqueId, espace = "personnel", rapide = f
   const lieux = TYPES_LIEU[rubriqueId];
   const p = profil() || {};
   const m = lire(CLE_MODELES, {})[rubriqueId];
-  const log = logements().find(l => l.id === m?.logementId) || logements()[0];
+  const log = biensPour(rubriqueId).find(l => l.id === m?.logementId) || biensPour(rubriqueId)[0];
   // Déjà commandé : tout est repris ; « rapide » ouvre directement l'adresse et le créneau.
   if (m) return avecLogement({ ...vierge(rubriqueId, espace, r, lieux), ...m, prenom: p.prenom || "", nom: p.nom || "", email: p.email || "", telephone: p.telephone || "",
     etape: rapide && log ? 4 : 2, jour: "", heure: -1, cgv: false }, log);
@@ -147,10 +173,9 @@ let racine = null;
 let envoi = false;
 
 /** Logement choisi à l'étape 1 : identifiant, "" pour un nouveau logement. Par défaut : celui du brouillon, sinon le premier enregistré. */
+/** Bien choisi depuis « Mes biens » (« Réserver ») : seules ses prestations sont proposées à l'étape 1 ; sinon aucun (toutes les prestations). */
 function logementDepart() {
-  if (b && b.logementDepart !== undefined) return b.logementDepart;
-  if (b?.logementId) return b.logementId;
-  return logements()[0]?.id ?? "";
+  return b && b.logementDepart ? b.logementDepart : "";
 }
 /** Compte connecté (hors administrateur) : la partie suit l'espace ouvert (Particulier, Conciergerie, Entreprise), la question « Pour qui ? » disparaît. */
 function partieImposee() {
@@ -164,7 +189,7 @@ const partieCourante = () => partieImposee() || b?.espace || "personnel";
 /** Applique le logement de l'étape 1 au brouillon (ou vide l'adresse pour un nouveau logement). */
 function avecLogementDepart(br, id) {
   const l = id ? logements().find(x => x.id === id) : null;
-  if (l) return { ...avecLogement(br, l), logementDepart: id };
+  if (l && bienCompatible(br.rubriqueId, l)) return { ...avecLogement(br, l), logementDepart: id };
   return { ...br, logementDepart: "", logementId: "", rue: "", codePostal: "", ville: "", accueil: "", tiersNom: "", tiersTel: "", boiteEmplacement: "", code: "", lat: null, lon: null };
 }
 
@@ -307,10 +332,13 @@ function etape1() {
   // Compte connecté (16 novembre 2026) : la partie suit l'espace ouvert, sans question ; un logement enregistré ne propose que les prestations qui le concernent.
   const depart = logementDepart();
   const pid = partieCourante(), p = partie(pid), imposee = !!partieImposee(), entreprise = p.id === "professionnel";
-  const choixLogement = logements().length ? titre(entreprise ? "Pour quelle adresse ?" : "Pour quel logement ?") + logements().map(l => `<button type="button" class="option ${depart === l.id ? "choisi" : ""}" data-logement-depart="${esc(l.id)}">${esc(nomLogement(l))}<span class="detail">${esc(l.rue)}, ${esc(l.codePostal)} ${esc(l.ville)}</span></button>`).join("")
-    + `<button type="button" class="option ${depart === "" ? "choisi" : ""}" data-logement-depart="">${entreprise ? "+ Nouvelle adresse" : "+ Nouveau logement"}</button>` : "";
-  const logEnr = !!depart && logements().some(l => l.id === depart);
-  const proposees = rubriquesProposees(pid, logEnr);
+  // Prestation d'abord (16 novembre 2026) : les biens s'affichent à l'étape 2, seulement ceux de la prestation choisie.
+  // Venu de « Réserver » sur un bien (Mes biens, Mon suivi) : ce bien est rappelé et seules ses prestations sont proposées.
+  const bienChoisi = depart ? logements().find(l => l.id === depart) : null;
+  const logEnr = !!bienChoisi;
+  const choixLogement = bienChoisi ? `<p class="logement-choisi">${icone(iconeBien(bienChoisi))} <b>${esc(nomLogement(bienChoisi))}</b>
+      <button type="button" class="lien-bouton" data-logement-depart="">${tr("Autre chose à nettoyer")}</button></p>` : "";
+  const proposees = rubriquesProposees(pid, bienChoisi);
   const pourQui = imposee
     ? `<p class="pour-qui-fixe">${icone({ personnel: "logement", conciergerie: "location", professionnel: "bureaux" }[p.id], { tuile: true })}<span><b>${p.nom}</b><span class="petit">${p.detail}</span></span></p>`
     : `${titre("Pour qui ?")}
@@ -325,7 +353,7 @@ function etape1() {
       return `<a class="carte prestation rapide" href="#/reserver/${m.rubriqueId}/rapide">${icone(r.icone, { tuile: true })}<h3>${r.nom}</h3>
         <p class="muet" style="margin:4px 0 0">${l ? esc(nomLogement(l)) : ""}</p><span class="tampon vert">Recommander en 3 clics ›</span></a>`; }).join("")}</div>` : ""}
     ${titre("Votre prestation")}
-    ${logEnr && !entreprise ? `<p class="petit" style="margin:-4px 0 12px">Prestations adaptées à ce logement.</p>` : ""}
+    ${logEnr ? `<p class="petit" style="margin:-4px 0 12px">${tr(categorieBien(bienChoisi) === "logement" ? "Prestations adaptées à ce logement." : "Prestations adaptées à ce bien.")}</p>` : ""}
     <div class="grille-3">${RUBRIQUES.filter(r => proposees.includes(r.id)).map(r => `<button type="button" class="carte prestation" data-rubrique="${r.id}" style="text-align:left">
       ${icone(r.icone, { tuile: true })}<h3>${r.nom}</h3><p class="muet" style="margin:4px 0 0">${r.sousTitre}</p><span class="tampon">${pastille(r)}</span></button>`).join("")}</div>`;
 }
@@ -347,6 +375,19 @@ function etape2() {
     : !tachesOk ? "Choisissez au moins une tâche." : "Précisez l'accueil du Cleaneur pour continuer.");
 }
 
+/** Étape 2 : les biens enregistrés de la catégorie de la prestation (« Mes bateaux »…), et « + Nouveau ». */
+const LIBELLES_BIENS = { logement: ["Mes logements", "+ Nouveau logement"], local: ["Mes locaux", "+ Nouveau local"], vehicule: ["Mes voitures", "+ Nouvelle voiture"],
+  loisirs: ["Mes vans et camping-cars", "+ Nouveau van, camping-car ou caravane"], bateau: ["Mes bateaux", "+ Nouveau bateau"] };
+function choixDuBien() {
+  const liste = biensPour(b.rubriqueId);
+  if (!liste.length) return "";
+  const cats = categoriesDeRubrique(b.rubriqueId);
+  const [titreListe, nouveau] = cats.length > 1 ? (["professionnel", "hotellerie"].includes(b.espace) ? ["Mes adresses", "+ Nouvelle adresse"] : ["Mes logements et adresses", "+ Nouvelle adresse"]) : LIBELLES_BIENS[cats[0]];
+  return titre(titreListe) + liste.map(l => `<button type="button" class="option option-bien ${b.logementId === l.id ? "choisi" : ""}" data-bien-etape2="${esc(l.id)}">${icone(iconeBien(l))}
+      <span><b>${esc(nomLogement(l))}</b><span class="detail">${esc(l.immatriculation ? `${l.immatriculation} · ` : "")}${esc(categorieBien(l) === "bateau" && l.port ? [l.port, l.place].filter(Boolean).join(", ") : `${l.rue}, ${l.codePostal} ${l.ville}`)}</span></span></button>`).join("")
+    + `<button type="button" class="option ${b.logementId ? "" : "choisi"}" data-bien-etape2="">${tr(nouveau)}</button>`;
+}
+
 /** Questions qui font le prix (étape 2 de la réservation, et simulateur « Estimer mon prix » sans l'en-tête). */
 function questionnaire(enTete = true) {
   const r = rubrique(b.rubriqueId);
@@ -354,8 +395,8 @@ function questionnaire(enTete = true) {
   let h = enTete ? `<h2>${icone(r.icone)} ${r.nom}</h2><p class="muet">Décrivez le besoin</p>` : "";
   // Logement déjà renseigné (réservation ou « Mes biens ») : choisi dès le début, sa description et son adresse sont reprises.
   // Logement choisi à l'étape 1 : rappelé ici (on peut en changer en revenant à l'étape 1).
-  const logChoisi = enTete && b.logementId && logements().find(l => l.id === b.logementId);
-  if (logChoisi) h += `<p class="logement-choisi">${icone("logement")} <b>${esc(nomLogement(logChoisi))}</b> <span class="petit">${esc(logChoisi.rue)}, ${esc(logChoisi.codePostal)} ${esc(logChoisi.ville)}</span></p>`;
+  const logChoisi = enTete && b.logementId && logements().find(l => l.id === b.logementId && bienCompatible(b.rubriqueId, l));
+  if (enTete) h += choixDuBien();
   if (b.rubriqueId === "special") {
     h += `<div class="note" style="margin-top:14px">Prix fixé à l'avance selon le type d'intervention et la surface : forfait, puis prix au m² au-delà.</div>`
       + (TARIFS_SPECIAUX[b.typeLieuId]?.certibiocide ? `<div class="note" style="margin-top:8px">Intervention réalisée par un Cleaneur titulaire du Certibiocide « nuisibles », vérifié avant activation.</div>` : "");
@@ -365,9 +406,19 @@ function questionnaire(enTete = true) {
   if (logFixe) h += titre("Votre logement") + `<div class="carte recap-logement"><span>${icone("logement")}<b>${esc((TYPES_LOGEMENT.find(t => t.id === b.typeLogementId) || {}).nom || "Logement")}</b>
       <span>· ${b.surface} m²</span><span>· ${b.chambres} ${tr(b.chambres > 1 ? "chambres" : "chambre")}</span><span>· ${b.sdb} ${tr(b.sdb > 1 ? "salles de bain" : "salle de bain")}</span>${b.niveaux > 1 ? `<span>· ${b.niveaux} ${tr("niveaux")}</span>` : ""}</span>
       <button type="button" class="lien-bouton" data-modifier-logement>Modifier</button></div>`;
+  // Véhicule, camping-car ou bateau enregistré : sa description n'est plus redemandée (type, longueur, port).
+  const bienFixe = enTete && !!logChoisi && !ADRESSES.includes(categorieBien(logChoisi)) && !b.modifierLogement;
+  if (bienFixe) {
+    const typeNom = (typesDeCategorie(categorieBien(logChoisi)).find(t => t.id === b.typeLieuId) || {}).nom || "";
+    const nature = { vehicule: "Votre véhicule", loisirs: "Votre véhicule", bateau: "Votre bateau" }[categorieBien(logChoisi)];
+    h += titre(nature) + `<div class="carte recap-logement"><span>${icone(iconeBien(logChoisi))}<b>${esc(typeNom)}</b>
+      ${categorieBien(logChoisi) !== "vehicule" ? `<span>· ${b.surface} m</span>` : ""}${logChoisi.immatriculation ? `<span>· ${esc(logChoisi.immatriculation)}</span>` : ""}
+      ${categorieBien(logChoisi) === "bateau" && b.port ? `<span>· ${esc([b.port, b.place].filter(Boolean).join(", "))}</span>` : ""}</span>
+      <button type="button" class="lien-bouton" data-modifier-logement>Modifier</button></div>`;
+  }
   if (RUBRIQUES_LOGEMENT.includes(b.rubriqueId) && !logFixe) h += titre("Type de logement") + choix(TYPES_LOGEMENT.map(t => [t.id, t.nom]), b.typeLogementId, "typeLogementId");
   const lieux = TYPES_LIEU[b.rubriqueId];
-  if (lieux) h += titre(r.titreTypes || { car: "Gabarit du véhicule", construction: "Type de sol", kitchen: "Type d'établissement" }[b.rubriqueId] || "Type de lieu")
+  if (lieux && !bienFixe) h += titre(r.titreTypes || { car: "Gabarit du véhicule", construction: "Type de sol", kitchen: "Type d'établissement" }[b.rubriqueId] || "Type de lieu")
     + choix(lieux.map(l => [l.id, l.nom]), b.typeLieuId, "typeLieuId");
   if (b.rubriqueId !== "car") {
     h += titre("Choisissez votre formule") + formules.map(f => `<button type="button" class="option ${f.id === b.formuleId ? "choisi" : ""}" data-champ="formuleId" data-valeur="${f.id}">
@@ -381,7 +432,7 @@ function questionnaire(enTete = true) {
   if (b.rubriqueId !== "car") {
     if (b.rubriqueId === "special" && TARIFS_SPECIAUX[b.typeLieuId]?.surface !== false) h += titre("Dimensions") + `<div class="carte">${compteur("Surface à traiter", "surface", b.surface, { min: 5, max: 5000, unite: " m²" })}`
       + (surfaceEffective(b) > REGLES.SEUIL_DEVIS_SURFACE_M2 ? `<p style="color:var(--alerte);font-size:14px">Au-delà de 300 m² : devis obligatoire.</p>` : "") + `</div>`;
-    if (!["textiles", "hospitality", "special"].includes(b.rubriqueId) && !logFixe) h += titre("Dimensions") + `<div class="carte">`
+    if (!["textiles", "hospitality", "special"].includes(b.rubriqueId) && !logFixe && !(bienFixe && ["leisure", "boat"].includes(b.rubriqueId))) h += titre("Dimensions") + `<div class="carte">`
       + (b.rubriqueId === "windows" ? compteur("Nombre de fenêtres", "fenetres", b.fenetres, { min: 1, max: 200 })
           + compteur("Surface vitrée approximative", "surfaceVitree", b.surfaceVitree ?? 20, { min: 1, max: 500, unite: " m²" })
           + `<p class="petit">La surface vitrée sert uniquement aux tâches à la surface.</p>`
@@ -389,6 +440,7 @@ function questionnaire(enTete = true) {
           ? compteur("Surface par palier", "surfacePalier", b.surfacePalier ?? REGLES.SURFACE_PALIER_DEFAUT_M2, { min: 5, max: 300, unite: " m²" })
           + compteur("Nombre de paliers (étages)", "paliers", b.paliers ?? REGLES.PALIERS_DEFAUT, { min: 1, max: REGLES.PALIERS_MAX })
           + `<p class="petit">Surface totale : ${surfaceEffective(b)} m² (${b.surfacePalier ?? REGLES.SURFACE_PALIER_DEFAUT_M2} m² × ${b.paliers ?? REGLES.PALIERS_DEFAUT} paliers).</p>`
+        : ["leisure", "boat"].includes(b.rubriqueId) && bienFixe ? ""
         : ["leisure", "boat"].includes(b.rubriqueId) ? compteur(b.rubriqueId === "boat" ? "Longueur du bateau" : "Longueur du véhicule", "surface", b.surface, { min: 3, max: b.rubriqueId === "boat" ? 40 : 14, unite: " m" })
         : compteur("Surface", "surface", b.surface, { min: 5, max: 5000, unite: " m²" }))
       + ([...RUBRIQUES_LOGEMENT, "rental"].includes(b.rubriqueId) ? compteur("Chambres", "chambres", b.chambres, { max: 12 }) + compteur("Salles de bain", "sdb", b.sdb, { min: 1, max: 8 }) : "")
@@ -399,7 +451,7 @@ function questionnaire(enTete = true) {
       + `</div>`;
   }
   // Bateaux : accès au port et capitainerie (16 novembre 2026).
-  if (b.rubriqueId === "boat") h += titre("Au port") + `<div class="carte">${champTexte("Port", "port", b.port || "", "text", 'maxlength="80" placeholder="Ex. : Port-Fréjus"')}
+  if (b.rubriqueId === "boat" && !bienFixe) h += titre("Au port") + `<div class="carte">${champTexte("Port", "port", b.port || "", "text", 'maxlength="80" placeholder="Ex. : Port-Fréjus"')}
       ${champTexte("Ponton et numéro de place", "place", b.place || "", "text", 'maxlength="60" placeholder="Ex. : ponton C, place 42"')}
       ${champTexte("Accès au ponton (badge, code du portail)", "accesPonton", b.accesPonton || "", "text", 'maxlength="120"')}
       <p class="petit" style="margin:0">${tr("Conseil : prévenez la capitainerie de votre port. Le Cleaneur reçoit un bon d'intervention à présenter sur place (bateau, place, autorisation du propriétaire, assurance). Le carénage n'est pas proposé : il se fait uniquement sur une aire agréée.")}</p></div>`;
@@ -673,9 +725,9 @@ function debutChoisi() {
 let changerLogement = false;   // étape 4 : liste des logements dépliée pour en changer
 /** Étape 4 : logement choisi à l'étape 1, rappelé en une ligne (« Changer » rouvre la liste). */
 function logementChoisiEtape4() {
-  const l = b.logementId && logements().find(x => x.id === b.logementId);
+  const l = b.logementId && biensPour(b.rubriqueId).find(x => x.id === b.logementId);
   if (!l || changerLogement) return "";
-  return `<div class="logement-choisi">${icone("logement")} <b>${esc(nomLogement(l))}</b> <span class="petit">${esc(l.rue)}, ${esc(l.codePostal)} ${esc(l.ville)}</span>
+  return `<div class="logement-choisi">${icone(iconeBien(l))} <b>${esc(nomLogement(l))}</b> <span class="petit">${esc(l.rue)}, ${esc(l.codePostal)} ${esc(l.ville)}</span>
     <button type="button" class="lien-bouton" data-changer-logement>${tr("Changer")}</button></div>`;
 }
 
@@ -701,7 +753,7 @@ function etape4() {
     : !tient ? "Le ménage ne tient pas entre le départ et l'arrivée suivante : avancez le départ ou retardez l'arrivée." : !creneauOk ? "Choisissez un créneau." : "";
   return `<h2>Adresse et créneau</h2>
     ${logementChoisiEtape4()}
-    ${logements().length && (!b.logementId || changerLogement) ? `${titre("Choisissez un logement déjà renseigné")}${logements().map(l => `<button type="button" class="option ${b.logementId === l.id ? "choisi" : ""}" data-logement="${l.id}">${esc(nomLogement(l))}<span class="detail">${esc(l.rue)}, ${esc(l.codePostal)} ${esc(l.ville)}</span></button>`).join("")}
+    ${biensPour(b.rubriqueId).length && (!b.logementId || changerLogement) ? `${titre(categoriesDeRubrique(b.rubriqueId).includes("logement") ? "Choisissez une adresse déjà renseignée" : "Choisissez un bien déjà enregistré")}${biensPour(b.rubriqueId).map(l => `<button type="button" class="option ${b.logementId === l.id ? "choisi" : ""}" data-logement="${l.id}">${esc(nomLogement(l))}<span class="detail">${esc(l.rue)}, ${esc(l.codePostal)} ${esc(l.ville)}</span></button>`).join("")}
       <button type="button" class="option ${b.logementId ? "" : "choisi"}" data-logement="">+ Ajouter une nouvelle adresse</button>` : ""}
     <div class="carte ${b.logementId ? "masque" : ""}" style="margin-top:14px">
       <button type="button" class="bouton secondaire plein bouton-geoloc" data-geoloc>${icone("position")}<span>Me géolocaliser</span></button>
@@ -899,13 +951,20 @@ document.addEventListener("click", async e => {
   }
   if (ds.espace) { b = b ? { ...b, espace: ds.espace } : { espace: ds.espace, etape: 1 }; sauver(); return rendre(); }
   if (ds.modifierLogement !== undefined) return maj({ modifierLogement: true });
+  if (ds.bienEtape2 !== undefined) {
+    const l = logements().find(x => x.id === ds.bienEtape2);
+    if (l) return maj({ ...avecLogement(b, l), modifierLogement: false });
+    // Nouveau bien : description et adresse à saisir (il sera enregistré à l'envoi de la demande).
+    return maj({ logementId: "", modifierLogement: true, rue: "", codePostal: "", ville: "", accueil: "", tiersNom: "", tiersTel: "", boiteEmplacement: "", code: "", lat: null, lon: null, port: "", place: "", accesPonton: "" });
+  }
   if (ds.favoriChoisi) return maj({ choixCleaneur: "favori", cleaneurFavori: ds.favoriChoisi });
   if (ds.champ === "choixCleaneur" && ds.valeur === "favori") return maj({ choixCleaneur: "favori", cleaneurFavori: favoriChoisi() ? b.cleaneurFavori : favoris[0]?.cleaneur_id || "" });
   if (ds.logementDepart !== undefined) { b = { ...(b || { etape: 1, espace: "personnel" }), logementDepart: ds.logementDepart }; sauver(); return rendre(); }
   if (ds.rubrique) {
     const dep = logementDepart();
     const nb = b?.rubriqueId === ds.rubrique && b.espace === partieCourante() ? { ...b, etape: 2 } : nouveauBrouillon(ds.rubrique, partieCourante());
-    b = logements().length ? avecLogementDepart(nb, dep) : nb;
+    // Bien venu de « Mes biens » ; sinon le brouillon a déjà le dernier bien compatible (choix à l'étape 2).
+    b = dep ? avecLogementDepart(nb, dep) : nb;
     sauver(); noterEtape(); rendre(); return window.scrollTo(0, 0);
   }
   if (ds.retour !== undefined) return retour();

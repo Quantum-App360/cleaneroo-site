@@ -2,7 +2,7 @@
 // et la boîte « À faire » (tout ce qui attend le client). Se met à jour en temps réel. Même écran dans l'appli (AccueilVivant.kt).
 import { guideVideo } from "./guide-video.js";
 import { badgeNiveau } from "./niveaux.js";
-import { reserverPourLogement, reserverAvecFavori } from "./reserver.js";
+import { reserverPourLogement, reserverAvecFavori, nomLogement, iconeBien } from "./reserver.js";
 import { decorTableau } from "./commun.js";
 import { agendaParticulier } from "./agenda-particulier.js";
 import { rubrique } from "./catalogue.js";
@@ -115,7 +115,7 @@ export async function pageTableau(vue) {
   const [profil, demandes, biens, cleaneurs] = await Promise.all([monProfil().catch(() => null), demandesDuCompte().catch(() => []),
     synchroniserBiens().catch(() => []), supabase.rpc("cleaneurs_de_mes_demandes").then(r => r.data || []).catch(() => [])]);
   if (location.hash !== ici) return true;
-  const prenoms = Object.fromEntries(cleaneurs.map(c => [c.reference, c.prenom]));
+  const prenoms = Object.fromEntries(cleaneurs.map(c => [c.reference, c.societe ? `${c.prenom} (${c.societe})` : c.prenom]));
   const niveaux = Object.fromEntries(cleaneurs.map(c => [c.reference, c.niveau || 0]));
   const d = prochaine(demandes);
   const autres = demandes.filter(x => !FINIES.includes(x.statut) && x !== d).length;
@@ -158,10 +158,10 @@ export async function pageTableau(vue) {
       <a class="carte raccourci" href="#/mes-biens">${icone("logement", { tuile: true })}<b>${tr("Mes biens")}</b><span class="petit">${biens.length} ${tr(biens.length > 1 ? "adresses" : "adresse")}</span></a>
       <a class="carte raccourci" href="${pro ? "#/compte/pro" : "#mon-agenda"}">${icone(pro ? "location" : "calendrier", { tuile: true })}<b>${tr(pro ? "Agenda" : "Mon agenda")}</b><span class="petit">${tr(pro ? "Séjours et ménages à programmer" : "Mes prestations jour par jour")}</span></a>
     </div>
-    ${biens.length && !pro ? `<h2 class="titre-section">${icone("logement", { tuile: true })}${tr("Mes logements")}</h2>
-      <div class="logements-suivi">${biens.slice(0, 6).map(l => `<div class="carte logement-suivi">${icone("logement", { tuile: true })}
-        <div class="corps"><b>${esc(l.nom || `${tr(({ studio: "Studio", appartement: "Appartement", maison: "Maison", duplex: "Duplex / loft" })[l.typeLogementId] || "Adresse")} · ${l.ville}`)}</b><span class="petit">${esc(l.rue)}, ${esc(l.ville)}</span></div>
-        <button type="button" class="bouton petit" data-reserver-ici="${esc(l.id)}">${tr("Réserver ici")}</button></div>`).join("")}</div>` : ""}
+    ${biens.length && !pro ? `<h2 class="titre-section">${icone("logement", { tuile: true })}${tr("Mes biens")}</h2>
+      <div class="logements-suivi">${biens.slice(0, 6).map(l => `<div class="carte logement-suivi">${icone(iconeBien(l), { tuile: true })}
+        <div class="corps"><b>${esc(nomLogement(l))}</b><span class="petit">${esc(l.rue)}, ${esc(l.ville)}</span></div>
+        <button type="button" class="bouton petit" data-reserver-ici="${esc(l.id)}">${tr("Réserver")}</button></div>`).join("")}</div>` : ""}
     ${!pro ? `<h2 class="titre-section" id="mon-agenda">${icone("calendrier", { tuile: true })}${tr("Mon agenda")}</h2>
       <p class="petit" style="margin-top:0">${tr("Toutes vos prestations demandées, jour par jour. Touchez un jour pour voir le détail.")}</p>
       <div class="carte agenda-carte" id="agenda-particulier"></div>` : ""}

@@ -13,7 +13,7 @@ import { installerSousOnglets } from "./sous-onglets.js";
 import { verrouillerPrestations } from "./prestations-cleaneur.js";
 import { verifierSiret, MESSAGES_SIRET, SIRET_REFUSE } from "./siret-officiel.js";
 import { blocInvitationsPro, brancherInvitationsPro, blocCodeInvitation, brancherCodeInvitation } from "./invitations.js";
-import { RUBRIQUES, rubrique, TYPES_LOGEMENT } from "./catalogue.js";
+import { RUBRIQUES, rubrique, TYPES_LOGEMENT, CATEGORIES_BIEN, categorieBien, typesDeCategorie } from "./catalogue.js";
 import { euros, dateLongue, heure, REGLES, sirenSiretValide } from "./regles.js";
 import { icone } from "./icones.js";
 import { traduire, tr } from "./langue.js";
@@ -22,9 +22,10 @@ import {
   DOCUMENTS_CLEANEUR, mesDocuments, deposerDocument, retirerDocument, lienDocument, soumettreDossier,
   demandesDuCompte, mesDemandes, synchroniserBiens, enregistrerBien, supprimerBien,
 } from "./donnees.js";
-import { oublierMesInformations, reserverPourLogement } from "./reserver.js";
+import { oublierMesInformations, reserverPourLogement, nomLogement, iconeBien } from "./reserver.js";
 import { rendreEntete, memoriserProfil } from "./entete.js";
 import { ONGLETS, ongletParDefaut, espaceDu, statutsDu, NOMS_ESPACES, barreOnglets, ongletParticulier, ongletPro, ongletEntreprise, ongletHotellerie, brancherRotation, brancherSociete, brancherPro, ongletCleaneur, brancherMissions, demanderGeoloc } from "./espaces.js";
+import { brancherEspaceSociete, brancherActiverSociete, brancherSalarie, utiliserCodeEquipeGarde } from "./societe.js";
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const OUVERTURE = "Les interventions commencent le 1er janvier 2027.";
@@ -84,6 +85,7 @@ export async function pageCompte(vue, param) {
   if (location.hash !== ici) return;
   if (!p) { vue.innerHTML = `<section class="bloc"><div class="etroit">${titre("Mon espace")}<p class="erreur">${tr("Le service est momentanément indisponible. Réessayez dans quelques minutes.")}</p></div></section>`; traduire(vue); return; }
   memoriserCoordonnees(p);
+  if (await utiliserCodeEquipeGarde()) { location.hash = "#/compte/cleaneur"; return; }
   // Un espace par statut coché (particulier, pro, cleaneur ; cumulables) ; l'administrateur a les trois.
   const admin = p.role === "admin";
   const statuts = admin ? ["particulier", "entreprise", "pro", "hotellerie", "cleaneur"] : statutsDu(p);
@@ -94,9 +96,9 @@ export async function pageCompte(vue, param) {
   if (!admin && onglet !== p.espace) { p.espace = onglet; majProfil({ espace: onglet }).then(() => majLienCompte()).catch(() => null); }
   const docs = cleaneur && onglet === "cleaneur" ? await mesDocuments().catch(() => []) : [];
   if (location.hash !== ici) return;
-  const contenu = onglet === "hotellerie" ? ongletHotellerie(p, biens) + `<details class="carte" style="margin-top:14px"><summary>Mes informations</summary>${formulaireProfil(p, false)}</details>`
+  const contenu = onglet === "hotellerie" ? ongletHotellerie(p, biens.filter(l => categorieBien(l) === "logement")) + `<details class="carte" style="margin-top:14px"><summary>Mes informations</summary>${formulaireProfil(p, false)}</details>`
     : onglet === "entreprise" ? ongletEntreprise(p, biens, demandes) + `<details class="carte" style="margin-top:14px"><summary>Mes informations</summary>${formulaireProfil(p, false)}</details>`
-    : onglet === "pro" ? ongletPro(p, biens) + `<h2 class="titre-section">${icone("paiement", { tuile: true })}${tr("Mon abonnement")}</h2>${blocAbonnementPro(p, biens)}` + blocInvitationsPro()
+    : onglet === "pro" ? ongletPro(p, biens.filter(l => categorieBien(l) === "logement")) + `<h2 class="titre-section">${icone("paiement", { tuile: true })}${tr("Mon abonnement")}</h2>${blocAbonnementPro(p, biens)}` + blocInvitationsPro()
       + `<details class="carte" style="margin-top:14px"><summary>Mes informations</summary>${formulaireProfil(p, false)}</details>`
     : onglet === "cleaneur" ? ongletCleaneur(p, docs, { dossier: cleaneur ? blocDossier(p, docs) : "", profil: cleaneur ? formulaireProfil(p, true) : "" }) + (cleaneur ? blocCodeInvitation() : "")
     : ongletParticulier(p, biens, demandes) + formulaireProfil(p, false);
@@ -137,10 +139,12 @@ export async function pageCompte(vue, param) {
   brancherParrainage(vue, parrain, () => pageCompte(vue, onglet));
   afficherFactures(vue.querySelector("[data-factures]"));
   blocEquipe(vue.querySelector("#equipe"), onglet === "pro", biens);   // Équipe et propriétaires   // onglet « Factures » de l'espace
+  document.body.classList.remove("salarie");
+  if (onglet === "cleaneur" && cleaneur) { brancherEspaceSociete(vue, p); brancherActiverSociete(vue, () => pageCompte(vue, "cleaneur")); brancherSalarie(vue, p, () => pageCompte(vue, "cleaneur")); }
   if (onglet === "cleaneur" && cleaneur) { brancherDossier(vue, p); brancherMissions(vue, p); brancherFormulesCleaneur(vue, p, () => pageCompte(vue, "cleaneur")); brancherCodeInvitation(vue); blocActivite(vue.querySelector("#mon-activite"), p); }
   if (onglet === "entreprise") brancherSociete(vue, majProfil, () => pageCompte(vue, "entreprise"));
-  if (onglet === "hotellerie") { brancherPro(vue, p, biens, demandes, { majProfil, recharger: () => pageCompte(vue, "hotellerie") }); brancherRotation(vue); }
-  if (onglet === "pro") { brancherPro(vue, p, biens, demandes, { majProfil, recharger: () => pageCompte(vue) }); brancherInvitationsPro(vue); brancherAbonnementPro(vue, () => { majLienCompte(); pageCompte(vue, "pro"); }); }
+  if (onglet === "hotellerie") { brancherPro(vue, p, biens.filter(l => categorieBien(l) === "logement"), demandes, { majProfil, recharger: () => pageCompte(vue, "hotellerie") }); brancherRotation(vue); }
+  if (onglet === "pro") { brancherPro(vue, p, biens.filter(l => categorieBien(l) === "logement"), demandes, { majProfil, recharger: () => pageCompte(vue) }); brancherInvitationsPro(vue); brancherAbonnementPro(vue, () => { majLienCompte(); pageCompte(vue, "pro"); }); }
   // Onglets à l'intérieur des espaces Cleaneur et Pro (la page ne défile plus sur des dizaines d'écrans).
   if ((onglet === "cleaneur" && cleaneur) || onglet === "pro" || onglet === "particulier") installerSousOnglets(vue, onglet);
   // Ajouter un espace : Particulier ou Cleaneur tout de suite ; Pro avec la société (raison sociale + SIRET/SIREN).
@@ -480,7 +484,7 @@ export async function afficherAccesCleaneur(racine) {
 const FINIES = ["TERMINEE", "ANNULEE"];
 
 /** Nom d'un logement : celui donné, sinon « Type · Ville ». */
-const nomDuBien = l => l.nom || `${tr((TYPES_LOGEMENT.find(t => t.id === l.typeLogementId) || {}).nom || "Adresse")} · ${l.ville}`;
+const nomDuBien = l => nomLogement(l);
 
 /** Écoute en temps réel de « Mes demandes » (arrêtée dès qu'on change de page). */
 let arretEcoute = null;
@@ -493,12 +497,15 @@ const ongletDemande = d => d.statut === "ANNULEE" ? "annulees" : d.statut === "T
  * « Mes demandes » (4 onglets : en cours, à venir, passées, annulées ; mises à jour en temps réel) ou « Mes biens ».
  * mode : "demandes" ou "biens" ; sous : onglet des demandes.
  */
+/** « Mes biens » : catégorie affichée (une seule à la fois, la page reste légère). */
+let ongletBiens = null;
 export async function pageMesPrestations(vue, mode = "demandes", sous = null) {
   const ici = location.hash;
   const s = await session();
   const [compte, locales, biens] = await Promise.all([
     s ? demandesDuCompte().catch(() => []) : [], mesDemandes().catch(() => []), synchroniserBiens().catch(() => []),
   ]);
+  if (!ongletBiens || !CATEGORIES_BIEN.some(c => c[0] === ongletBiens)) ongletBiens = (CATEGORIES_BIEN.find(([c]) => biens.some(l => categorieBien(l) === c)) || CATEGORIES_BIEN[0])[0];
   // Demandes du compte et de cet appareil, sans doublon ; le lien de suivi a besoin du jeton.
   const toutes = [...compte];
   locales.forEach(d => { if (!toutes.some(x => x.reference === d.reference)) toutes.push(d); });
@@ -520,22 +527,32 @@ export async function pageMesPrestations(vue, mode = "demandes", sous = null) {
   const VIDES = { "en-cours": "Aucune prestation en cours.", "a-venir": "Aucune prestation à venir.", passees: "Aucune prestation passée.", annulees: "Aucune prestation annulée." };
   vue.innerHTML = mode === "biens" ? `<section class="bloc"><div class="etroit">
     ${titre("Mes biens")}
-    <p class="petit" style="margin-top:0">Vos adresses déjà renseignées : elles sont proposées automatiquement à la réservation.</p>
-    ${biens.length ? biens.map(l => `<div class="carte ligne-compte bien-particulier">${icone("logement", { tuile: true })}
-      <div class="corps"><b>${esc(nomDuBien(l))}</b><div class="petit">${esc(l.rue)}, ${esc(l.codePostal)} ${esc(l.ville)}${l.surface ? ` · ${l.surface} m²` : ""}${l.chambres ? ` · ${l.chambres} ${tr("ch.")}` : ""}${l.sdb ? ` · ${l.sdb} ${tr("sdb")}` : ""}</div>
-        <div class="actions-bien"><button type="button" class="bouton petit" data-reserver-bien="${esc(l.id)}">${tr("Réserver ici")}</button>
+    <p class="petit" style="margin-top:0">Logements, voitures, camping-cars, bateaux : enregistrez-les une fois, ils sont proposés automatiquement pour les bonnes prestations.</p>
+    <nav class="onglets-biens" aria-label="${esc(tr("Catégories de biens"))}">${CATEGORIES_BIEN.map(([c, nomCat, ico]) => { const n = biens.filter(l => categorieBien(l) === c).length;
+      return `<button type="button" class="${c === ongletBiens ? "actif" : ""}" data-onglet-biens="${c}">${icone(ico)}<span>${tr({ logement: "Logements", local: "Locaux", vehicule: "Voitures", loisirs: "Camping-cars", bateau: "Bateaux" }[c])}</span>${n ? `<em>${n}</em>` : ""}</button>`; }).join("")}</nav>
+    ${(() => { const liste = biens.filter(l => categorieBien(l) === ongletBiens);
+      return liste.length ? liste.map(l => { const c = ongletBiens; return `<div class="carte ligne-compte bien-particulier">${icone(iconeBien(l), { tuile: true })}
+      <div class="corps"><b>${esc(nomDuBien(l))}</b><div class="petit">${c === "bateau" ? esc([l.port, l.place].filter(Boolean).join(", ") || l.ville) : `${esc(l.rue)}, ${esc(l.codePostal)} ${esc(l.ville)}`}${l.immatriculation ? ` · ${esc(l.immatriculation)}` : ""}${c === "logement" ? `${l.surface ? ` · ${l.surface} m²` : ""}${l.chambres ? ` · ${l.chambres} ${tr("ch.")}` : ""}${l.sdb ? ` · ${l.sdb} ${tr("sdb")}` : ""}` : ["loisirs", "bateau"].includes(c) && l.surface ? ` · ${l.surface} m` : ""}
+        <div class="actions-bien"><button type="button" class="bouton petit" data-reserver-bien="${esc(l.id)}">${tr("Réserver")}</button>
           <button type="button" class="lien-bouton" data-modifier-bien="${esc(l.id)}">${tr("Modifier")}</button>
-          <button type="button" class="lien-bouton" style="color:var(--erreur)" data-retirer-bien="${esc(l.id)}">${tr("Retirer")}</button></div></div></div>`).join("") : vide("Aucun bien enregistré pour l'instant.", "Un ou plusieurs logements : enregistrez-les une fois, ils sont proposés à chaque réservation.")}
-    <details class="carte" style="margin-top:6px" id="ajout-bien"><summary style="cursor:pointer;font-weight:700" id="titre-form-bien">＋ Ajouter un bien</summary>
+          <button type="button" class="lien-bouton" style="color:var(--erreur)" data-retirer-bien="${esc(l.id)}">${tr("Retirer")}</button></div></div></div></div>`; }).join("")
+        : vide({ logement: "Aucun logement enregistré.", local: "Aucun local enregistré.", vehicule: "Aucune voiture enregistrée.", loisirs: "Aucun van, camping-car ou caravane enregistré.", bateau: "Aucun bateau enregistré." }[ongletBiens],
+          "Enregistrez-le une fois : il sera proposé automatiquement pour les bonnes prestations."); })()}
+    <details class="carte" style="margin-top:12px" id="ajout-bien"><summary style="cursor:pointer;font-weight:700" id="titre-form-bien">＋ ${tr({ logement: "Ajouter un logement", local: "Ajouter un local", vehicule: "Ajouter une voiture", loisirs: "Ajouter un van, un camping-car ou une caravane", bateau: "Ajouter un bateau" }[ongletBiens])}</summary>
       <form id="form-bien" novalidate style="margin-top:12px">
-        <label class="champ">Nom (facultatif)<input name="nom" maxlength="60" placeholder="${esc(tr("Ex. : Appartement du centre, Maison de vacances"))}"></label>
-        <label class="champ">Type<select name="typeLogementId">${TYPES_LOGEMENT.map(t => `<option value="${t.id}">${t.nom}</option>`).join("")}</select></label>
-        <label class="champ">Adresse<input name="rue" maxlength="200" autocomplete="street-address"></label>
+        <label class="champ">Nom (facultatif)<input name="nom" maxlength="60"></label>
+        <label class="champ">Type<select name="type"></select></label>
+        <div data-pour="vehicule loisirs bateau"><label class="champ">Immatriculation (facultatif)<input name="immatriculation" maxlength="20" autocomplete="off" style="text-transform:uppercase"></label></div>
+        <div data-pour="loisirs bateau"><label class="champ" data-libelle-longueur>Longueur (m)<input name="longueur" type="number" min="3" max="40" step="0.5"></label></div>
+        <div data-pour="bateau"><div class="grille-2"><label class="champ">Port<input name="port" maxlength="80"></label>
+          <label class="champ">Ponton et place<input name="place" maxlength="60"></label></div>
+          <label class="champ">Accès au ponton (badge, code)<input name="accesPonton" maxlength="120"></label></div>
+        <label class="champ" data-libelle-adresse>Adresse<input name="rue" maxlength="200" autocomplete="street-address"></label>
         <div class="grille-2"><label class="champ">Code postal<input name="codePostal" inputmode="numeric" maxlength="5" autocomplete="postal-code"></label>
           <label class="champ">Ville<input name="ville" maxlength="100" autocomplete="address-level2"></label></div>
-        <div class="grille-3"><label class="champ">Surface (m²)<input name="surface" type="number" min="5" max="1000"></label>
+        <div data-pour="logement"><div class="grille-3"><label class="champ">Surface (m²)<input name="surface" type="number" min="5" max="1000"></label>
           <label class="champ">Chambres<input name="chambres" type="number" min="0" max="20"></label>
-          <label class="champ">Salles de bain<input name="sdb" type="number" min="0" max="10"></label></div>
+          <label class="champ">Salles de bain<input name="sdb" type="number" min="0" max="10"></label></div></div>
         <p class="erreur" id="erreur-bien"></p>
         <button class="bouton plein" type="submit">Enregistrer ce bien</button></form></details>
     ${biens.length ? `<p style="margin-top:18px"><button type="button" class="lien-bouton" style="color:var(--erreur);padding:0" id="oublier">Oublier mes informations sur cet appareil</button></p>` : ""}
@@ -558,27 +575,50 @@ export async function pageMesPrestations(vue, mode = "demandes", sous = null) {
   }
   if (mode !== "biens") return;
   const f = vue.querySelector("#form-bien");
-  f.typeLogementId.value = "appartement";
-  const defauts = () => { const t = TYPES_LOGEMENT.find(x => x.id === f.typeLogementId.value); f.surface.value = t.surface; f.chambres.value = t.chambres; f.sdb.value = t.sdb; };
-  defauts();
-  f.typeLogementId.onchange = defauts;
+  // Catégorie du bien : type, champs et libellés propres (logement, voiture, camping-car, bateau).
+  let categorie = "logement";
+  const LIBELLE_ADRESSE = { logement: "Adresse", local: "Adresse", vehicule: "Lieu de stationnement", loisirs: "Lieu de stationnement", bateau: "Adresse du port" };
+  const choisirCategorie = (c, garder = false) => {
+    categorie = c;
+    vue.querySelectorAll("[data-pour]").forEach(d => { d.hidden = !d.dataset.pour.split(" ").includes(c); });
+    const types = typesDeCategorie(c);
+    f.type.innerHTML = types.map(t => `<option value="${t.id}">${esc(tr(t.nom))}</option>`).join("");
+    f.querySelector("[data-libelle-adresse]").firstChild.textContent = tr(LIBELLE_ADRESSE[c]);
+    f.nom.placeholder = tr({ logement: "Ex. : Appartement du centre", local: "Ex. : Agence du port, Camping des Pins", vehicule: "Ex. : Clio grise", loisirs: "Ex. : Fourgon Hymer", bateau: "Ex. : Jeanneau Sun Odyssey « Belle Bleue »" }[c]);
+    if (!garder) { f.type.value = c === "logement" ? "appartement" : types[0].id; defauts(); f.longueur.value = c === "bateau" ? 10 : c === "loisirs" ? 7 : ""; }
+  };
+  const defauts = () => { if (categorie !== "logement") return; const t = TYPES_LOGEMENT.find(x => x.id === f.type.value); if (!t) return; f.surface.value = t.surface; f.chambres.value = t.chambres; f.sdb.value = t.sdb; };
+  vue.querySelectorAll("[data-onglet-biens]").forEach(x => x.onclick = () => { ongletBiens = x.dataset.ongletBiens; pageMesPrestations(vue, "biens"); });
+  f.type.onchange = defauts;
+  choisirCategorie(ongletBiens);
+  const ongletOuvert = vue.querySelector(".onglets-biens .actif"); if (ongletOuvert) ongletOuvert.parentElement.scrollLeft = ongletOuvert.offsetLeft - ongletOuvert.parentElement.offsetWidth / 2 + ongletOuvert.offsetWidth / 2;
   f.onsubmit = async e => {
     e.preventDefault();
     const err = vue.querySelector("#erreur-bien");
     if (f.rue.value.trim().length < 3 || !/^[0-9]{5}$/.test(f.codePostal.value.trim()) || !f.ville.value.trim()) { err.textContent = tr("Indiquez l'adresse, le code postal et la ville."); return; }
-    const t = TYPES_LOGEMENT.find(x => x.id === f.typeLogementId.value);
     const ancien = biens.find(x => x.id === f.dataset.modifier) || {};
-    await enregistrerBien({ ...ancien, id: ancien.id || "l" + Date.now(), nom: f.nom.value.trim(), typeLogementId: t.id, surface: Number(f.surface.value) || t.surface, chambres: Number(f.chambres.value) || 0,
-      sdb: Number(f.sdb.value) || 0, niveaux: t.niveaux, rue: f.rue.value.trim(), codePostal: f.codePostal.value.trim(), ville: f.ville.value.trim(),
-      accueil: ancien.accueil || "PRESENT", tiersNom: ancien.tiersNom || "", tiersTel: ancien.tiersTel || "", boiteEmplacement: ancien.boiteEmplacement || "" }).catch(() => null);
+    const commun = { ...ancien, id: ancien.id || "l" + Date.now(), nom: f.nom.value.trim(), rue: f.rue.value.trim(), codePostal: f.codePostal.value.trim(), ville: f.ville.value.trim(),
+      accueil: ancien.accueil || "PRESENT", tiersNom: ancien.tiersNom || "", tiersTel: ancien.tiersTel || "", boiteEmplacement: ancien.boiteEmplacement || "" };
+    let bien;
+    ongletBiens = categorie;
+    if (categorie === "local") bien = { ...commun, categorie: "local", typeLocal: f.type.value };
+    else if (categorie === "logement") {
+      const t = TYPES_LOGEMENT.find(x => x.id === f.type.value);
+      bien = { ...commun, categorie: undefined, typeLogementId: t.id, surface: Number(f.surface.value) || t.surface, chambres: Number(f.chambres.value) || 0, sdb: Number(f.sdb.value) || 0, niveaux: t.niveaux };
+    } else bien = { ...commun, categorie, typeLieuId: f.type.value, immatriculation: f.immatriculation.value.trim().toUpperCase(),
+      ...(categorie !== "vehicule" ? { surface: Math.max(3, Math.min(40, Math.round(Number(f.longueur.value) || 0))) || (categorie === "bateau" ? 10 : 7) } : {}),
+      ...(categorie === "bateau" ? { port: f.port.value.trim(), place: f.place.value.trim(), accesPonton: f.accesPonton.value.trim() } : {}) };
+    await enregistrerBien(bien).catch(() => null);
     pageMesPrestations(vue, "biens");
   };
   // Modifier un bien : le formulaire se remplit avec ses informations.
   vue.querySelectorAll("[data-modifier-bien]").forEach(b => b.onclick = () => {
     const l = biens.find(x => x.id === b.dataset.modifierBien); if (!l) return;
-    f.dataset.modifier = l.id; f.nom.value = l.nom || ""; f.typeLogementId.value = l.typeLogementId || "appartement";
+    choisirCategorie(categorieBien(l), true);
+    f.dataset.modifier = l.id; f.nom.value = l.nom || ""; f.type.value = categorieBien(l) === "logement" ? l.typeLogementId || "appartement" : categorieBien(l) === "local" ? l.typeLocal || "bureaux" : l.typeLieuId || f.type.options[0].value;
     f.rue.value = l.rue || ""; f.codePostal.value = l.codePostal || ""; f.ville.value = l.ville || "";
     f.surface.value = l.surface || ""; f.chambres.value = l.chambres ?? ""; f.sdb.value = l.sdb ?? "";
+    f.immatriculation.value = l.immatriculation || ""; f.longueur.value = categorieBien(l) === "logement" ? "" : l.surface || ""; f.port.value = l.port || ""; f.place.value = l.place || ""; f.accesPonton.value = l.accesPonton || "";
     vue.querySelector("#titre-form-bien").textContent = `✏️ ${tr("Modifier")} · ${nomDuBien(l)}`;
     f.querySelector("[type=submit]").textContent = tr("Enregistrer les modifications");
     const d = vue.querySelector("#ajout-bien"); d.open = true; d.scrollIntoView({ behavior: "smooth", block: "start" });

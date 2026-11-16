@@ -420,11 +420,11 @@ export async function brancherMissions(vue, p) {
     <div id="formations-cleaneur"></div>
     <div id="periodes-fermees"></div>
     <div id="creneaux-cleaneur"></div>
-    <h2 class="titre-section" id="missions-disponibles">${icone("position", { tuile: true })}Missions disponibles</h2>
+${p.employeur_id ? "" : `    <h2 class="titre-section" id="missions-disponibles">${icone("position", { tuile: true })}Missions disponibles</h2>
     <p class="petit" style="margin-top:0">Missions en ligne pour les prestations que vous proposez et pour lesquelles vous êtes formé. Le premier Cleaneur qui la prend l'obtient.</p>
     <p class="petit" style="margin-top:0">${tr("Les plus proches et celles qui comblent vos trous de planning d'abord.")}</p>
     ${dispo.length ? dispo.map(carteDisponible).join("") : vide("Aucune mission disponible pour l'instant.", p.dossier === "VALIDE" || p.role === "admin" ? "" : "Votre dossier doit être validé pour voir et prendre des missions.")}
-    <div id="missions-incompatibles"></div>
+`}    <div id="missions-incompatibles"></div>
 `;
   traduire(boite);
   brancherTableau(boite, miennes, () => brancherMissions(vue, p));

@@ -609,8 +609,34 @@ export const RUBRIQUES_PANIER = ["textiles", "hospitality"];
 /** Prestations sans objet pour un logement déjà enregistré (véhicule, locaux professionnels, réception). Même liste dans l'appli. */
 export const RUBRIQUES_HORS_LOGEMENT = ["car", "leisure", "boat", "event", "office", "commerce", "communal"];
 /** Prestations proposées à l'étape 1 : celles de la partie ; pour un logement enregistré (hors Entreprise, dont les adresses sont des locaux), sans celles qui n'ont pas de sens. */
-export const rubriquesProposees = (partieId, logementEnregistre = false) =>
-  partie(partieId).rubriques.filter(id => !(logementEnregistre && partie(partieId).id !== "professionnel" && RUBRIQUES_HORS_LOGEMENT.includes(id)));
+/**
+ * Biens enregistrés par catégorie (16 novembre 2026, demande de l'utilisateur) : logements et adresses, voitures,
+ * vans / camping-cars / caravanes, bateaux. Chaque prestation ne propose que les biens de sa catégorie, et un bien choisi
+ * ne propose que ses prestations. Même règle dans l'appli (Catalogue.categorieDeRubrique).
+ */
+export const CATEGORIES_BIEN = [["logement", "Logements", "logement"], ["local", "Locaux et établissements", "bureaux"], ["vehicule", "Voitures", "vehicule"],
+  ["loisirs", "Vans, camping-cars et caravanes", "vehicule"], ["bateau", "Bateaux", "bateau"]];
+/** Catégories de biens acceptées par chaque prestation (une adresse sert aux logements comme aux locaux). */
+const ADRESSE = ["logement", "local"];
+export const CATEGORIES_DE_RUBRIQUE = { home: ["logement"], rental: ["logement"], moving: ["logement"],
+  office: ["local"], commerce: ["local"], communal: ["local"], hospitality: ["local"],
+  windows: ADRESSE, outdoor: ADRESSE, construction: ADRESSE, textiles: ADRESSE, special: ADRESSE, kitchen: ADRESSE, event: ADRESSE,
+  car: ["vehicule"], leisure: ["loisirs"], boat: ["bateau"] };
+export const categorieBien = l => (l && l.categorie) || "logement";
+export const categoriesDeRubrique = id => CATEGORIES_DE_RUBRIQUE[id] || ADRESSE;
+/** Catégorie d'un nouveau bien créé par une réservation de cette prestation, pour cette partie. */
+export const categorieDeRubrique = (id, partieId = "personnel") => { const c = categoriesDeRubrique(id); return c.length === 1 ? c[0] : ["professionnel", "hotellerie"].includes(partieId) ? "local" : "logement"; };
+export const bienCompatible = (rubriqueId, l) => !!l && categoriesDeRubrique(rubriqueId).includes(categorieBien(l));
+/** Types proposés pour une catégorie de bien (type de logement, de local, gabarit, type de bateau). */
+export const TYPES_LOCAL = [{ id: "bureaux", nom: "Bureaux ou cabinet" }, { id: "commerce", nom: "Commerce ou entrepôt" }, { id: "immeuble", nom: "Immeuble (parties communes)" },
+  { id: "hotel", nom: "Hôtel" }, { id: "camping", nom: "Camping ou résidence de tourisme" }, { id: "restaurant", nom: "Restaurant" }, { id: "autre_local", nom: "Autre local" }];
+export const typesDeCategorie = cat => cat === "vehicule" ? TYPES_LIEU.car : cat === "loisirs" ? TYPES_LIEU.leisure : cat === "bateau" ? TYPES_LIEU.boat : cat === "local" ? TYPES_LOCAL : TYPES_LOGEMENT;
+/** Prestations proposées à l'étape 1 : celles de la partie ; avec un bien choisi, seulement celles de sa catégorie
+ *  (un logement d'un particulier ou d'une conciergerie ne propose ni réception ni locaux professionnels). [bien] : le bien, true (= un logement) ou null. */
+export const rubriquesProposees = (partieId, bien = null) => {
+  const p = partie(partieId), cat = bien === true ? "logement" : bien ? categorieBien(bien) : null;
+  return p.rubriques.filter(id => !cat || categoriesDeRubrique(id).includes(cat));
+};
 export const TYPES_VITRES_ELIGIBLES =["fenetres_logement", "baies_veranda"];
 
 export const TYPES_LOGEMENT = [

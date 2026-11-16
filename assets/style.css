@@ -2134,3 +2134,44 @@ body.avec-decor main, body.avec-decor #vue, body.avec-decor footer { position: r
   .onglets-compte a span { white-space: normal; text-align: center; line-height: 1.15; }
   .barre-espaces .onglets-compte { grid-auto-columns: minmax(0, 1fr); }
 }
+/* Mes biens par catégorie (16 novembre 2026) : onglets compacts, une catégorie à la fois */
+.onglets-biens { display: flex; gap: 6px; overflow-x: auto; padding: 4px; margin: 6px 0 14px; background: var(--creux); border-radius: 16px; scrollbar-width: none; }
+.onglets-biens::-webkit-scrollbar { display: none; }
+.onglets-biens button { flex: 1 0 auto; display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; padding: 0 12px; border: 0; border-radius: 12px; background: none; font: inherit; font-weight: 700; font-size: 14px; color: var(--texte2); cursor: pointer; white-space: nowrap; }
+.onglets-biens button .ico { width: 18px; height: 18px; flex: none; }
+.onglets-biens button.actif { background: var(--surface); color: var(--primaire); box-shadow: var(--ombre); }
+.onglets-biens em { font-style: normal; font-size: 12px; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px; display: inline-grid; place-items: center; background: color-mix(in srgb, var(--primaire) 14%, transparent); color: var(--primaire); }
+.option-bien { display: flex; align-items: center; gap: 10px; text-align: left; }
+.option-bien > .ico { width: 22px; height: 22px; flex: none; color: var(--primaire); }
+.option-bien > span { display: flex; flex-direction: column; min-width: 0; }
+
+/* Espace « Ma société » et salariés (16 novembre 2026) */
+.entete-societe:not(.entete-pro) { background: linear-gradient(135deg, color-mix(in srgb, var(--primaire) 12%, var(--surface)), var(--surface)); }
+.onglets-societe { margin-top: 12px; }
+.tuiles-societe { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 560px) { .tuiles-societe { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.sous-titre-societe { margin: 20px 0 8px; font-size: 17px; }
+.mission-societe .a-attribuer { color: var(--alerte); font-weight: 700; }
+.mission-societe .petit .ico { width: 15px; height: 15px; vertical-align: -2px; }
+.alerte-societe { margin-top: 12px; border: 1px solid color-mix(in srgb, var(--alerte) 45%, transparent); background: color-mix(in srgb, var(--alerte) 9%, var(--surface)); }
+.alerte-societe p { margin: 4px 0; font-size: 14px; }
+.planning-societe { overflow-x: auto; border-radius: var(--rayon); background: var(--surface); box-shadow: var(--ombre); }
+.planning-societe table { border-collapse: collapse; width: 100%; min-width: 620px; font-size: 13px; }
+.planning-societe th, .planning-societe td { padding: 8px 6px; border-bottom: 1px solid var(--separateur); text-align: left; vertical-align: top; }
+.planning-societe thead th { font-size: 12px; text-transform: capitalize; color: var(--texte2); }
+.planning-societe tbody th { white-space: nowrap; font-weight: 700; }
+.creneau-societe { display: inline-flex; align-items: center; gap: 3px; margin: 2px 2px 0 0; padding: 2px 6px; border-radius: 8px; border: 1.5px solid var(--primaire); color: var(--primaire); font-weight: 700; font-size: 12px; }
+.creneau-societe.chef { background: var(--primaire); color: #fff; }
+.creneau-societe .ico { width: 13px; height: 13px; }
+.lien-salarie input.texte { width: 100%; font-size: 13px; }
+.tableau-simple { width: 100%; border-collapse: collapse; font-size: 14px; }
+.tableau-simple th, .tableau-simple td { padding: 8px 6px; border-bottom: 1px solid var(--separateur); text-align: left; }
+.fenetre-fond { position: fixed; inset: 0; z-index: 9000; background: rgba(8, 24, 22, .55); display: grid; place-items: center; padding: 16px; }
+.fenetre-fond .fenetre { width: min(460px, 100%); max-height: calc(100vh - 32px); overflow-y: auto; }
+/* Salarié : ni marché des missions, ni prix, ni paiements, ni formule */
+body.salarie .tableau-cleaneur, body.salarie #formules-cleaneur, body.salarie #mon-activite, body.salarie [data-factures], body.salarie .parrainage, body.salarie .bloc-parrainage,
+body.salarie #missions-disponibles, body.salarie #missions-incompatibles, body.salarie #ce-qui-manque, body.salarie #bloc-invitation, body.salarie .alerte-secteur,
+body.salarie #carte-missions, body.salarie .legende-carte { display: none !important; }
+
+.case.desactive { opacity: .55; }
+.formations-salarie { display: flex; flex-wrap: wrap; gap: 4px 6px; align-items: center; margin: 4px 0 0; }

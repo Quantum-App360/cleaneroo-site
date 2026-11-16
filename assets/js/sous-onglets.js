@@ -4,9 +4,9 @@
 import { tr, traduire } from "./langue.js";
 
 const GROUPES = {
-  cleaneur: { onglets: [["aujourdhui", "Aujourd'hui"], ["missions", "Missions"], ["planning", "Planning"], ["dossier", "Mon dossier"], ["activite", "Activité"]],
+  cleaneur: { onglets: [["societe", "Ma société"], ["aujourdhui", "Aujourd'hui"], ["missions", "Missions"], ["planning", "Planning"], ["dossier", "Mon dossier"], ["activite", "Activité"]],
     defaut: "aujourdhui", details: "dossier",
-    regles: [["#selfie-jour, .tableau-cleaneur, #noter-clients", "aujourdhui"], ["#avis-recus, #niveau-cleaneur, #mon-activite, #formules-cleaneur, [data-factures], .parrainage, .bloc-parrainage", "activite"],
+    regles: [["#espace-societe", "societe"], ["#espace-salarie", "aujourdhui"], ["#activer-societe", "dossier"], ["#selfie-jour, .tableau-cleaneur, #noter-clients", "aujourdhui"], ["#avis-recus, #niveau-cleaneur, #mon-activite, #formules-cleaneur, [data-factures], .parrainage, .bloc-parrainage", "activite"],
       ["#ce-qui-manque, #formations-cleaneur, #bloc-invitation", "dossier"], ["#periodes-fermees, #creneaux-cleaneur", "planning"],
       ["#missions-disponibles, #missions-incompatibles, .deroule-mission", "missions"]] },
   // Particulier (13 novembre 2026) : le compte en trois rubriques (le suivi est dans « Mon suivi »).
@@ -61,8 +61,14 @@ export function installerSousOnglets(vue, espace) {
   };
   barre.onclick = e => { const b = e.target.closest("[data-sous-onglet]"); if (b) choisir(b.dataset.sousOnglet, true); };
   let attente = null;
-  const tout = () => { ranger(c, g, g.defaut); };
-  tout(); choisir(actif);
+  // Onglets sans contenu (ex. « Ma société » pour un Cleaneur indépendant) : masqués ; une société ouvre par défaut sur « Ma société ».
+  const tout = () => { ranger(c, g, g.defaut);
+    barre.querySelectorAll("[data-sous-onglet]").forEach(b => { b.hidden = !c.querySelector(`[data-sous="${b.dataset.sousOnglet}"]`) && b.dataset.sousOnglet !== g.defaut; }); };
+  tout();
+  let memorise = null; try { memorise = localStorage.getItem(CLE(espace)); } catch { /* rien */ }
+  if (!memorise && c.querySelector("#espace-societe")) actif = "societe";
+  if (barre.querySelector(`[data-sous-onglet="${actif}"]`)?.hidden) actif = g.defaut;
+  choisir(actif);
   new MutationObserver(() => { clearTimeout(attente); attente = setTimeout(tout, 60); }).observe(c, { childList: true, subtree: true });
   // Un lien vers un bloc d'un autre onglet (ex. « Missions disponibles ») ouvre d'abord le bon onglet.
   c.addEventListener("click", e => {

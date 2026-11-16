@@ -4,7 +4,7 @@ import { decorTableau } from "./commun.js";
 import "./oeil.js";   // œil pour afficher le mot de passe
 import { nomsAttestations } from "./formations.js";
 import { blocDossierAdmin } from "./dossier.js";
-import { blocSelfiesAdmin, blocAvertissementsAdmin } from "./controle-cleaneurs.js";
+import { blocSelfiesAdmin, blocAvertissementsAdmin, blocSalariesAdmin } from "./controle-cleaneurs.js";
 import { verifierSiret, MESSAGES_SIRET } from "./siret-officiel.js";
 import { supabase, deconnecter, secteursARecruter, dossiersCleaneurs, documentsDe, deciderDossier, deciderDocument, lienDocument, DOCUMENTS_CLEANEUR } from "./donnees.js";
 import { rubrique } from "./catalogue.js";
@@ -171,9 +171,10 @@ nomsAttestations().then(n => Object.assign(NOM_DOC, n));
 /** Contrôle des Cleaneurs (13 novembre 2026, déplacé de l'espace Cleaneur) : selfies du jour à comparer à la pièce d'identité, avertissements. */
 async function listeControle() {
   vue.innerHTML = `${titreBO()}<p class="muet">Selfies des 7 derniers jours à comparer à la pièce d'identité, et avertissements : au 3e, le Cleaneur est banni.</p>
-    <div id="selfies-admin" class="selfies-admin"></div><div id="avertissements-admin"></div>`;
+    <div id="selfies-admin" class="selfies-admin"></div><div id="salaries-admin" class="selfies-admin"></div><div id="avertissements-admin"></div>`;
   brancherOnglets();
   blocSelfiesAdmin(vue.querySelector("#selfies-admin"));
+  blocSalariesAdmin(vue.querySelector("#salaries-admin"));
   blocAvertissementsAdmin(vue.querySelector("#avertissements-admin"));
 }
 

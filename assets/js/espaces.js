@@ -16,6 +16,7 @@ import { editeurGuide, brancherGuides } from "./guides.js";
 import { editeurEtapesPhoto, brancherEtapesPhoto, etapesPhotoDe, etapesPersoDe } from "./etapes-bien.js";
 import { editeurStock, editeurIncidents, brancherOutilsBiens, blocAujourdhui, blocMenages, blocRapports, stockBas, incidentsDe, consommerStock } from "./conciergerie.js";
 export { brancherMissions, demanderGeoloc } from "./missions.js";
+import { blocSociete, blocActiverSociete, blocSalarie } from "./societe.js";
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 // Quatre espaces (13 novembre 2026) : Particulier, Entreprise (bureaux, commerces), Conciergerie (statut « pro » : conciergeries et SCI), Cleaneur.
@@ -633,11 +634,14 @@ export function ongletCleaneur(p, docs, { dossier, profil }) {
         <li>Vous gardez vos autres espaces : vos missions restent séparées de vos réservations privées.</li></ul>
       <button type="button" class="bouton" id="devenir-cleaneur">Ajouter l'espace Cleaneur</button></div>`;
   const admin = p.role === "admin";
+  // Salarié d'une société (16 novembre 2026) : ses missions, son selfie et son employeur ; ni marché, ni formule, ni dossier d'indépendant.
+  const salarie = !!p.employeur_id;
   return `${admin ? `<p style="margin:0 0 10px"><span class="tampon">Accès administrateur</span></p>` : ""}
+    ${blocSalarie(p)}${blocSociete(p)}
     ${guideVideo("cleaneur", "cleaneur")}
     <div id="missions-cleaneur">${chargeur("Chargement de vos missions…")}</div>
-    <h2 class="titre-section">${icone("paiement", { tuile: true })}Ma formule</h2>
-    ${blocFormulesCleaneur(p)}
+    ${salarie ? "" : `<h2 class="titre-section">${icone("paiement", { tuile: true })}Ma formule</h2>
+    ${blocFormulesCleaneur(p)}`}
     <h2 class="titre-section">${icone("termine", { tuile: true })}Le déroulé d'une mission</h2>
     <ol class="deroule-mission">
       <li><b>J'accepte la mission</b><span class="petit">Adresse, horaires, tâches et prix sont connus avant d'accepter.</span></li>
@@ -646,9 +650,10 @@ export function ongletCleaneur(p, docs, { dossier, profil }) {
       <li><b>Je coche mes tâches</b><span class="petit">Pièce par pièce : photo avant, tâches, photo après, contrôle par IA.</span></li>
       <li><b>Mission terminée</b><span class="petit">Le client valide, le paiement est versé.</span></li>
     </ol>
-    ${admin ? `<details class="carte"><summary>Essayer le dépôt de documents (comme un Cleaneur)</summary><div style="margin-top:12px">${dossier}</div></details>`
+    ${salarie ? "" : admin ? `<details class="carte"><summary>Essayer le dépôt de documents (comme un Cleaneur)</summary><div style="margin-top:12px">${dossier}</div></details>`
       : `<details class="carte" ${p.dossier === "VALIDE" ? "" : "open"}><summary>Mon dossier Cleaneur</summary><div style="margin-top:12px">${dossier}</div></details>`}
-    <details class="carte"><summary>Mon profil et mon périmètre</summary>${profil}</details>`;
+    ${salarie ? "" : blocActiverSociete(p)}
+    ${salarie ? "" : `<details class="carte"><summary>Mon profil et mon périmètre</summary>${profil}</details>`}`;
 }
 
 /* ------------------------------------------------------------------ Planning de la semaine (conciergerie, 13 novembre 2026) */
