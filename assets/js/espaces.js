@@ -1,7 +1,8 @@
 // Espaces du compte : « Particulier », « Entreprise » (bureaux, commerces), « Conciergerie » (statut pro : conciergeries et SCI, agenda iCal, planning) et « Cleaneur ».
 // Mêmes écrans que l'application (EspacesCompte.kt). Les valeurs métier sont dans regles.js.
-import { TYPES_LOGEMENT, rubrique } from "./catalogue.js";
-import { REGLES, euros, dateLongue, dateCourte, sirenSiretValide } from "./regles.js";
+import { TYPES_LOGEMENT, rubrique, ELEMENTS_TEXTILES, minutesLigne, prixLigne } from "./catalogue.js";
+import { calculer, entreeEstimation } from "./estimation.js";
+import { REGLES, euros, dateLongue, dateCourte, sirenSiretValide, cleaneursRotation, duree } from "./regles.js";
 import { icone } from "./icones.js";
 import { traduire, tr, LOCALE } from "./langue.js";
 import { DOCUMENTS_CLEANEUR, enregistrerBien, lireCalendrier } from "./donnees.js";
@@ -10,7 +11,7 @@ import { afficherCarte, coordonnees } from "./cartes.js";
 import { guideVideo } from "./guide-video.js";
 import { chargeur } from "./commun.js";
 import { blocFormulesCleaneur } from "./formules-cleaneur.js";
-import { preremplir } from "./reserver.js";
+import { preremplir, brouillonExemple } from "./reserver.js";
 import { editeurGuide, brancherGuides } from "./guides.js";
 import { editeurEtapesPhoto, brancherEtapesPhoto, etapesPhotoDe, etapesPersoDe } from "./etapes-bien.js";
 import { editeurStock, editeurIncidents, brancherOutilsBiens, blocAujourdhui, blocMenages, blocRapports, stockBas, incidentsDe, consommerStock } from "./conciergerie.js";
@@ -18,7 +19,7 @@ export { brancherMissions, demanderGeoloc } from "./missions.js";
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 // Quatre espaces (13 novembre 2026) : Particulier, Entreprise (bureaux, commerces), Conciergerie (statut « pro » : conciergeries et SCI), Cleaneur.
-export const ONGLETS = [["particulier", "Particulier", "logement"], ["entreprise", "Entreprise", "bureaux"], ["pro", "Conciergerie", "location"], ["cleaneur", "Cleaneur", "cleaneurs"]];
+export const ONGLETS = [["particulier", "Particulier", "logement"], ["entreprise", "Entreprise", "bureaux"], ["pro", "Conciergerie", "location"], ["hotellerie", "Hôtels et campings", "location"], ["cleaneur", "Cleaneur", "cleaneurs"]];
 
 /**
  * Espaces du compte : un par statut coché (particulier, pro, cleaneur ; cumulables). profils.espace = l'espace ouvert,
@@ -35,7 +36,7 @@ export function ongletParDefaut(p, biens) {
   if (p.espace === "pro" || p.societe || biens.length >= REGLES.SEUIL_ESPACE_PRO_BIENS) return "pro";
   return "particulier";
 }
-export const NOMS_ESPACES = { particulier: "Mon espace Particulier", entreprise: "Mon espace Entreprise", pro: "Mon espace Conciergerie", cleaneur: "Mon espace Cleaneur" };
+export const NOMS_ESPACES = { particulier: "Mon espace Particulier", entreprise: "Mon espace Entreprise", pro: "Mon espace Conciergerie", hotellerie: "Mon espace Hôtels et campings", cleaneur: "Mon espace Cleaneur" };
 
 export function barreOnglets(actif, ids = ONGLETS.map(o => o[0])) {
   return `<nav class="onglets-compte" aria-label="Mes espaces">${ONGLETS.filter(o => ids.includes(o[0])).map(([id, nom, ico]) =>
@@ -99,6 +100,71 @@ export function ongletEntreprise(p, biens, demandes) {
     <p class="petit">Prix affiché tout de suite, Cleaneurs vérifiés, paiement après validation. Factures au nom de votre société, au format Factur-X.</p>`;
 }
 
+/* ------------------------------------------------------------------ Hôtels et campings (16 novembre 2026) */
+const RACCOURCIS_HOTELLERIE = [["camping", "Rotation des mobil-homes", "location", "Le samedi, entre deux séjours"], ["hotel", "Chambres d'hôtel", "logement", "Départs, recouches, renforts"],
+  ["communs", "Sanitaires et espaces communs", "valide", "Blocs sanitaires, piscine, accueil"]];
+export function ongletHotellerie(p, biens) {
+  const rot = lireRotation();
+  return `${calculateurRotation(rot)}${ongletPro(p, biens, true)}`;
+}
+
+/* Calculateur de rotation (16 novembre 2026) : nombre de chaque logement, options → prix, temps de travail et Cleaneurs nécessaires.
+   « Réserver cette rotation » ouvre la réservation avec ce panier. Même calcul que la réservation (estimation.js). */
+const CLE_ROTATION = "cleaneroo-rotation";
+const lireRotation = () => { try { return JSON.parse(localStorage.getItem(CLE_ROTATION) || "null") || { q: {}, taches: [] }; } catch { return { q: {}, taches: [] }; } };
+const ecrireRotation = r => { try { localStorage.setItem(CLE_ROTATION, JSON.stringify(r)); } catch { /* rien */ } };
+const GROUPES_HEB = [["camping", "Camping"], ["hotel", "Hôtel"], ["communs", "Espaces communs"]];
+function brouillonRotation(rot) {
+  const panier = ELEMENTS_TEXTILES.filter(e => GROUPES_HEB.some(g => g[0] === e.formuleId) && (rot.q[e.id] || 0) > 0).map(e => ({ elementId: e.id, tailleId: "", quantite: rot.q[e.id], surfaceM2: 0 }));
+  return { ...brouillonExemple("hospitality"), espace: "hotellerie", formuleId: panier[0] ? ELEMENTS_TEXTILES.find(e => e.id === panier[0].elementId).formuleId : "camping", panier, taches: rot.taches || [] };
+}
+function resultatRotation(rot) {
+  const br = brouillonRotation(rot);
+  if (!br.panier.length) return `<p class="muet" style="margin:0">${tr("Indiquez le nombre de logements à nettoyer : le prix et le nombre de Cleaneurs s'affichent.")}</p>`;
+  const est = calculer(entreeEstimation(br, false, null));
+  const minutes = br.panier.reduce((t, l) => t + minutesLigne(l), 0) + (rubrique("hospitality").taches.filter(t => br.taches.includes(t.id)).reduce((t, x) => t + x.minutes, 0));
+  const n = cleaneursRotation(minutes);
+  return `<div class="tuiles-chiffres" style="margin:0">
+      <div class="tuile-chiffre"><b>${euros(est.totalC)}</b><span>${tr("Prix de la rotation")}</span></div>
+      <div class="tuile-chiffre"><b>${duree(minutes)}</b><span>${tr("Temps de travail")}</span></div>
+      <div class="tuile-chiffre succes"><b>${n}</b><span>${tr(n > 1 ? "Cleaneurs nécessaires" : "Cleaneur nécessaire")}</span></div></div>
+    <p class="petit">${tr("Pour finir en 6 h (de 10 h à 16 h). Hors frais de service.")}</p>
+    <button type="button" class="bouton plein" data-reserver-rotation>${tr("Réserver cette rotation")}</button>`;
+}
+function calculateurRotation(rot) {
+  const options = rubrique("hospitality").taches;
+  return `<h2 class="titre-section">${icone("instantane", { tuile: true })}${tr("Ma rotation")}</h2>
+    <p class="petit" style="margin-top:0">${tr("Combien de logements à nettoyer ? Le prix, le temps de travail et le nombre de Cleaneurs se calculent tout de suite.")}</p>
+    <div class="carte calculateur-rotation">
+      ${GROUPES_HEB.map(([g, nom]) => `<p class="surtitre" style="margin:10px 0 4px">${tr(nom)}</p>${ELEMENTS_TEXTILES.filter(e => e.formuleId === g).map(e => `<div class="compteur"><span>${esc(e.nom)}<small class="petit" style="display:block">${euros(e.prixC)} · ${duree(e.minutes)}</small></span><span class="regle">
+        <button type="button" data-rot-moins="${e.id}" aria-label="Moins" ${(rot.q[e.id] || 0) <= 0 ? "disabled" : ""}>−</button>
+        <input type="number" inputmode="numeric" min="0" max="500" value="${rot.q[e.id] || 0}" data-rot-qte="${e.id}" aria-label="${esc(e.nom)}">
+        <button type="button" data-rot-plus="${e.id}" aria-label="Plus">+</button></span></div>`).join("")}`).join("")}
+      <p class="surtitre" style="margin:12px 0 4px">${tr("Options par intervention")}</p>
+      ${options.map(t => `<label class="case"><input type="checkbox" data-rot-tache="${t.id}" ${(rot.taches || []).includes(t.id) ? "checked" : ""}><span>${esc(t.nom)}</span><span class="info"><b>+${euros(t.prixC)}</b></span></label>`).join("")}
+      <div id="resultat-rotation" style="margin-top:12px">${resultatRotation(rot)}</div>
+    </div>`;
+}
+export function brancherRotation(vue) {
+  const boite = vue.querySelector(".calculateur-rotation");
+  if (!boite) return;
+  let rot = lireRotation();
+  const majResultat = () => { ecrireRotation(rot); const r = boite.querySelector("#resultat-rotation"); r.innerHTML = resultatRotation(rot); traduire(r); brancherBouton(); };
+  const brancherBouton = () => boite.querySelector("[data-reserver-rotation]")?.addEventListener("click", () => {
+    try { localStorage.setItem("cleaneroo-brouillon", JSON.stringify({ ...brouillonRotation(rot), etape: 2 })); } catch { /* rien */ }
+    location.hash = "#/reserver/hospitality";
+  });
+  const fixer = (id, v) => { rot = { ...rot, q: { ...rot.q, [id]: Math.max(0, Math.min(500, Math.round(Number(v) || 0))) } };
+    const champ = boite.querySelector(`[data-rot-qte="${id}"]`); if (champ) champ.value = rot.q[id];
+    const moins = boite.querySelector(`[data-rot-moins="${id}"]`); if (moins) moins.disabled = rot.q[id] <= 0; majResultat(); };
+  boite.querySelectorAll("[data-rot-moins]").forEach(b => b.onclick = () => fixer(b.dataset.rotMoins, (rot.q[b.dataset.rotMoins] || 0) - 1));
+  boite.querySelectorAll("[data-rot-plus]").forEach(b => b.onclick = () => fixer(b.dataset.rotPlus, (rot.q[b.dataset.rotPlus] || 0) + 1));
+  boite.querySelectorAll("[data-rot-qte]").forEach(i => i.onchange = () => fixer(i.dataset.rotQte, i.value));
+  boite.querySelectorAll("[data-rot-tache]").forEach(c => c.onchange = () => {
+    const t = c.dataset.rotTache; rot = { ...rot, taches: c.checked ? [...new Set([...(rot.taches || []), t])] : (rot.taches || []).filter(x => x !== t) }; majResultat(); });
+  brancherBouton();
+}
+
 /** Raison sociale et SIRET/SIREN (partagés par les espaces Entreprise et Conciergerie). */
 function formulaireSociete(p) {
   return `<details class="societe"><summary>Ma société</summary>
@@ -135,12 +201,16 @@ async function sejoursDes(biens) {
   return { sejours, erreurs, lus };
 }
 
-export function ongletPro(p, biens) {
+/** Prestation des ménages programmés depuis l'agenda : location saisonnière (Conciergerie) ou hôtels et campings. */
+let rubriqueMenage = "rental";
+export function ongletPro(p, biens, hotellerie = false) {
+  rubriqueMenage = hotellerie ? "hospitality" : "rental";
   const relies = biens.filter(l => (l.calendriers || []).some(c => c.url)).length;
-  return `${guideVideo("client", "conciergerie")}<div class="entete-pro carte">
-      <div><span class="surtitre">Espace Conciergerie · Locations saisonnières et SCI</span>
-        <h2 style="margin:6px 0 2px">${p.societe ? esc(p.societe) : tr("Votre conciergerie")}</h2>
-        <p class="petit" style="margin:0">Vos biens, les séjours de vos voyageurs et chaque ménage entre deux départs, pilotés d'un seul écran.</p></div>
+  return `${guideVideo("client", hotellerie ? "hotellerie" : "conciergerie")}<div class="entete-pro carte">
+      <div><span class="surtitre">${hotellerie ? "Espace Hôtels et campings · Rotations, renforts et saisons" : "Espace Conciergerie · Locations saisonnières et SCI"}</span>
+        <h2 style="margin:6px 0 2px">${p.societe ? esc(p.societe) : tr(hotellerie ? "Votre établissement" : "Votre conciergerie")}</h2>
+        <p class="petit" style="margin:0">${hotellerie ? "Vos hébergements, les séjours lus dans votre logiciel de réservation et chaque rotation, pilotés d'un seul écran. Un même Cleaneur au plus 4 jours sur 7 chez vous : des renforts, jamais un emploi déguisé."
+          : "Vos biens, les séjours de vos voyageurs et chaque ménage entre deux départs, pilotés d'un seul écran."}</p></div>
       ${formulaireSociete(p)}
     </div>
     <div class="tuiles-chiffres tuiles-conciergerie" id="chiffres-pro">
@@ -151,7 +221,7 @@ export function ongletPro(p, biens) {
       <div class="tuile-chiffre alerte"><b data-chiffre="aprogrammer">…</b><span>Ménages à programmer</span></div>
     </div>
     <div class="grille-raccourcis raccourcis-conciergerie">
-      <a class="carte raccourci" href="#/reserver/rental">${icone("location", { tuile: true })}<b>Programmer un ménage</b><span class="petit">Entre deux voyageurs</span></a>
+      <a class="carte raccourci" href="#/reserver/${rubriqueMenage}">${icone("location", { tuile: true })}<b>Programmer un ménage</b><span class="petit">Entre deux voyageurs</span></a>
       <a class="carte raccourci" href="#agenda-pro">${icone("calendrier", { tuile: true })}<b>Ajouter un séjour</b><span class="petit">Sans calendrier relié</span></a>
       <a class="carte raccourci" href="#liste-biens">${icone("logement", { tuile: true })}<b>Mes biens</b><span class="petit">Calendriers, accès, étapes photo</span></a>
       <a class="carte raccourci" href="#liste-invitations">${icone("cleaneurs", { tuile: true })}<b>Mes Cleaneurs</b><span class="petit">Inviter vos habitués</span></a>
@@ -189,7 +259,7 @@ export function ongletPro(p, biens) {
         ${editeurGuide(l)}${editeurEtapesPhoto(l)}${editeurStock(l)}${editeurIncidents(l)}</div>`;
     }).join("") : `<div class="vide-compte"><p class="muet">Aucun bien enregistré pour l'instant.</p><p class="petit">Ajoutez vos biens dans « Mes prestations » ou lors d'une réservation.</p></div>`}</div>
     <p class="petit" id="aucun-bien" hidden>Aucun bien ne correspond à votre recherche.</p>
-    <div class="boutons"><a class="bouton secondaire" href="#/mes-demandes">＋ Ajouter un bien</a><a class="bouton secondaire" href="#/reserver/rental">Réserver un ménage de location</a></div>
+    <div class="boutons"><a class="bouton secondaire" href="#/mes-demandes">＋ Ajouter un bien</a><a class="bouton secondaire" href="#/reserver/${rubriqueMenage}">${hotellerie ? "Réserver une rotation" : "Réserver un ménage de location"}</a></div>
     <h2 class="titre-section" id="titre-menages">${icone("termine", { tuile: true })}Tous les ménages</h2>
     <div id="pro-menages">${chargeur("Chargement…", { petit: true })}</div>
     <h2 class="titre-section" id="titre-rapports">${icone("avis", { tuile: true })}Rapports mensuels</h2>
@@ -320,11 +390,11 @@ async function remplirAgenda(vue, biens, demandes, recharger) {
   planningSemaine(vue.querySelector("#semaine-pro"), biens, uniques, menageDe, auj, couleurBien);
   const ordreBiens = biens.slice().sort((a, b) => nomBien(a).localeCompare(nomBien(b), "fr", { sensitivity: "base", numeric: true }));
   const couleurDe = id => couleurBien(ordreBiens.findIndex(l => l.id === id));
-  const programmerMenage = (bienId, jour) => { preremplir({ bienId, jour }); location.hash = "#/reserver/rental"; };
+  const programmerMenage = (bienId, jour) => { preremplir({ bienId, jour }); location.hash = `#/reserver/${rubriqueMenage}`; };
   blocAujourdhui(vue.querySelector("#pro-aujourdhui"), { biens, sejours: uniques, demandes, menageDe, erreurs, nomBien, couleur: couleurDe, programmer: programmerMenage });
   blocMenages(vue.querySelector("#pro-menages"), { biens, demandes, nomBien });
   blocRapports(vue.querySelector("#pro-rapports"), { biens, sejours: uniques, demandes, nomBien, societe: vue.querySelector(".entete-pro h2")?.textContent || "" });
-  const programmer = b => b.onclick = () => { preremplir({ bienId: b.dataset.programmer, jour: b.dataset.jour }); location.hash = "#/reserver/rental"; };
+  const programmer = b => b.onclick = () => { preremplir({ bienId: b.dataset.programmer, jour: b.dataset.jour }); location.hash = `#/reserver/${rubriqueMenage}`; };
 
   const liste = vue.querySelector("#a-programmer");
   const aDesSejours = uniques.length > 0 || biens.some(l => (l.calendriers || []).some(c => c.url));
@@ -602,5 +672,5 @@ export function planningSemaine(boite, biens, sejours, menageDe, auj, couleur) {
   boite.innerHTML = `<div class="planning-defile"><table class="planning"><thead><tr><th>${tr("Bien")}</th>${jours.map((d, i) => `<th class="${i === 0 ? "pl-auj" : ""}">${libJour(d)}</th>`).join("")}</tr></thead>
     <tbody>${ordre.map((l, i) => `<tr style="--c:${couleur(i)}"><th><span class="pl-pastille"></span>${esc(nomBien(l))}</th>${jours.map(d => cellule(l, d)).join("")}</tr>`).join("")}</tbody></table></div>
     <p class="petit legende-planning"><span class="pl-menage">✓ ${tr("Ménage")}</span> ${tr("prévu")} · <span class="pl-programmer">${tr("Départ")} ›</span> ${tr("à programmer")} · <span class="pl-arrivee">${tr("Arrivée")}</span> · <span class="pl-occupe-ex"></span> ${tr("occupé")}</p>`;
-  boite.querySelectorAll("[data-programmer]").forEach(b => b.onclick = () => { preremplir({ bienId: b.dataset.programmer, jour: b.dataset.jour }); location.hash = "#/reserver/rental"; });
+  boite.querySelectorAll("[data-programmer]").forEach(b => b.onclick = () => { preremplir({ bienId: b.dataset.programmer, jour: b.dataset.jour }); location.hash = `#/reserver/${rubriqueMenage}`; });
 }

@@ -22,7 +22,7 @@ export function memoriserProfil(p) {
 export function typeEspace(p) {
   if (!p) return "visiteur";
   if (p.role === "admin") return "admin";
-  return ["particulier", "entreprise", "pro", "cleaneur"].includes(p.espace) ? p.espace : "particulier";
+  return ["particulier", "entreprise", "pro", "hotellerie", "cleaneur"].includes(p.espace) ? p.espace : "particulier";
 }
 
 const LIENS = {
@@ -30,11 +30,12 @@ const LIENS = {
   // L'essentiel, selon l'espace ouvert ; on change d'espace depuis le bouton du compte (à droite).
   particulier: [["#/tableau", "Mon suivi"], ["#/mes-demandes", "Mes prestations"], ["#/mes-biens", "Mes biens"]],
   entreprise: [["#/compte/entreprise", "Mon espace"], ["#/mes-demandes", "Mes prestations"], ["#/prestations", "Prestations"]],
+  hotellerie: [["#/compte/hotellerie", "Mon espace"], ["#/mes-demandes", "Mes prestations"], ["#/mes-biens", "Mes sites"]],
   pro: [["#/compte/pro", "Planning"], ["#/mes-demandes", "Mes prestations"], ["#/mes-biens", "Mes biens"]],
   cleaneur: [["#/compte/cleaneur", "Mes missions"], ["#/comment-ca-marche", "Comment ça marche"]],
   admin: [["gestion.html", "Tableau de bord"], ["#/compte/cleaneur", "Missions"], ["#/mes-demandes", "Mes prestations"], ["#/mes-biens", "Mes biens"]],
 };
-const NOM_ESPACE = { particulier: "Espace Particulier", entreprise: "Espace Entreprise", pro: "Espace Conciergerie", cleaneur: "Espace Cleaneur", admin: "Administration" };
+const NOM_ESPACE = { particulier: "Espace Particulier", entreprise: "Espace Entreprise", pro: "Espace Conciergerie", hotellerie: "Espace Hôtels et campings", cleaneur: "Espace Cleaneur", admin: "Administration" };
 
 /** Remplit la navigation et les actions de l'en-tête pour ce profil (null = visiteur). */
 export function rendreEntete(p) {
@@ -45,7 +46,7 @@ export function rendreEntete(p) {
   const initiale = (p?.prenom || "?").trim().charAt(0).toUpperCase() || "?";
   const html = type === "visiteur"
     ? `<a class="lien-connexion" href="${b}#/compte">Se connecter</a><a class="bouton bouton-entete" href="${b}#/compte/creer">Créer mon espace</a>`
-    : `${["particulier", "entreprise", "pro"].includes(type) ? `<a class="bouton bouton-entete" href="${b}#/reserver${type === "pro" ? "/rental" : type === "entreprise" ? "/office" : ""}">Réserver</a>` : ""}
+    : `${["particulier", "entreprise", "pro", "hotellerie"].includes(type) ? `<a class="bouton bouton-entete" href="${b}#/reserver${type === "pro" ? "/rental" : type === "entreprise" ? "/office" : type === "hotellerie" ? "/hospitality" : ""}">Réserver</a>` : ""}
        <a class="cloche" href="${b}#/messages" title="${tr("Messages")}" aria-label="${tr("Messages")}">💬</a>
        <a class="cloche" href="${b}#/notifications" title="${tr("Notifications")}" aria-label="${tr("Notifications")}">🔔<span class="pastille-cloche" hidden></span></a>
        <a class="puce-compte" href="${b}#/compte" title="${tr("Mon espace")}"><span class="avatar">${initiale}</span><span class="qui"><b>${p.prenom || tr("Mon espace")}</b><small>${NOM_ESPACE[type]}</small></span></a>`;
@@ -55,7 +56,7 @@ export function rendreEntete(p) {
   const autres = type === "admin" || type === "visiteur" ? [] : (p.statuts || []).filter(x => x !== type && NOM_ESPACE[x]).map(x => [`#/compte/${x}`, NOM_ESPACE[x]]);
   nav.innerHTML = [...LIENS[type], ...autres].map(lien).join("") + `<div class="nav-compte">${html}</div>`;
   // Logo : une fois connecté, il ramène à son espace (et non à la page d'accueil du site, toujours accessible depuis « Mon suivi »).
-  const accueil = { visiteur: "#/", particulier: "#/tableau", entreprise: "#/compte/entreprise", pro: "#/compte/pro", cleaneur: "#/compte/cleaneur", admin: "#/tableau" }[type] || "#/";
+  const accueil = { visiteur: "#/", particulier: "#/tableau", entreprise: "#/compte/entreprise", pro: "#/compte/pro", hotellerie: "#/compte/hotellerie", cleaneur: "#/compte/cleaneur", admin: "#/tableau" }[type] || "#/";
   document.querySelectorAll(".entete .marque").forEach(m => { m.setAttribute("href", b + accueil); m.setAttribute("aria-label", type === "visiteur" ? "Cleaneroo, accueil" : tr("Mon espace")); });
   document.body.dataset.espace = type;
   document.body.classList.toggle("acces-cleaneur", type === "cleaneur");

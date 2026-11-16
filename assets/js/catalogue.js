@@ -212,6 +212,13 @@ export const RUBRIQUES = [
       { id: "confort", nom: "Confort", remisePct: 10, tacheIds: ["detachage", "desodorisation", "acariens"] },
       { id: "prestige", nom: "Premium", remisePct: 15, tacheIds: ["detachage", "desodorisation", "acariens", "protection", "sechage"] },
     ] },
+  // Hôtels et campings (16 novembre 2026) : rotations, renforts et saisons, au forfait par logement (panier comme les textiles).
+  { id: "hospitality", nom: "Hôtels et campings", sousTitre: "Mobil-homes, chalets et chambres au forfait", icone: "location", tauxHoraireC: 3000, salissureSurTemps: false, affichagePrix: "PAR_ELEMENT",
+    inclus: "Linge changé (fourni par l'établissement) · Cuisine et sanitaires désinfectés · Sols, poussières et poubelles · Photo de contrôle par logement",
+    formules: [F("camping", "Camping"), F("hotel", "Hôtel"), F("communs", "Espaces communs")],
+    taches: [T("terrasse", "Terrasse et salon de jardin", 800, 10, { groupe: "Options par intervention" }), T("reassort", "Réassort des produits d'accueil", 500, 5, { groupe: "Options par intervention" }),
+      T("vitres_heb", "Vitres et baies vitrées", 1000, 15, { groupe: "Options par intervention" })],
+    packs: [] },
   { id: "construction", nom: "Fin de chantier", sousTitre: "Éliminer la poussière après les travaux", icone: "chantier", tauxHoraireC: 3800, salissureSurTemps: true,
     inclus: "Aspiration des poussières de chantier (filtre HEPA) · Sols lavés selon leur nature · Vitres et menuiseries intérieures · Sanitaires et cuisine · Retrait des traces et étiquettes courantes",
     taches: [T("etiquettes", "Retrait des étiquettes et films de protection", REGLES.OPTION_GENERIQUE_C, REGLES.OPTION_GENERIQUE_MIN, { groupe: "Options" }), T("residus", "Résidus de plâtre ou de peinture au sol", REGLES.OPTION_GENERIQUE_C, REGLES.OPTION_GENERIQUE_MIN, { groupe: "Options" }), T("dechets", "Évacuation de déchets légers (sacs)", REGLES.OPTION_GENERIQUE_C, REGLES.OPTION_GENERIQUE_MIN, { groupe: "Options" })] },
@@ -464,6 +471,13 @@ export const ELEMENTS_TEXTILES = [
   E("matelas_2", "Matelas 2 personnes", "matelas", 7500, 60), E("matelas_grand", "Matelas grand lit (160 cm et +)", "matelas", 8900, 75),
   E("tapis_2", "Tapis jusqu'à 2 m", "tapis", 4500, 30), E("tapis_3", "Tapis de 2 à 3 m", "tapis", 6500, 45),
   E("tapis_plus", "Tapis de plus de 3 m", "tapis", 8500, 60), E("moquette", "Moquette", "tapis", 600, 4, { parM2: true }),
+  // Hôtels et campings : prix par logement, base 30 €/h (même taux que la location saisonnière).
+  E("mh_2", "Mobil-home 1 à 2 chambres", "camping", 3500, 60), E("mh_3", "Mobil-home 3 chambres et plus", "camping", 4500, 80),
+  E("chalet", "Chalet ou bungalow", "camping", 5500, 100), E("lodge", "Tente lodge ou safari", "camping", 2900, 45),
+  E("ch_depart", "Chambre d'hôtel · départ (à blanc)", "hotel", 1600, 30), E("ch_recouche", "Chambre d'hôtel · recouche", "hotel", 900, 15),
+  E("suite", "Suite ou appartement hôtelier", "hotel", 3500, 60),
+  E("sanitaires", "Bloc sanitaire collectif", "communs", 4500, 75), E("salle_commune", "Accueil, salle commune ou club enfants", "communs", 3900, 60),
+  E("piscine", "Abords de piscine et douches", "communs", 2900, 45),
 ];
 /** Supplément de taille des canapés (prix et durée). */
 export const TAILLES_CANAPE = [
@@ -553,6 +567,8 @@ export const PARTIES = [
     rubriques: ["home", "rental", "moving", "textiles", "windows", "outdoor", "car", "kitchen", "event", "construction", "special"] },
   { id: "conciergerie", nom: "Conciergerie et locations", detail: "Locations saisonnières et logements gérés · facture au nom de votre société",
     rubriques: ["rental", "home", "moving", "textiles", "windows", "outdoor", "construction", "special"] },
+  { id: "hotellerie", nom: "Hôtels et campings", detail: "Rotations, renforts et saisons · facture au nom de votre établissement",
+    rubriques: ["hospitality", "windows", "outdoor", "textiles", "construction", "special"] },
   { id: "professionnel", nom: "Entreprise", detail: "Bureaux, commerces, immeubles, cuisines pro · facture au nom de votre société",
     rubriques: ["office", "commerce", "communal", "kitchen", "windows", "outdoor", "construction", "car", "event", "textiles", "special"] },
 ];
@@ -561,7 +577,9 @@ export const partie = id => PARTIES.find(p => p.id === id) || PARTIES[0];
 export const partiePour = (rubriqueId, voulue = "personnel") =>
   partie(voulue).rubriques.includes(rubriqueId) ? partie(voulue).id : (PARTIES.find(p => p.rubriques.includes(rubriqueId)) || PARTIES[0]).id;
 /** Partie imposée par l'espace du compte connecté (16 novembre 2026) : plus de question « Pour qui ? » une fois connecté. */
-export const PARTIE_DE_L_ESPACE = { particulier: "personnel", pro: "conciergerie", entreprise: "professionnel" };
+export const PARTIE_DE_L_ESPACE = { particulier: "personnel", pro: "conciergerie", hotellerie: "hotellerie", entreprise: "professionnel" };
+/** Prestations au panier (prix forfaitaire par élément) : textiles, hôtels et campings. */
+export const RUBRIQUES_PANIER = ["textiles", "hospitality"];
 /** Prestations sans objet pour un logement déjà enregistré (véhicule, locaux professionnels, réception). Même liste dans l'appli. */
 export const RUBRIQUES_HORS_LOGEMENT = ["car", "event", "office", "commerce", "communal"];
 /** Prestations proposées à l'étape 1 : celles de la partie ; pour un logement enregistré (hors Entreprise, dont les adresses sont des locaux), sans celles qui n'ont pas de sens. */

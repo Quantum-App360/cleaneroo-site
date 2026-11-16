@@ -335,7 +335,7 @@ function etape2() {
   h += blocAccueil();
   const accueilOk = accueilValide(b);
   const tachesOk = b.rubriqueId !== "car" || b.taches.length > 0;
-  const panierOk = b.rubriqueId !== "textiles" || (b.panier || []).length > 0;
+  const panierOk = !["textiles", "hospitality"].includes(b.rubriqueId) || (b.panier || []).length > 0;
   const chantierOk = b.rubriqueId !== "construction" || !!b.artisansPartis;
   const equipementsOk = b.rubriqueId !== "kitchen" || minutesEquipements(b) > 0;
   const joursOk = !(formuleDe(b)?.genre === "REGULIER" && b.frequence === "plusieurs") || (b.jours || []).length >= REGLES.JOURS_MIN_PLUSIEURS_PAR_SEMAINE;
@@ -377,11 +377,11 @@ function questionnaire(enTete = true) {
     const inclus = (lieux || []).find(l => l.id === b.typeLieuId)?.inclus || r.inclus;
     if (inclus) h += `<div class="carte teintee" style="margin-top:6px"><b style="color:var(--primaire)">Inclus dans votre forfait</b><p class="muet" style="margin:4px 0 0;font-size:14px">${esc(inclus)}</p></div>`;
   }
-  if (b.rubriqueId === "textiles") h += panierTextiles();
+  if (["textiles", "hospitality"].includes(b.rubriqueId)) h += panierTextiles();
   if (b.rubriqueId !== "car") {
     if (b.rubriqueId === "special" && TARIFS_SPECIAUX[b.typeLieuId]?.surface !== false) h += titre("Dimensions") + `<div class="carte">${compteur("Surface à traiter", "surface", b.surface, { min: 5, max: 5000, unite: " m²" })}`
       + (surfaceEffective(b) > REGLES.SEUIL_DEVIS_SURFACE_M2 ? `<p style="color:var(--alerte);font-size:14px">Au-delà de 300 m² : devis obligatoire.</p>` : "") + `</div>`;
-    if (!["textiles", "special"].includes(b.rubriqueId) && !logFixe) h += titre("Dimensions") + `<div class="carte">`
+    if (!["textiles", "hospitality", "special"].includes(b.rubriqueId) && !logFixe) h += titre("Dimensions") + `<div class="carte">`
       + (b.rubriqueId === "windows" ? compteur("Nombre de fenêtres", "fenetres", b.fenetres, { min: 1, max: 200 })
           + compteur("Surface vitrée approximative", "surfaceVitree", b.surfaceVitree ?? 20, { min: 1, max: 500, unite: " m²" })
           + `<p class="petit">La surface vitrée sert uniquement aux tâches à la surface.</p>`
@@ -599,27 +599,30 @@ function questionsFormule(r) {
 
 /** Canapés et textiles : choix d'un élément de la formule, taille, quantité, puis ajout au panier (PanierTextiles dans l'appli). */
 function ligneEnCours() {
-  const elements = ELEMENTS_TEXTILES.filter(e => e.formuleId === (b.formuleId || "canape"));
+  const elements = ELEMENTS_TEXTILES.filter(e => e.formuleId === (b.formuleId || (b.rubriqueId === "hospitality" ? "camping" : "canape")));
   const e = elements.find(x => x.id === b.elementTextile) || elements[0];
   return { elements, e, ligne: { elementId: e.id, tailleId: e.avecTaille ? b.tailleCanape || "t15" : "", quantite: b.quantitePanier || 1, surfaceM2: e.parM2 ? b.surfaceMoquette || 1 : 0 } };
 }
 function panierTextiles() {
   const { elements, e, ligne } = ligneEnCours();
   const panier = b.panier || [];
+  const heb = b.rubriqueId === "hospitality";
   return titre("Votre panier")
-    + `<div class="note">Choisir un élément ne suffit pas : ajoutez chaque canapé, fauteuil, matelas ou tapis au panier.</div>`
+    + `<div class="note">${heb ? "Ajoutez chaque type de logement avec son nombre : par exemple 24 mobil-homes 2 chambres et 6 chalets pour la rotation du samedi."
+      : "Choisir un élément ne suffit pas : ajoutez chaque canapé, fauteuil, matelas ou tapis au panier."}</div>`
     + `<div class="carte" style="margin-top:10px">${choix(elements.map(x => [x.id, x.nom]), e.id, "elementTextile")}`
     + (e.avecTaille ? `<p class="petit"><b>Taille</b></p>${choix(TAILLES_CANAPE.map(t => [t.id, t.libelle]), b.tailleCanape || "t15", "tailleCanape")}` : "")
     + (e.parM2 ? compteur("Surface de moquette", "surfaceMoquette", b.surfaceMoquette || 10, { min: 1, max: 300, unite: " m²" }) : "")
-    + compteur("Quantité", "quantitePanier", b.quantitePanier || 1, { min: 1, max: 20 })
+    + compteur("Quantité", "quantitePanier", b.quantitePanier || 1, { min: 1, max: heb ? 300 : 20, pas: 1 })
     + `<div style="display:flex;align-items:center;margin-top:8px"><b style="flex:1">${euros(prixLigne(ligne))}</b>
       <button type="button" class="lien-bouton" id="ajouter-panier">Ajouter au panier</button></div></div>`
     + `<div class="carte ${panier.length ? "teintee" : ""}" style="margin-top:10px">${panier.length ? "" : `<p class="muet" style="margin:0">Votre panier est vide.</p>`}`
     + panier.map((l, i) => `<div style="display:flex;align-items:center;gap:8px"><span style="flex:1">${esc(libelleLigne(l))}<span class="petit" style="display:block">${duree(minutesLigne(l))}</span></span>
       <span>${euros(prixLigne(l))}</span><button type="button" class="lien-bouton" style="color:var(--erreur)" data-retirer-panier="${i}">Retirer</button></div>`).join("")
-    + `<p class="petit">Minimum de commande : ${euros(REGLES.MINIMUM_COMMANDE_TEXTILES_C).replace(",00", "")}. Prix forfaitaire par élément, la durée sert au planning.</p></div>`
-    + titre("Taches à traiter") + `<div class="choix">${TACHES_A_TRAITER.map(t =>
-      `<button type="button" data-tache-a-traiter="${esc(t)}" class="${(b.tachesATraiter || []).includes(t) ? "choisi" : ""}">${esc(t)}</button>`).join("")}</div>`;
+    + `<p class="petit">Minimum de commande : ${euros(heb ? REGLES.MINIMUM_COMMANDE_HEBERGEMENT_C : REGLES.MINIMUM_COMMANDE_TEXTILES_C).replace(",00", "")}. Prix forfaitaire par élément, la durée sert au planning.</p>
+      ${heb ? `<p class="petit">${tr("Au-delà de 6 h de travail, plusieurs Cleaneurs se partagent la rotation. Un même Cleaneur intervient au plus 4 jours sur 7 chez vous : Cleaneroo assure des renforts et des pics, pas un emploi permanent.")}</p>` : ""}</div>`
+    + (heb ? "" : titre("Taches à traiter") + `<div class="choix">${TACHES_A_TRAITER.map(t =>
+      `<button type="button" data-tache-a-traiter="${esc(t)}" class="${(b.tachesATraiter || []).includes(t) ? "choisi" : ""}">${esc(t)}</button>`).join("")}</div>`);
 }
 
 function etape3() {

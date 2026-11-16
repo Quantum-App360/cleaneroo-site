@@ -29,7 +29,7 @@ export function calculer(entree) {
   const r = rubrique(e.rubriqueId);
   const taux = r.tauxHoraireC ?? 0;
   const vehicule = e.rubriqueId === "car";
-  const forfait = e.rubriqueId === "textiles";
+  const forfait = e.rubriqueId === "textiles" || e.rubriqueId === "hospitality";
   const panier = e.panier || [];
   const lignes = [];
   const sal = SALISSURE[e.salissure || "NORMAL"];
@@ -249,7 +249,7 @@ export function datesPassages(premier, frequence, jours, nombre) {
 }
 
 /** Minimum facturé par rubrique (centimes), null s'il n'y en a pas. */
-export const minimumC = id => ({ car: REGLES.MINIMUM_COMMANDE_VEHICULE_C, textiles: REGLES.MINIMUM_COMMANDE_TEXTILES_C, rental: REGLES.MINIMUM_MENAGE_LOCATION_C })[id] ?? null;
+export const minimumC = id => ({ car: REGLES.MINIMUM_COMMANDE_VEHICULE_C, textiles: REGLES.MINIMUM_COMMANDE_TEXTILES_C, hospitality: REGLES.MINIMUM_COMMANDE_HEBERGEMENT_C, rental: REGLES.MINIMUM_MENAGE_LOCATION_C })[id] ?? null;
 /** Ligne « Complément minimum » : ce qu'il manque pour atteindre le minimum (0 si atteint). */
 export const complementMinimum = (totalC, minC) => Math.max(0, minC - totalC);
 
@@ -294,7 +294,7 @@ export function entreeEstimation(b, espacePersonnel, debut) {
   // Temps de rotation exact (sans arrondi intermédiaire) : × formule, × salissure, + étapes, + consommables, puis quart d'heure.
   if (b.rubriqueId === "rental") { dureeImposee = tempsRotationLocation(b.chambres, b.sdb, b.surface, 1.0); m2h = 0; }
   if (b.rubriqueId === "windows") { dureeImposee = Math.max(f.minimumMin, b.fenetres * 15); m2h = 0; surface = 0; }
-  if (b.rubriqueId === "textiles") { m2h = 0; surface = 0; }
+  if (b.rubriqueId === "textiles" || b.rubriqueId === "hospitality") { m2h = 0; surface = 0; }
   // Prestations spécialisées : durée et prix fixés par le type d'intervention et la surface à traiter
   if (b.rubriqueId === "special") { dureeImposee = minutesSpeciales(b.typeLieuId, b.surface); m2h = 0; surface = b.surface; }
   // Immeubles : hall et entrée + chaque palier (au moins un quart d'heure), puis formule et type
@@ -320,7 +320,7 @@ export function entreeEstimation(b, espacePersonnel, debut) {
     dimanche: debut ? debut.getDay() === 0 : false,
     creneauMalin: dispo === "MALIN" && !b.flexible,
     engagementMois: b.engagementMois, espacePersonnel, typeLieuId: b.typeLieuId,
-    panier: b.rubriqueId === "textiles" ? b.panier || [] : [],
+    panier: b.rubriqueId === "textiles" || b.rubriqueId === "hospitality" ? b.panier || [] : [],
     minutesEnPlus: b.rubriqueId === "construction" ? (b.fenetres || 0) * REGLES.CHANTIER_MIN_PAR_FENETRE : 0,
     minimumApresMin: b.rubriqueId === "construction" ? REGLES.CHANTIER_MINIMUM_MIN : 0,
     lavageDrapsLits: b.rubriqueId === "rental" && b.lavageDraps ? litsDe(b) : 0,

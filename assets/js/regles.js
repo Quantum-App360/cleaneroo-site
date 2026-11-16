@@ -15,6 +15,9 @@ export const REGLES = {
   SEUIL_DEVIS_SURFACE_M2: 300,
   MINIMUM_COMMANDE_VEHICULE_C: 4000,
   MINIMUM_COMMANDE_TEXTILES_C: 5900,
+  MINIMUM_COMMANDE_HEBERGEMENT_C: 5900,   // Hôtels et campings (16 novembre 2026) : minimum par intervention
+  JOURS_MAX_MEME_SITE: 4,
+  FENETRE_ROTATION_MIN: 360,              // rotation d'un camping ou d'un hôtel : à finir en 6 h (10 h – 16 h) → nombre de Cleaneurs                 // un même Cleaneur au plus 4 jours sur 7 chez un même hôtel ou camping (pas d'emploi déguisé)
   VEHICULES_MIN: 1,
   VEHICULES_MAX: 20,
   DUREE_MIN_VEHICULE_MIN: 30,
@@ -210,6 +213,9 @@ export const REGLES = {
  * null si le périmètre suffit (au moins MISSIONS_SECTEUR_MIN missions) ou s'il est déjà au plus grand ; sinon le plus petit périmètre proposé
  * qui en donne assez (à défaut, le palier suivant) et le nombre de missions en plus.
  */
+/** Cleaneurs nécessaires pour finir une rotation dans la fenêtre (16 novembre 2026, copie de ReglesMetier.cleaneursRotation). */
+export const cleaneursRotation = minutes => Math.max(1, Math.ceil(minutes / REGLES.FENETRE_ROTATION_MIN));
+
 export function conseilSecteur(distancesKm, zoneKm) {
   const dans = km => distancesKm.filter(d => d <= km).length;
   const n = dans(zoneKm);

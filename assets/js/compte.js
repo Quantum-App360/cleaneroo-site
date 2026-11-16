@@ -24,7 +24,7 @@ import {
 } from "./donnees.js";
 import { oublierMesInformations, reserverPourLogement } from "./reserver.js";
 import { rendreEntete, memoriserProfil } from "./entete.js";
-import { ONGLETS, ongletParDefaut, espaceDu, statutsDu, NOMS_ESPACES, barreOnglets, ongletParticulier, ongletPro, ongletEntreprise, brancherSociete, brancherPro, ongletCleaneur, brancherMissions, demanderGeoloc } from "./espaces.js";
+import { ONGLETS, ongletParDefaut, espaceDu, statutsDu, NOMS_ESPACES, barreOnglets, ongletParticulier, ongletPro, ongletEntreprise, ongletHotellerie, brancherRotation, brancherSociete, brancherPro, ongletCleaneur, brancherMissions, demanderGeoloc } from "./espaces.js";
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const OUVERTURE = "Les interventions commencent le 1er janvier 2027.";
@@ -42,6 +42,7 @@ const NOMS_STATUTS = {
   // Un particulier qui a plusieurs logements reste Particulier : il les enregistre tous dans « Mes biens » (13 novembre 2026).
   particulier: ["Particulier", "Particulier", "logement", "Je cherche un ménage pour mon logement, ou pour plusieurs."],
   entreprise: ["Entreprise", "Entreprise ou professionnel", "bureaux", "Je réserve le ménage de mes bureaux, commerces ou locaux (SIRET ou SIREN demandé)."],
+  hotellerie: ["Hôtels et campings", "Hôtel ou camping", "location", "Je gère un hôtel, un camping ou une résidence de tourisme (SIRET ou SIREN demandé)."],
   pro: ["Conciergerie", "Conciergerie ou SCI", "location", "Je gère des locations saisonnières pour des propriétaires ou au nom d'une société (SIRET ou SIREN demandé)."],
   cleaneur: ["Cleaneur", "Cleaneur", "cleaneurs", "Je propose mes services en auto-entrepreneur."],
 };
@@ -78,14 +79,14 @@ export async function pageCompte(vue, param) {
   const s = await session();
   if (location.hash !== ici) return;
   if (param === "mdp" && s) return ecranNouveauMdp(vue);
-  if (!s) return ecranConnexion(vue, ["creer", "particulier", "entreprise", "cleaneur", "pro"].includes(param) ? "creer" : "connexion", "", false, ["cleaneur", "pro", "entreprise"].includes(param) ? param : "client");
+  if (!s) return ecranConnexion(vue, ["creer", "particulier", "entreprise", "cleaneur", "pro", "hotellerie"].includes(param) ? "creer" : "connexion", "", false, ["cleaneur", "pro", "entreprise"].includes(param) ? param : "client");
   const [p, biens, demandes, parrain] = await Promise.all([monProfil().catch(() => null), synchroniserBiens().catch(() => []), demandesDuCompte().catch(() => []), monParrainage().catch(() => null)]);
   if (location.hash !== ici) return;
   if (!p) { vue.innerHTML = `<section class="bloc"><div class="etroit">${titre("Mon espace")}<p class="erreur">${tr("Le service est momentanément indisponible. Réessayez dans quelques minutes.")}</p></div></section>`; traduire(vue); return; }
   memoriserCoordonnees(p);
   // Un espace par statut coché (particulier, pro, cleaneur ; cumulables) ; l'administrateur a les trois.
   const admin = p.role === "admin";
-  const statuts = admin ? ["particulier", "entreprise", "pro", "cleaneur"] : statutsDu(p);
+  const statuts = admin ? ["particulier", "entreprise", "pro", "hotellerie", "cleaneur"] : statutsDu(p);
   const cleaneur = statuts.includes("cleaneur");
   const voulu = ONGLETS.some(o => o[0] === param) ? param : null;
   const onglet = voulu && statuts.includes(voulu) ? voulu : admin ? ongletParDefaut(p, biens) : espaceDu(p);
@@ -93,13 +94,14 @@ export async function pageCompte(vue, param) {
   if (!admin && onglet !== p.espace) { p.espace = onglet; majProfil({ espace: onglet }).then(() => majLienCompte()).catch(() => null); }
   const docs = cleaneur && onglet === "cleaneur" ? await mesDocuments().catch(() => []) : [];
   if (location.hash !== ici) return;
-  const contenu = onglet === "entreprise" ? ongletEntreprise(p, biens, demandes) + `<details class="carte" style="margin-top:14px"><summary>Mes informations</summary>${formulaireProfil(p, false)}</details>`
+  const contenu = onglet === "hotellerie" ? ongletHotellerie(p, biens) + `<details class="carte" style="margin-top:14px"><summary>Mes informations</summary>${formulaireProfil(p, false)}</details>`
+    : onglet === "entreprise" ? ongletEntreprise(p, biens, demandes) + `<details class="carte" style="margin-top:14px"><summary>Mes informations</summary>${formulaireProfil(p, false)}</details>`
     : onglet === "pro" ? ongletPro(p, biens) + `<h2 class="titre-section">${icone("paiement", { tuile: true })}${tr("Mon abonnement")}</h2>${blocAbonnementPro(p, biens)}` + blocInvitationsPro()
       + `<details class="carte" style="margin-top:14px"><summary>Mes informations</summary>${formulaireProfil(p, false)}</details>`
     : onglet === "cleaneur" ? ongletCleaneur(p, docs, { dossier: cleaneur ? blocDossier(p, docs) : "", profil: cleaneur ? formulaireProfil(p, true) : "" }) + (cleaneur ? blocCodeInvitation() : "")
     : ongletParticulier(p, biens, demandes) + formulaireProfil(p, false);
   const etiquette = admin ? ROLES.admin : statuts.map(x => NOMS_STATUTS[x][0]).join(" · ");
-  const manquants = admin ? [] : ["particulier", "entreprise", "pro", "cleaneur"].filter(x => !statuts.includes(x));
+  const manquants = admin ? [] : ["particulier", "entreprise", "pro", "hotellerie", "cleaneur"].filter(x => !statuts.includes(x));
   vue.innerHTML = `<section class="bloc"><div class="etroit large-compte">
     <span class="surtitre">${NOMS_ESPACES[onglet]}</span>
     ${titre(`Bonjour ${esc(p.prenom || "")}`.trim())}
@@ -114,7 +116,7 @@ export async function pageCompte(vue, param) {
       <p class="petit" style="margin:8px 0 10px">Chaque espace reste séparé : vous passez de l'un à l'autre avec les onglets en haut de votre compte.</p>
       ${manquants.map(x => `<button type="button" class="carte ligne-compte" data-ajouter-statut="${x}">${icone(NOMS_STATUTS[x][2], { tuile: true })}
         <div class="corps"><b>${NOMS_STATUTS[x][1]}</b><p class="petit" style="margin:2px 0 0">${NOMS_STATUTS[x][3]}</p></div><span class="aller" aria-hidden="true">›</span></button>`).join("")}
-      ${manquants.some(x => x === "pro" || x === "entreprise") ? `<form id="form-ajout-pro" class="masque" novalidate style="margin-top:10px">
+      ${manquants.some(x => x === "pro" || x === "entreprise" || x === "hotellerie") ? `<form id="form-ajout-pro" class="masque" novalidate style="margin-top:10px">
         <label class="champ">Raison sociale<input name="societe" maxlength="120" autocomplete="organization" value="${esc(p.societe || "")}"></label>
         <label class="champ">SIRET (14 chiffres) ou SIREN (9 chiffres)<input name="siret" inputmode="numeric" maxlength="17" value="${esc(p.siret_societe || "")}"></label>
         <p class="erreur" id="erreur-ajout-pro"></p><button class="bouton plein" type="submit">Ajouter l'espace Pro</button></form>` : ""}</details>` : ""}
@@ -137,6 +139,7 @@ export async function pageCompte(vue, param) {
   blocEquipe(vue.querySelector("#equipe"), onglet === "pro", biens);   // Équipe et propriétaires   // onglet « Factures » de l'espace
   if (onglet === "cleaneur" && cleaneur) { brancherDossier(vue, p); brancherMissions(vue, p); brancherFormulesCleaneur(vue, p, () => pageCompte(vue, "cleaneur")); brancherCodeInvitation(vue); blocActivite(vue.querySelector("#mon-activite"), p); }
   if (onglet === "entreprise") brancherSociete(vue, majProfil, () => pageCompte(vue, "entreprise"));
+  if (onglet === "hotellerie") { brancherPro(vue, p, biens, demandes, { majProfil, recharger: () => pageCompte(vue, "hotellerie") }); brancherRotation(vue); }
   if (onglet === "pro") { brancherPro(vue, p, biens, demandes, { majProfil, recharger: () => pageCompte(vue) }); brancherInvitationsPro(vue); brancherAbonnementPro(vue, () => { majLienCompte(); pageCompte(vue, "pro"); }); }
   // Onglets à l'intérieur des espaces Cleaneur et Pro (la page ne défile plus sur des dizaines d'écrans).
   if ((onglet === "cleaneur" && cleaneur) || onglet === "pro" || onglet === "particulier") installerSousOnglets(vue, onglet);
@@ -153,11 +156,11 @@ export async function pageCompte(vue, param) {
   vue.querySelectorAll("[data-ajouter-statut]").forEach(b => b.onclick = () => {
     const x = b.dataset.ajouterStatut;
     // Entreprise ou Conciergerie : la société est demandée, sauf si elle est déjà renseignée.
-    if ((x === "pro" || x === "entreprise") && !(p.societe && sirenSiretValide(p.siret_societe || ""))) {
+    if ((x === "pro" || x === "entreprise" || x === "hotellerie") && !(p.societe && sirenSiretValide(p.siret_societe || ""))) {
       const fa = vue.querySelector("#form-ajout-pro"); fa.dataset.statut = x; fa.classList.remove("masque");
       fa.querySelector("[type=submit]").textContent = tr(x === "entreprise" ? "Ajouter l'espace Entreprise" : "Ajouter l'espace Conciergerie");
       fa.querySelector("[name=societe]").focus(); return; }
-    const noms = { cleaneur: "Cleaneur", particulier: "Particulier", entreprise: "Entreprise", pro: "Conciergerie" };
+    const noms = { cleaneur: "Cleaneur", particulier: "Particulier", entreprise: "Entreprise", pro: "Conciergerie", hotellerie: "Hôtels et campings" };
     if (!confirm(`${tr("Ajouter l'espace")} ${tr(noms[x])} ${tr("à votre compte ? Vos autres espaces sont conservés.")}`)) return;
     ajouter(x, b);
   });
@@ -209,7 +212,7 @@ function ecranConnexion(vue, mode, message = "", ok = false, roleDefaut = "clien
         <div class="statuts-inscription">${Object.entries(NOMS_STATUTS).map(([v, [, t, ico, d]]) => `<label class="carte statut-choix">
           <input type="checkbox" name="statut" value="${v}" ${roleDefaut === v || (roleDefaut === "client" && v === "particulier") ? "checked" : ""}>${icone(ico, { tuile: true })}
           <span><b>${t}</b><small>${d}</small></span><i class="coche" aria-hidden="true"></i></label>`).join("")}</div>
-        <div id="champs-pro" class="${roleDefaut === "pro" || roleDefaut === "entreprise" ? "" : "masque"}"><div class="grille-2">
+        <div id="champs-pro" class="${["pro", "entreprise", "hotellerie"].includes(roleDefaut) ? "" : "masque"}"><div class="grille-2">
           <label class="champ">Raison sociale<input name="societe" maxlength="120" autocomplete="organization"></label>
           <label class="champ">SIRET ou SIREN<input name="siretSociete" inputmode="numeric" maxlength="17"></label></div></div>
         <div class="grille-2"><label class="champ">Prénom<input name="prenom" required maxlength="80" autocomplete="given-name"></label>
@@ -231,8 +234,8 @@ function ecranConnexion(vue, mode, message = "", ok = false, roleDefaut = "clien
     supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: location.origin + location.pathname + "?vers=compte" } }));
   const f = vue.querySelector("#form-compte");
   f.querySelectorAll("[name=statut]").forEach(c => c.onchange = () => {
-    if (c.value === "pro" || c.value === "entreprise")
-      vue.querySelector("#champs-pro").classList.toggle("masque", !f.querySelector("[name=statut][value=pro]").checked && !f.querySelector("[name=statut][value=entreprise]").checked);
+    if (["pro", "entreprise", "hotellerie"].includes(c.value))
+      vue.querySelector("#champs-pro").classList.toggle("masque", !["pro", "entreprise", "hotellerie"].some(v => f.querySelector(`[name=statut][value=${v}]`)?.checked));
   });
   // Erreur affichée sous le formulaire : ce qui a été saisi est conservé.
   const erreur = t => { f.querySelector("#erreur-compte").textContent = tr(t); f.querySelector("[type=submit]").disabled = false; };
@@ -252,7 +255,7 @@ function ecranConnexion(vue, mode, message = "", ok = false, roleDefaut = "clien
     if (!f.cgu.checked) return erreur("Acceptez les conditions d'utilisation pour créer votre compte.");
     const statuts = [...f.querySelectorAll("[name=statut]:checked")].map(c => c.value);
     if (!statuts.length) return erreur("Cochez au moins un statut : Particulier, Entreprise, Conciergerie ou Cleaneur.");
-    const avecSociete = statuts.includes("pro") || statuts.includes("entreprise");
+    const avecSociete = statuts.includes("pro") || statuts.includes("entreprise") || statuts.includes("hotellerie");
     if (avecSociete && (!f.societe.value.trim() || !sirenSiretValide(f.siretSociete.value)))
       return erreur("Indiquez la raison sociale et un SIRET (14 chiffres) ou un SIREN (9 chiffres) valable.");
     try {
