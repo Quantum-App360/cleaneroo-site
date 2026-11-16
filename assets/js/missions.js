@@ -2,8 +2,8 @@
 // automatique), étapes Je pars › Je suis arrivé › Je commence › J'ai terminé, et partage de la position pendant le trajet.
 // Mêmes écrans que l'application (EspacesCompte.kt / ServiceTrajet.kt).
 import { rubrique } from "./catalogue.js";
-import { REGLES, euros, dateLongue, heure, duree, finOffreLancement, indemniteAccesC, dateVersement } from "./regles.js";
-import { supabase } from "./donnees.js";
+import { REGLES, euros, dateLongue, heure, duree, finOffreLancement, indemniteAccesC, dateVersement, conseilSecteur } from "./regles.js";
+import { supabase, majProfil } from "./donnees.js";
 import { positionAdresse, distanceKm } from "./suivi-live.js";
 import { blocNoterClients, remplirNotesClients, blocAvisRecus } from "./avis-clients.js";
 import { blocFormations } from "./formations.js";
@@ -364,6 +364,22 @@ async function carteDesMissions(boite, miennes, dispo) {
   afficherCarte(boite, { marqueurs, zoom: 13 }).catch(() => boite.remove());
 }
 
+/* Secteur (16 novembre 2026) : peu de missions dans le périmètre → conseil d'agrandir, avec les missions qu'il ferait gagner.
+   Une notification est aussi envoyée, au plus une fois par semaine (alerte_secteur dans la base). Même encart dans l'appli. */
+let alerteEnvoyee = false;
+function blocSecteur(p, dispo) {
+  if (p.role === "admin" || !p.zone_lat) return "";
+  const zone = p.zone_km || REGLES.ZONE_KM_DEFAUT;
+  const c = conseilSecteur(dispo.map(m => distances.get(m.reference)).filter(km => km != null), zone);
+  if (!c) return "";
+  if (!alerteEnvoyee) { alerteEnvoyee = true; supabase.rpc("alerte_secteur", { p_dans_zone: c.dansZone, p_zone_km: c.zoneKm, p_conseil_km: c.conseilKm, p_en_plus: c.enPlus }).catch(() => null); }
+  return `<div class="carte alerte-secteur"><div class="corps">${icone("position", { tuile: true })}<div>
+      <b>${tr("Peu de missions dans votre secteur")}</b>
+      <p class="petit" style="margin:4px 0 0">${c.dansZone} ${tr(c.dansZone > 1 ? "missions disponibles" : "mission disponible")} ${tr("à moins de")} ${c.zoneKm} km.
+        ${c.enPlus > 0 ? `${tr("En passant à")} ${c.conseilKm} km : +${c.enPlus} ${tr(c.enPlus > 1 ? "missions" : "mission")}.` : tr("Un périmètre plus large vous montrera plus de demandes.")}</p></div></div>
+    <button type="button" class="bouton petit" data-agrandir-secteur="${c.conseilKm}">${tr("Passer à")} ${c.conseilKm} km</button></div>`;
+}
+
 /** Remplit l'onglet Cleaneur : géolocalisation, aujourd'hui, prochaines missions, missions disponibles. */
 export async function brancherMissions(vue, p) {
   const boite = vue.querySelector("#missions-cleaneur");
@@ -391,6 +407,7 @@ export async function brancherMissions(vue, p) {
     ${blocPenalites(penalites)}
     ${avert?.banni ? "" : blocSelfie(selfie)}
     ${tableauDeBord(p, docs, miennes, dispo, tableau)}
+    ${blocSecteur(p, dispo)}
     ${duJour.length ? `<h2 class="titre-section">${icone("termine", { tuile: true })}${tr("Missions du jour")}</h2>` : ""}
     ${duJour.map(carteMission).join("")}
     ${miennes.length || dispo.length ? `<div class="carte-missions" id="carte-missions" role="img" aria-label="Carte des missions"></div>
@@ -450,6 +467,12 @@ export async function brancherMissions(vue, p) {
   carteDesMissions(boite.querySelector("#carte-missions"), miennes, dispo);
   const recharger = () => brancherMissions(vue, p);
   boite.querySelector("#autoriser-geoloc")?.addEventListener("click", async () => { await demanderGeoloc(); recharger(); });
+  // « Passer à N km » : le périmètre du profil est agrandi, la liste se recharge.
+  boite.querySelector("[data-agrandir-secteur]")?.addEventListener("click", async e => {
+    const km = Number(e.currentTarget.dataset.agrandirSecteur);
+    e.currentTarget.disabled = true;
+    try { await majProfil({ zone_km: km }); p = { ...p, zone_km: km }; recharger(); } catch { e.currentTarget.disabled = false; }
+  });
   // Trajet en cours (page rouverte) : la position repart toute seule.
   const enRoute = miennes.find(m => m.statut === "EN_ROUTE");
   if (enRoute && geo === "granted") partagerPosition(enRoute.reference); else if (!enRoute) arreterPartage();

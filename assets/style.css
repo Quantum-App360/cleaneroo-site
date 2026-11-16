@@ -2105,3 +2105,20 @@ body.avec-decor main, body.avec-decor #vue, body.avec-decor footer { position: r
   .ap-jour .b-presta .ico { width: 11px; height: 11px; }
   .ap-barre .segments { min-width: 0; flex: 1 1 100%; }
 }
+/* Choix du Cleaneur, carnet de favoris, alerte de secteur (16 novembre 2026) */
+.favoris-choix { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; margin: 4px 0 10px; }
+.favori-carte { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 14px; border: 1.5px solid var(--separateur); background: var(--surface); text-align: left; font: inherit; color: var(--texte); cursor: pointer; }
+.favori-carte.choisi { border-color: var(--primaire); background: color-mix(in srgb, var(--primaire) 8%, var(--surface)); }
+.favori-carte span:last-child { display: flex; flex-direction: column; min-width: 0; }
+.favori-carte small { color: var(--texte2); font-size: 12.5px; }
+.avatar-favori { flex: none; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; color: #fff; background: var(--degrade); }
+.avatar-favori.grand { width: 48px; height: 48px; font-size: 20px; }
+.carnet-favoris { display: grid; gap: 10px; }
+.favori-ligne { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.favori-ligne .corps { flex: 1 1 200px; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.actions-favori { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.pastilles-presta { display: flex; gap: 4px; }
+.pastilles-presta i { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 8px; background: color-mix(in srgb, var(--primaire) 10%, var(--surface)); color: var(--primaire); }
+.pastilles-presta .ico { width: 15px; height: 15px; }
+.alerte-secteur { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 14px 0; border: 1px solid color-mix(in srgb, var(--alerte) 45%, transparent); background: color-mix(in srgb, var(--alerte) 9%, var(--surface)); }
+.alerte-secteur .corps { display: flex; align-items: center; gap: 12px; flex: 1 1 240px; }

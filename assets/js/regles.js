@@ -200,7 +200,25 @@ export const REGLES = {
   // Niveaux des Cleaneurs (missions terminées) : copie de NiveauCleaneur (ReglesMetier.kt)
   NIVEAUX_CLEANEUR: [["Cleaneur", 0], ["Confirmé", 10], ["Expert", 30], ["Élite", 60]],
   SURVEILLANCE_S: 30,            // nouvelles missions (Cleaneur) et prises en charge (client) : vérifiées toutes les 30 s, avec un son
+  // Choix du Cleaneur et secteur (16 novembre 2026) : copie de Regles.kt
+  FAVORI_EXCLUSIVITE_H: 12,      // « Mon Cleaneur favori » : lui seul voit la demande pendant 12 h, puis elle s'ouvre aux candidatures
+  MISSIONS_SECTEUR_MIN: 3,       // moins de 3 missions disponibles dans le périmètre : conseil d'agrandir le secteur
 };
+
+/**
+ * Conseil de secteur (16 novembre 2026, copie de ReglesMetier.conseilSecteur) : distances (km) des missions disponibles et périmètre actuel.
+ * null si le périmètre suffit (au moins MISSIONS_SECTEUR_MIN missions) ou s'il est déjà au plus grand ; sinon le plus petit périmètre proposé
+ * qui en donne assez (à défaut, le palier suivant) et le nombre de missions en plus.
+ */
+export function conseilSecteur(distancesKm, zoneKm) {
+  const dans = km => distancesKm.filter(d => d <= km).length;
+  const n = dans(zoneKm);
+  if (n >= REGLES.MISSIONS_SECTEUR_MIN) return null;
+  const plus = REGLES.ZONES_KM.filter(z => z > zoneKm);
+  if (!plus.length) return null;
+  const conseil = plus.find(z => dans(z) >= REGLES.MISSIONS_SECTEUR_MIN) ?? plus[0];
+  return { dansZone: n, zoneKm, conseilKm: conseil, enPlus: dans(conseil) - n };
+}
 
 // ---- Lancement (copie de Regles.DATE_LANCEMENT dans l'application) : ouverture de l'activité et des réservations.
 export const DATE_LANCEMENT = new Date(2026, 11, 31, 0, 0, 0);

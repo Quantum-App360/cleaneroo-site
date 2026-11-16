@@ -15,7 +15,7 @@ import { profilMemorise } from "./entete.js";
 import { icone } from "./icones.js";
 import { blocReassurance } from "./commun.js";
 import { monParrainage } from "./parrainage.js";
-import { session, monProfil, majProfil } from "./donnees.js";
+import { session, monProfil, majProfil, supabase } from "./donnees.js";
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const CLE_BROUILLON = "cleaneroo-brouillon";
@@ -95,7 +95,18 @@ export function reserverPrestation(rubriqueId, espace = "personnel") {
   location.hash = `#/reserver/${rubriqueId}`;
 }
 
+/** « Réserver avec ce Cleaneur » (carnet de favoris) : le favori est repris dans la réservation jusqu'à son envoi. */
+const CLE_FAVORI_VOULU = "cleaneroo-favori-voulu";
+export function reserverAvecFavori(cleaneurId) {
+  try { localStorage.setItem(CLE_FAVORI_VOULU, JSON.stringify(cleaneurId)); localStorage.removeItem(CLE_BROUILLON); } catch { /* rien */ }
+  if (location.hash === "#/reserver") dispatchEvent(new HashChangeEvent("hashchange")); else location.hash = "#/reserver";
+}
+const avecFavoriVoulu = br => { const id = lire(CLE_FAVORI_VOULU, null); return id ? { ...br, choixCleaneur: "favori", cleaneurFavori: id } : br; };
+
 function brouillonInitial(rubriqueId, espace = "personnel", rapide = false) {
+  return avecFavoriVoulu(brouillonInitialSansFavori(rubriqueId, espace, rapide));
+}
+function brouillonInitialSansFavori(rubriqueId, espace = "personnel", rapide = false) {
   const r = rubrique(rubriqueId);
   const lieux = TYPES_LIEU[rubriqueId];
   const p = profil() || {};
@@ -759,12 +770,7 @@ function etape5() {
              ${passagesPlanifies(b) > 1 ? `<p class="petit">${passagesPlanifies(b)} passages planifiés : chaque passage est une demande séparée, au même prix.</p>` : ""}`}
     </div>
     ${est.creditImpotC ? `<p class="petit">50 % des dépenses pour les prestations éligibles réalisées à votre domicile (résidence principale ou secondaire), dans la limite des plafonds légaux (12 000 € par an, majorés dans certains cas).</p>` : ""}
-    ${titre("Choix du Cleaneur")}
-    <button type="button" class="option ${b.choixCleaneur === "candidatures" ? "choisi" : ""}" data-champ="choixCleaneur" data-valeur="candidatures">Je choisis parmi les candidatures
-      <span class="detail">Les Cleaneurs vous proposent un horaire et un prix. Vous êtes notifié à chaque candidature et vous choisissez.</span></button>
-    ${b.flexible || estPrelancement() || est.devisObligatoire ? "" : `<button type="button" class="option ${b.choixCleaneur === "directe" ? "choisi" : ""}" data-champ="choixCleaneur" data-valeur="directe">Réservation directe
-      <span class="detail">Le premier Cleaneur qui se positionne au prix estimé, sans frais supplémentaire, obtient la mission.</span></button>`}
-    <p class="petit">Aucun Cleaneur n'est accepté automatiquement sans votre choix.</p>
+    ${titre("Choix du Cleaneur")}${blocChoixCleaneur(est)}
     ${titre("Vos garanties")}${blocReassurance({ compact: true })}
     ${titre("Vos coordonnées")}
     <div class="carte"><div class="grille-2">${champTexte("Prénom", "prenom", b.prenom, "text", 'autocomplete="given-name" maxlength="80"')}${champTexte("Nom", "nom", b.nom, "text", 'autocomplete="family-name" maxlength="80"')}</div>
@@ -788,12 +794,41 @@ function actions(ok, message = "", libelle = "Continuer", id = "suivant") {
 /* ------------------------------------------------------------------ Rendu et événements */
 /* Parrainage : remise de bienvenue et cagnotte du compte connecté (la base revérifie tout à l'envoi). */
 let infosParrain = null;
+/** Carnet de Cleaneurs favoris du compte connecté (choix « Mon Cleaneur favori » à l'étape 5). */
+let favoris = [];
 async function chargerParrainage() {
   infosParrain = null;
-  if (!(await session().catch(() => null))) return;
+  if (!(await session().catch(() => null))) { favoris = []; return; }
+  favoris = await supabase.rpc("mes_favoris").then(r => r.data || []).catch(() => []);
   infosParrain = await monParrainage().catch(() => null);
   if (infosParrain && b && b.etape === 5 && racine?.isConnected) rendre();
 }
+/* Choix du Cleaneur (16 novembre 2026) : attribué automatiquement, validé par le client, ou demandé à un Cleaneur favori. */
+const directePossible = est => !b.flexible && !est.devisObligatoire;
+const favoriChoisi = () => favoris.find(f => f.cleaneur_id === b.cleaneurFavori);
+/** Choix réellement envoyé : sans favori valable ni réservation directe possible, ce sont les candidatures. */
+function choixEnvoye() {
+  if (b.choixCleaneur === "favori") return favoriChoisi() ? "favori" : "candidatures";
+  if (b.choixCleaneur === "directe") return b.flexible ? "candidatures" : "directe";
+  return "candidatures";
+}
+function blocChoixCleaneur(est) {
+  const c = b.choixCleaneur === "favori" ? (favoris.length ? "favori" : "candidatures") : b.choixCleaneur === "directe" && !directePossible(est) ? "candidatures" : b.choixCleaneur || "candidatures";
+  const etoiles = f => f.note ? `★ ${String(f.note).replace(".", ",")} · ` : "";
+  return `${directePossible(est) ? `<button type="button" class="option ${c === "directe" ? "choisi" : ""}" data-champ="choixCleaneur" data-valeur="directe">Cleaneur attribué automatiquement
+      <span class="detail">Le premier Cleaneur vérifié qui accepte au prix estimé obtient la mission. Le plus rapide, sans rien à faire.</span></button>` : ""}
+    <button type="button" class="option ${c === "candidatures" ? "choisi" : ""}" data-champ="choixCleaneur" data-valeur="candidatures">Je valide mon Cleaneur
+      <span class="detail">Les Cleaneurs se proposent avec leur horaire et leur prix. Vous êtes prévenu à chaque candidature et vous choisissez.</span></button>
+    ${favoris.length ? `<button type="button" class="option ${c === "favori" ? "choisi" : ""}" data-champ="choixCleaneur" data-valeur="favori">Mon Cleaneur favori
+      <span class="detail">La demande est proposée d'abord à votre favori, seul à la voir pendant ${REGLES.FAVORI_EXCLUSIVITE_H} h. Sans réponse, elle s'ouvre aux autres Cleaneurs et vous validez.</span></button>
+    ${c === "favori" ? `<div class="favoris-choix">${favoris.map(f => `<button type="button" class="favori-carte ${f.cleaneur_id === b.cleaneurFavori ? "choisi" : ""}" data-favori-choisi="${esc(f.cleaneur_id)}">
+        <span class="avatar-favori">${esc((f.prenom || "?").charAt(0).toUpperCase())}</span><span><b>${esc(f.prenom)} ${esc(f.initiale ? f.initiale + "." : "")}</b>
+        <small>${etoiles(f)}${f.ensemble} ${tr(f.ensemble > 1 ? "prestations ensemble" : "prestation ensemble")}</small></span></button>`).join("")}</div>
+      ${favoriChoisi() ? "" : `<p class="petit" style="color:var(--alerte)">Choisissez le Cleaneur favori à qui proposer la demande.</p>`}` : ""}`
+    : `<p class="petit">Ajoutez un Cleaneur à vos favoris après une prestation : vous pourrez ensuite le demander directement.</p>`}
+    ${estPrelancement() ? `<p class="petit">Votre choix est gardé : il s'appliquera dès l'ouverture, le 31 décembre 2026.</p>` : ""}`;
+}
+
 function appliquerParrainage() {
   if (!b) return;
   b.remiseParrainageC = b.espace === "personnel" || b.espace === "conciergerie" || b.espace === "professionnel" ? infosParrain?.remise_bienvenue_c || 0 : 0;
@@ -855,6 +890,8 @@ document.addEventListener("click", async e => {
   }
   if (ds.espace) { b = b ? { ...b, espace: ds.espace } : { espace: ds.espace, etape: 1 }; sauver(); return rendre(); }
   if (ds.modifierLogement !== undefined) return maj({ modifierLogement: true });
+  if (ds.favoriChoisi) return maj({ choixCleaneur: "favori", cleaneurFavori: ds.favoriChoisi });
+  if (ds.champ === "choixCleaneur" && ds.valeur === "favori") return maj({ choixCleaneur: "favori", cleaneurFavori: favoriChoisi() ? b.cleaneurFavori : favoris[0]?.cleaneur_id || "" });
   if (ds.logementDepart !== undefined) { b = { ...(b || { etape: 1, espace: "personnel" }), logementDepart: ds.logementDepart }; sauver(); return rendre(); }
   if (ds.rubrique) {
     const dep = logementDepart();
@@ -1008,7 +1045,7 @@ async function envoyer() {
       rubrique_id: b.rubriqueId, details, estimation_c: est.totalC, credit_impot_c: est.creditImpotC, duree_min: est.dureeMin,
       remise_parrainage_c: n === 0 ? est.remiseParrainageC : 0, cagnotte_c: n === 0 ? est.cagnotteC : 0,
       nombre_cleaneurs: est.nombreCleaneurs, sur_devis: est.devisObligatoire, creneau: d ? d.toISOString() : null, flexible: b.flexible || (estPrelancement() && !d), prelancement: estPrelancement(),
-      choix_cleaneur: estPrelancement() ? "candidatures" : b.choixCleaneur, espace: b.espace, prenom: b.prenom.trim(), nom: b.nom.trim(), email: b.email.trim(), telephone: b.telephone.trim(),
+      choix_cleaneur: choixEnvoye(), cleaneur_favori: choixEnvoye() === "favori" ? b.cleaneurFavori : null, espace: b.espace, prenom: b.prenom.trim(), nom: b.nom.trim(), email: b.email.trim(), telephone: b.telephone.trim(),
       rue: b.rue.trim(), code_postal: b.codePostal.trim(), ville: b.ville.trim(), accueil: b.accueil || "PRESENT", acces,
       remarque: (dates.length > 1 ? `Passage ${n + 1}/${dates.length}. ` : "") + b.remarque.trim(),
     }, n === 0 ? photos : [], b.accueil === "BOITE" ? photoBoite : null);
@@ -1018,7 +1055,7 @@ async function envoyer() {
     const tel = b.telephone.trim();
     if (tel) session().then(x => x ? monProfil() : null).then(p => { if (p && !p.telephone) majProfil({ telephone: tel }); }).catch(() => null);
     memoriserCommande(b);
-    try { localStorage.removeItem(CLE_BROUILLON); } catch { /* rien */ }
+    try { localStorage.removeItem(CLE_BROUILLON); localStorage.removeItem(CLE_FAVORI_VOULU); } catch { /* rien */ }
     envoi = false; b = null; photos = []; photoBoite = null; infosParrain = null;
     location.hash = `#/demande/${reference}/${jeton}`;
   } catch (err) {

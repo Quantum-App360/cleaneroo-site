@@ -2,7 +2,7 @@
 // et la boîte « À faire » (tout ce qui attend le client). Se met à jour en temps réel. Même écran dans l'appli (AccueilVivant.kt).
 import { guideVideo } from "./guide-video.js";
 import { badgeNiveau } from "./niveaux.js";
-import { reserverPourLogement } from "./reserver.js";
+import { reserverPourLogement, reserverAvecFavori } from "./reserver.js";
 import { decorTableau } from "./commun.js";
 import { agendaParticulier } from "./agenda-particulier.js";
 import { rubrique } from "./catalogue.js";
@@ -77,6 +77,32 @@ export function aFaire({ profil, demandes, biens }) {
   return l;
 }
 
+/* ------------------------------------------------------------------ Carnet de Cleaneurs favoris (16 novembre 2026) */
+/** Les favoris du client : demandés directement à la réservation (« Mon Cleaneur favori »), ou retirés. Même écran dans l'appli. */
+export async function carnetFavoris(boite) {
+  if (!boite) return;
+  const favoris = await supabase.rpc("mes_favoris").then(r => r.data || []).catch(() => []);
+  if (!boite.isConnected) return;
+  boite.innerHTML = `<h2 class="titre-section">${icone("cleaneurs", { tuile: true })}${tr("Mes Cleaneurs favoris")}</h2>
+    ${favoris.length ? `<div class="carnet-favoris">${favoris.map(f => `<div class="carte favori-ligne">
+        <span class="avatar-favori grand">${esc((f.prenom || "?").charAt(0).toUpperCase())}</span>
+        <div class="corps"><b>${esc(f.prenom)} ${esc(f.initiale ? f.initiale + "." : "")}</b>
+          <span class="petit">${f.note ? `★ ${String(f.note).replace(".", ",")} (${f.nb_avis}) · ` : ""}${f.ensemble} ${tr(f.ensemble > 1 ? "prestations ensemble" : "prestation ensemble")}${f.derniere ? ` · ${tr("dernière le")} ${esc(dateLongue(new Date(f.derniere)))}` : ""}</span>
+          ${(f.prestations || []).length ? `<span class="pastilles-presta">${f.prestations.filter(id => rubrique(id)).slice(0, 5).map(id => `<i title="${esc(rubrique(id).nom)}">${icone(rubrique(id).icone)}</i>`).join("")}</span>` : ""}</div>
+        <div class="actions-favori"><button type="button" class="bouton petit" data-reserver-favori="${esc(f.cleaneur_id)}">${tr("Réserver avec")} ${esc(f.prenom)}</button>
+          <button type="button" class="lien-bouton" data-retirer-favori="${esc(f.cleaneur_id)}">${tr("Retirer")}</button></div></div>`).join("")}</div>
+      <p class="petit">${tr("Votre favori voit votre demande seul pendant 12 h et peut l'accepter directement ; sans réponse, elle s'ouvre aux autres Cleaneurs.")}</p>`
+    : `<div class="carte vide-compte"><p class="muet" style="margin:0">${tr("Aucun Cleaneur favori pour l'instant.")}</p>
+        <p class="petit" style="margin:4px 0 0">${tr("Après une prestation, touchez « Ajouter à mes favoris » : vous pourrez ensuite le demander directement.")}</p></div>`}`;
+  traduire(boite);
+  boite.querySelectorAll("[data-reserver-favori]").forEach(x => x.onclick = () => reserverAvecFavori(x.dataset.reserverFavori));
+  boite.querySelectorAll("[data-retirer-favori]").forEach(x => x.onclick = async () => {
+    if (!confirm(tr("Retirer ce Cleaneur de vos favoris ?"))) return;
+    await supabase.rpc("retirer_favori", { p_cleaneur: x.dataset.retirerFavori }).catch(() => null);
+    carnetFavoris(boite);
+  });
+}
+
 /* ------------------------------------------------------------------ Écran */
 let minuterie = null, arret = null;
 export function arreterTableau() { clearInterval(minuterie); minuterie = null; if (arret) arret(); arret = null; }
@@ -139,10 +165,12 @@ export async function pageTableau(vue) {
     ${!pro ? `<h2 class="titre-section" id="mon-agenda">${icone("calendrier", { tuile: true })}${tr("Mon agenda")}</h2>
       <p class="petit" style="margin-top:0">${tr("Toutes vos prestations demandées, jour par jour. Touchez un jour pour voir le détail.")}</p>
       <div class="carte agenda-carte" id="agenda-particulier"></div>` : ""}
+    <div id="carnet-favoris"></div>
     <p class="petit direct" style="margin-top:14px"><i></i>${tr("Mis à jour en temps réel")} · <a href="#/vitrine">${tr("Voir la page d'accueil du site")}</a></p>
   </div></section>`;
   traduire(vue);
   agendaParticulier(vue.querySelector("#agenda-particulier"), { demandes, biens });
+  carnetFavoris(vue.querySelector("#carnet-favoris"));
   vue.querySelectorAll("[data-reserver-ici]").forEach(b => b.onclick = () => reserverPourLogement(b.dataset.reserverIci));
   // Compte à rebours rafraîchi chaque minute ; écran redessiné à chaque changement d'une demande.
   arreterTableau();
