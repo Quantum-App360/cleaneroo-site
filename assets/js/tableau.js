@@ -98,7 +98,7 @@ export async function carnetFavoris(boite) {
   boite.querySelectorAll("[data-reserver-favori]").forEach(x => x.onclick = () => reserverAvecFavori(x.dataset.reserverFavori));
   boite.querySelectorAll("[data-retirer-favori]").forEach(x => x.onclick = async () => {
     if (!confirm(tr("Retirer ce Cleaneur de vos favoris ?"))) return;
-    await supabase.rpc("retirer_favori", { p_cleaneur: x.dataset.retirerFavori }).catch(() => null);
+    await supabase.rpc("retirer_favori", { p_cleaneur: x.dataset.retirerFavori }).then(() => null, () => null);
     carnetFavoris(boite);
   });
 }

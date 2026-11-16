@@ -324,13 +324,22 @@ export const indemniteAccesC = prixC => Math.min(REGLES.INDEMNITE_MAX_C, Math.ma
  * Formations exigées pour une prestation (12 novembre 2026, reprises de l'appli de Vincent). Copie de qualifs_requises
  * (outils/base-formations.sql) et de Regles.qualificationsRequises (appli). typeLieuId : type de lieu de la demande.
  */
+/**
+ * Formations exigées par la loi pour exercer (16 novembre 2026) : seules elles bloquent une prestation ou une mission.
+ * Les autres formations (Socle Cleaneroo, quiz, techniques) sont conseillées, jamais imposées à un indépendant.
+ * Même liste en base (modules_exiges_loi) et dans l'appli (Regles.MODULES_EXIGES_PAR_LA_LOI).
+ */
+export const MODULES_EXIGES_PAR_LA_LOI = ["nuisibles"];
+export const formationsExigees = (rubriqueId, typeLieuId = "", taches = []) => qualificationsRequises(rubriqueId, typeLieuId, taches).filter(m => MODULES_EXIGES_PAR_LA_LOI.includes(m));
+export const formationsConseillees = (rubriqueId, typeLieuId = "", taches = []) => qualificationsRequises(rubriqueId, typeLieuId, taches).filter(m => !MODULES_EXIGES_PAR_LA_LOI.includes(m));
+
 export function qualificationsRequises(rubriqueId, typeLieuId = "", taches = []) {
   const t = typeLieuId || "";
   const selon = {
     home: ["domicile"], rental: ["domicile", "location"], moving: ["domicile"], car: ["auto"], textiles: ["textiles"],
     construction: ["remise-etat"], kitchen: !t || t === "particulier" ? ["domicile"] : ["cuisine-pro", "haccp"],
     office: t === "medical" ? ["locaux-pro", "bionettoyage"] : ["locaux-pro"], commerce: ["locaux-pro"], communal: ["locaux-pro"],
-    windows: ["vitres"], outdoor: ["exterieurs"], event: ["evenementiel"],
+    windows: ["vitres"], outdoor: ["exterieurs"], event: ["evenementiel"], hospitality: ["domicile", "location"],
     special: ["cafards", "punaises", "rats", "guepes"].includes(t) ? ["nuisibles"] : ["specialise"],
   }[rubriqueId] || [];
   // Selon les tâches cochées (comme l'appli de Vincent) : hauteur, machines, polissage, désinfection professionnelle.

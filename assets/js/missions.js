@@ -372,7 +372,7 @@ function blocSecteur(p, dispo) {
   const zone = p.zone_km || REGLES.ZONE_KM_DEFAUT;
   const c = conseilSecteur(dispo.map(m => distances.get(m.reference)).filter(km => km != null), zone);
   if (!c) return "";
-  if (!alerteEnvoyee) { alerteEnvoyee = true; supabase.rpc("alerte_secteur", { p_dans_zone: c.dansZone, p_zone_km: c.zoneKm, p_conseil_km: c.conseilKm, p_en_plus: c.enPlus }).catch(() => null); }
+  if (!alerteEnvoyee) { alerteEnvoyee = true; supabase.rpc("alerte_secteur", { p_dans_zone: c.dansZone, p_zone_km: c.zoneKm, p_conseil_km: c.conseilKm, p_en_plus: c.enPlus }).then(() => null, () => null); }
   return `<div class="carte alerte-secteur"><div class="corps">${icone("position", { tuile: true })}<div>
       <b>${tr("Peu de missions dans votre secteur")}</b>
       <p class="petit" style="margin:4px 0 0">${c.dansZone} ${tr(c.dansZone > 1 ? "missions disponibles" : "mission disponible")} ${tr("à moins de")} ${c.zoneKm} km.
@@ -439,7 +439,7 @@ export async function brancherMissions(vue, p) {
   supabase.rpc("missions_incompatibles").then(({ data }) => {
     const z = boite.querySelector("#missions-incompatibles");
     if (!z || !data?.length) return;
-    const RAISONS = { qualification: "Formation à valider (Mes formations)", fermee: "Pendant une de vos périodes fermées", assurance: "Activité non couverte par votre RC Pro" };
+    const RAISONS = { qualification: "Formation exigée par la loi (Certibiocide) : voir comment l'obtenir dans « Formations »", fermee: "Pendant une de vos périodes fermées", assurance: "Activité non couverte par votre RC Pro" };
     z.innerHTML = `<details class="carte" style="margin-top:12px"><summary><b>${tr("Missions incompatibles")} (${data.length})</b></summary>
       <p class="petit">${tr("Ces missions ne vous sont pas notifiées : vous ne pourriez pas les assurer.")}</p>
       ${data.map(x => `<p class="petit" style="margin:6px 0">${esc(rubrique(x.rubrique_id)?.nom || "")} · ${esc(x.ville)}${x.creneau ? " · " + esc(dateLongue(new Date(x.creneau))) : ""}<br><b>${tr(RAISONS[x.raison] || x.raison)}</b></p>`).join("")}</details>`;
@@ -484,7 +484,7 @@ export async function brancherMissions(vue, p) {
     b.closest(".carte").querySelector("[data-erreur-prendre]").textContent = tr({
       deja_prise: "Un autre Cleaneur a pris cette mission juste avant vous.", ouverture: "Les missions commencent le 1er janvier 2027.",
       dossier: "Votre dossier doit être validé pour prendre des missions.", formule: "Cette mission est réservée aux Cleaneurs Pro pendant ses 30 premières minutes.",
-      qualification: "Validez d'abord la formation demandée pour cette prestation (Mes formations).",
+      qualification: "Cette prestation exige une formation imposée par la loi (Certibiocide). Voir « Formations » pour savoir comment l'obtenir.",
       fermee: "Cette mission tombe pendant une de vos périodes fermées.",
       candidature: "Le client choisit parmi les propositions : proposez vos conditions.",
       assurance: "Votre RC Pro ne couvre pas cette activité : mettez-la à jour dans votre dossier." }[r] || "Le service est momentanément indisponible. Réessayez dans quelques minutes.");

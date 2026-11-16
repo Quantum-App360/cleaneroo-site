@@ -592,6 +592,7 @@ async function afficherPage() {
   if (route === "messages") { window.scrollTo(0, 0); vue.innerHTML = pageChargement(); traduire(vue); await pageMessages(vue, chemin.split("/").slice(1).join("/")); return; }
   if (route === "notifications") { window.scrollTo(0, 0); vue.innerHTML = pageChargement(); traduire(vue); await pageNotifications(vue, param); return; }
   if (route === "compte") { window.scrollTo(0, 0); vue.innerHTML = pageChargement(); traduire(vue); await pageCompte(vue, param); return; }
+  if (route === "formation") { window.scrollTo(0, 0); vue.innerHTML = pageChargement(); traduire(vue); const { pageFormation } = await import("./formations.js"); await pageFormation(vue, param); return; }
   if (route === "mes-demandes" || route === "mes-biens") {
     const deja = vue.querySelector(".onglets-demandes") && route === "mes-demandes";
     if (!deja) { vue.innerHTML = pageChargement(); traduire(vue); }

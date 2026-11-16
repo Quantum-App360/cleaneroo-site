@@ -213,3 +213,58 @@ function styles() {
       .bloc-formation.produits{background:rgba(80,140,220,.12)}.question-formation.fausse{background:rgba(224,101,75,.1)}}`;
   document.head.appendChild(s);
 }
+
+/* ------------------------------------------------------------------ Page explicative d'une formation (16 novembre 2026)
+   #/formation/<id> : obligatoire par la loi ou conseillée, pourquoi, durée, coût indicatif, où se former, financement,
+   comment déposer l'attestation. Les montants et durées sont indicatifs (à vérifier auprès des organismes). Même page dans l'appli. */
+export const GUIDES_FORMATION = {
+  nuisibles: { loi: true, quoi: "Certibiocide, catégorie « nuisibles » (désinsectisation, dératisation).",
+    pourquoi: "Obligatoire pour utiliser à titre professionnel les insecticides et raticides réservés aux professionnels (réglementation des produits biocides). Sans ce certificat, la prestation « nuisibles » reste bloquée.",
+    duree: "3 jours environ (formation initiale), à renouveler tous les 5 ans.", cout: "Environ 500 à 900 €.",
+    ou: "Organismes de formation habilités Certibiocide : recherchez « Certibiocide » sur Mon Compte Formation." },
+  biocides: { loi: false, quoi: "Désinfection professionnelle et produits biocides.",
+    pourquoi: "Conseillée. Certains produits biocides réservés aux professionnels exigent le Certibiocide : si vous les utilisez, la loi s'applique à vous.",
+    duree: "1 à 3 jours.", cout: "Environ 300 à 900 €.", ou: "Recherchez « Certibiocide » ou « désinfection » sur Mon Compte Formation." },
+  hauteur: { loi: false, quoi: "Travail en hauteur (échelle, perche, plateforme).",
+    pourquoi: "Conseillée pour votre sécurité. Pour une nacelle, les clients et les assureurs exigent en pratique le CACES R486.",
+    duree: "1 jour (travail en hauteur), 2 à 3 jours (CACES nacelle).", cout: "Environ 200 à 900 €.", ou: "Recherchez « travail en hauteur » ou « CACES R486 » sur Mon Compte Formation." },
+  haccp: { loi: false, quoi: "Hygiène alimentaire (HACCP).",
+    pourquoi: "Conseillée pour les cuisines professionnelles : l'obligation de formation pèse sur le restaurant, pas sur vous, mais beaucoup d'établissements la demandent.",
+    duree: "14 heures (2 jours).", cout: "Environ 200 à 400 €.", ou: "Recherchez « HACCP » sur Mon Compte Formation." },
+  electrique: { loi: false, quoi: "Habilitation électrique B0 / H0 (non électricien).",
+    pourquoi: "Conseillée. Nécessaire pour entrer seul dans un local électrique : Cleaneroo ne vous confie aucune mission qui l'exige sans votre accord.",
+    duree: "1 à 2 jours, recyclage tous les 3 ans.", cout: "Environ 150 à 350 €.", ou: "Recherchez « habilitation électrique B0 H0 » sur Mon Compte Formation." },
+  specialise: { loi: false, quoi: "Interventions spécialisées (dégâts des eaux, logement très encombré, après décès).",
+    pourquoi: "Conseillée : protection contre les risques biologiques et équipements adaptés. Les chantiers avec amiante sont exclus de Cleaneroo.",
+    duree: "1 à 3 jours.", cout: "Variable.", ou: "Recherchez « bionettoyage » ou « risque biologique » sur Mon Compte Formation." },
+};
+const FINANCEMENT = "Financement possible : votre Compte Personnel de Formation (CPF, moncompteformation.gouv.fr) et le fonds de formation des indépendants auquel vous cotisez (FAFCEA pour les artisans, AGEFICE pour les commerçants).";
+
+export async function pageFormation(vue, id) {
+  const cat = await chargerFormations();
+  const m = cat.find(x => x.id === id);
+  if (!m) { location.hash = "#/compte/cleaneur"; return; }
+  const g = GUIDES_FORMATION[id], t = textes(m);
+  const etats = await supabase.rpc("mes_formations").then(r => r.data || [], () => []);
+  const statut = (etats || []).find(e => e.module === id)?.statut;
+  const loi = !!g?.loi;
+  vue.innerHTML = `<section class="bloc" style="padding-top:28px"><div class="etroit">
+    <a class="lien-bouton" href="#/compte/cleaneur">‹ ${tr("Mon espace Cleaneur")}</a>
+    <h1>${ICONES[id] || "🎓"} ${esc(t.titre)}</h1>
+    <p><span class="tampon ${loi ? "" : "vert"}">${tr(loi ? "Exigée par la loi" : "Conseillée, jamais obligatoire")}</span>
+      ${statut === "VALIDEE" ? `<span class="tampon vert">✓ ${tr("Validée")}</span>` : ""}</p>
+    ${g ? `<div class="carte"><p style="margin-top:0"><b>${tr("De quoi s'agit-il ?")}</b><br>${tr(g.quoi)}</p>
+      <p><b>${tr(loi ? "Pourquoi est-elle obligatoire ?" : "Pourquoi la suivre ?")}</b><br>${tr(g.pourquoi)}</p>
+      <p><b>${tr("Durée")}</b> : ${tr(g.duree)}<br><b>${tr("Coût indicatif")}</b> : ${tr(g.cout)}</p>
+      <p><b>${tr("Où se former ?")}</b><br>${tr(g.ou)} <a href="https://www.moncompteformation.gouv.fr" target="_blank" rel="noopener">moncompteformation.gouv.fr</a></p>
+      <p class="petit" style="margin-bottom:0">${tr(FINANCEMENT)}</p></div>
+      <h2 class="titre-section">${tr("Une fois formé")}</h2>
+      <div class="carte"><p style="margin:0">${tr("Déposez l'attestation ou le certificat de l'organisme de formation dans « Mon dossier » (espace Cleaneur). Cleaneroo la vérifie, puis la prestation se débloque.")}</p>
+        <div class="boutons" style="margin-top:12px"><a class="bouton" href="#/compte/cleaneur">${tr("Déposer mon attestation")}</a></div></div>`
+    : `<div class="carte"><p style="margin-top:0">${tr("Formation Cleaneroo gratuite : une fiche à lire et un petit quiz. Elle est conseillée, jamais obligatoire, et vous donne le badge « Formé » visible des clients.")}</p>
+        <div class="boutons"><button type="button" class="bouton" data-suivre>${tr(statut === "VALIDEE" ? "Revoir la formation" : "Suivre la formation")}</button></div></div>`}
+    ${blocRessources(id)}
+  </div></section>`;
+  traduire(vue);
+  vue.querySelector("[data-suivre]")?.addEventListener("click", () => ouvrirFormation(m, statut, () => pageFormation(vue, id)));
+}

@@ -2122,3 +2122,5 @@ body.avec-decor main, body.avec-decor #vue, body.avec-decor footer { position: r
 .pastilles-presta .ico { width: 15px; height: 15px; }
 .alerte-secteur { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 14px 0; border: 1px solid color-mix(in srgb, var(--alerte) 45%, transparent); background: color-mix(in srgb, var(--alerte) 9%, var(--surface)); }
 .alerte-secteur .corps { display: flex; align-items: center; gap: 12px; flex: 1 1 240px; }
+/* Formations conseillées (16 novembre 2026) : encart doux, jamais bloquant */
+.encart-socle.conseil { background: color-mix(in srgb, var(--primaire) 8%, var(--surface)) !important; border-color: color-mix(in srgb, var(--primaire) 30%, transparent) !important; color: var(--texte) !important; }
