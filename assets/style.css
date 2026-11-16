@@ -2124,3 +2124,13 @@ body.avec-decor main, body.avec-decor #vue, body.avec-decor footer { position: r
 .alerte-secteur .corps { display: flex; align-items: center; gap: 12px; flex: 1 1 240px; }
 /* Formations conseillées (16 novembre 2026) : encart doux, jamais bloquant */
 .encart-socle.conseil { background: color-mix(in srgb, var(--primaire) 8%, var(--surface)) !important; border-color: color-mix(in srgb, var(--primaire) 30%, transparent) !important; color: var(--texte) !important; }
+/* Barre des espaces à 5 entrées (16 novembre 2026) : plus aucun chevauchement entre icônes et noms */
+.onglets-compte a { padding: 0 12px; min-width: 0; }
+.onglets-compte a svg, .onglets-compte a .ico { flex: none; }
+.onglets-compte a span { white-space: nowrap; }
+.barre-espaces .onglets-compte { max-width: 1000px; grid-auto-columns: auto; }
+@media (max-width: 960px) {
+  .onglets-compte a { flex-direction: column; gap: 3px; font-size: 13px; min-height: 60px; padding: 6px 4px; }
+  .onglets-compte a span { white-space: normal; text-align: center; line-height: 1.15; }
+  .barre-espaces .onglets-compte { grid-auto-columns: minmax(0, 1fr); }
+}
