@@ -146,7 +146,7 @@ export async function pageCompte(vue, param) {
   if (onglet === "hotellerie") { brancherPro(vue, p, biens.filter(l => categorieBien(l) === "logement"), demandes, { majProfil, recharger: () => pageCompte(vue, "hotellerie") }); brancherRotation(vue); }
   if (onglet === "pro") { brancherPro(vue, p, biens.filter(l => categorieBien(l) === "logement"), demandes, { majProfil, recharger: () => pageCompte(vue) }); brancherInvitationsPro(vue); brancherAbonnementPro(vue, () => { majLienCompte(); pageCompte(vue, "pro"); }); }
   // Onglets à l'intérieur des espaces Cleaneur et Pro (la page ne défile plus sur des dizaines d'écrans).
-  if ((onglet === "cleaneur" && cleaneur) || onglet === "pro" || onglet === "particulier") installerSousOnglets(vue, onglet);
+  if ((onglet === "cleaneur" && cleaneur) || ["pro", "hotellerie", "entreprise", "particulier"].includes(onglet)) installerSousOnglets(vue, onglet);
   // Ajouter un espace : Particulier ou Cleaneur tout de suite ; Pro avec la société (raison sociale + SIRET/SIREN).
   const ajouter = async (statut, bouton) => {
     if (bouton) bouton.disabled = true;

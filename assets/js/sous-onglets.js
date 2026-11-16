@@ -4,23 +4,30 @@
 import { tr, traduire } from "./langue.js";
 
 const GROUPES = {
-  cleaneur: { onglets: [["societe", "Ma société"], ["aujourdhui", "Aujourd'hui"], ["missions", "Missions"], ["planning", "Planning"], ["dossier", "Mon dossier"], ["activite", "Activité"]],
+  // Harmonisation (17 novembre 2026) : mêmes noms et même ordre dans tous les espaces — Accueil · Planning · Biens · Prestations · Équipe · Rapports · Compte.
+  cleaneur: { onglets: [["societe", "Ma société"], ["aujourdhui", "Accueil"], ["missions", "Missions"], ["planning", "Planning"], ["dossier", "Mon dossier"], ["activite", "Activité"]],
     defaut: "aujourdhui", details: "dossier",
     regles: [["#espace-societe", "societe"], ["#espace-salarie", "aujourdhui"], ["#activer-societe", "dossier"], ["#selfie-jour, .tableau-cleaneur, #noter-clients", "aujourdhui"], ["#avis-recus, #niveau-cleaneur, #mon-activite, #formules-cleaneur, [data-factures], .parrainage, .bloc-parrainage", "activite"],
       ["#ce-qui-manque, #formations-cleaneur, #bloc-invitation", "dossier"], ["#periodes-fermees, #creneaux-cleaneur", "planning"],
       ["#missions-disponibles, #missions-incompatibles, .deroule-mission", "missions"]] },
   // Particulier (13 novembre 2026) : le compte en trois rubriques (le suivi est dans « Mon suivi »).
-  particulier: { onglets: [["profil", "Mes informations"], ["factures", "Factures"], ["parrainage", "Parrainage"]],
+  particulier: { onglets: [["profil", "Compte"], ["factures", "Factures"], ["parrainage", "Parrainage"]],
     defaut: "profil", details: null,
     regles: [[".acces-particulier, #form-profil, #equipe", "profil"], ["[data-factures]", "factures"], [".parrainage, .bloc-parrainage", "parrainage"]] },
   // Conciergerie (13 novembre 2026) : poste de pilotage, planning, biens, ménages, équipe, rapports, compte.
-  pro: { onglets: [["aujourdhui", "Aujourd'hui"], ["planning", "Planning"], ["biens", "Biens"], ["menages", "Ménages"], ["equipe", "Équipe"], ["rapports", "Rapports"], ["compte", "Compte"]],
+  pro: { onglets: [["aujourdhui", "Accueil"], ["planning", "Planning"], ["biens", "Biens"], ["menages", "Prestations"], ["equipe", "Équipe"], ["rapports", "Rapports"], ["compte", "Compte"]],
     defaut: "aujourdhui", details: null,
     regles: [[".entete-pro, .grille-raccourcis, #chiffres-pro, #pro-aujourdhui, #a-programmer", "aujourdhui"], ["#semaine-pro, #agenda-pro", "planning"],
       ["#carte-biens, #liste-biens, #aucun-bien, .aide-ical, .outils-biens", "biens"], ["#pro-menages, #titre-menages", "menages"], ["#pro-rapports, #titre-rapports", "rapports"],
       ["#liste-invitations, #equipe", "equipe"],
       ["#abonnement-pro, [data-factures], .parrainage, .bloc-parrainage", "compte"], ["details:has(#form-profil)", "compte"]] },
 };
+// Hôtels et campings : le même espace que la Conciergerie, avec le calculateur de rotation dans « Prestations ».
+GROUPES.hotellerie = { ...GROUPES.pro, regles: [[".calculateur-rotation", "menages"], ...GROUPES.pro.regles] };
+// Entreprise : Accueil (prochaine prestation, chiffres) · Prestations (réserver pour ses locaux) · Compte (société, informations, factures).
+GROUPES.entreprise = { onglets: [["accueil", "Accueil"], ["prestations", "Prestations"], ["compte", "Compte"]], defaut: "accueil", details: "compte",
+  regles: [[".entete-pro, .tuiles-chiffres, .mise-en-avant, .guide-video", "accueil"], [".grille-raccourcis", "prestations"],
+    ["details:has(#form-profil), [data-factures], .parrainage, .bloc-parrainage, #equipe", "compte"]] };
 const CLE = e => `cleaneroo-sous-onglet-${e}`;
 
 /** Groupe d'un bloc : règle qui correspond (le bloc ou ce qu'il contient), sinon null. */
