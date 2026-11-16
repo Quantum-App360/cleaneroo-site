@@ -4,6 +4,7 @@ import { guideVideo } from "./guide-video.js";
 import { badgeNiveau } from "./niveaux.js";
 import { reserverPourLogement } from "./reserver.js";
 import { decorTableau } from "./commun.js";
+import { agendaParticulier } from "./agenda-particulier.js";
 import { rubrique } from "./catalogue.js";
 import { REGLES, euros, dateLongue, heure } from "./regles.js";
 import { icone } from "./icones.js";
@@ -129,15 +130,19 @@ export async function pageTableau(vue) {
     <div class="grille-raccourcis tableau-raccourcis">
       <a class="carte raccourci" href="#/mes-demandes">${icone("calendrier", { tuile: true })}<b>${tr("Mes prestations")}</b><span class="petit">${tr("En cours, à venir, passées")}</span></a>
       <a class="carte raccourci" href="#/mes-biens">${icone("logement", { tuile: true })}<b>${tr("Mes biens")}</b><span class="petit">${biens.length} ${tr(biens.length > 1 ? "adresses" : "adresse")}</span></a>
-      <a class="carte raccourci" href="${pro ? "#/compte/pro" : "#/compte"}">${icone(pro ? "location" : "avis", { tuile: true })}<b>${tr(pro ? "Agenda" : "Mon espace")}</b><span class="petit">${tr(pro ? "Séjours et ménages à programmer" : "Profil et espaces")}</span></a>
+      <a class="carte raccourci" href="${pro ? "#/compte/pro" : "#mon-agenda"}">${icone(pro ? "location" : "calendrier", { tuile: true })}<b>${tr(pro ? "Agenda" : "Mon agenda")}</b><span class="petit">${tr(pro ? "Séjours et ménages à programmer" : "Mes prestations jour par jour")}</span></a>
     </div>
     ${biens.length && !pro ? `<h2 class="titre-section">${icone("logement", { tuile: true })}${tr("Mes logements")}</h2>
       <div class="logements-suivi">${biens.slice(0, 6).map(l => `<div class="carte logement-suivi">${icone("logement", { tuile: true })}
         <div class="corps"><b>${esc(l.nom || `${tr(({ studio: "Studio", appartement: "Appartement", maison: "Maison", duplex: "Duplex / loft" })[l.typeLogementId] || "Adresse")} · ${l.ville}`)}</b><span class="petit">${esc(l.rue)}, ${esc(l.ville)}</span></div>
         <button type="button" class="bouton petit" data-reserver-ici="${esc(l.id)}">${tr("Réserver ici")}</button></div>`).join("")}</div>` : ""}
+    ${!pro ? `<h2 class="titre-section" id="mon-agenda">${icone("calendrier", { tuile: true })}${tr("Mon agenda")}</h2>
+      <p class="petit" style="margin-top:0">${tr("Toutes vos prestations demandées, jour par jour. Touchez un jour pour voir le détail.")}</p>
+      <div class="carte agenda-carte" id="agenda-particulier"></div>` : ""}
     <p class="petit direct" style="margin-top:14px"><i></i>${tr("Mis à jour en temps réel")} · <a href="#/vitrine">${tr("Voir la page d'accueil du site")}</a></p>
   </div></section>`;
   traduire(vue);
+  agendaParticulier(vue.querySelector("#agenda-particulier"), { demandes, biens });
   vue.querySelectorAll("[data-reserver-ici]").forEach(b => b.onclick = () => reserverPourLogement(b.dataset.reserverIci));
   // Compte à rebours rafraîchi chaque minute ; écran redessiné à chaque changement d'une demande.
   arreterTableau();

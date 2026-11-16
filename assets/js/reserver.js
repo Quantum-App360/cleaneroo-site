@@ -1,6 +1,6 @@
 // Parcours de réservation en 5 étapes : copie de Reservation.kt (application Android).
 // 1 prestation · 2 questionnaire · 3 photos · 4 adresse, accès et créneau · 5 estimation, coordonnées et envoi.
-import { PARTIES, partie, partiePour, TARIFS_SPECIAUX, RUBRIQUES, rubrique, formulesPour, TYPES_LIEU, TYPES_LOGEMENT, BESOINS_SPECIAUX, ACCUEIL, accueilAutonomeInterdit, photosObligatoires,
+import { PARTIES, partie, partiePour, PARTIE_DE_L_ESPACE, rubriquesProposees, TARIFS_SPECIAUX, RUBRIQUES, rubrique, formulesPour, TYPES_LIEU, TYPES_LOGEMENT, BESOINS_SPECIAUX, ACCUEIL, accueilAutonomeInterdit, photosObligatoires,
   ELEMENTS_TEXTILES, TAILLES_CANAPE, prixLigne, minutesLigne, libelleLigne, pastille,
   FREQUENCES, JOURS_SEMAINE, DERNIERS_NETTOYAGES, packsPour, remisePack,
   TACHES_A_TRAITER, TYPES_CHANTIER, equipementsPour, DELAIS_URGENCE, TYPES_IMMEUBLE, surfaceEffective, SELECTION_CONSEILLEE_VEHICULE, LIEUX_VEHICULE, FREQUENCES_VEHICULE, RUBRIQUES_LOGEMENT, vuesPhotos, vuesCompletes, PIECES_LOCATION, ETAPES_LOCATION, PACK_ETAPES_CONSEILLE, ETAPES_DEPART, prixEtapeLocationC, repetitionsEtape, CONSOMMABLES_LOCATION, PACK_CONSOMMABLES_CONSEILLE } from "./catalogue.js";
@@ -59,7 +59,9 @@ function memoriserCommande(b) {
 /** Applique une adresse enregistrée au brouillon (adresse et accès ; le code est redemandé). */
 function avecLogement(br, l) {
   if (!l) return br;
-  const dims = ["home", "rental"].includes(br.rubriqueId) ? { typeLogementId: l.typeLogementId, surface: l.surface, chambres: l.chambres, sdb: l.sdb, niveaux: l.niveaux } : {};
+  // Description du logement reprise (ménage, location, déménagement) quand elle est connue : elle n'est plus redemandée.
+  const dims = ["home", "rental", "moving"].includes(br.rubriqueId) && Number(l.surface) > 0
+    ? { typeLogementId: l.typeLogementId || "appartement", surface: l.surface, chambres: l.chambres ?? 0, sdb: l.sdb || 1, niveaux: l.niveaux || 1, modifierLogement: false } : {};
   // Étapes à valider en photo fixées pour ce bien (espace Pro) : reprises en location saisonnière.
   const etapes = br.rubriqueId === "rental" && l.etapesPhoto ? { etapesChoisies: etapesPhotoDe(l), etapesPerso: etapesPersoDe(l) } : {};
   return { ...br, ...dims, ...etapes, ...Object.fromEntries(CHAMPS_LOGEMENT.map(k => [k, l[k] || ""])), logementId: l.id, code: "", guide: Array.isArray(l.guide) ? l.guide : [],
@@ -139,6 +141,15 @@ function logementDepart() {
   if (b?.logementId) return b.logementId;
   return logements()[0]?.id ?? "";
 }
+/** Compte connecté (hors administrateur) : la partie suit l'espace ouvert (Particulier, Conciergerie, Entreprise), la question « Pour qui ? » disparaît. */
+function partieImposee() {
+  const p = profilMemorise();
+  if (!p || p.role === "admin") return null;
+  const e = PARTIE_DE_L_ESPACE[p.espace] ? p.espace : (p.statuts || []).find(s => PARTIE_DE_L_ESPACE[s]);
+  return e ? PARTIE_DE_L_ESPACE[e] : null;
+}
+const partieCourante = () => partieImposee() || b?.espace || "personnel";
+
 /** Applique le logement de l'étape 1 au brouillon (ou vide l'adresse pour un nouveau logement). */
 function avecLogementDepart(br, id) {
   const l = id ? logements().find(x => x.id === id) : null;
@@ -213,7 +224,7 @@ export function ouvrirReservation(conteneur, rubriqueId, option = "") {
   const rapide = option === "rapide";
   if (rubriqueId && rubrique(rubriqueId)) b = !rapide && ancien && ancien.rubriqueId === rubriqueId ? ancien : nouveauBrouillon(rubriqueId, ancien?.espace, rapide);
   else b = ancien && (ancien.etape > 1 || ancien.logementDepart !== undefined) ? ancien : null;
-  if (b?.rubriqueId) b = { ...b, espace: partiePour(b.rubriqueId, b.espace) };
+  if (b?.rubriqueId) b = { ...b, espace: partiePour(b.rubriqueId, partieImposee() || b.espace) };
   // Conciergerie abonnée : 0 % de frais de service (profil mémorisé par l'en-tête).
   if (b) b = { ...b, abonnePro: !!profilMemorise()?.abonnePro };
   chargerParrainage();
@@ -282,20 +293,29 @@ const champTexte = (lib, champ, val, type = "text", extra = "") => `<label class
 /* ------------------------------------------------------------------ Étapes */
 function etape1() {
   // Logement choisi en premier (13 novembre 2026) : adresse, description et étapes photo sont reprises dans toute la réservation.
+  // Compte connecté (16 novembre 2026) : la partie suit l'espace ouvert, sans question ; un logement enregistré ne propose que les prestations qui le concernent.
   const depart = logementDepart();
-  const choixLogement = logements().length ? titre("Pour quel logement ?") + logements().map(l => `<button type="button" class="option ${depart === l.id ? "choisi" : ""}" data-logement-depart="${esc(l.id)}">${esc(nomLogement(l))}<span class="detail">${esc(l.rue)}, ${esc(l.codePostal)} ${esc(l.ville)}</span></button>`).join("")
-    + `<button type="button" class="option ${depart === "" ? "choisi" : ""}" data-logement-depart="">+ Nouveau logement</button>` : "";
+  const pid = partieCourante(), p = partie(pid), imposee = !!partieImposee(), entreprise = p.id === "professionnel";
+  const choixLogement = logements().length ? titre(entreprise ? "Pour quelle adresse ?" : "Pour quel logement ?") + logements().map(l => `<button type="button" class="option ${depart === l.id ? "choisi" : ""}" data-logement-depart="${esc(l.id)}">${esc(nomLogement(l))}<span class="detail">${esc(l.rue)}, ${esc(l.codePostal)} ${esc(l.ville)}</span></button>`).join("")
+    + `<button type="button" class="option ${depart === "" ? "choisi" : ""}" data-logement-depart="">${entreprise ? "+ Nouvelle adresse" : "+ Nouveau logement"}</button>` : "";
+  const logEnr = !!depart && logements().some(l => l.id === depart);
+  const proposees = rubriquesProposees(pid, logEnr);
+  const pourQui = imposee
+    ? `<p class="pour-qui-fixe">${icone({ personnel: "logement", conciergerie: "location", professionnel: "bureaux" }[p.id], { tuile: true })}<span><b>${p.nom}</b><span class="petit">${p.detail}</span></span></p>`
+    : `${titre("Pour qui ?")}
+    <div class="segments trois">${PARTIES.map(x => `<button type="button" data-espace="${x.id}" class="${p.id === x.id ? "choisi" : ""}">${x.nom}</button>`).join("")}</div>
+    <p class="petit" style="margin:6px 0 0">${p.detail}</p>`;
+  const derniers = modeles().filter(m => proposees.includes(m.rubriqueId) && rubrique(m.rubriqueId));
   return `<h1>Que souhaitez-vous nettoyer ?</h1><p class="muet">Choisissez votre prestation : le prix s'affiche dès que vous décrivez votre besoin.</p>
     ${choixLogement}
-    ${titre("Pour qui ?")}
-    <div class="segments trois">${PARTIES.map(p => `<button type="button" data-espace="${p.id}" class="${partie(b?.espace).id === p.id ? "choisi" : ""}">${p.nom}</button>`).join("")}</div>
-    <p class="petit" style="margin:6px 0 0">${partie(b?.espace).detail}</p>
-    ${modeles().length ? titre("Comme la dernière fois") + `<div class="grille-2">${modeles().slice(0, 4).map(m => {
+    ${pourQui}
+    ${derniers.length ? titre("Comme la dernière fois") + `<div class="grille-2">${derniers.slice(0, 4).map(m => {
       const r = rubrique(m.rubriqueId), l = logements().find(x => x.id === m.logementId);
       return `<a class="carte prestation rapide" href="#/reserver/${m.rubriqueId}/rapide">${icone(r.icone, { tuile: true })}<h3>${r.nom}</h3>
         <p class="muet" style="margin:4px 0 0">${l ? esc(nomLogement(l)) : ""}</p><span class="tampon vert">Recommander en 3 clics ›</span></a>`; }).join("")}</div>` : ""}
     ${titre("Votre prestation")}
-    <div class="grille-3">${RUBRIQUES.filter(r => partie(b?.espace).rubriques.includes(r.id)).map(r => `<button type="button" class="carte prestation" data-rubrique="${r.id}" style="text-align:left">
+    ${logEnr && !entreprise ? `<p class="petit" style="margin:-4px 0 12px">Prestations adaptées à ce logement.</p>` : ""}
+    <div class="grille-3">${RUBRIQUES.filter(r => proposees.includes(r.id)).map(r => `<button type="button" class="carte prestation" data-rubrique="${r.id}" style="text-align:left">
       ${icone(r.icone, { tuile: true })}<h3>${r.nom}</h3><p class="muet" style="margin:4px 0 0">${r.sousTitre}</p><span class="tampon">${pastille(r)}</span></button>`).join("")}</div>`;
 }
 
@@ -329,7 +349,12 @@ function questionnaire(enTete = true) {
     h += `<div class="note" style="margin-top:14px">Prix fixé à l'avance selon le type d'intervention et la surface : forfait, puis prix au m² au-delà.</div>`
       + (TARIFS_SPECIAUX[b.typeLieuId]?.certibiocide ? `<div class="note" style="margin-top:8px">Intervention réalisée par un Cleaneur titulaire du Certibiocide « nuisibles », vérifié avant activation.</div>` : "");
   }
-  if (RUBRIQUES_LOGEMENT.includes(b.rubriqueId)) h += titre("Type de logement") + choix(TYPES_LOGEMENT.map(t => [t.id, t.nom]), b.typeLogementId, "typeLogementId");
+  // Logement enregistré dont la description est connue : plus de questions, un rappel avec « Modifier » (16 novembre 2026).
+  const logFixe = enTete && !!logChoisi && [...RUBRIQUES_LOGEMENT, "rental"].includes(b.rubriqueId) && Number(b.surface) > 0 && !b.modifierLogement;
+  if (logFixe) h += titre("Votre logement") + `<div class="carte recap-logement"><span>${icone("logement")}<b>${esc((TYPES_LOGEMENT.find(t => t.id === b.typeLogementId) || {}).nom || "Logement")}</b>
+      <span>· ${b.surface} m²</span><span>· ${b.chambres} ${tr(b.chambres > 1 ? "chambres" : "chambre")}</span><span>· ${b.sdb} ${tr(b.sdb > 1 ? "salles de bain" : "salle de bain")}</span>${b.niveaux > 1 ? `<span>· ${b.niveaux} ${tr("niveaux")}</span>` : ""}</span>
+      <button type="button" class="lien-bouton" data-modifier-logement>Modifier</button></div>`;
+  if (RUBRIQUES_LOGEMENT.includes(b.rubriqueId) && !logFixe) h += titre("Type de logement") + choix(TYPES_LOGEMENT.map(t => [t.id, t.nom]), b.typeLogementId, "typeLogementId");
   const lieux = TYPES_LIEU[b.rubriqueId];
   if (lieux) h += titre(r.titreTypes || { car: "Gabarit du véhicule", construction: "Type de sol", kitchen: "Type d'établissement" }[b.rubriqueId] || "Type de lieu")
     + choix(lieux.map(l => [l.id, l.nom]), b.typeLieuId, "typeLieuId");
@@ -345,7 +370,7 @@ function questionnaire(enTete = true) {
   if (b.rubriqueId !== "car") {
     if (b.rubriqueId === "special" && TARIFS_SPECIAUX[b.typeLieuId]?.surface !== false) h += titre("Dimensions") + `<div class="carte">${compteur("Surface à traiter", "surface", b.surface, { min: 5, max: 5000, unite: " m²" })}`
       + (surfaceEffective(b) > REGLES.SEUIL_DEVIS_SURFACE_M2 ? `<p style="color:var(--alerte);font-size:14px">Au-delà de 300 m² : devis obligatoire.</p>` : "") + `</div>`;
-    if (!["textiles", "special"].includes(b.rubriqueId)) h += titre("Dimensions") + `<div class="carte">`
+    if (!["textiles", "special"].includes(b.rubriqueId) && !logFixe) h += titre("Dimensions") + `<div class="carte">`
       + (b.rubriqueId === "windows" ? compteur("Nombre de fenêtres", "fenetres", b.fenetres, { min: 1, max: 200 })
           + compteur("Surface vitrée approximative", "surfaceVitree", b.surfaceVitree ?? 20, { min: 1, max: 500, unite: " m²" })
           + `<p class="petit">La surface vitrée sert uniquement aux tâches à la surface.</p>`
@@ -829,10 +854,11 @@ document.addEventListener("click", async e => {
     sim = false; location.hash = `#/reserver/${b.rubriqueId}`; return;
   }
   if (ds.espace) { b = b ? { ...b, espace: ds.espace } : { espace: ds.espace, etape: 1 }; sauver(); return rendre(); }
+  if (ds.modifierLogement !== undefined) return maj({ modifierLogement: true });
   if (ds.logementDepart !== undefined) { b = { ...(b || { etape: 1, espace: "personnel" }), logementDepart: ds.logementDepart }; sauver(); return rendre(); }
   if (ds.rubrique) {
     const dep = logementDepart();
-    const nb = b?.rubriqueId === ds.rubrique ? { ...b, etape: 2 } : nouveauBrouillon(ds.rubrique, b?.espace || "personnel");
+    const nb = b?.rubriqueId === ds.rubrique && b.espace === partieCourante() ? { ...b, etape: 2 } : nouveauBrouillon(ds.rubrique, partieCourante());
     b = logements().length ? avecLogementDepart(nb, dep) : nb;
     sauver(); noterEtape(); rendre(); return window.scrollTo(0, 0);
   }

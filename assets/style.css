@@ -1711,27 +1711,68 @@ details.piece.complete .pastille-piece { background: #23955A; border-color: #239
    Attentes 3 (8 novembre 2026) : logo Cleaneroo dans un anneau en dégradé, reflet d'essuyage,
    silhouette de la page (squelette) avec balayage lumineux. Même rendu dans l'appli (Chargement.kt).
    ================================================================================================ */
-.chargeur-pro { display: flex; flex-direction: column; align-items: center; gap: 16px; margin: 6px 0 34px; color: var(--texte2); text-align: center; }
-.chargeur-ligne { display: flex; align-items: center; gap: 14px; padding: 10px 0; color: var(--texte2); }
-.logo-attente { position: relative; width: 92px; height: 92px; display: grid; place-items: center; flex: none; }
-.logo-attente.petit { width: 46px; height: 46px; }
+.chargeur-pro, .chargeur-ligne { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: var(--texte2); }
+.chargeur-pro { gap: 18px; margin: 18px auto 34px; min-height: 210px; }
+.chargeur-ligne { gap: 12px; padding: 22px 0; width: 100%; }
+.chargeur-pro .texte-attente { font-size: 16px; color: var(--texte); }
+/* Attentes 4 (16 novembre 2026) : toujours au centre. Le logo se couvre de buée, une raclette corail l'essuie,
+   des étincelles jaillissent, des bulles de savon montent autour ; un halo respire et une barre de progression glisse.
+   Même scène dans l'appli (Chargement.kt). */
+.logo-attente { --t: 2.8s; position: relative; width: 132px; height: 132px; display: grid; place-items: center; flex: none; }
+.logo-attente.petit { width: 74px; height: 74px; }
+.logo-attente .halo { position: absolute; inset: 8%; border-radius: 50%; background: radial-gradient(circle, rgba(37, 181, 191, .32), rgba(107, 91, 214, .12) 55%, transparent 72%);
+  filter: blur(6px); animation: halo-respire var(--t) ease-in-out infinite; }
 .logo-attente .anneau { position: absolute; inset: 0; border-radius: 50%;
   background: conic-gradient(from 0deg, rgba(37, 181, 191, 0) 0deg, #25B5BF 140deg, #6B5BD6 250deg, #FA8C66 330deg, rgba(250, 140, 102, 0) 360deg);
   -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3px));
           mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3px));
-  animation: anneau-tourne 1.1s linear infinite; }
+  animation: anneau-tourne 1.4s linear infinite; }
+.logo-attente .anneau.a2 { inset: 11px; opacity: .55; animation-duration: 2.3s; animation-direction: reverse;
+  background: conic-gradient(from 90deg, rgba(250, 140, 102, 0), #FA8C66 90deg, rgba(37, 181, 191, 0) 200deg, rgba(37, 181, 191, 0) 360deg); }
 .logo-attente.petit .anneau { -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
           mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px)); }
-.logo-attente .tuile { position: relative; width: 64px; height: 64px; border-radius: 19px; overflow: hidden;
-  box-shadow: 0 12px 26px -10px rgba(15, 138, 130, .65); animation: tuile-respire 2.2s ease-in-out infinite; }
-.logo-attente.petit .tuile { width: 32px; height: 32px; border-radius: 10px; box-shadow: 0 6px 14px -6px rgba(15, 138, 130, .6); }
+.logo-attente.petit .anneau.a2 { inset: 6px; }
+.logo-attente .tuile { position: relative; width: 72px; height: 72px; border-radius: 22px; overflow: hidden; z-index: 1;
+  box-shadow: 0 14px 30px -10px rgba(15, 138, 130, .7); animation: tuile-respire var(--t) ease-in-out infinite; }
+.logo-attente.petit .tuile { width: 38px; height: 38px; border-radius: 12px; box-shadow: 0 6px 14px -6px rgba(15, 138, 130, .6); }
 .logo-attente .tuile img { width: 100%; height: 100%; display: block; }
-.logo-attente .reflet { position: absolute; top: -30%; bottom: -30%; left: -60%; width: 45%; transform: skewX(-20deg);
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .75), transparent); animation: reflet-logo 1.8s cubic-bezier(.55, .05, .3, 1) infinite; }
+.logo-attente .buee { position: absolute; inset: 0; background:
+    radial-gradient(circle at 28% 32%, rgba(255, 255, 255, .55) 0 9%, transparent 10%), radial-gradient(circle at 70% 64%, rgba(255, 255, 255, .45) 0 7%, transparent 8%),
+    radial-gradient(circle at 60% 22%, rgba(255, 255, 255, .4) 0 5%, transparent 6%), linear-gradient(135deg, rgba(222, 236, 236, .9), rgba(190, 210, 212, .82));
+  animation: buee var(--t) cubic-bezier(.6, .05, .35, 1) infinite; }
+.logo-attente .raclette { position: absolute; top: -6%; bottom: -6%; left: -14%; width: 9%; border-radius: 6px; background: linear-gradient(180deg, #FFB08F, #FA8C66);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, .95), 6px 0 14px rgba(255, 255, 255, .9); animation: raclette-logo var(--t) cubic-bezier(.6, .05, .35, 1) infinite; }
+.logo-attente .reflet { position: absolute; top: -30%; bottom: -30%; left: -60%; width: 40%; transform: skewX(-20deg);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .8), transparent); animation: reflet-logo var(--t) ease-in-out infinite; }
+.logo-attente .bulle { position: absolute; bottom: 14%; width: 12px; height: 12px; border-radius: 50%; opacity: 0; z-index: 2;
+  background: radial-gradient(circle at 32% 30%, #fff 0 18%, rgba(255, 255, 255, .25) 30%, rgba(37, 181, 191, .25) 62%, rgba(107, 91, 214, .45) 100%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .7); animation: bulle-monte 3.2s ease-in infinite; }
+.logo-attente .b1 { left: 10%; animation-delay: 0s; }
+.logo-attente .b2 { left: 78%; width: 9px; height: 9px; animation-delay: .8s; }
+.logo-attente .b3 { left: 24%; width: 7px; height: 7px; animation-delay: 1.6s; }
+.logo-attente .b4 { left: 66%; width: 14px; height: 14px; animation-delay: 2.3s; }
+.logo-attente.petit .bulle { width: 7px; height: 7px; }
+.logo-attente .etincelle { position: absolute; width: 16px; height: 16px; opacity: 0; z-index: 3; background: var(--c, #F5B83D);
+  clip-path: polygon(50% 0, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0 50%, 39% 39%); animation: etincelle var(--t) ease-out infinite; }
+.logo-attente .e1 { top: 14%; right: 16%; --c: #F5B83D; }
+.logo-attente .e2 { bottom: 20%; left: 12%; width: 11px; height: 11px; --c: #25B5BF; animation-delay: .12s; }
+.logo-attente .e3 { top: 24%; left: 17%; width: 9px; height: 9px; --c: #FA8C66; animation-delay: .24s; }
+.logo-attente.petit .etincelle { width: 9px; height: 9px; }
+.barre-attente { position: relative; display: block; width: 150px; height: 4px; border-radius: 4px; overflow: hidden; background: color-mix(in srgb, var(--primaire) 14%, transparent); }
+.barre-attente i { position: absolute; top: 0; bottom: 0; left: -40%; width: 40%; border-radius: 4px; background: linear-gradient(90deg, #25B5BF, #6B5BD6, #FA8C66); animation: barre-glisse 1.6s cubic-bezier(.5, .1, .3, 1) infinite; }
+.chargeur-ligne .barre-attente { width: 110px; height: 3px; }
+.chargeur-pro, .chargeur-ligne { animation: chargeur-entre .45s cubic-bezier(.2, .8, .3, 1) both; }
+.chargement-page .chargeur-pro { min-height: 34vh; }
 @keyframes anneau-tourne { to { transform: rotate(360deg); } }
-@keyframes tuile-respire { 0%, 100% { transform: scale(1); } 50% { transform: scale(.94); } }
-@keyframes reflet-logo { 0%, 35% { left: -60%; } 75%, 100% { left: 130%; } }
-.chargeur-pro .texte-attente { font-size: 16px; color: var(--texte); }
+@keyframes halo-respire { 0%, 100% { transform: scale(.88); opacity: .7; } 50% { transform: scale(1.08); opacity: 1; } }
+@keyframes tuile-respire { 0%, 100% { transform: scale(1) rotate(0); } 45% { transform: scale(.95) rotate(-2deg); } 60% { transform: scale(1.04) rotate(1deg); } }
+@keyframes buee { 0% { opacity: 0; clip-path: inset(0 0 0 0); } 12%, 20% { opacity: 1; clip-path: inset(0 0 0 0); } 58% { opacity: 1; clip-path: inset(0 0 0 100%); } 100% { opacity: 0; clip-path: inset(0 0 0 100%); } }
+@keyframes raclette-logo { 0%, 20% { left: -14%; opacity: 0; } 24% { opacity: 1; } 58% { left: 104%; opacity: 1; } 62%, 100% { left: 110%; opacity: 0; } }
+@keyframes reflet-logo { 0%, 58% { left: -60%; } 82%, 100% { left: 130%; } }
+@keyframes etincelle { 0%, 56% { opacity: 0; transform: scale(.2) rotate(0); } 66% { opacity: 1; transform: scale(1.15) rotate(45deg); } 82%, 100% { opacity: 0; transform: scale(.4) rotate(90deg); } }
+@keyframes bulle-monte { 0% { opacity: 0; transform: translate(0, 0) scale(.5); } 15% { opacity: 1; } 70% { opacity: .9; } 100% { opacity: 0; transform: translate(6px, -96px) scale(1.15); } }
+@keyframes barre-glisse { 0% { left: -40%; } 100% { left: 100%; } }
+@keyframes chargeur-entre { from { opacity: 0; transform: translateY(10px) scale(.96); } to { opacity: 1; transform: none; } }
 
 /* Silhouette de la page */
 .squelette { display: grid; gap: 14px; }
@@ -1755,7 +1796,8 @@ details.piece.complete .pastille-piece { background: #23955A; border-color: #239
 }
 @media (max-width: 560px) { .sq-pilule { width: 84px; } .sq-carte { grid-template-columns: 42px 1fr 52px; padding: 14px; } .sq-rond { width: 42px; height: 42px; } }
 @media (prefers-reduced-motion: reduce) {
-  .logo-attente .anneau, .logo-attente .tuile, .logo-attente .reflet, .sq { animation: none !important; }
+  .logo-attente *, .barre-attente i, .chargeur-pro, .chargeur-ligne, .sq { animation: none !important; }
+  .logo-attente .buee, .logo-attente .raclette, .logo-attente .bulle, .logo-attente .etincelle { display: none; }
   .sq-carte { animation: none !important; opacity: 1; }
 }
 
@@ -2005,3 +2047,61 @@ body.avec-decor main, body.avec-decor #vue, body.avec-decor footer { position: r
 .guide-video-fermer { position: absolute; top: -12px; right: -12px; z-index: 1; width: 40px; height: 40px; border-radius: 50%; border: 0; background: #fff; color: #14302b; font-size: 16px; cursor: pointer; box-shadow: 0 2px 10px rgba(0, 0, 0, .3); }
 @media (max-width: 480px) { .guide-video-fermer { top: 6px; right: 6px; } }
 @keyframes guideApparait { from { opacity: 0; } to { opacity: 1; } }
+/* Réservation (16 novembre 2026) : partie fixée par l'espace du compte, logement enregistré rappelé sans questions */
+.pour-qui-fixe { display: flex; align-items: center; gap: 12px; margin: 22px 0 0; padding: 12px 14px; border-radius: 16px; background: var(--surface); box-shadow: var(--ombre); }
+.pour-qui-fixe > span:last-child { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.pour-qui-fixe .petit { margin: 0; }
+.recap-logement { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.recap-logement > span { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; flex: 1; min-width: 0; }
+.recap-logement .ico { width: 20px; height: 20px; color: var(--primaire); }
+/* Agenda du Particulier (16 novembre 2026) : ses prestations jour par jour, dans « Mon suivi » */
+.agenda-particulier { display: grid; gap: 14px; }
+.ap-barre { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.ap-barre .segments { min-width: 220px; }
+.ap-barre .segments button { flex: 1; }
+.ap-barre .lien-bouton { display: inline-flex; align-items: center; gap: 6px; }
+.ap-barre .lien-bouton .ico { width: 18px; height: 18px; }
+.ap-nav { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.ap-nav > div { display: flex; flex-direction: column; align-items: center; text-align: center; }
+.ap-titre { font-size: 19px; font-weight: 800; }
+.ap-nav button { width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--separateur); background: var(--surface); color: var(--primaire); font-size: 22px; cursor: pointer; transition: background .15s, transform .15s; }
+.ap-nav button:hover { background: color-mix(in srgb, var(--primaire) 10%, var(--surface)); transform: scale(1.05); }
+.ap-grille { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 5px; }
+.ap-grille.entete { margin-bottom: 4px; }
+.ap-grille.entete span { text-align: center; font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--texte3); }
+.ap-jour { position: relative; min-height: 70px; border: 1px solid transparent; border-radius: 13px; background: var(--creux); padding: 6px; font: inherit; color: var(--texte);
+  display: flex; flex-direction: column; align-items: flex-start; gap: 4px; cursor: pointer; transition: background .15s, border-color .15s, transform .15s; }
+.ap-jour:hover { border-color: color-mix(in srgb, var(--primaire) 40%, transparent); transform: translateY(-1px); }
+.ap-jour.hors { background: none; opacity: .45; }
+.ap-jour.passe .num { color: var(--texte3); font-weight: 600; }
+.ap-jour .num { display: inline-flex; align-items: center; justify-content: center; min-width: 26px; height: 26px; border-radius: 13px; font-size: 13px; font-weight: 800; }
+.ap-jour.auj .num { background: var(--degrade); color: #fff; }
+.ap-jour.occupe { background: color-mix(in srgb, var(--primaire) 9%, var(--surface)); }
+.ap-jour.choisi { border-color: var(--primaire); box-shadow: 0 4px 14px rgba(14, 59, 64, .14); }
+.ap-pastilles { display: flex; flex-wrap: wrap; gap: 3px; align-items: center; }
+.ap-pastilles em { font-style: normal; font-size: 11px; font-weight: 800; color: var(--texte2); }
+.agenda-particulier .b-presta { box-shadow: 0 0 0 2px var(--surface), 0 0 0 3.5px var(--c, transparent); }
+.ap-legende { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 12px; font-size: 13px; }
+.ap-legende span { display: inline-flex; align-items: center; gap: 6px; }
+.ap-legende i { width: 12px; height: 12px; border-radius: 50%; }
+.ap-detail, .ap-sans-date { margin-top: 14px; padding: 14px; border-radius: var(--rayon); background: color-mix(in srgb, var(--primaire) 6%, var(--surface)); border: 1px solid var(--separateur); animation: sq-apparait .3s ease both; }
+.ap-detail h3 { margin: 0 0 6px; }
+.ap-detail h3::first-letter { text-transform: uppercase; }
+.ap-detail .bouton { margin-top: 10px; }
+.ap-liste-jour { padding: 10px 0; border-top: 1px solid var(--separateur); }
+.ap-liste-jour:first-child { border-top: 0; }
+.ap-liste-jour .surtitre::first-letter { text-transform: uppercase; }
+.evt-particulier { color: inherit; text-decoration: none; border-radius: 12px; padding: 10px 6px; }
+.evt-particulier:hover { background: color-mix(in srgb, var(--primaire) 6%, transparent); }
+.evt-particulier .b-presta { width: 38px; height: 38px; border-radius: 12px; flex: none; }
+.evt-particulier .b-presta .ico { width: 22px; height: 22px; }
+.evt-particulier .evt-haut b { color: var(--texte); }
+.evt-fleche { font-size: 22px; color: var(--texte3); }
+@media (max-width: 560px) {
+  .ap-grille { gap: 3px; }
+  .ap-jour { min-height: 54px; padding: 4px; border-radius: 10px; }
+  .ap-jour .num { min-width: 22px; height: 22px; font-size: 12px; }
+  .ap-jour .b-presta { width: 16px; height: 16px; border-radius: 5px; }
+  .ap-jour .b-presta .ico { width: 11px; height: 11px; }
+  .ap-barre .segments { min-width: 0; flex: 1 1 100%; }
+}

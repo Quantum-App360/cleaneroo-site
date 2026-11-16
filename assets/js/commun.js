@@ -29,14 +29,15 @@ export function bandeauLancement() {
 }
 
 /* ------------------------------------------------------------------ Chargement (8 novembre 2026) : logo Cleaneroo + silhouette de la page */
-const LOGO_ATTENTE = (petit = false) => `<span class="logo-attente${petit ? " petit" : ""}" aria-hidden="true"><span class="anneau"></span>
-  <span class="tuile"><img src="/assets/img/logo-marque.svg" alt="" width="64" height="64"><i class="reflet"></i></span></span>`;
-/** Attente : logo de la marque dans un anneau en dégradé qui tourne, reflet d'essuyage qui passe sur le logo, texte avec points animés.
- *  Même animation que l'appli (Chargement.kt). petit : version en ligne, dans une carte. */
+export const LOGO_ATTENTE = (petit = false) => `<span class="logo-attente${petit ? " petit" : ""}" aria-hidden="true"><span class="halo"></span><span class="anneau"></span><span class="anneau a2"></span>
+  <span class="tuile"><img src="/assets/img/logo-marque.svg" alt="" width="72" height="72"><i class="buee"></i><i class="raclette"></i><i class="reflet"></i></span>
+  <i class="bulle b1"></i><i class="bulle b2"></i><i class="bulle b3"></i><i class="bulle b4"></i><i class="etincelle e1"></i><i class="etincelle e2"></i><i class="etincelle e3"></i></span>`;
+/** Attente (16 novembre 2026), toujours centrée : le logo se couvre de buée, une raclette l'essuie, étincelles et bulles de savon,
+ *  halo, double anneau en dégradé, texte avec points animés et barre de progression. Même animation que l'appli (Chargement.kt).
+ *  petit : version compacte, dans une carte. */
 export function chargeur(texte = "Chargement…", { petit = false } = {}) {
   const libelle = `<span class="texte-attente">${texte.replace(/…$/, "")}<i class="points"></i></span>`;
-  return petit ? `<div class="chargeur-ligne" role="status">${LOGO_ATTENTE(true)}${libelle}</div>`
-    : `<div class="chargeur-pro" role="status">${LOGO_ATTENTE()}${libelle}</div>`;
+  return `<div class="${petit ? "chargeur-ligne" : "chargeur-pro"}" role="status">${LOGO_ATTENTE(petit)}${libelle}<span class="barre-attente" aria-hidden="true"><i></i></span></div>`;
 }
 /** Silhouette de la page qui arrive (titre, onglets, cartes), avec un balayage lumineux : la mise en page ne saute pas. */
 const squelette = () => `<div class="squelette" aria-hidden="true">

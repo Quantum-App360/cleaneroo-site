@@ -560,7 +560,14 @@ export const partie = id => PARTIES.find(p => p.id === id) || PARTIES[0];
 /** Partie qui propose cette prestation (la partie demandée si elle la propose, sinon la première qui la propose). */
 export const partiePour = (rubriqueId, voulue = "personnel") =>
   partie(voulue).rubriques.includes(rubriqueId) ? partie(voulue).id : (PARTIES.find(p => p.rubriques.includes(rubriqueId)) || PARTIES[0]).id;
-export const TYPES_VITRES_ELIGIBLES = ["fenetres_logement", "baies_veranda"];
+/** Partie imposée par l'espace du compte connecté (16 novembre 2026) : plus de question « Pour qui ? » une fois connecté. */
+export const PARTIE_DE_L_ESPACE = { particulier: "personnel", pro: "conciergerie", entreprise: "professionnel" };
+/** Prestations sans objet pour un logement déjà enregistré (véhicule, locaux professionnels, réception). Même liste dans l'appli. */
+export const RUBRIQUES_HORS_LOGEMENT = ["car", "event", "office", "commerce", "communal"];
+/** Prestations proposées à l'étape 1 : celles de la partie ; pour un logement enregistré (hors Entreprise, dont les adresses sont des locaux), sans celles qui n'ont pas de sens. */
+export const rubriquesProposees = (partieId, logementEnregistre = false) =>
+  partie(partieId).rubriques.filter(id => !(logementEnregistre && partie(partieId).id !== "professionnel" && RUBRIQUES_HORS_LOGEMENT.includes(id)));
+export const TYPES_VITRES_ELIGIBLES =["fenetres_logement", "baies_veranda"];
 
 export const TYPES_LOGEMENT = [
   { id: "studio", nom: "Studio", surface: 25, chambres: 0, sdb: 1, niveaux: 1 },
