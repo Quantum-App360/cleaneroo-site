@@ -15,7 +15,9 @@ export const REGLES = {
   SEUIL_DEVIS_SURFACE_M2: 300,
   MINIMUM_COMMANDE_VEHICULE_C: 4000,
   MINIMUM_COMMANDE_TEXTILES_C: 5900,
-  MINIMUM_COMMANDE_HEBERGEMENT_C: 5900,   // Hôtels et campings (16 novembre 2026) : minimum par intervention
+  MINIMUM_COMMANDE_HEBERGEMENT_C: 5900,
+  MINIMUM_COMMANDE_BATEAU_C: 4900,        // Bateaux : minimum par intervention (16 novembre 2026)
+  MINIMUM_COMMANDE_LOISIRS_C: 7900,       // Vans, camping-cars et caravanes : minimum par intervention   // Hôtels et campings (16 novembre 2026) : minimum par intervention
   JOURS_MAX_MEME_SITE: 4,
   FENETRE_ROTATION_MIN: 360,              // rotation d'un camping ou d'un hôtel : à finir en 6 h (10 h – 16 h) → nombre de Cleaneurs                 // un même Cleaneur au plus 4 jours sur 7 chez un même hôtel ou camping (pas d'emploi déguisé)
   VEHICULES_MIN: 1,
@@ -339,7 +341,7 @@ export function qualificationsRequises(rubriqueId, typeLieuId = "", taches = [])
     home: ["domicile"], rental: ["domicile", "location"], moving: ["domicile"], car: ["auto"], textiles: ["textiles"],
     construction: ["remise-etat"], kitchen: !t || t === "particulier" ? ["domicile"] : ["cuisine-pro", "haccp"],
     office: t === "medical" ? ["locaux-pro", "bionettoyage"] : ["locaux-pro"], commerce: ["locaux-pro"], communal: ["locaux-pro"],
-    windows: ["vitres"], outdoor: ["exterieurs"], event: ["evenementiel"], hospitality: ["domicile", "location"],
+    windows: ["vitres"], outdoor: ["exterieurs"], event: ["evenementiel"], hospitality: ["domicile", "location"], leisure: ["auto"], boat: [],
     special: ["cafards", "punaises", "rats", "guepes"].includes(t) ? ["nuisibles"] : ["specialise"],
   }[rubriqueId] || [];
   // Selon les tâches cochées (comme l'appli de Vincent) : hauteur, machines, polissage, désinfection professionnelle.

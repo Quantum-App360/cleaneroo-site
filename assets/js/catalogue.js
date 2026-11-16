@@ -212,6 +212,32 @@ export const RUBRIQUES = [
       { id: "confort", nom: "Confort", remisePct: 10, tacheIds: ["detachage", "desodorisation", "acariens"] },
       { id: "prestige", nom: "Premium", remisePct: 15, tacheIds: ["detachage", "desodorisation", "acariens", "protection", "sechage"] },
     ] },
+  // Vans, camping-cars et caravanes (16 novembre 2026) : prix au mètre de longueur (36 €/h ; extérieur ≈ 9 €/m, cellule ≈ 12 €/m, complet ≈ 21 €/m).
+  { id: "leisure", nom: "Vans, camping-cars et caravanes", sousTitre: "Extérieur et cellule, prix au mètre", icone: "vehicule", tauxHoraireC: 3600, salissureSurTemps: false,
+    titreTypes: "Type de véhicule", surfaceReferenceM2: 7,
+    inclus: "Carrosserie et jantes lavées à la main · Cellule : cuisine, sanitaires, couchages, sols et vitres · Produits adaptés aux joints et au polyester",
+    formules: [F("exterieur", "Extérieur", "Carrosserie, jantes, vitres et marchepied", 4, 135, 1.0, "PONCTUEL", false, false),
+      F("interieur", "Cellule intérieure", "Cuisine, sanitaires, couchages, rangements et sols", 4, 100, 1.333, "PONCTUEL", false, false),
+      F("complet", "Complet", "Extérieur et cellule intérieure", 4, 60, 2.333, "PONCTUEL", false, false)],
+    taches: [T("toit", "Toit et lanterneaux", 2500, 30, { groupe: "Extérieur", parSurface: true }), T("store", "Store et auvent", 2000, 20, { groupe: "Extérieur" }),
+      T("demoussage_toit", "Démoussage du toit", 4000, 45, { groupe: "Extérieur", parSurface: true }),
+      T("reservoir", "Désinfection du réservoir d'eau propre", 3500, 30, { groupe: "Cellule" }), T("cassette", "Nettoyage de la cassette WC", 2500, 20, { groupe: "Cellule" }),
+      T("banquettes", "Banquettes et matelas (shampoing)", 3500, 40, { groupe: "Cellule" }), T("hivernage", "Préparation à l'hivernage", 4500, 45, { groupe: "Cellule" })],
+    packs: [] },
+  // Bateaux (16 novembre 2026) : prix au mètre de longueur (36 €/h ; rinçage ≈ 6 €/m, entretien ≈ 15 €/m, remise en état ≈ 28 €/m). Carénage exclu.
+  { id: "boat", nom: "Bateaux", sousTitre: "Rinçage, entretien et remise en état, prix au mètre", icone: "bateau", tauxHoraireC: 3600, salissureSurTemps: false,
+    titreTypes: "Type de bateau", surfaceReferenceM2: 10,
+    inclus: "Pont, cockpit et coque au-dessus de la ligne de flottaison · Produits adaptés au gelcoat et au milieu marin · Photos avant et après · Carénage exclu (aire agréée obligatoire)",
+    formules: [F("rincage", "Rinçage après sortie", "Rinçage à l'eau douce, pont, cockpit et inox", 6, 80, 1.0, "PONCTUEL", false, false),
+      F("entretien", "Entretien complet", "Extérieur et intérieur : cabines, carré, cuisine, sanitaires", 6, 40, 2.5, "PONCTUEL", false, false),
+      F("saison", "Entretien régulier en saison", "Pendant votre absence, à la fréquence choisie", 6, 40, 2.25, "REGULIER", false, false),
+      F("remise", "Remise en état (début ou fin de saison)", "Nettoyage en profondeur avant la mise à l'eau ou l'hivernage", 6, 30, 4.67, "AUTRE", false, false)],
+    taches: [T("lustrage", "Lustrage et polish de la coque (hors carène)", 18000, 300, { groupe: "Coque et pont", parSurface: true }),
+      T("teck", "Nettoyage et éclaircissement du teck", 8000, 120, { groupe: "Coque et pont", parSurface: true }),
+      T("anti_uv", "Protection anti-UV du gelcoat", 5000, 60, { groupe: "Coque et pont", parSurface: true }), T("inox", "Inox et accastillage", 4000, 60, { groupe: "Coque et pont" }),
+      T("sellerie", "Sellerie, coussins et bains de soleil", 4000, 45, { groupe: "Intérieur" }), T("hublots", "Vitres, hublots et plexiglas", 2500, 30, { groupe: "Intérieur" }),
+      T("wc_marin", "Toilettes marines désinfectées", 2500, 25, { groupe: "Intérieur" }), T("frigo_bateau", "Réfrigérateur et coffres", 2000, 20, { groupe: "Intérieur" })],
+    packs: [] },
   // Hôtels et campings (16 novembre 2026) : rotations, renforts et saisons, au forfait par logement (panier comme les textiles).
   { id: "hospitality", nom: "Hôtels et campings", sousTitre: "Mobil-homes, chalets et chambres au forfait", icone: "location", tauxHoraireC: 3000, salissureSurTemps: false, affichagePrix: "PAR_ELEMENT",
     inclus: "Linge changé (fourni par l'établissement) · Cuisine et sanitaires désinfectés · Sols, poussières et poubelles · Photo de contrôle par logement",
@@ -564,13 +590,13 @@ export const RUBRIQUES_CREDIT_IMPOT = ["home", "windows", "textiles"];
  *  Le crédit d'impôt ne concerne que les particuliers (« personnel »). */
 export const PARTIES = [
   { id: "personnel", nom: "Particulier", detail: "Crédit d'impôt sur le ménage, les vitres et les textiles (services à la personne)",
-    rubriques: ["home", "rental", "moving", "textiles", "windows", "outdoor", "car", "kitchen", "event", "construction", "special"] },
+    rubriques: ["home", "rental", "moving", "textiles", "windows", "outdoor", "car", "leisure", "boat", "kitchen", "event", "construction", "special"] },
   { id: "conciergerie", nom: "Conciergerie et locations", detail: "Locations saisonnières et logements gérés · facture au nom de votre société",
-    rubriques: ["rental", "home", "moving", "textiles", "windows", "outdoor", "construction", "special"] },
+    rubriques: ["rental", "home", "moving", "textiles", "windows", "outdoor", "leisure", "boat", "construction", "special"] },
   { id: "hotellerie", nom: "Hôtels et campings", detail: "Rotations, renforts et saisons · facture au nom de votre établissement",
     rubriques: ["hospitality", "windows", "outdoor", "textiles", "construction", "special"] },
   { id: "professionnel", nom: "Entreprise", detail: "Bureaux, commerces, immeubles, cuisines pro · facture au nom de votre société",
-    rubriques: ["office", "commerce", "communal", "kitchen", "windows", "outdoor", "construction", "car", "event", "textiles", "special"] },
+    rubriques: ["office", "commerce", "communal", "kitchen", "windows", "outdoor", "construction", "car", "leisure", "boat", "event", "textiles", "special"] },
 ];
 export const partie = id => PARTIES.find(p => p.id === id) || PARTIES[0];
 /** Partie qui propose cette prestation (la partie demandée si elle la propose, sinon la première qui la propose). */
@@ -581,7 +607,7 @@ export const PARTIE_DE_L_ESPACE = { particulier: "personnel", pro: "conciergerie
 /** Prestations au panier (prix forfaitaire par élément) : textiles, hôtels et campings. */
 export const RUBRIQUES_PANIER = ["textiles", "hospitality"];
 /** Prestations sans objet pour un logement déjà enregistré (véhicule, locaux professionnels, réception). Même liste dans l'appli. */
-export const RUBRIQUES_HORS_LOGEMENT = ["car", "event", "office", "commerce", "communal"];
+export const RUBRIQUES_HORS_LOGEMENT = ["car", "leisure", "boat", "event", "office", "commerce", "communal"];
 /** Prestations proposées à l'étape 1 : celles de la partie ; pour un logement enregistré (hors Entreprise, dont les adresses sont des locaux), sans celles qui n'ont pas de sens. */
 export const rubriquesProposees = (partieId, logementEnregistre = false) =>
   partie(partieId).rubriques.filter(id => !(logementEnregistre && partie(partieId).id !== "professionnel" && RUBRIQUES_HORS_LOGEMENT.includes(id)));
@@ -603,6 +629,8 @@ export const TYPES_LIEU = {
   commerce: [L("boutique", "Local commercial / boutique", 1.1, "Surface de vente, sols, corbeilles, sanitaires"), L("magasin", "Magasin / supérette", 1.15, "Surface de vente, allées, sols, corbeilles, sanitaires"), L("showroom", "Showroom / galerie", 1.1, "Espace d'exposition, sols, corbeilles, sanitaires"), L("sport", "Salle de sport / studio", 1.15, "Salles, sols, corbeilles, sanitaires"), L("entrepot", "Entrepôt / remise / stockage", 0.7, "Allées et zones de stockage, sols, sanitaires"), L("atelier", "Atelier / local d'activité", 0.9, "Atelier, sols, corbeilles, sanitaires")],
   communal: [L("copro", "Immeuble résidentiel / copropriété", 1.0, "Hall, escaliers, paliers, rampes"), L("residence", "Résidence services (seniors, étudiants)", 1.1), L("parking", "Parking / sous-sol", 0.7)],
   windows: [L("fenetres_logement", "Fenêtres d'un logement", 1.0, "Vitres, faces intérieure et extérieure accessibles"), L("baies_veranda", "Baies vitrées et véranda", 1.1), L("vitrine_commerce", "Vitrine de commerce", 1.0), L("facades", "Bureaux et façades vitrées", 1.1)],
+  leisure: [L("van", "Van aménagé ou fourgon", 0.9), L("profile", "Camping-car profilé ou capucine", 1.0), L("integral", "Camping-car intégral", 1.15), L("caravane", "Caravane", 0.9)],
+  boat: [L("voilier", "Voilier", 1.0), L("moteur", "Bateau à moteur", 1.0), L("semi_rigide", "Semi-rigide", 0.7), L("vedette", "Vedette ou yacht (flybridge)", 1.2), L("catamaran", "Catamaran", 1.5)],
   outdoor: [L("terrasse", "Terrasse / balcon", 1.0, "Balayage et lavage des sols"), L("jardin", "Jardin, allées et cour", 1.0), L("garage", "Garage, cave ou abri", 0.9), L("piscine", "Abords de piscine", 1.1, "Plages et margelles"), L("cour_immeuble", "Cour d'immeuble / parking extérieur", 0.9)],
   event: [L("mariage", "Mariage / réception", 1.1, "Salle, sols, tables, sanitaires"), L("fete", "Fête privée à domicile", 1.0, "Pièces de réception, cuisine, sanitaires"), L("seminaire", "Séminaire / événement d'entreprise", 1.0), L("salon", "Salon / exposition", 1.1), L("anniversaire", "Anniversaire / fête en salle", 1.0)],
   special: [L("cafards", "Cafards et blattes (désinsectisation)", 1.0, "Diagnostic, traitement gel et pulvérisation ciblée, passage de contrôle"),

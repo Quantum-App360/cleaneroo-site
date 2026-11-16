@@ -119,7 +119,7 @@ function brouillonInitialSansFavori(rubriqueId, espace = "personnel", rapide = f
 }
 
 /** Surface proposée au départ, selon la prestation (comme nouveauBrouillon dans l'appli). */
-const SURFACE_DEPART = { office: 120, commerce: 120, communal: 200, kitchen: 30, outdoor: 40, event: 100, construction: 80 };
+const SURFACE_DEPART = { office: 120, commerce: 120, communal: 200, kitchen: 30, outdoor: 40, event: 100, construction: 80, leisure: 7, boat: 10 };
 function vierge(rubriqueId, espace, r, lieux) {
   return {
     photosAvantExigees: REGLES.PHOTOS_AVANT_PAR_DEFAUT.includes(rubriqueId),
@@ -389,6 +389,7 @@ function questionnaire(enTete = true) {
           ? compteur("Surface par palier", "surfacePalier", b.surfacePalier ?? REGLES.SURFACE_PALIER_DEFAUT_M2, { min: 5, max: 300, unite: " m²" })
           + compteur("Nombre de paliers (étages)", "paliers", b.paliers ?? REGLES.PALIERS_DEFAUT, { min: 1, max: REGLES.PALIERS_MAX })
           + `<p class="petit">Surface totale : ${surfaceEffective(b)} m² (${b.surfacePalier ?? REGLES.SURFACE_PALIER_DEFAUT_M2} m² × ${b.paliers ?? REGLES.PALIERS_DEFAUT} paliers).</p>`
+        : ["leisure", "boat"].includes(b.rubriqueId) ? compteur(b.rubriqueId === "boat" ? "Longueur du bateau" : "Longueur du véhicule", "surface", b.surface, { min: 3, max: b.rubriqueId === "boat" ? 40 : 14, unite: " m" })
         : compteur("Surface", "surface", b.surface, { min: 5, max: 5000, unite: " m²" }))
       + ([...RUBRIQUES_LOGEMENT, "rental"].includes(b.rubriqueId) ? compteur("Chambres", "chambres", b.chambres, { max: 12 }) + compteur("Salles de bain", "sdb", b.sdb, { min: 1, max: 8 }) : "")
       + (RUBRIQUES_LOGEMENT.includes(b.rubriqueId) ? compteur("Niveaux", "niveaux", b.niveaux, { min: 1, max: 5 }) + (b.niveaux > 1 ? `<p class="petit">+15 min par niveau supplémentaire</p>` : "") : "")
@@ -397,9 +398,14 @@ function questionnaire(enTete = true) {
       + (surfaceEffective(b) > REGLES.SEUIL_DEVIS_SURFACE_M2 ? `<p style="color:var(--alerte);font-size:14px">Au-delà de 300 m² : devis obligatoire.</p>` : "")
       + `</div>`;
   }
+  // Bateaux : accès au port et capitainerie (16 novembre 2026).
+  if (b.rubriqueId === "boat") h += titre("Au port") + `<div class="carte">${champTexte("Port", "port", b.port || "", "text", 'maxlength="80" placeholder="Ex. : Port-Fréjus"')}
+      ${champTexte("Ponton et numéro de place", "place", b.place || "", "text", 'maxlength="60" placeholder="Ex. : ponton C, place 42"')}
+      ${champTexte("Accès au ponton (badge, code du portail)", "accesPonton", b.accesPonton || "", "text", 'maxlength="120"')}
+      <p class="petit" style="margin:0">${tr("Conseil : prévenez la capitainerie de votre port. Le Cleaneur reçoit un bon d'intervention à présenter sur place (bateau, place, autorisation du propriétaire, assurance). Le carénage n'est pas proposé : il se fait uniquement sur une aire agréée.")}</p></div>`;
   if (b.rubriqueId === "rental") h += etapesLocation();
   if (b.rubriqueId === "car") h += questionsVehicule();
-  if (!r.toujoursSurDevis && !["car", "construction", "special"].includes(b.rubriqueId)) {
+  if (!r.toujoursSurDevis && !["car", "construction", "special", "leisure", "boat", "hospitality"].includes(b.rubriqueId)) {
     h += titre("État de saleté") + `<div class="segments">${Object.entries(SALISSURE).map(([k, s]) =>
       `<button type="button" data-champ="salissure" data-valeur="${k}" class="${b.salissure === k ? "choisi" : ""}">${s.libelle}</button>`).join("")}</div>`;
   }
@@ -407,7 +413,7 @@ function questionnaire(enTete = true) {
   if (b.rubriqueId === "kitchen") h += equipementsCuisine();
   const chiffrees = tachesChiffrees(b), packs = packsPour(r, b.typeLieuId);
   if (chiffrees.length) {
-    h += titre("Tâches complémentaires");
+    if (packs.some(p => p.id === "confort") && packs.some(p => p.id === "prestige")) h += titre("Tâches complémentaires");
     // Trois formules (Standard · Confort · Premium) : prix total de chaque formule, ce qu'elle ajoute, puis les options en plus.
     const confort = packs.find(p => p.id === "confort"), premium = packs.find(p => p.id === "prestige");
     const formules = confort && premium ? [{ id: "standard", nom: "Standard", tacheIds: [] }, { ...confort, nom: "Confort" }, { ...premium, nom: "Premium" }] : [];
@@ -438,7 +444,7 @@ function questionnaire(enTete = true) {
       <span>${t.nom}</span><span class="info"><b>+${euros(t.prixC)}</b><small>${duree(t.minutes)}</small></span></label>`).join("")}</div>`).join("");
     if (formules.length) h += `<p class="petit">${tr("Les tâches de la formule bénéficient de sa remise ; les options en plus sont au prix indiqué.")}</p>`;
     if (r.noteTaches) h += `<div class="note alerte" style="margin-top:10px">${esc(r.noteTaches)}</div>`;
-    if (r.surfaceReferenceM2 > 0 && chiffrees.some(t => t.parSurface)) h += `<p class="petit">Tâches marquées à la surface : prix pour ${r.surfaceReferenceM2} m², au prorata au-delà.</p>`;
+    if (r.surfaceReferenceM2 > 0 && chiffrees.some(t => t.parSurface)) h += `<p class="petit">Tâches marquées à la surface : prix pour ${r.surfaceReferenceM2} ${["leisure", "boat"].includes(b.rubriqueId) ? "m de longueur" : "m²"}, au prorata au-delà.</p>`;
   }
   if (!r.toujoursSurDevis && b.rubriqueId !== "special") {
     h += titre("Une demande spécifique ?") + `<div class="carte">${b.tachesPerso.map((t, i) => `<div style="display:flex;align-items:center"><span style="flex:1">• ${esc(t)}</span>
@@ -1050,7 +1056,8 @@ async function envoyer() {
       nombre_cleaneurs: est.nombreCleaneurs, sur_devis: est.devisObligatoire, creneau: d ? d.toISOString() : null, flexible: b.flexible || (estPrelancement() && !d), prelancement: estPrelancement(),
       choix_cleaneur: choixEnvoye(), cleaneur_favori: choixEnvoye() === "favori" ? b.cleaneurFavori : null, espace: b.espace, prenom: b.prenom.trim(), nom: b.nom.trim(), email: b.email.trim(), telephone: b.telephone.trim(),
       rue: b.rue.trim(), code_postal: b.codePostal.trim(), ville: b.ville.trim(), accueil: b.accueil || "PRESENT", acces,
-      remarque: (dates.length > 1 ? `Passage ${n + 1}/${dates.length}. ` : "") + b.remarque.trim(),
+      remarque: (dates.length > 1 ? `Passage ${n + 1}/${dates.length}. ` : "")
+        + (b.rubriqueId === "boat" && (b.port || b.place) ? `Port : ${[b.port, b.place].filter(Boolean).join(", ")}${b.accesPonton ? ` · accès : ${b.accesPonton}` : ""}. ` : "") + b.remarque.trim(),
     }, n === 0 ? photos : [], b.accueil === "BOITE" ? photoBoite : null);
     premiere = premiere || envoi1;
     }

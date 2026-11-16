@@ -14,7 +14,7 @@ import { esc } from "./commun.js";
 /** Activité d'assurance d'une prestation (copie de activite_rc_pro en base, type de lieu par défaut). */
 export const activiteRcPro = r => ({ home: "domicile", rental: "domicile", moving: "domicile", kitchen: "domicile", office: "locaux", commerce: "locaux",
   communal: "locaux", windows: "vitres", construction: "chantier", car: "vehicules", textiles: "textiles", outdoor: "exterieurs", event: "evenementiel",
-  special: "specialise" })[r] || "domicile";
+  special: "specialise", leisure: "vehicules", boat: "nautique" })[r] || "domicile";
 
 /** État d'une prestation pour ce Cleaneur : bloquée (raison), quiz à réussir (modules), ou libre. Fonction pure, testée. */
 export function etatPrestation(rubriqueId, catalogue, statut, rcActivites) {

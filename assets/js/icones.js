@@ -33,6 +33,9 @@ const RUBRIQUES = {
   vehicule: aplat("M8 12.6 9.7 10h4.8l1.9 2.6Z")
     + `<path d="M4.8 17.2H3.6a1 1 0 0 1-1-1v-2.4a1 1 0 0 1 .7-1l2.6-.8 2.4-3.4A2 2 0 0 1 9.9 7.8h4.6a2 2 0 0 1 1.6.8l2.7 3.7 1.6.5a1 1 0 0 1 .7 1v2.4a1 1 0 0 1-1 1h-1.2M9 17.2h6M8 12.6 9.7 10h4.8l1.9 2.6Z"/>`
     + `<circle cx="6.9" cy="17.2" r="2.1"/><circle cx="17.1" cy="17.2" r="2.1"/><circle cx="5" cy="4.6" r="1.4"/><circle cx="8.6" cy="3.4" r=".8"/>`,
+  // Bateau : coque et voile
+  bateau: aplat("M4 15.5h16l-2.2 3.6a1.5 1.5 0 0 1-1.3.7H7.5a1.5 1.5 0 0 1-1.3-.7Z")
+    + `<path d="M4 15.5h16l-2.2 3.6a1.5 1.5 0 0 1-1.3.7H7.5a1.5 1.5 0 0 1-1.3-.7ZM12 3.5v12M12 4.5l6 9h-6M11 6.5l-4.5 7H11"/>`,
   // Canapé
   canape: `<path class="a" d="M6.5 13h11v3.5h-11Z"/>`
     + `<path d="M6.3 12.5V9.6A2.6 2.6 0 0 1 8.9 7h6.2a2.6 2.6 0 0 1 2.6 2.6v2.9M6.5 16.5h11M12 13v3.5M5.2 18.5V20.5M18.8 18.5V20.5"/>`
@@ -109,7 +112,7 @@ export const ICONES = {
 
 /** Couleur propre à chaque icône (direction « lumineux et coloré ») : turquoise, corail, lilas, soleil, ciel, rose, menthe. */
 export const TEINTES = {
-  logement: "turquoise", location: "corail", demenagement: "soleil", vehicule: "ciel", canape: "lilas", chantier: "soleil",
+  logement: "turquoise", location: "corail", demenagement: "soleil", vehicule: "ciel", bateau: "ciel", canape: "lilas", chantier: "soleil",
   cuisine: "corail", bureaux: "ciel", commerce: "lilas", "parties-communes": "menthe", vitres: "ciel", exterieurs: "menthe",
   evenement: "rose", specialise: "rose", cleaneurs: "lilas", position: "turquoise", photo: "lilas", calendrier: "ciel",
   paiement: "soleil", garantie: "menthe", "credit-impot": "soleil", avis: "rose", valide: "menthe",

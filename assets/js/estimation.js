@@ -249,7 +249,7 @@ export function datesPassages(premier, frequence, jours, nombre) {
 }
 
 /** Minimum facturé par rubrique (centimes), null s'il n'y en a pas. */
-export const minimumC = id => ({ car: REGLES.MINIMUM_COMMANDE_VEHICULE_C, textiles: REGLES.MINIMUM_COMMANDE_TEXTILES_C, hospitality: REGLES.MINIMUM_COMMANDE_HEBERGEMENT_C, rental: REGLES.MINIMUM_MENAGE_LOCATION_C })[id] ?? null;
+export const minimumC = id => ({ car: REGLES.MINIMUM_COMMANDE_VEHICULE_C, textiles: REGLES.MINIMUM_COMMANDE_TEXTILES_C, hospitality: REGLES.MINIMUM_COMMANDE_HEBERGEMENT_C, boat: REGLES.MINIMUM_COMMANDE_BATEAU_C, leisure: REGLES.MINIMUM_COMMANDE_LOISIRS_C, rental: REGLES.MINIMUM_MENAGE_LOCATION_C })[id] ?? null;
 /** Ligne « Complément minimum » : ce qu'il manque pour atteindre le minimum (0 si atteint). */
 export const complementMinimum = (totalC, minC) => Math.max(0, minC - totalC);
 

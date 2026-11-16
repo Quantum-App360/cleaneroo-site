@@ -84,7 +84,7 @@ export async function blocCeQuiMeManque(boite) {
 /** Activités qu'une RC Pro peut couvrir (copie de activite_rc_pro en base). */
 export const ACTIVITES_RC_PRO = [["domicile", "Ménage à domicile"], ["locaux", "Locaux professionnels et parties communes"], ["vitres", "Vitres"],
   ["chantier", "Fin de chantier"], ["cuisines_pro", "Cuisines professionnelles"], ["medical", "Bionettoyage médical"], ["vehicules", "Véhicules"],
-  ["textiles", "Textiles"], ["exterieurs", "Extérieurs et haute pression"], ["evenementiel", "Événementiel"], ["specialise", "Interventions spécialisées"]];
+  ["textiles", "Textiles"], ["exterieurs", "Extérieurs et haute pression"], ["evenementiel", "Événementiel"], ["specialise", "Interventions spécialisées"], ["nautique", "Nautisme (bateaux)"]];
 
 /** Gestion : mission test, activités RC Pro et contrat d'un Cleaneur. */
 export async function blocDossierAdmin(boite, idCleaneur, recharger) {
