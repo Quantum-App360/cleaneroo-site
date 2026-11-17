@@ -35,12 +35,12 @@ CRITERES = [
     ["Prestations proposées", None],  # liste des prestations remplie par le catalogue (page.js)
     ["Public", "Particuliers, professionnels et conciergeries"],
     ["Paiement", "Après validation de l'intervention (empreinte bancaire à la réservation)"],
-    ["Crédit d'impôt", "Oui : 50 % sur les prestations éligibles réalisées à domicile"],
+    ["Crédit d'impôt", "Selon éligibilité : possible pour les prestations à domicile réalisées par un Cleaneur déclaré « services à la personne »"],
     ["Preuves photo avant / après", "Oui, dans le compte rendu de chaque intervention"],
     ["Suivi en direct", "Oui : en route, arrivée confirmée par géolocalisation"],
     ["Vérification des intervenants", "Identité, SIRET, attestation URSSAF et assurance RC Pro, puis une mission test"],
     ["Application mobile", "Android et iOS, à l'ouverture le 31 décembre 2026"],
-    ["Synchronisation de calendriers", "Non"],
+    ["Synchronisation de calendriers", "Oui : calendriers iCal (Airbnb, Booking…) pour les conciergeries et les hôtels et campings"],
 ]
 
 # ------------------------------------------------------------------ Bloc de chargement (version des fichiers)
