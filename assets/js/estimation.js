@@ -87,6 +87,8 @@ export function calculer(entree) {
   // Étapes en plus de la location : petits forfaits (2, 4 ou 6 €), les mêmes dans toutes les zones.
   if (e.optionsLocationC > 0) { lignes.push({ libelle: "Étapes en plus", montantC: e.optionsLocationC }); sousTotal += e.optionsLocationC; }
   // Option « Lavage des draps » (location saisonnière) : prix fixe par lit, le même dans toutes les zones.
+  // Linge de toilette et de cuisine (serviettes, tapis de bain et de WC, torchons) : ligne à part.
+  if (e.lingeC > 0) { lignes.push({ libelle: e.drapsLaverie ? "Serviettes, tapis et torchons en laverie" : "Serviettes, tapis et torchons (sur place)", montantC: e.lingeC }); sousTotal += e.lingeC; }
   const lits = e.lavageDrapsLits || 0;
   if (lits > 0) {
     const c = e.drapsC ?? lits * REGLES.LAVAGE_DRAPS_PAR_LIT_C;
@@ -149,7 +151,7 @@ export function calculer(entree) {
   }
 
   // Véhicules : durée affichée d'au moins 30 min.
-  const drapsMin = lits * REGLES.LAVAGE_DRAPS_MIN_PAR_LIT + (lits > 0 && e.drapsLaverie ? REGLES.LAVERIE_TRAJET_MIN : 0);
+  const drapsMin = lits * REGLES.LAVAGE_DRAPS_MIN_PAR_LIT + (e.lingeC > 0 ? REGLES.LINGE_MIN : 0) + ((lits > 0 || e.lingeC > 0) && e.drapsLaverie ? REGLES.LAVERIE_TRAJET_MIN : 0);
   const dureeTotale = vehicule ? Math.max(REGLES.DUREE_MIN_VEHICULE_MIN, dureeBase + tachesMin + persoMin) : dureeBase + tachesMin + persoMin + drapsMin;
   const deux = dureeTotale > REGLES.SEUIL_DEUX_CLEANEURS_MIN;
   const devis = r.toujoursSurDevis || e.surfaceM2 > REGLES.SEUIL_DEVIS_SURFACE_M2;
@@ -279,6 +281,10 @@ export const litsTailles = b => {
   const un = b.lits1 ?? 0, king = b.litsKing ?? 0, deux = b.lits2 ?? (b.lits1 == null && b.litsKing == null ? litsDe(b) : 0);
   return { un, deux, king, total: un + deux + king };
 };
+/** Linge de toilette et de cuisine : forfait sur place, ou en laverie par salle de bain (serviettes, tapis) + torchons. */
+export const prixLingeC = b => b.drapsLieu === "laverie"
+  ? Math.max(1, b.sdb ?? 1) * REGLES.LINGE_LAVERIE_PAR_SDB_C + REGLES.TORCHONS_LAVERIE_C
+  : REGLES.LINGE_SUR_PLACE_FORFAIT_C;
 /** Prix du lavage des draps : selon le lieu (sur place / laverie) et la taille de chaque lit. */
 export const prixDrapsC = b => {
   const t = litsTailles(b), p = REGLES.DRAPS_LAVERIE_C;
@@ -336,7 +342,8 @@ export function entreeEstimation(b, espacePersonnel, debut) {
     minimumApresMin: b.rubriqueId === "construction" ? REGLES.CHANTIER_MINIMUM_MIN : 0,
     lavageDrapsLits: b.rubriqueId === "rental" && b.lavageDraps ? litsTailles(b).total : 0,
     drapsC: b.rubriqueId === "rental" && b.lavageDraps ? prixDrapsC(b) : 0,
-    drapsLaverie: b.rubriqueId === "rental" && !!b.lavageDraps && b.drapsLieu === "laverie",
+    drapsLaverie: b.rubriqueId === "rental" && (!!b.lavageDraps || !!b.lavageLinge) && b.drapsLieu === "laverie",
+    lingeC: b.rubriqueId === "rental" && b.lavageLinge ? prixLingeC(b) : 0,
     zonePct: pctZone(b.codePostal),
     suiviSms: !!b.suiviSms,
     remiseParrainageC: b.remiseParrainageC || 0, cagnotteC: b.utiliserCagnotte ? b.cagnotteDispoC || 0 : 0,

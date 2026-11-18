@@ -646,16 +646,19 @@ function etapesLocation() {
     + compteur("Arrivée suivante", "arriveeSuivanteH", b.arriveeSuivanteH ?? REGLES.ARRIVEE_SUIVANTE_DEFAUT_H, { min: REGLES.ARRIVEE_SUIVANTE_MIN_H, max: REGLES.ARRIVEE_SUIVANTE_MAX_H, unite: " h" })
     + `<p class="petit">Le ménage commence au départ des voyageurs et doit finir avant l'arrivée suivante.</p>`
     + caseCocher("Je souhaite cette prestation à chaque départ de voyageurs", "aChaqueDepart", !!b.aChaqueDepart) + `</div>`
-    + titre("Linge de lit") + `<div class="carte">${caseCocher("Les draps propres sont fournis sur place", "drapsFournis", b.drapsFournis !== false, "Le Cleaneur fait les lits avec votre linge.")}
+    + titre("Linge") + `<div class="carte">${caseCocher("Draps et serviettes propres fournis sur place", "drapsFournis", b.drapsFournis !== false, "Le Cleaneur fait les lits et installe serviettes et tapis avec votre linge.")}
       ${caseCocher("Lavage des draps", "lavageDraps", !!b.lavageDraps, "Draps et housses lavés, séchés et pliés.")}
-      ${b.lavageDraps ? (() => { const t = litsTailles(b), p = REGLES.DRAPS_LAVERIE_C, laverie = b.drapsLieu === "laverie";
+      ${caseCocher("Lavage des serviettes, tapis et torchons", "lavageLinge", !!b.lavageLinge, "Serviettes de bain, tapis de bain et de WC, torchons de cuisine.")}
+      ${b.lavageDraps || b.lavageLinge ? (() => { const t = litsTailles(b), p = REGLES.DRAPS_LAVERIE_C, laverie = b.drapsLieu === "laverie";
+        const prixSurPlace = (b.lavageDraps ? REGLES.DRAPS_SUR_PLACE_FORFAIT_C : 0) + (b.lavageLinge ? REGLES.LINGE_SUR_PLACE_FORFAIT_C : 0);
         return `<p style="margin:10px 0 4px"><b>${tr("Machine à laver et sèche-linge dans le logement ?")}</b></p>`
-          + choix([["sur_place", `${tr("Oui : lavés et séchés sur place")} · ${euros(REGLES.DRAPS_SUR_PLACE_FORFAIT_C)}`], ["laverie", tr("Non : lavés en laverie (prix par lit)")]], laverie ? "laverie" : "sur_place", "drapsLieu")
-          + (laverie ? compteur(`${tr("Lits 1 place")} · ${euros(p.un)}`, "lits1", t.un, { min: 0, max: REGLES.LITS_MAX })
+          + choix([["sur_place", `${tr("Oui : lavés et séchés sur place")} · ${euros(prixSurPlace)}`], ["laverie", tr("Non : lavés en laverie")]], laverie ? "laverie" : "sur_place", "drapsLieu")
+          + (laverie && b.lavageLinge ? `<p class="petit">${tr("Serviettes et tapis")} : ${euros(REGLES.LINGE_LAVERIE_PAR_SDB_C)} ${tr("par salle de bain")} · ${tr("torchons")} : ${euros(REGLES.TORCHONS_LAVERIE_C)}</p>` : "")
+          + (laverie && b.lavageDraps ? compteur(`${tr("Lits 1 place")} · ${euros(p.un)}`, "lits1", t.un, { min: 0, max: REGLES.LITS_MAX })
             + compteur(`${tr("Lits 2 places")} · ${euros(p.deux)}`, "lits2", t.deux, { min: 0, max: REGLES.LITS_MAX })
             + compteur(`${tr("Lits king size")} · ${euros(p.king)}`, "litsKing", t.king, { min: 0, max: REGLES.LITS_MAX })
-            + `<p class="petit">${tr("Sans sèche-linge, le Cleaneur porte les draps à la laverie : trajet et machines compris dans le prix par lit.")}</p>`
-            : `<p class="petit">${tr("Le Cleaneur lance les machines et refait les lits : forfait unique, quel que soit le nombre de lits.")}</p>`); })() : ""}</div>`
+            : "")
+          + `<p class="petit">${tr(laverie ? "Sans sèche-linge, le Cleaneur porte le linge à la laverie : trajet et machines compris." : "Le Cleaneur lance les machines, refait les lits et remet serviettes et tapis : forfait unique, quel que soit le nombre de lits.")}</p>`; })() : ""}</div>`
     + repli("etapes-location", "Étapes photo et consommables", `${tr("Pack conseillé appliqué")} · ${etapes.length + perso.length} ${tr("étapes")}`,
         detail + `<div class="carte" style="margin-top:10px">${caseCocher("Mémoriser ces étapes pour ce logement", "memoriserEtapes", b.memoriserEtapes !== false)}</div>`);
 }

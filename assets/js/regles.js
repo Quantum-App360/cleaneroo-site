@@ -92,6 +92,11 @@ export const REGLES = {
   // conciergeries ~10 € par lit 2 places) : machine ET sèche-linge dans le logement → forfait unique ; sinon laverie obligatoire, prix par lit.
   DRAPS_SUR_PLACE_FORFAIT_C: 500,
   DRAPS_LAVERIE_C: { un: 800, deux: 1000, king: 1200 },
+  // Linge de toilette et de cuisine (serviettes, tapis de bain et de WC, torchons) : une machine de plus sur place ; en laverie, par salle de bain + torchons.
+  LINGE_SUR_PLACE_FORFAIT_C: 300,
+  LINGE_LAVERIE_PAR_SDB_C: 400,
+  TORCHONS_LAVERIE_C: 200,
+  LINGE_MIN: 10,                  // planning : une machine de plus (sur place) ou un sac de plus (laverie)
   LAVERIE_TRAJET_MIN: 30,         // aller et retour à la laverie, une fois par ménage
   // Options en plus (7 novembre 2026, décision de l'utilisateur) : petits forfaits selon la taille de l'option, plus de prix au temps.
   // Petite (≤ 5 min) 2 €, moyenne (≤ 15 min) 4 €, grande 6 € ; le temps reste compté pour le planning du Cleaneur.
