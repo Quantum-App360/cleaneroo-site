@@ -19,6 +19,7 @@ import { blocConsommablesClient } from "./consommables.js";
 import { blocFavori } from "./favoris.js";
 import { blocModifier, boutonBon, brancherBons, blocConstat } from "./demande-actions.js";
 import { blocSupplementClient } from "./supplement.js";
+import { blocPaiement } from "./paiement.js";
 import { CONDITIONS, CONFIDENTIALITE, MENTIONS, texteLegal } from "./legal.js";
 import { transitionVitre } from "./vitre.js";
 import { compterPage } from "./compteur.js";
@@ -493,6 +494,7 @@ async function pageDemande(ref, jeton) {
   <section class="bloc" style="padding-top:28px"><div class="etroit">
     <div class="progression">${ETAPES_SUIVI.map((_, i) => `<span class="${d.statut !== "ANNULEE" && i <= idx ? "fait" : ""}"></span>`).join("")}</div>
     <div class="note" style="margin-bottom:14px">${etat}</div>
+    ${!d.sur_devis && d.statut !== "ANNULEE" ? `<div id="paiement-client"></div>` : ""}
     ${["PUBLIEE", "CONFIRMEE"].includes(d.statut) ? `<div id="remplacement-client"></div>` : ""}
     ${d.statut === "PUBLIEE" && d.choix_cleaneur !== "directe" ? `<div id="propositions-client"></div>` : ""}
     ${["CONFIRMEE", "EN_ROUTE"].includes(d.statut) ? `<div id="retard-client"></div>` : ""}
@@ -629,6 +631,7 @@ async function afficherPage() {
     blocConstat(document.getElementById("constat-arrivee"), decodeURIComponent(ref || ""), decodeURIComponent(jeton || ""));
     const fav = document.getElementById("favori-client");
     if (fav) blocFavori(fav, decodeURIComponent(ref || ""), fav.dataset.rubrique);
+    blocPaiement(document.getElementById("paiement-client"), decodeURIComponent(ref || ""), decodeURIComponent(jeton || ""));
     blocRemplacementClient(document.getElementById("remplacement-client"), decodeURIComponent(ref || ""), decodeURIComponent(jeton || ""));
     blocConsommablesClient(document.getElementById("consommables-client"), decodeURIComponent(ref || ""), decodeURIComponent(jeton || ""));
     blocPropositionsClient(document.getElementById("propositions-client"), decodeURIComponent(ref || ""), decodeURIComponent(jeton || ""));

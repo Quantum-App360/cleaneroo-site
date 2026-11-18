@@ -185,6 +185,8 @@ export async function suivre(reference, jeton) {
 export async function annuler(reference, jeton) {
   const { data, error } = await supabase.rpc("annuler_demande", { p_reference: reference, p_jeton: jeton });
   if (error) throw new Error(error.message);
+  // Montant réservé par Stripe : la réservation est levée (fonction serveur « paiement »).
+  if (data === true) await supabase.functions.invoke("paiement", { body: { action: "annuler", reference, jeton } }).catch(() => null);
   return data === true;
 }
 

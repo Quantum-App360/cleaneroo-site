@@ -3,6 +3,7 @@
 // Avis en double aveugle (12 novembre 2026, comme l'appli de Vincent) : le Cleaneur ne le voit qu'après avoir noté le client, ou sous 14 jours.
 // Validation automatique 48 h après la fin (REGLES.VALIDATION_AUTO_H) ; note possible pendant REGLES.AVIS_DELAI_JOURS jours.
 // Même écran dans l'appli (Avis.kt). Le pourboire sera débité avec le paiement en ligne.
+import { paiementApres } from "./paiement.js";
 import { supabase } from "./donnees.js";
 import { REGLES, euros } from "./regles.js";
 import { traduire, tr } from "./langue.js";
@@ -63,6 +64,8 @@ export async function blocAvis(boite, reference, jeton, statut) {
       p_commentaire: boite.querySelector("[data-commentaire]").value.trim(), p_pourboire_c: pourboire }).catch(() => "erreur");
     if (r !== "ok") { e.target.disabled = false; err.textContent = tr("Le service est momentanément indisponible. Réessayez dans quelques minutes."); return; }
     if (nb) await rpc("noter_criteres", { p_reference: reference, p_categories: notes, p_jeton: jeton }).catch(() => null);
+    // Prestation validée : le montant réservé par Stripe est encaissé (fonction serveur « paiement »).
+    if (statut === "A_VALIDER") await paiementApres("encaisser", reference, jeton);
     if (statut === "A_VALIDER") location.reload(); else blocAvis(boite, reference, jeton, "TERMINEE");
   };
 }

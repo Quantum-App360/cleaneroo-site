@@ -3201,6 +3201,19 @@ const T = [
   ["Sous 48 h", "Within 48 h", "Entro 48 h", "En 48 h"],
   ["Dans la semaine", "Within the week", "In settimana", "En la semana"],
   // </rubriques-textes>
+  // Paiement Stripe (18 novembre 2026)
+  ["Mode test", "Test mode", "Modalità test", "Modo de prueba"],
+  ["Aucun débit réel. Carte d'essai : 4242 4242 4242 4242, date future, n'importe quel code.", "No real charge. Test card: 4242 4242 4242 4242, any future date, any code.", "Nessun addebito reale. Carta di prova: 4242 4242 4242 4242, data futura, qualsiasi codice.", "Ningún cargo real. Tarjeta de prueba: 4242 4242 4242 4242, fecha futura, cualquier código."],
+  ["Réservation garantie : le montant est réservé et ne sera débité qu'après votre validation.", "Booking guaranteed: the amount is held and will only be charged after you approve.", "Prenotazione garantita: l'importo è bloccato e sarà addebitato solo dopo la tua convalida.", "Reserva garantizada: el importe queda retenido y solo se cobrará tras tu validación."],
+  ["Paiement effectué après votre validation.", "Payment made after your approval.", "Pagamento effettuato dopo la tua convalida.", "Pago realizado tras tu validación."],
+  ["Réservation annulée : le montant réservé a été libéré.", "Booking cancelled: the held amount has been released.", "Prenotazione annullata: l'importo bloccato è stato liberato.", "Reserva cancelada: el importe retenido se ha liberado."],
+  ["Garantir ma réservation", "Guarantee my booking", "Garantisci la mia prenotazione", "Garantizar mi reserva"],
+  ["Carte bancaire, Apple Pay ou Google Pay, sur la page sécurisée de Stripe. Le montant est seulement réservé : il n'est débité qu'après votre validation du ménage.", "Bank card, Apple Pay or Google Pay, on Stripe's secure page. The amount is only held: it is charged after you approve the cleaning.", "Carta bancaria, Apple Pay o Google Pay, sulla pagina sicura di Stripe. L'importo è solo bloccato: viene addebitato dopo la convalida della pulizia.", "Tarjeta bancaria, Apple Pay o Google Pay, en la página segura de Stripe. El importe solo queda retenido: se cobra tras validar la limpieza."],
+  ["Le paiement en ligne n'est pas encore activé.", "Online payment is not yet enabled.", "Il pagamento online non è ancora attivo.", "El pago en línea aún no está activado."],
+  ["Le prix de cette demande est sur devis : le paiement sera proposé avec le devis.", "This request is priced on quote: payment will be offered with the quote.", "Il prezzo di questa richiesta è su preventivo: il pagamento sarà proposto con il preventivo.", "El precio de esta solicitud es por presupuesto: el pago se propondrá con el presupuesto."],
+  ["Ouvrir la page de paiement", "Open the payment page", "Apri la pagina di pagamento", "Abrir la página de pago"],
+  ["Revenez ici une fois le paiement terminé, puis actualisez.", "Come back here once payment is done, then refresh.", "Torna qui al termine del pagamento, poi aggiorna.", "Vuelve aquí cuando termines el pago y actualiza."],
+  ["Actualiser", "Refresh", "Aggiorna", "Actualizar"],
   // Présentation de chaque espace (rubriques du haut, 18 novembre 2026)
   ["Le ménage de votre logement, réservé en deux minutes et suivi en direct.", "Cleaning for your home, booked in two minutes and tracked live.", "Le pulizie della tua casa, prenotate in due minuti e seguite in diretta.", "La limpieza de tu vivienda, reservada en dos minutos y seguida en directo."],
   ["Réservation en deux minutes", "Booking in two minutes", "Prenotazione in due minuti", "Reserva en dos minutos"],
