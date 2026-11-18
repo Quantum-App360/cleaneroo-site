@@ -3201,6 +3201,12 @@ const T = [
   ["Sous 48 h", "Within 48 h", "Entro 48 h", "En 48 h"],
   ["Dans la semaine", "Within the week", "In settimana", "En la semana"],
   // </rubriques-textes>
+  ["Draps portés à la laverie, lavés et rapportés", "Sheets taken to the laundrette, washed and brought back", "Lenzuola portate in lavanderia, lavate e riportate", "Sábanas llevadas a la lavandería, lavadas y devueltas"],
+  ["Draps lavés et séchés sur place", "Sheets washed and dried on site", "Lenzuola lavate e asciugate sul posto", "Sábanas lavadas y secadas en el lugar"],
+  ["Serviettes et tapis lavés en laverie et remis en place", "Towels and mats washed at the laundrette and put back", "Asciugamani e tappetini lavati in lavanderia e rimessi a posto", "Toallas y alfombrillas lavadas en la lavandería y repuestas"],
+  ["Serviettes et tapis lavés, séchés et remis en place", "Towels and mats washed, dried and put back", "Asciugamani e tappetini lavati, asciugati e rimessi a posto", "Toallas y alfombrillas lavadas, secadas y repuestas"],
+  ["Torchons lavés et remis en place", "Tea towels washed and put back", "Strofinacci lavati e rimessi a posto", "Paños lavados y repuestos"],
+  ["Établissement", "Establishment", "Struttura", "Establecimiento"],
   ["Draps et serviettes propres fournis sur place", "Clean sheets and towels provided on site", "Lenzuola e asciugamani puliti forniti sul posto", "Sábanas y toallas limpias facilitadas en el lugar"],
   ["Le Cleaneur fait les lits et installe serviettes et tapis avec votre linge.", "The Cleaneur makes the beds and sets out towels and mats with your linen.", "Il Cleaneur rifà i letti e sistema asciugamani e tappetini con la tua biancheria.", "El Cleaneur hace las camas y coloca toallas y alfombrillas con tu ropa."],
   ["Lavage des serviettes, tapis et torchons", "Washing towels, mats and tea towels", "Lavaggio di asciugamani, tappetini e strofinacci", "Lavado de toallas, alfombrillas y paños"],
