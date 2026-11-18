@@ -2251,3 +2251,12 @@ body.mode-cleaneur .barre-espaces .bascule-mode { background: rgba(255,255,255,.
 @keyframes voile-entree { to { clip-path: circle(150% at 50% 50%); } }
 @keyframes voile-sortie { from { clip-path: circle(150% at 50% 50%); opacity: 1; } to { clip-path: circle(150% at 50% 50%); opacity: 0; } }
 @keyframes voile-texte { 0% { opacity: 0; transform: scale(.85); } 40%, 100% { opacity: 1; transform: none; } }
+
+/* Réservation : détail rangé dans des blocs repliables (18 novembre 2026) */
+.repli-reservation { margin: 14px 0 0; border: 1px solid var(--separateur); border-radius: var(--rayon); background: var(--surface); }
+.repli-reservation > summary { list-style: none; cursor: pointer; padding: 14px 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; font-weight: 700; }
+.repli-reservation > summary::-webkit-details-marker { display: none; }
+.repli-reservation > summary::after { content: "›"; margin-left: auto; font-size: 22px; color: var(--texte3); transition: transform .2s; }
+.repli-reservation[open] > summary::after { transform: rotate(90deg); }
+.repli-reservation .resume-repli { font-weight: 500; font-size: 13px; color: var(--primaire); }
+.repli-reservation .contenu-repli { padding: 0 14px 14px; }

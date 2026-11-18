@@ -1,6 +1,6 @@
 // Parcours de réservation en 5 étapes : copie de Reservation.kt (application Android).
 // 1 prestation · 2 questionnaire · 3 photos · 4 adresse, accès et créneau · 5 estimation, coordonnées et envoi.
-import { PARTIES, partie, partiePour, PARTIE_DE_L_ESPACE, rubriquesProposees, categorieBien, categorieDeRubrique, categoriesDeRubrique, bienCompatible, typesDeCategorie, CATEGORIES_BIEN, TARIFS_SPECIAUX, RUBRIQUES, rubrique, formulesPour, TYPES_LIEU, TYPES_LOGEMENT, BESOINS_SPECIAUX, ACCUEIL, accueilAutonomeInterdit, photosObligatoires,
+import { PARTIES, partie, partiePour, PARTIE_DE_L_ESPACE, rubriquesProposees, lieuxDuSecteur, categorieBien, categorieDeRubrique, categoriesDeRubrique, bienCompatible, typesDeCategorie, CATEGORIES_BIEN, TARIFS_SPECIAUX, RUBRIQUES, rubrique, formulesPour, TYPES_LIEU, TYPES_LOGEMENT, BESOINS_SPECIAUX, ACCUEIL, accueilAutonomeInterdit, photosObligatoires,
   ELEMENTS_TEXTILES, TAILLES_CANAPE, prixLigne, minutesLigne, libelleLigne, pastille,
   FREQUENCES, JOURS_SEMAINE, DERNIERS_NETTOYAGES, packsPour, remisePack,
   TACHES_A_TRAITER, TYPES_CHANTIER, equipementsPour, DELAIS_URGENCE, TYPES_IMMEUBLE, surfaceEffective, SELECTION_CONSEILLEE_VEHICULE, LIEUX_VEHICULE, FREQUENCES_VEHICULE, RUBRIQUES_LOGEMENT, vuesPhotos, vuesCompletes, PIECES_LOCATION, ETAPES_LOCATION, PACK_ETAPES_CONSEILLE, ETAPES_DEPART, prixEtapeLocationC, repetitionsEtape, CONSOMMABLES_LOCATION, PACK_CONSOMMABLES_CONSEILLE } from "./catalogue.js";
@@ -134,7 +134,7 @@ function brouillonInitial(rubriqueId, espace = "personnel", rapide = false) {
 }
 function brouillonInitialSansFavori(rubriqueId, espace = "personnel", rapide = false) {
   const r = rubrique(rubriqueId);
-  const lieux = TYPES_LIEU[rubriqueId];
+  const lieux = lieuxDuSecteur(rubriqueId, TYPES_LIEU[rubriqueId], profilMemorise()?.secteur);
   const p = profil() || {};
   const m = lire(CLE_MODELES, {})[rubriqueId];
   const log = biensPour(rubriqueId).find(l => l.id === m?.logementId) || biensPour(rubriqueId)[0];
@@ -338,7 +338,7 @@ function etape1() {
   const logEnr = !!bienChoisi;
   const choixLogement = bienChoisi ? `<p class="logement-choisi">${icone(iconeBien(bienChoisi))} <b>${esc(nomLogement(bienChoisi))}</b>
       <button type="button" class="lien-bouton" data-logement-depart="">${tr("Autre chose à nettoyer")}</button></p>` : "";
-  const proposees = rubriquesProposees(pid, bienChoisi);
+  const proposees = rubriquesProposees(pid, bienChoisi, profilMemorise()?.secteur);   // Entreprise : selon son secteur d'activité
   const pourQui = imposee
     ? `<p class="pour-qui-fixe">${icone({ personnel: "logement", conciergerie: "location", professionnel: "bureaux" }[p.id], { tuile: true })}<span><b>${p.nom}</b><span class="petit">${p.detail}</span></span></p>`
     : `${titre("Pour qui ?")}
@@ -417,7 +417,7 @@ function questionnaire(enTete = true) {
       <button type="button" class="lien-bouton" data-modifier-logement>Modifier</button></div>`;
   }
   if (RUBRIQUES_LOGEMENT.includes(b.rubriqueId) && !logFixe) h += titre("Type de logement") + choix(TYPES_LOGEMENT.map(t => [t.id, t.nom]), b.typeLogementId, "typeLogementId");
-  const lieux = TYPES_LIEU[b.rubriqueId];
+  const lieux = lieuxDuSecteur(b.rubriqueId, TYPES_LIEU[b.rubriqueId], profilMemorise()?.secteur);
   if (lieux && !bienFixe) h += titre(r.titreTypes || { car: "Gabarit du véhicule", construction: "Type de sol", kitchen: "Type d'établissement" }[b.rubriqueId] || "Type de lieu")
     + choix(lieux.map(l => [l.id, l.nom]), b.typeLieuId, "typeLieuId");
   if (b.rubriqueId !== "car") {
@@ -487,23 +487,25 @@ function questionnaire(enTete = true) {
         </button>`; }).join("")}</div>`;
     }
     // Options en plus : celles de la formule sont cochées et incluses ; les autres s'ajoutent à l'unité.
-    h += titre(formules.length ? "Options en plus" : "Tâches complémentaires");
     const groupes = [...new Set(chiffrees.map(t => t.groupe))];
-    h += groupes.map(g => (g ? `<p class="petit" style="margin:12px 0 4px"><b>${esc(g)}</b></p>` : "")
+    let options = groupes.map(g => (g ? `<p class="petit" style="margin:12px 0 4px"><b>${esc(g)}</b></p>` : "")
       + `<div class="carte">${chiffrees.filter(t => t.groupe === g).map(t => incluses.has(t.id)
         ? `<label class="case incluse"><input type="checkbox" checked disabled><span>${t.nom}</span><span class="info">${tr("Inclus")}</span></label>`
         : `<label class="case"><input type="checkbox" data-tache="${t.id}" ${b.taches.includes(t.id) ? "checked" : ""}>
       <span>${t.nom}</span><span class="info"><b>+${euros(t.prixC)}</b><small>${duree(t.minutes)}</small></span></label>`).join("")}</div>`).join("");
-    if (formules.length) h += `<p class="petit">${tr("Les tâches de la formule bénéficient de sa remise ; les options en plus sont au prix indiqué.")}</p>`;
-    if (r.noteTaches) h += `<div class="note alerte" style="margin-top:10px">${esc(r.noteTaches)}</div>`;
-    if (r.surfaceReferenceM2 > 0 && chiffrees.some(t => t.parSurface)) h += `<p class="petit">Tâches marquées à la surface : prix pour ${r.surfaceReferenceM2} ${["leisure", "boat"].includes(b.rubriqueId) ? "m de longueur" : "m²"}, au prorata au-delà.</p>`;
+    if (formules.length) options += `<p class="petit">${tr("Les tâches de la formule bénéficient de sa remise ; les options en plus sont au prix indiqué.")}</p>`;
+    if (r.noteTaches) options += `<div class="note alerte" style="margin-top:10px">${esc(r.noteTaches)}</div>`;
+    if (r.surfaceReferenceM2 > 0 && chiffrees.some(t => t.parSurface)) options += `<p class="petit">Tâches marquées à la surface : prix pour ${r.surfaceReferenceM2} ${["leisure", "boat"].includes(b.rubriqueId) ? "m de longueur" : "m²"}, au prorata au-delà.</p>`;
+    const enPlus = b.taches.filter(id => !incluses.has(id)).length;
+    h += repli("options", formules.length ? "Ajouter des options (facultatif)" : "Tâches complémentaires (facultatif)",
+      enPlus ? `${enPlus} ${tr(enPlus > 1 ? "options ajoutées" : "option ajoutée")}` : tr(formules.length ? "La formule suffit dans la plupart des cas" : "Aucune pour l'instant"), options);
   }
   if (!r.toujoursSurDevis && b.rubriqueId !== "special") {
-    h += titre("Une demande spécifique ?") + `<div class="carte">${b.tachesPerso.map((t, i) => `<div style="display:flex;align-items:center"><span style="flex:1">• ${esc(t)}</span>
+    h += repli("perso", "Une demande spécifique ? (facultatif)", b.tachesPerso.length ? `${b.tachesPerso.length} ${tr(b.tachesPerso.length > 1 ? "demandes" : "demande")}` : "", `<div class="carte">${b.tachesPerso.map((t, i) => `<div style="display:flex;align-items:center"><span style="flex:1">• ${esc(t)}</span>
       <button type="button" class="lien-bouton" style="color:var(--erreur)" data-retirer="${i}">Retirer</button></div>`).join("")}
       <div style="display:flex;gap:8px;align-items:center"><input class="texte" id="saisie-perso" maxlength="120" placeholder="Ex. : nettoyer l'intérieur du lave-linge" style="margin:0">
       <button type="button" class="lien-bouton" id="ajouter-perso">Ajouter</button></div>
-      <p class="petit">Pour un besoin vraiment particulier : chaque demande compte 15 min dans l'estimation et le Cleaneur la confirme.</p></div>`;
+      <p class="petit">Pour un besoin vraiment particulier : chaque demande compte 15 min dans l'estimation et le Cleaneur la confirme.</p></div>`);
   }
   if (b.rubriqueId === "home") h += `<div class="carte" style="margin-top:14px">${caseCocher("Des animaux vivent dans le logement", "animaux", b.animaux)}</div>`;
   if (b.rubriqueId === "office" || b.rubriqueId === "commerce") h += `<div class="carte" style="margin-top:14px">${caseCocher("Les lieux seront vides pendant l'intervention", "lieuxVides", !!b.lieuxVides)}</div>`;
@@ -599,9 +601,22 @@ function formuleActive(b, packs, chiffrees) {
   return complet("prestige") ? "prestige" : complet("confort") ? "confort" : "standard";
 }
 
+/** Bloc repliable « pour aller plus loin » (18 novembre 2026) : l'essentiel reste visible, le détail est rangé ici.
+ *  Il reste ouvert ou fermé quand la page se redessine. resume : ce qui est déjà choisi, visible même fermé. */
+const REPLIS_OUVERTS = new Set();
+function repli(cle, titreRepli, resume, contenu) {
+  return `<details class="repli-reservation" ${REPLIS_OUVERTS.has(cle) ? "open" : ""} data-repli="${cle}">
+    <summary><span class="titre-repli">${tr(titreRepli)}</span>${resume ? `<span class="resume-repli">${resume}</span>` : ""}</summary>
+    <div class="contenu-repli">${contenu}</div></details>`;
+}
+document.addEventListener("toggle", e => {
+  const d = e.target;
+  if (d?.dataset?.repli) d.open ? REPLIS_OUVERTS.add(d.dataset.repli) : REPLIS_OUVERTS.delete(d.dataset.repli);
+}, true);
+
 function etapesLocation() {
   const etapes = etapesDe(b), perso = b.etapesPerso || [], conso = consommablesDe(b);
-  return titreAction("Étapes à valider en photo", "pack-etapes", "Pack conseillé")
+  const detail = titreAction("Étapes à valider en photo", "pack-etapes", "Pack conseillé")
     + `<p class="petit">Une étape « Chambre » compte une fois par chambre, « Salle de bain » une fois par salle de bain.</p>`
     + PIECES_LOCATION.map(([piece, nom]) => `<p class="petit" style="margin:12px 0 4px"><b>${nom}</b></p><div class="carte">`
       + ETAPES_LOCATION.filter(e => e.piece === piece).map(e => `<label class="case"><input type="checkbox" data-etape="${e.id}" ${etapes.includes(e.id) ? "checked" : ""}>
@@ -616,15 +631,16 @@ function etapesLocation() {
     + titreAction("Consommables à contrôler", "pack-conso", "Pack conseillé")
     + `<div class="carte">${CONSOMMABLES_LOCATION.map(([id, nom]) => `<label class="case"><input type="checkbox" data-conso="${id}" ${conso.includes(id) ? "checked" : ""}><span>${nom}</span></label>`).join("")}
       <p class="petit">+10 min si la liste n'est pas vide.</p></div>`
-    + `<div class="note alerte" style="margin-top:10px">Le Cleaneur n'apporte jamais de consommables : ils doivent être sur place.</div>`
-    + titre("Linge de lit") + `<div class="carte">${caseCocher("Lavage des draps", "lavageDraps", !!b.lavageDraps, `${euros(REGLES.LAVAGE_DRAPS_PAR_LIT_C)} par lit : draps et housses lavés, séchés et pliés.`)}
-      ${b.lavageDraps ? compteur("Nombre de lits", "lits", litsDe(b), { min: 1, max: REGLES.LITS_MAX }) : ""}</div>`
-    + titre("Horaires des voyageurs") + `<div class="carte">`
+    + `<div class="note alerte" style="margin-top:10px">Le Cleaneur n'apporte jamais de consommables : ils doivent être sur place.</div>`;
+  return titre("Horaires des voyageurs") + `<div class="carte">`
     + compteur("Départ des voyageurs", "departVoyageursH", b.departVoyageursH ?? REGLES.DEPART_VOYAGEURS_DEFAUT_H, { min: REGLES.DEPART_VOYAGEURS_MIN_H, max: REGLES.DEPART_VOYAGEURS_MAX_H, unite: " h" })
     + compteur("Arrivée suivante", "arriveeSuivanteH", b.arriveeSuivanteH ?? REGLES.ARRIVEE_SUIVANTE_DEFAUT_H, { min: REGLES.ARRIVEE_SUIVANTE_MIN_H, max: REGLES.ARRIVEE_SUIVANTE_MAX_H, unite: " h" })
-    + `<p class="petit">Le ménage commence au départ des voyageurs et doit finir avant l'arrivée suivante.</p></div>`
-    + `<div class="carte" style="margin-top:10px">${caseCocher("Je souhaite cette prestation à chaque départ de voyageurs", "aChaqueDepart", !!b.aChaqueDepart)}
-      ${caseCocher("Mémoriser ces étapes pour ce logement", "memoriserEtapes", b.memoriserEtapes !== false)}</div>`;
+    + `<p class="petit">Le ménage commence au départ des voyageurs et doit finir avant l'arrivée suivante.</p>`
+    + caseCocher("Je souhaite cette prestation à chaque départ de voyageurs", "aChaqueDepart", !!b.aChaqueDepart) + `</div>`
+    + titre("Linge de lit") + `<div class="carte">${caseCocher("Lavage des draps", "lavageDraps", !!b.lavageDraps, `${euros(REGLES.LAVAGE_DRAPS_PAR_LIT_C)} par lit : draps et housses lavés, séchés et pliés.`)}
+      ${b.lavageDraps ? compteur("Nombre de lits", "lits", litsDe(b), { min: 1, max: REGLES.LITS_MAX }) : ""}</div>`
+    + repli("etapes-location", "Étapes photo et consommables", `${tr("Pack conseillé appliqué")} · ${etapes.length + perso.length} ${tr("étapes")}`,
+        detail + `<div class="carte" style="margin-top:10px">${caseCocher("Mémoriser ces étapes pour ce logement", "memoriserEtapes", b.memoriserEtapes !== false)}</div>`);
 }
 
 /** Questions affichées sous les formules, selon leur genre (QuestionsFormule dans l'appli). */

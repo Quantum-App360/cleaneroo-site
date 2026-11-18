@@ -1,6 +1,6 @@
 // Espaces du compte : « Particulier », « Entreprise » (bureaux, commerces), « Conciergerie » (statut pro : conciergeries et SCI, agenda iCal, planning) et « Cleaneur ».
 // Mêmes écrans que l'application (EspacesCompte.kt). Les valeurs métier sont dans regles.js.
-import { TYPES_LOGEMENT, rubrique, ELEMENTS_TEXTILES, minutesLigne, prixLigne } from "./catalogue.js";
+import { TYPES_LOGEMENT, rubrique, ELEMENTS_TEXTILES, minutesLigne, prixLigne , secteurEntreprise } from "./catalogue.js";
 import { calculer, entreeEstimation } from "./estimation.js";
 import { REGLES, euros, dateLongue, dateCourte, sirenSiretValide, cleaneursRotation, duree } from "./regles.js";
 import { icone } from "./icones.js";
@@ -96,7 +96,7 @@ export function ongletEntreprise(p, biens, demandes) {
       : `<p class="muet" style="margin:8px 0 0">Aucune prestation prévue pour l'instant.</p>`}
     </div>
     <h2 class="titre-section">${icone("instantane", { tuile: true })}Réserver pour vos locaux</h2>
-    <div class="grille-raccourcis">${RACCOURCIS_ENTREPRISE.map(([id, nom]) => rubrique(id) ? `<a class="carte raccourci" href="#/reserver/${id}">${icone(rubrique(id).icone, { tuile: true })}<b>${nom}</b><span class="petit">${esc(rubrique(id).sousTitre)}</span></a>` : "").join("")}
+    <div class="grille-raccourcis">${RACCOURCIS_ENTREPRISE.filter(([id]) => !secteurEntreprise(p.secteur) || secteurEntreprise(p.secteur).rubriques.includes(id)).map(([id, nom]) => rubrique(id) ? `<a class="carte raccourci" href="#/reserver/${id}">${icone(rubrique(id).icone, { tuile: true })}<b>${nom}</b><span class="petit">${esc(rubrique(id).sousTitre)}</span></a>` : "").join("")}
       <a class="carte raccourci" href="#/mes-demandes">${icone("calendrier", { tuile: true })}<b>Mes prestations</b><span class="petit">À venir et passées</span></a></div>
     <p class="petit">Prix affiché tout de suite, Cleaneurs vérifiés, paiement après validation. Factures au nom de votre société, au format Factur-X.</p>`;
 }

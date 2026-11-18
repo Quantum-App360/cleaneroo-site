@@ -633,9 +633,37 @@ export const TYPES_LOCAL = [{ id: "bureaux", nom: "Bureaux ou cabinet" }, { id: 
 export const typesDeCategorie = cat => cat === "vehicule" ? TYPES_LIEU.car : cat === "loisirs" ? TYPES_LIEU.leisure : cat === "bateau" ? TYPES_LIEU.boat : cat === "local" ? TYPES_LOCAL : TYPES_LOGEMENT;
 /** Prestations proposées à l'étape 1 : celles de la partie ; avec un bien choisi, seulement celles de sa catégorie
  *  (un logement d'un particulier ou d'une conciergerie ne propose ni réception ni locaux professionnels). [bien] : le bien, true (= un logement) ou null. */
-export const rubriquesProposees = (partieId, bien = null) => {
+export const rubriquesProposees = (partieId, bien = null, secteurId = null) => {
   const p = partie(partieId), cat = bien === true ? "logement" : bien ? categorieBien(bien) : null;
-  return p.rubriques.filter(id => !cat || categoriesDeRubrique(id).includes(cat));
+  const s = partieId === "professionnel" ? secteurEntreprise(secteurId) : null;
+  return p.rubriques.filter(id => (!cat || categoriesDeRubrique(id).includes(cat)) && (!s || s.rubriques.includes(id)));
+};
+
+/** Secteurs d'activité des comptes Entreprise (18 novembre 2026) : chaque secteur ne voit que les prestations utiles à son métier
+ *  (des pompes funèbres ne réservent pas un lavage de voiture, un garage ne réserve pas un nettoyage après décès).
+ *  speciaux : interventions spécialisées proposées (désinfection, après décès, nuisibles…). Même liste dans l'appli (Catalogue.SECTEURS). */
+const NUISIBLES = ["cafards", "punaises", "rats", "guepes"];
+export const SECTEURS_ENTREPRISE = [
+  { id: "bureaux", nom: "Bureaux, agence, siège social", rubriques: ["office", "windows", "outdoor", "textiles", "kitchen", "event", "construction", "special"], speciaux: ["desinfection", "sinistre", "cafards", "punaises", "rats"] },
+  { id: "medical", nom: "Cabinet médical ou paramédical", rubriques: ["office", "windows", "textiles", "construction", "special"], speciaux: ["desinfection", "sinistre", "cafards", "rats"] },
+  { id: "commerce", nom: "Commerce, boutique, showroom", rubriques: ["commerce", "windows", "outdoor", "textiles", "event", "construction", "special"], speciaux: ["desinfection", "sinistre", "cafards", "rats", "guepes"] },
+  { id: "restaurant", nom: "Restaurant, bar, traiteur", rubriques: ["kitchen", "commerce", "windows", "outdoor", "textiles", "event", "construction", "special"], speciaux: ["desinfection", "sinistre", "cafards", "rats", "guepes"] },
+  { id: "garage", nom: "Garage, carrosserie, concession", rubriques: ["commerce", "office", "car", "leisure", "windows", "outdoor", "construction", "special"], speciaux: ["sinistre", "rats", "guepes"] },
+  { id: "funeraire", nom: "Pompes funèbres, funérarium", rubriques: ["office", "commerce", "windows", "outdoor", "textiles", "event", "special"], speciaux: ["deces", "desinfection", "sinistre", "encombre"] },
+  { id: "syndic", nom: "Syndic, bailleur, gestion d'immeubles", rubriques: ["communal", "windows", "outdoor", "construction", "special"], speciaux: ["deces", "desinfection", "encombre", "sinistre", ...NUISIBLES] },
+  { id: "nautisme", nom: "Port, nautisme, location de bateaux", rubriques: ["boat", "office", "commerce", "windows", "outdoor", "special"], speciaux: ["sinistre", "rats"] },
+  { id: "loueur", nom: "Location de véhicules ou de camping-cars", rubriques: ["car", "leisure", "office", "commerce", "windows", "outdoor", "special"], speciaux: ["desinfection", "sinistre"] },
+  { id: "evenementiel", nom: "Événementiel, salle de réception", rubriques: ["event", "kitchen", "commerce", "windows", "outdoor", "textiles", "construction", "special"], speciaux: ["desinfection", "sinistre", "guepes"] },
+  { id: "btp", nom: "BTP, promoteur, architecte", rubriques: ["construction", "office", "windows", "outdoor", "special"], speciaux: ["sinistre", "encombre"] },
+  { id: "industrie", nom: "Industrie, entrepôt, logistique", rubriques: ["commerce", "office", "kitchen", "windows", "outdoor", "construction", "special"], speciaux: ["desinfection", "sinistre", "cafards", "rats"] },
+  { id: "autre", nom: "Autre activité", rubriques: null, speciaux: null },
+];
+/** Secteur d'un compte Entreprise ; null (= tout proposer) si inconnu ou « Autre activité ». */
+export const secteurEntreprise = id => { const s = SECTEURS_ENTREPRISE.find(x => x.id === id); return s && s.rubriques ? s : null; };
+/** Interventions spécialisées proposées à ce secteur (toutes si aucun secteur). */
+export const lieuxDuSecteur = (rubriqueId, lieux, secteurId) => {
+  const s = secteurEntreprise(secteurId);
+  return rubriqueId === "special" && s && lieux ? lieux.filter(l => s.speciaux.includes(l.id)) : lieux;
 };
 export const TYPES_VITRES_ELIGIBLES =["fenetres_logement", "baies_veranda"];
 

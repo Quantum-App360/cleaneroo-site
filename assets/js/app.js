@@ -210,7 +210,8 @@ const ESPACES_ACCUEIL = [
   ["logement", "Particuliers", "Ménage régulier ou ponctuel, vitres, canapés et textiles, avec crédit d'impôt selon éligibilité.", "#/estimer", "Estimer mon prix"],
   ["bureaux", "Entreprises", "Bureaux, commerces, cabinets et parties communes : ménage réservé en deux minutes, facturé à votre société.", "#/compte/entreprise", "Créer mon espace Entreprise"],
   ["location", "Conciergeries et SCI", "Planning de vos biens relié à Airbnb et Booking, ménages entre deux voyageurs, stock, incidents et rapports pour vos propriétaires.", "#/compte/pro", "Créer mon espace Conciergerie"],
-  ["cleaneurs", "Cleaneurs", "Missions près de chez vous, itinéraire, déroulé guidé et paiement sécurisé. 3 mois de formule Pro offerts aux inscrits jusqu'au 31 janvier 2027.", "#/devenir-cleaneur", "Devenir Cleaneur"],
+
+  ["location", "Hôtels et campings", "Rotations des mobil-homes, chalets et chambres : prix, temps et Cleaneurs nécessaires calculés tout de suite.", "#/compte/hotellerie", "Créer mon espace Hôtels et campings"],
 ];
 /* Inscription inspirante (visiteur) : un espace par profil, chacun avec son avantage offert. Même bloc dans l'appli (Vitrine.kt). */
 const INSCRIPTION_ESPACES = () => [
@@ -220,8 +221,8 @@ const INSCRIPTION_ESPACES = () => [
     `${euros(REGLES.PARRAINAGE_FILLEUL_C)} ${tr("offerts avec un code de parrainage")}`, "#/compte/entreprise"],
   ["location", "Conciergerie ou SCI", "Vos locations, toujours prêtes.", ["Agenda relié à Airbnb et Booking", "Ménages entre deux voyageurs", "Compte rendu photo de chaque logement"],
     `${REGLES.ABONNEMENT_PRO_MOIS_OFFERTS} ${tr("mois d'abonnement offert")}`, "#/compte/pro"],
-  ["cleaneurs", "Cleaneur", "Vos missions, votre liberté.", ["Missions près de chez vous", "Paiement sécurisé après chaque mission", "Itinéraire et déroulé guidé"],
-    `${REGLES.OFFRE_LANCEMENT_MOIS} ${tr("mois de formule Pro offerts")}`, "#/compte/cleaneur"],
+  ["location", "Hôtel ou camping", "Vos logements, prêts à temps.", ["Calculateur de rotation", "Agenda iCal et planning", "Renforts pour vos pics d'activité"],
+    `${euros(REGLES.PARRAINAGE_FILLEUL_C)} ${tr("offerts avec un code de parrainage")}`, "#/compte/hotellerie"],
 ];
 function blocInscriptionInspirante() {
   return `<section class="inscription-inspirante"><div class="conteneur">

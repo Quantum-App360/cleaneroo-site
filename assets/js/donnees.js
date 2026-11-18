@@ -242,10 +242,10 @@ export async function session() {
  * Création du compte avec ses statuts cochés (cumulables) : "particulier", "pro" (SCI, conciergerie : société + SIRET/SIREN), "cleaneur".
  * Chaque statut n'ouvre que son espace ; la base vérifie tout (outils/base-statuts.sql).
  */
-export async function creerCompte({ email, mdp, statuts, prenom, nom, societe = "", siretSociete = "", codeParrain = "" }) {
+export async function creerCompte({ email, mdp, statuts, prenom, nom, societe = "", siretSociete = "", codeParrain = "", secteur = "" }) {
   const st = ["particulier", "entreprise", "pro", "hotellerie", "cleaneur"].filter(x => statuts.includes(x));
   const { data, error } = await supabase.auth.signUp({ email, password: mdp,
-    options: { data: { statuts: st, prenom, nom, societe, siret_societe: siretSociete.replace(/\D/g, ""), code_parrain: codeParrain.trim().toUpperCase().slice(0, 20),
+    options: { data: { statuts: st, prenom, nom, societe, secteur, siret_societe: siretSociete.replace(/\D/g, ""), code_parrain: codeParrain.trim().toUpperCase().slice(0, 20),
       role: st.includes("cleaneur") ? "cleaneur" : "client", espace: st.includes("pro") ? "pro" : st.includes("entreprise") ? "entreprise" : "particulier" }, emailRedirectTo: retour("compte") } });
   if (error) throw new Error(error.message);
   return data.session ? "connecte" : "confirmer";

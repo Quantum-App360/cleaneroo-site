@@ -13,7 +13,7 @@ import { installerSousOnglets } from "./sous-onglets.js";
 import { verrouillerPrestations } from "./prestations-cleaneur.js";
 import { verifierSiret, MESSAGES_SIRET, SIRET_REFUSE } from "./siret-officiel.js";
 import { blocInvitationsPro, brancherInvitationsPro, blocCodeInvitation, brancherCodeInvitation } from "./invitations.js";
-import { RUBRIQUES, rubrique, TYPES_LOGEMENT, CATEGORIES_BIEN, categorieBien, typesDeCategorie } from "./catalogue.js";
+import { RUBRIQUES, rubrique, TYPES_LOGEMENT, CATEGORIES_BIEN, categorieBien, typesDeCategorie, SECTEURS_ENTREPRISE } from "./catalogue.js";
 import { euros, dateLongue, heure, REGLES, sirenSiretValide } from "./regles.js";
 import { icone } from "./icones.js";
 import { VITRINES, vitrineEspace } from "./vitrine-espaces.js";
@@ -48,6 +48,9 @@ const NOMS_STATUTS = {
   pro: ["Conciergerie", "Conciergerie ou SCI", "location", "Je gère des locations saisonnières pour des propriétaires ou au nom d'une société (SIRET ou SIREN demandé)."],
   cleaneur: ["Cleaneur", "Cleaneur", "cleaneurs", "Je propose mes services en auto-entrepreneur."],
 };
+/** Liste du secteur d'activité (comptes Entreprise) : seules les prestations utiles à ce métier sont proposées. */
+const champSecteur = (valeur = "") => `<label class="champ">Secteur d'activité<select name="secteur"><option value="">Choisissez…</option>${SECTEURS_ENTREPRISE.map(x => `<option value="${x.id}" ${x.id === valeur ? "selected" : ""}>${x.nom}</option>`).join("")}</select>
+  <small class="petit">Nous ne vous proposerons que les prestations utiles à votre activité.</small></label>`;
 const titre = (t, sous = "") => `<h1>${t}</h1><div class="trait-corail"></div>${sous ? `<p class="muet">${sous}</p>` : ""}`;
 
 /** Après le lien de confirmation ou de nouveau mot de passe reçu par e-mail (?vers=compte / ?vers=mdp). */
@@ -124,6 +127,7 @@ export async function pageCompte(vue, param) {
       ${manquants.some(x => x === "pro" || x === "entreprise" || x === "hotellerie") ? `<form id="form-ajout-pro" class="masque" novalidate style="margin-top:10px">
         <label class="champ">Raison sociale<input name="societe" maxlength="120" autocomplete="organization" value="${esc(p.societe || "")}"></label>
         <label class="champ">SIRET (14 chiffres) ou SIREN (9 chiffres)<input name="siret" inputmode="numeric" maxlength="17" value="${esc(p.siret_societe || "")}"></label>
+        <div id="secteur-ajout" class="masque">${champSecteur(p.secteur || "")}</div>
         <p class="erreur" id="erreur-ajout-pro"></p><button class="bouton plein" type="submit">Ajouter l'espace Pro</button></form>` : ""}</details>` : ""}
     <p style="margin-top:18px"><button type="button" class="lien-bouton" id="deconnexion-compte">Se déconnecter</button></p>
     <details class="supprimer-compte"><summary>Supprimer mon compte</summary>
@@ -165,6 +169,7 @@ export async function pageCompte(vue, param) {
     // Entreprise ou Conciergerie : la société est demandée, sauf si elle est déjà renseignée.
     if ((x === "pro" || x === "entreprise" || x === "hotellerie") && !(p.societe && sirenSiretValide(p.siret_societe || ""))) {
       const fa = vue.querySelector("#form-ajout-pro"); fa.dataset.statut = x; fa.classList.remove("masque");
+      vue.querySelector("#secteur-ajout")?.classList.toggle("masque", x !== "entreprise");
       fa.querySelector("[type=submit]").textContent = tr(x === "entreprise" ? "Ajouter l'espace Entreprise" : x === "hotellerie" ? "Ajouter l'espace Hôtels et campings" : "Ajouter l'espace Conciergerie");
       const d = vue.querySelector("#ajout-espace"); if (d) d.open = true;
       fa.scrollIntoView({ behavior: "smooth", block: "center" }); fa.querySelector("[name=societe]").focus(); return; }
@@ -177,7 +182,8 @@ export async function pageCompte(vue, param) {
     e.preventDefault();
     const err = vue.querySelector("#erreur-ajout-pro"), siret = fp.siret.value.replace(/\D/g, "");
     if (!fp.societe.value.trim() || !sirenSiretValide(siret)) { err.textContent = tr("Indiquez la raison sociale et un SIRET (14 chiffres) ou un SIREN (9 chiffres) valable."); return; }
-    try { await majProfil({ societe: fp.societe.value.trim(), siret_societe: siret }); } catch { err.textContent = tr("Le service est momentanément indisponible. Réessayez dans quelques minutes."); return; }
+    if (fp.dataset.statut === "entreprise" && !fp.secteur?.value) { err.textContent = tr("Choisissez votre secteur d'activité."); return; }
+    try { await majProfil({ societe: fp.societe.value.trim(), siret_societe: siret, ...(fp.dataset.statut === "entreprise" ? { secteur: fp.secteur.value } : {}) }); } catch { err.textContent = tr("Le service est momentanément indisponible. Réessayez dans quelques minutes."); return; }
     const r = await ajouter(fp.dataset.statut || "pro", fp.querySelector("[type=submit]"));
     if (r !== "ok") err.textContent = tr("Le service est momentanément indisponible. Réessayez dans quelques minutes.");
   };
@@ -223,6 +229,7 @@ function ecranConnexion(vue, mode, message = "", ok = false, roleDefaut = "clien
         <div id="champs-pro" class="${["pro", "entreprise", "hotellerie"].includes(roleDefaut) ? "" : "masque"}"><div class="grille-2">
           <label class="champ">Raison sociale<input name="societe" maxlength="120" autocomplete="organization"></label>
           <label class="champ">SIRET ou SIREN<input name="siretSociete" inputmode="numeric" maxlength="17"></label></div></div>
+        <div id="champ-secteur" class="${roleDefaut === "entreprise" ? "" : "masque"}">${champSecteur()}</div>
         <div class="grille-2"><label class="champ">Prénom<input name="prenom" required maxlength="80" autocomplete="given-name"></label>
           <label class="champ">Nom<input name="nom" required maxlength="80" autocomplete="family-name"></label></div>` : ""}
       <label class="champ">E-mail<input type="email" name="email" required maxlength="200" autocomplete="username"></label>
@@ -244,6 +251,7 @@ function ecranConnexion(vue, mode, message = "", ok = false, roleDefaut = "clien
   f.querySelectorAll("[name=statut]").forEach(c => c.onchange = () => {
     if (["pro", "entreprise", "hotellerie"].includes(c.value))
       vue.querySelector("#champs-pro").classList.toggle("masque", !["pro", "entreprise", "hotellerie"].some(v => f.querySelector(`[name=statut][value=${v}]`)?.checked));
+    vue.querySelector("#champ-secteur")?.classList.toggle("masque", !f.querySelector("[name=statut][value=entreprise]")?.checked);
   });
   // Erreur affichée sous le formulaire : ce qui a été saisi est conservé.
   const erreur = t => { f.querySelector("#erreur-compte").textContent = tr(t); f.querySelector("[type=submit]").disabled = false; };
@@ -264,12 +272,14 @@ function ecranConnexion(vue, mode, message = "", ok = false, roleDefaut = "clien
     const statuts = [...f.querySelectorAll("[name=statut]:checked")].map(c => c.value);
     if (!statuts.length) return erreur("Cochez au moins un statut : Particulier, Entreprise, Conciergerie ou Cleaneur.");
     const avecSociete = statuts.includes("pro") || statuts.includes("entreprise") || statuts.includes("hotellerie");
+    if (statuts.includes("entreprise") && !f.secteur.value) return erreur("Choisissez votre secteur d'activité.");
     if (avecSociete && (!f.societe.value.trim() || !sirenSiretValide(f.siretSociete.value)))
       return erreur("Indiquez la raison sociale et un SIRET (14 chiffres) ou un SIREN (9 chiffres) valable.");
     try {
       if (statuts.includes("cleaneur")) demanderGeoloc();   // autorisation de géolocalisation dès l'inscription
       const r = await creerCompte({ email, mdp: f.mdp.value, statuts, prenom: f.prenom.value.trim(), nom: f.nom.value.trim(),
-        societe: avecSociete ? f.societe.value.trim() : "", siretSociete: avecSociete ? f.siretSociete.value : "", codeParrain: f.code_parrain.value });
+        societe: avecSociete ? f.societe.value.trim() : "", siretSociete: avecSociete ? f.siretSociete.value : "", codeParrain: f.code_parrain.value,
+        secteur: statuts.includes("entreprise") ? f.secteur.value : "" });
       oublierCodeParrain();
       if (r === "connecte") { majLienCompte(); return pageCompte(vue); }
       ecranConnexion(vue, "connexion", tr("Compte créé. Ouvrez l'e-mail de confirmation que nous venons de vous envoyer, cliquez sur le lien, puis connectez-vous."), true);
@@ -306,6 +316,7 @@ function formulaireProfil(p, cleaneur) {
     <div class="grille-2"><label class="champ">Téléphone<input name="telephone" type="tel" maxlength="20" value="${esc(p.telephone)}" autocomplete="tel"></label>
       <label class="champ">Code postal<input name="code_postal" inputmode="numeric" maxlength="5" value="${esc(p.code_postal)}" autocomplete="postal-code"></label></div>
     <label class="champ">Ville<input name="ville" maxlength="100" value="${esc(p.ville)}" autocomplete="address-level2"></label>
+    ${!cleaneur && (p.statuts || []).includes("entreprise") ? champSecteur(p.secteur || "") : ""}
     ${cleaneur ? `<div class="grille-2"><label class="champ">Numéro SIRET (14 chiffres)<input name="siret" inputmode="numeric" maxlength="17" value="${esc(p.siret)}"></label>
       <label class="champ">Périmètre d'intervention<select name="zone_km">${[...new Set([...REGLES.ZONES_KM, p.zone_km || REGLES.ZONE_KM_DEFAUT])].sort((a, b) => a - b)
         .map(km => `<option value="${km}" ${km === (p.zone_km || REGLES.ZONE_KM_DEFAUT) ? "selected" : ""}>${km} km autour de chez moi</option>`).join("")}</select></label></div>
@@ -383,6 +394,7 @@ function brancherProfil(vue, p, cleaneur) {
     if (tel && !/^0[1-9][0-9]{8}$/.test(tel)) { err.textContent = tr("Indiquez un numéro de téléphone à 10 chiffres."); return; }
     if (cp && !/^[0-9]{5}$/.test(cp)) { err.textContent = tr("Indiquez un code postal à 5 chiffres."); return; }
     const champs = { prenom: f.prenom.value.trim(), nom: f.nom.value.trim(), telephone: tel, code_postal: cp, ville: f.ville.value.trim() };
+    if (f.secteur && f.secteur.value) { champs.secteur = f.secteur.value; memoriserProfil({ ...p, secteur: f.secteur.value }); }
     if (cleaneur) {
       const siret = f.siret.value.replace(/\D/g, "");
       if (siret && siret.length !== 14) { err.textContent = tr("Le numéro SIRET compte 14 chiffres."); return; }
