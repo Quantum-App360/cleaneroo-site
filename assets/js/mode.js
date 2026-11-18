@@ -82,13 +82,29 @@ export function basculer() {
   const vers = !modeCleaneur();
   animer(vers, () => {
     fixerMode(vers);
+    majPastilleMode();
     location.hash = vers ? "#/mode-cleaneur" : "#/";
     window.dispatchEvent(new Event("cleaneroo-mode"));
   });
 }
 
+/** Pastille flottante en bas de l'écran (19 novembre 2026, comme l'appli iPhone) : toujours visible, dans les deux sens,
+ * même dans l'espace Cleaneur sur téléphone où l'interrupteur de l'en-tête est rangé dans le menu. */
+export function majPastilleMode() {
+  let p = document.querySelector(".pastille-mode");
+  if (!p) {
+    p = document.createElement("button");
+    p.type = "button"; p.className = "pastille-mode"; p.setAttribute("data-bascule-mode", "");
+    document.body.append(p);
+  }
+  const c = modeCleaneur();
+  p.classList.toggle("vers-client", c);
+  p.innerHTML = `<span aria-hidden="true">⇄</span>${tr(c ? "Passer en mode client" : "Passer en mode Cleaneur")}`;
+}
+
 /** Branche tous les interrupteurs présents dans la page (délégation : un seul écouteur). */
 export function brancherBascule() {
+  majPastilleMode();
   if (document.body.dataset.basculeBranchee) return;
   document.body.dataset.basculeBranchee = "1";
   document.addEventListener("click", e => {

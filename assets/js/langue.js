@@ -2367,6 +2367,8 @@ const T = [
   ["Remise formule Confort", "Comfort package discount", "Sconto formula Comfort", "Descuento fórmula Confort"],
   ["Remise formule Premium", "Premium package discount", "Sconto formula Premium", "Descuento fórmula Premium"],
   ["Votre formule", "Your package", "La tua formula", "Tu fórmula"],
+  ["Passer en mode client", "Switch to client mode", "Passa alla modalità cliente", "Cambiar a modo cliente"],
+  ["Passer en mode Cleaneur", "Switch to Cleaneur mode", "Passa alla modalità Cleaneur", "Cambiar a modo Cleaneur"],
   ["À quelle fréquence ?", "How often?", "Con quale frequenza?", "¿Con qué frecuencia?"],
   ["Votre niveau de ménage", "Your cleaning level", "Il tuo livello di pulizia", "Tu nivel de limpieza"],
   ["Le grand ménage, du sol au plafond", "The deep clean, floor to ceiling", "La pulizia a fondo, dal pavimento al soffitto", "La limpieza a fondo, del suelo al techo"],
