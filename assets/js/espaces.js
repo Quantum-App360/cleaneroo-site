@@ -257,6 +257,7 @@ export function ongletPro(p, biens, hotellerie = false) {
             <label class="champ">Nom du bien<input name="nom" maxlength="60" value="${esc(l.nom)}" placeholder="${esc(tr("Ex. : Studio Vieux-Port"))}"></label>
             ${SOURCES.map(([id, nom]) => `<label class="champ">Lien du calendrier ${nom}<input name="${id}" type="url" inputmode="url" maxlength="600" placeholder="https://…ics" value="${esc((l.calendriers || []).find(c => c.source === id)?.url)}"></label>`).join("")}
             <p class="erreur" data-erreur-cal></p><button class="bouton plein" type="submit">Enregistrer</button></form></details>
+        ${cals.length ? blocPilote(l) : ""}
         ${editeurGuide(l)}${editeurEtapesPhoto(l)}${editeurStock(l)}${editeurIncidents(l)}</div>`;
     }).join("") : `<div class="vide-compte"><p class="muet">Aucun bien enregistré pour l'instant.</p><p class="petit">Ajoutez vos biens dans « Mes prestations » ou lors d'une réservation.</p></div>`}</div>
     <p class="petit" id="aucun-bien" hidden>Aucun bien ne correspond à votre recherche.</p>
@@ -271,6 +272,19 @@ export function ongletPro(p, biens, hotellerie = false) {
       <p><b>Booking.com</b> : Extranet › Tarifs et disponibilités › Synchronisation des calendriers › Exporter le calendrier. Copiez le lien.</p>
       <p><b>Abritel / Vrbo</b> : Calendrier › Importer et exporter › Exporter. Copiez le lien.</p>
       <p class="petit">Le lien se termine souvent par « .ics ». Il ne donne accès qu'aux dates, jamais aux coordonnées de vos voyageurs.</p></details>`;
+}
+
+/** Pilote automatique d'un logement relié à un calendrier (18 novembre 2026) : Manuel (par défaut) ou Automatique avec plafond mensuel.
+ *  En Automatique, le serveur (fonction pilote-auto) programme le ménage de chaque départ de voyageurs, au prix du dernier ménage réservé. */
+function blocPilote(l) {
+  const p = l.pilote || {}, auto = p.mode === "auto";
+  return `<details class="pilote-bien"><summary>🤖 ${tr("Pilote automatique")} : <b>${tr(auto ? "Automatique" : "Manuel")}</b>${auto && p.plafondC ? ` · ${tr("plafond")} ${euros(p.plafondC)} / ${tr("mois")}` : ""}</summary>
+    <form data-form-pilote="${esc(l.id)}" novalidate style="margin-top:10px">
+      <label class="case"><input type="radio" name="mode" value="manuel" ${auto ? "" : "checked"}><span>${tr("Manuel : je programme moi-même chaque ménage")}</span></label>
+      <label class="case"><input type="radio" name="mode" value="auto" ${auto ? "checked" : ""}><span>${tr("Automatique : chaque départ de voyageurs programme son ménage tout seul")}</span></label>
+      <label class="champ">${tr("Plafond mensuel (€)")}<input name="plafond" type="number" inputmode="numeric" min="0" step="1" value="${p.plafondC ? Math.round(p.plafondC / 100) : ""}"></label>
+      <p class="petit">${tr("Prix et consignes : ceux de votre dernier ménage réservé pour ce logement. Au-delà du plafond, rien n'est programmé sans vous. Vous êtes prévenu à chaque ménage programmé.")}</p>
+      <p class="erreur" data-erreur-pilote></p><button class="bouton plein" type="submit">${tr("Enregistrer")}</button></form></details>`;
 }
 
 /** « Ma société » (espaces Entreprise et Conciergerie). */
@@ -302,6 +316,18 @@ export function brancherPro(vue, p, biens, demandes, { majProfil, recharger }) {
         : r.erreur === "format" ? "Ce lien n'est pas un calendrier (.ics). Vérifiez que vous avez copié le lien d'export." : "Calendrier injoignable. Vérifiez le lien et réessayez."); return; }
     }
     try { await enregistrerBien({ ...l, nom: f.nom.value.trim(), calendriers }); recharger(); }
+    catch { err.textContent = tr("Le service est momentanément indisponible. Réessayez dans quelques minutes."); }
+  });
+  // Pilote automatique : modèle = dernier ménage (non annulé) réservé pour ce logement.
+  vue.querySelectorAll("[data-form-pilote]").forEach(f => f.onsubmit = async e => {
+    e.preventDefault();
+    const l = biens.find(x => x.id === f.dataset.formPilote), err = f.querySelector("[data-erreur-pilote]");
+    const mode = f.querySelector("[name=mode]:checked")?.value || "manuel", plafondC = Math.round((Number(f.plafond.value) || 0) * 100);
+    const modele = (demandes || []).filter(d => d.details?.logementId === l.id && d.statut !== "ANNULEE" && !d.sur_devis)
+      .sort((a, b) => new Date(b.cree_le) - new Date(a.cree_le))[0];
+    if (mode === "auto" && !modele) { err.textContent = tr("Réservez d'abord un premier ménage pour ce logement : il servira de modèle (prix et consignes)."); return; }
+    if (mode === "auto" && plafondC <= 0) { err.textContent = tr("Indiquez un plafond mensuel : au-delà, rien n'est programmé sans vous."); return; }
+    try { await enregistrerBien({ ...l, pilote: { mode, plafondC, modele: modele?.reference || "" } }); recharger(); }
     catch { err.textContent = tr("Le service est momentanément indisponible. Réessayez dans quelques minutes."); }
   });
   brancherGuides(vue, biens, recharger);

@@ -629,6 +629,8 @@ async function afficherPage() {
     vue.querySelector("#rejouer").onclick = lancer;
     return;
   }
+  // Badge public « Logement contrôlé Cleaneroo » (badge.js)
+  if (route === "controle" && param) { window.scrollTo(0, 0); vue.innerHTML = pageChargement(); traduire(vue); const { pageBadge } = await import("./badge.js"); await pageBadge(vue, param); return; }
   if (route === "demande") {
     const [, ref, jeton] = chemin.split("/");
     vue.innerHTML = pageChargement("Recherche de votre demande…"); traduire(vue);

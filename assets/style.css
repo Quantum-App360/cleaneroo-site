@@ -2260,3 +2260,12 @@ body.mode-cleaneur .barre-espaces .bascule-mode { background: rgba(255,255,255,.
 .repli-reservation[open] > summary::after { transform: rotate(90deg); }
 .repli-reservation .resume-repli { font-weight: 500; font-size: 13px; color: var(--primaire); }
 .repli-reservation .contenu-repli { padding: 0 14px 14px; }
+
+/* Badge public « Logement contrôlé Cleaneroo » (badge.js) */
+.badge-controle { text-align: center; padding: 30px 22px; display: grid; justify-items: center; gap: 8px; }
+.badge-controle h1 { margin: 2px 0; font-size: clamp(22px, 4vw, 30px); }
+.badge-date { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; background: #E9F8E1; color: #2E6B1F; margin: 6px 0; }
+.badge-chiffres { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; width: 100%; margin: 10px 0; }
+.badge-chiffres div { background: var(--creux); border-radius: 14px; padding: 12px; display: grid; }
+.badge-chiffres b { font-size: 26px; background: var(--degrade); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.badge-chiffres span { font-size: 13px; color: var(--texte2); }

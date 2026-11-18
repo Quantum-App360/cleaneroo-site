@@ -1,0 +1,5 @@
+-- Innovations du 18 novembre 2026, appliquées :
+-- 1. Contrôle IA : controles_pieces.essais (déclencheur compter_essai_ia) → « validée du premier coup ».
+-- 2. Badge « Logement contrôlé Cleaneroo » : biens.badge (uuid), fonctions lien_badge(bien) (propriétaire) et badge_controle(code) (public, sans donnée personnelle).
+-- 3. Pilote automatique : biens.donnees.pilote = { mode: "manuel" | "auto", plafondC, modele (référence du ménage modèle) } ;
+--    fonction serveur supabase/functions/pilote-auto, lancée à la 20e minute de chaque heure par pg_cron (tâche « pilote-auto », fonction tache_pilote_auto()).

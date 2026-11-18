@@ -88,16 +88,20 @@ export async function brancherControle(boite, m, surFin) {
           <div class="taches-piece">${(c.taches || []).map(t => `<label class="case"><input type="checkbox" data-tache="${esc(t.id)}" ${t.fait ? "checked" : ""} ${pret ? "" : "disabled"}><span>${esc(tr(t.nom))}</span></label>`).join("")}</div>
           ${pret && !toutes ? `<p class="petit">${tr("Cochez toutes les tâches, puis prenez la photo après.")}</p>` : ""}
           ${avisIA(c)}
-          ${["ecart", "erreur"].includes(c.ia_statut) ? `<div class="justif"><label class="champ">${tr("Justification (visible par le client)")}
+          ${["ecart", "erreur"].includes(c.ia_statut) ? `<div class="justif">
+              ${c.ia_statut === "ecart" ? `<button type="button" class="bouton plein" data-reprendre-piece>${tr("Je reprends la pièce")}</button>
+                <p class="petit">${tr("Corrigez ce que l'IA signale avant de partir, puis reprenez la photo après : le client ne verra que le résultat final.")}</p>` : ""}
+              <details ${c.ia_statut === "erreur" || (c.justification || "").trim() ? "open" : ""}><summary class="petit">${tr("Impossible à corriger ? Justifier")}</summary>
+              <label class="champ">${tr("Justification (visible par le client)")}
               <textarea maxlength="600" rows="2" data-justif placeholder="${esc(tr("Ex. tache incrustée, impossible à retirer sans abîmer le tissu."))}">${esc(c.justification)}</textarea></label>
-              <button type="button" class="bouton secondaire" data-enregistrer-justif>${tr("Enregistrer la justification")}</button>
-              <span class="petit">${tr("Ou corrigez, puis reprenez la photo après.")}</span></div>` : ""}
+              <button type="button" class="bouton secondaire" data-enregistrer-justif>${tr("Enregistrer la justification")}</button></details></div>` : ""}
           <p class="erreur" data-erreur-piece></p>
         </div></details>`; }).join("")}
   </div>`;
   traduire(boite);
   surFin(faites === liste.length);
   const recharger = () => brancherControle(boite, m, surFin);
+  boite.querySelectorAll("[data-reprendre-piece]").forEach(bt => bt.onclick = () => bt.closest("details")?.querySelector('[data-photo="apres"]')?.click());
   // Signalement d'arrivée : type, texte, photo facultative.
   const photoSignal = boite.querySelector("[data-photo-signal]");
   photoSignal.onchange = () => { boite.querySelector("[data-nom-photo-signal]").textContent = photoSignal.files?.[0] ? "✓ " + tr("Photo ajoutée") : ""; };
@@ -155,7 +159,7 @@ export async function compteRenduPieces(boite, reference) {
   const ecarts = liste.filter(c => c.ia_statut === "ecart").length;
   boite.innerHTML = `<h2 class="titre-section">${icone("photo", { tuile: true })}${tr("Compte rendu pièce par pièce")}</h2>
     ${signalements ? `<p style="margin:8px 0 4px"><b>${tr("Signalé par le Cleaneur à son arrivée")}</b></p>${signalements}` : ""}
-    <p class="petit">${liste.filter(c => pieceComplete(c, !!c.photo_avant)).length} / ${liste.length} ${tr("pièces terminées")}${ecarts ? ` · ${ecarts} ${tr("écart(s) signalé(s) par l'IA")}` : ""}</p>
+    <p class="petit">${liste.filter(c => pieceComplete(c, !!c.photo_avant)).length} / ${liste.length} ${tr("pièces terminées")}${ecarts ? ` · ${ecarts} ${tr("écart(s) signalé(s) par l'IA")}` : ""}${liste.some(c => c.ia_statut === "ok") ? ` · ${liste.filter(c => c.ia_statut === "ok" && (c.essais || 1) <= 1).length} ${tr("validée(s) par l'IA du premier coup")}` : ""}</p>
     ${liste.map(c => `<div class="carte piece-rendu">
       <div class="haut"><b>${esc(tr(c.nom))}</b>${c.ia_statut === "ok" ? `<span class="tampon vert">${tr("IA : rien à signaler")}</span>` : c.ia_statut === "ecart" ? `<span class="tampon corail">${tr("IA : écart")}</span>` : ""}</div>
       <div class="photos-rendu">${(c.photo_avant ? ["avant", "apres"] : ["apres"]).map(mo => { const ch = mo === "avant" ? c.photo_avant : c.photo_apres;
