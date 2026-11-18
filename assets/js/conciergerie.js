@@ -139,6 +139,32 @@ export function alertes({ biens, sejours, menagePrevu, erreurs = {}, aujourdhui 
   return l;
 }
 
+/**
+ * Niveau de risque d'une rotation (18 novembre 2026, repris de l'app iPhone). Fonction pure, testée.
+ * Urgent : départ dans moins de 48 h sans ménage · aucun Cleaneur confirmé à moins de 24 h · moins de 30 min de marge avant l'arrivée suivante ·
+ *   incident bloquant ouvert · départ passé de 30 min et Cleaneur pas encore en route.
+ * À surveiller : ménage à programmer · Cleaneur pas encore confirmé (départ dans moins de 72 h) · moins de 1 h 30 de marge · articles sous le seuil.
+ * Serein sinon. Renvoie { niveau: "urgent" | "surveiller" | "serein", raison, rang } (rang 0 = le plus urgent).
+ */
+export function niveauRotation({ jour, menage = null, bien = {}, arriveeSuivanteH = null, maintenant = new Date() }) {
+  const departH = REGLES.DEPART_VOYAGEURS_DEFAUT_H;
+  const depart = jourDe(jour); depart.setHours(departH, 0, 0, 0);
+  const heures = (depart - maintenant) / 3600000;
+  const confirme = menage && !["VERIFICATION", "PUBLIEE"].includes(menage.statut);
+  const marge = menage && arriveeSuivanteH != null ? (arriveeSuivanteH - departH) * 60 - (menage.duree_min || 0) : null;
+  const r = (niveau, raison) => ({ niveau, raison, rang: { urgent: 0, surveiller: 1, serein: 2 }[niveau] });
+  if (!menage && heures < REGLES.RISQUE_SANS_MENAGE_URGENT_H) return r("urgent", "Départ dans moins de 48 h sans ménage");
+  if (menage && !confirme && heures < REGLES.RISQUE_SANS_CLEANEUR_URGENT_H) return r("urgent", "Aucun Cleaneur confirmé à moins de 24 h");
+  if (marge != null && marge < REGLES.RISQUE_MARGE_URGENTE_MIN) return r("urgent", "Moins de 30 min de marge avant l'arrivée suivante");
+  if (ouverts(bien).some(i => i.bloquant)) return r("urgent", "Incident bloquant ouvert");
+  if (menage && menage.statut === "CONFIRMEE" && -heures * 60 > REGLES.RISQUE_RETARD_DEPART_MIN) return r("urgent", "Départ passé et Cleaneur pas encore en route");
+  if (!menage) return r("surveiller", "Ménage à programmer");
+  if (!confirme && heures < REGLES.RISQUE_SANS_CLEANEUR_SURVEILLER_H) return r("surveiller", "Cleaneur pas encore confirmé");
+  if (marge != null && marge < REGLES.RISQUE_MARGE_SURVEILLER_MIN) return r("surveiller", "Moins de 1 h 30 de marge avant l'arrivée suivante");
+  if (stockBas(bien).length) return r("surveiller", "Articles sous le seuil");
+  return r("serein", "Tout est prêt");
+}
+
 export function blocAujourdhui(boite, { biens, sejours, demandes, menageDe, erreurs, nomBien, couleur, programmer, aujourdhui = new Date() }) {
   if (!boite) return;
   const auj = iso(aujourdhui), demain = iso(plusJours(aujourdhui, 1));
@@ -154,8 +180,11 @@ export function blocAujourdhui(boite, { biens, sejours, demandes, menageDe, erre
     const dep = sejours.find(s => s.bienId === l.id && s.fin === j), arr = sejours.find(s => s.bienId === l.id && s.debut === j);
     if (!dep && !arr) return "";
     const m = menageDe(l.id, j), prochaine = sejours.filter(s => s.bienId === l.id && s.debut >= j).sort((a, b) => a.debut.localeCompare(b.debut))[0];
-    return `<div class="rotation" style="--c:${couleur(l.id)}">
-      <div class="rot-bien"><span class="pl-pastille"></span><b>${esc(nomBien(l))}</b><span class="petit">${esc(l.ville || "")}</span></div>
+    // Niveau de risque de la rotation (départ du jour) : affiché et utilisé pour classer de la plus urgente à la plus sereine.
+    const risque = dep ? niveauRotation({ jour: j, menage: m, bien: l, arriveeSuivanteH: arr ? REGLES.ARRIVEE_SUIVANTE_DEFAUT_H : null, maintenant: aujourdhui }) : null;
+    return `<div class="rotation" data-rang="${risque ? risque.rang : 3}" style="--c:${couleur(l.id)}">
+      <div class="rot-bien"><span class="pl-pastille"></span><b>${esc(nomBien(l))}</b><span class="petit">${esc(l.ville || "")}</span>
+        ${risque ? `<span class="risque risque-${risque.niveau}">${{ urgent: "🔴", surveiller: "🟠", serein: "🟢" }[risque.niveau]} ${tr({ urgent: "Urgent", surveiller: "À surveiller", serein: "Serein" }[risque.niveau])} · ${tr(risque.raison)}</span>` : ""}</div>
       <div class="rot-flux">
         ${dep ? `<span class="rot-etape">🧳 ${tr("Départ")} <b>${REGLES.DEPART_VOYAGEURS_DEFAUT_H} h</b></span>` : ""}
         ${dep ? (m ? `<span class="rot-etape menage etat-${esc(m.statut)}">${icone(rubrique(m.rubrique_id)?.icone || "termine")} ${tr(ETATS[m.statut] || "")}</span>`
@@ -172,7 +201,8 @@ export function blocAujourdhui(boite, { biens, sejours, demandes, menageDe, erre
       <span class="b-menage b-presta etat-${esc(d.statut)}">${icone(r?.icone || "termine")}</span>
       <span class="corps"><b>${esc(b ? nomBien(b) : d.ville)}</b><span class="petit">${new Date(d.creneau).toLocaleTimeString(LOCALE, { hour: "2-digit", minute: "2-digit" })} · ${esc(r?.nom || "")}</span></span>
       <span class="etat-texte etat-${esc(d.statut)}">${tr(ETATS[d.statut] || "")}</span><span class="aller">›</span></a>`; };
-  const jour = (j, titre) => { const r = biens.map(l => rotation(l, j)).filter(Boolean), m = menagesDuJour(j);
+  const rang = h => Number((h.match(/data-rang="(\d)"/) || [])[1] ?? 3);
+  const jour = (j, titre) => { const r = biens.map(l => rotation(l, j)).filter(Boolean).sort((a, b) => rang(a) - rang(b)), m = menagesDuJour(j);
     return `<div class="carte jour-rotations"><h3>${titre} <span class="petit">${dateLongue(jourDe(j))}</span></h3>
       ${m.length ? `<p class="resume-missions"><b>${m.length} ${tr(m.length > 1 ? "ménages" : "ménage")}</b> · ${m.map(d => esc(nomBien(biens.find(x => memeAdresse(d, x)) || { nom: d.ville }))).join(", ")}</p>
         <div class="missions-jour">${m.map(ligneMission).join("")}</div>` : ""}

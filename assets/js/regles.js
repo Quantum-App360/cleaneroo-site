@@ -97,7 +97,10 @@ export const REGLES = {
   LINGE_LAVERIE_PAR_SDB_C: 400,
   TORCHONS_LAVERIE_C: 200,
   LINGE_MIN: 10,                  // planning : une machine de plus (sur place) ou un sac de plus (laverie)
-  LAVERIE_TRAJET_MIN: 30,         // aller et retour à la laverie, une fois par ménage
+  LAVERIE_TRAJET_MIN: 30,
+  // Niveau de risque d'une rotation (conciergerie, 18 novembre 2026, repris de l'app iPhone) — marges entre la fin du ménage et l'arrivée suivante.
+  RISQUE_MARGE_URGENTE_MIN: 30, RISQUE_MARGE_SURVEILLER_MIN: 90,
+  RISQUE_SANS_MENAGE_URGENT_H: 48, RISQUE_SANS_CLEANEUR_URGENT_H: 24, RISQUE_SANS_CLEANEUR_SURVEILLER_H: 72, RISQUE_RETARD_DEPART_MIN: 30,         // aller et retour à la laverie, une fois par ménage
   // Options en plus (7 novembre 2026, décision de l'utilisateur) : petits forfaits selon la taille de l'option, plus de prix au temps.
   // Petite (≤ 5 min) 2 €, moyenne (≤ 15 min) 4 €, grande 6 € ; le temps reste compté pour le planning du Cleaneur.
   OPTION_PETITE_C: 200, OPTION_MOYENNE_C: 400, OPTION_GRANDE_C: 600,
