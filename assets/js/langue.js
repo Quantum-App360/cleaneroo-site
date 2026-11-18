@@ -3201,6 +3201,12 @@ const T = [
   ["Sous 48 h", "Within 48 h", "Entro 48 h", "En 48 h"],
   ["Dans la semaine", "Within the week", "In settimana", "En la semana"],
   // </rubriques-textes>
+  ["Machine à laver et sèche-linge dans le logement ?", "Washing machine and dryer in the home?", "Lavatrice e asciugatrice nell'alloggio?", "¿Lavadora y secadora en el alojamiento?"],
+  ["Oui : lavés et séchés sur place", "Yes: washed and dried on site", "Sì: lavate e asciugate sul posto", "Sí: lavadas y secadas en el lugar"],
+  ["Non : lavés en laverie (prix par lit)", "No: washed at a laundrette (price per bed)", "No: lavate in lavanderia (prezzo per letto)", "No: lavadas en lavandería (precio por cama)"],
+  ["Sans sèche-linge, le Cleaneur porte les draps à la laverie : trajet et machines compris dans le prix par lit.", "Without a dryer, the Cleaneur takes the sheets to a laundrette: trip and machines included in the price per bed.", "Senza asciugatrice, il Cleaneur porta le lenzuola in lavanderia: tragitto e macchine inclusi nel prezzo per letto.", "Sin secadora, el Cleaneur lleva las sábanas a la lavandería: trayecto y máquinas incluidos en el precio por cama."],
+  ["Le Cleaneur lance les machines et refait les lits : forfait unique, quel que soit le nombre de lits.", "The Cleaneur runs the machines and remakes the beds: one flat fee, whatever the number of beds.", "Il Cleaneur avvia le macchine e rifà i letti: forfait unico, qualunque sia il numero di letti.", "El Cleaneur pone las máquinas y rehace las camas: tarifa única, sea cual sea el número de camas."],
+  ["Lavage des draps sur place (forfait)", "Sheet washing on site (flat fee)", "Lavaggio lenzuola sul posto (forfait)", "Lavado de sábanas en el lugar (tarifa fija)"],
   // Photos témoins (18 novembre 2026)
   ["Photos témoins de l'état attendu", "Reference photos of the expected result", "Foto di riferimento dello stato atteso", "Fotos de referencia del estado esperado"],
   ["Photographiez chaque pièce telle que vous voulez la retrouver (serviettes, tapis de bain, coussins à leur place). L'IA compare chaque ménage à ces photos.", "Photograph each room the way you want to find it (towels, bath mat, cushions in place). The AI compares every cleaning with these photos.", "Fotografa ogni stanza come vuoi ritrovarla (asciugamani, tappetino del bagno, cuscini al loro posto). L'IA confronta ogni pulizia con queste foto.", "Fotografía cada estancia tal como quieres encontrarla (toallas, alfombrilla de baño, cojines en su sitio). La IA compara cada limpieza con estas fotos."],

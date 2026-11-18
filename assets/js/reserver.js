@@ -648,12 +648,14 @@ function etapesLocation() {
     + caseCocher("Je souhaite cette prestation à chaque départ de voyageurs", "aChaqueDepart", !!b.aChaqueDepart) + `</div>`
     + titre("Linge de lit") + `<div class="carte">${caseCocher("Les draps propres sont fournis sur place", "drapsFournis", b.drapsFournis !== false, "Le Cleaneur fait les lits avec votre linge.")}
       ${caseCocher("Lavage des draps", "lavageDraps", !!b.lavageDraps, "Draps et housses lavés, séchés et pliés.")}
-      ${b.lavageDraps ? (() => { const t = litsTailles(b), p = REGLES.DRAPS_PRIX_C[b.drapsLieu === "laverie" ? "laverie" : "sur_place"];
-        return choix([["sur_place", "Sur place (machine et sèche-linge dans le logement)"], ["laverie", "En laverie"]], b.drapsLieu || "sur_place", "drapsLieu")
-          + compteur(`${tr("Lits 1 place")} · ${euros(p.un)}`, "lits1", t.un, { min: 0, max: REGLES.LITS_MAX })
-          + compteur(`${tr("Lits 2 places")} · ${euros(p.deux)}`, "lits2", t.deux, { min: 0, max: REGLES.LITS_MAX })
-          + compteur(`${tr("Lits king size")} · ${euros(p.king)}`, "litsKing", t.king, { min: 0, max: REGLES.LITS_MAX })
-          + (b.drapsLieu === "laverie" ? `<p class="petit">${tr("Sans machine ni sèche-linge sur place, le Cleaneur porte les draps à la laverie : supplément forfaitaire compris dans le prix par lit.")}</p>` : ""); })() : ""}</div>`
+      ${b.lavageDraps ? (() => { const t = litsTailles(b), p = REGLES.DRAPS_LAVERIE_C, laverie = b.drapsLieu === "laverie";
+        return `<p style="margin:10px 0 4px"><b>${tr("Machine à laver et sèche-linge dans le logement ?")}</b></p>`
+          + choix([["sur_place", `${tr("Oui : lavés et séchés sur place")} · ${euros(REGLES.DRAPS_SUR_PLACE_FORFAIT_C)}`], ["laverie", tr("Non : lavés en laverie (prix par lit)")]], laverie ? "laverie" : "sur_place", "drapsLieu")
+          + (laverie ? compteur(`${tr("Lits 1 place")} · ${euros(p.un)}`, "lits1", t.un, { min: 0, max: REGLES.LITS_MAX })
+            + compteur(`${tr("Lits 2 places")} · ${euros(p.deux)}`, "lits2", t.deux, { min: 0, max: REGLES.LITS_MAX })
+            + compteur(`${tr("Lits king size")} · ${euros(p.king)}`, "litsKing", t.king, { min: 0, max: REGLES.LITS_MAX })
+            + `<p class="petit">${tr("Sans sèche-linge, le Cleaneur porte les draps à la laverie : trajet et machines compris dans le prix par lit.")}</p>`
+            : `<p class="petit">${tr("Le Cleaneur lance les machines et refait les lits : forfait unique, quel que soit le nombre de lits.")}</p>`); })() : ""}</div>`
     + repli("etapes-location", "Étapes photo et consommables", `${tr("Pack conseillé appliqué")} · ${etapes.length + perso.length} ${tr("étapes")}`,
         detail + `<div class="carte" style="margin-top:10px">${caseCocher("Mémoriser ces étapes pour ce logement", "memoriserEtapes", b.memoriserEtapes !== false)}</div>`);
 }

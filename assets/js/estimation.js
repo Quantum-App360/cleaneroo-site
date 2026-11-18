@@ -90,7 +90,7 @@ export function calculer(entree) {
   const lits = e.lavageDrapsLits || 0;
   if (lits > 0) {
     const c = e.drapsC ?? lits * REGLES.LAVAGE_DRAPS_PAR_LIT_C;
-    lignes.push({ libelle: `${e.drapsLaverie ? "Lavage des draps en laverie" : "Lavage des draps"} × ${lits}`, montantC: c });
+    lignes.push({ libelle: e.drapsLaverie ? `Lavage des draps en laverie × ${lits}` : "Lavage des draps sur place (forfait)", montantC: c });
     sousTotal += c;
   }
 
@@ -281,8 +281,9 @@ export const litsTailles = b => {
 };
 /** Prix du lavage des draps : selon le lieu (sur place / laverie) et la taille de chaque lit. */
 export const prixDrapsC = b => {
-  const t = litsTailles(b), p = REGLES.DRAPS_PRIX_C[b.drapsLieu === "laverie" ? "laverie" : "sur_place"];
-  return t.un * p.un + t.deux * p.deux + t.king * p.king;
+  const t = litsTailles(b), p = REGLES.DRAPS_LAVERIE_C;
+  if (!t.total) return 0;
+  return b.drapsLieu === "laverie" ? t.un * p.un + t.deux * p.deux + t.king * p.king : REGLES.DRAPS_SUR_PLACE_FORFAIT_C;
 };
 /** Le ménage tient-il entre le départ des voyageurs et l'arrivée suivante ? */
 export const menageTientEntreVoyageurs = (b, dureeMin) => (b.departVoyageursH ?? 10) * 60 + dureeMin <= (b.arriveeSuivanteH ?? 16) * 60;
