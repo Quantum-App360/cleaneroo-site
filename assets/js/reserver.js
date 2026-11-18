@@ -515,6 +515,7 @@ function questionnaire(enTete = true) {
     h += repli("perso", "Une demande spécifique ? (facultatif)", b.tachesPerso.length ? `${b.tachesPerso.length} ${tr(b.tachesPerso.length > 1 ? "demandes" : "demande")}` : "", `<div class="carte">${b.tachesPerso.map((t, i) => `<div style="display:flex;align-items:center"><span style="flex:1">• ${esc(t)}</span>
       <button type="button" class="lien-bouton" style="color:var(--erreur)" data-retirer="${i}">Retirer</button></div>`).join("")}
       <div style="display:flex;gap:8px;align-items:center"><input class="texte" id="saisie-perso" maxlength="120" placeholder="Ex. : nettoyer l'intérieur du lave-linge" style="margin:0">
+      <span style="white-space:nowrap;font-weight:800;color:var(--primaire)">+${euros(Math.round((r.tauxHoraireC || 0) * REGLES.TACHE_PERSO_MIN / 60))}</span>
       <button type="button" class="lien-bouton" id="ajouter-perso">Ajouter</button></div>
       <p class="petit">Pour un besoin vraiment particulier : chaque demande compte 15 min dans l'estimation et le Cleaneur la confirme.</p></div>`);
   }
@@ -934,7 +935,26 @@ function appliquerParrainage() {
   b.cagnotteDispoC = infosParrain?.soldes?.[b.espace === "personnel" ? "particulier" : "pro"] || 0;
 }
 
+/** Le prix « respire » quand il change, avec l'écart affiché un instant (+7,50 €, −3,00 €) : chaque choix montre son effet. */
+let prixPrecedent = null;
+function signalerPrix() {
+  if (!racine) return;
+  const els = [...racine.querySelectorAll(".prix-simulation, .prix-barre b, .tete-etape b")];
+  const m = els[0]?.textContent.replace(/[\s\u202f\u00a0]/g, "").match(/(\d+),(\d{2})/);
+  if (!m) { prixPrecedent = null; return; }
+  const c = +m[1] * 100 + +m[2];
+  if (prixPrecedent != null && c !== prixPrecedent) {
+    els.forEach(el => { el.classList.remove("prix-change"); void el.offsetWidth; el.classList.add("prix-change"); });
+    const d = c - prixPrecedent, pastille = document.createElement("span");
+    pastille.className = `prix-delta${d < 0 ? " baisse" : ""}`;
+    pastille.textContent = `${d > 0 ? "+" : "−"}${euros(Math.abs(d))}`;
+    (racine.querySelector(".prix-simulation") || els[0]).append(pastille);
+  }
+  prixPrecedent = c;
+}
+
 function rendre() {
+  queueMicrotask(signalerPrix);
   // Anciens brouillons « Grand ménage » du logement : ménage ponctuel au niveau Premium (le grand ménage, depuis le 18/11/2026).
   if (b && b.rubriqueId === "home" && b.formuleId === "grand") {
     const premium = packsPour(rubrique("home"), b.typeLieuId).find(p => p.id === "prestige");

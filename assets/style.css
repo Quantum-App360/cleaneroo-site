@@ -2364,3 +2364,94 @@ body.mode-cleaneur .pied { background: #0B1517; color: var(--texte2); }
 .pastille-mode.vers-client { background: linear-gradient(120deg, #04BEE5, #5CCCF0); color: #062430; }
 /* Une seule bascule, propre : la pastille du bas (19/11/2026). L'ancien interrupteur de l'en-tête et de la barre est retiré. */
 .bascule-mode { display: none !important; }
+
+/* ================================================================================================
+   Couche « vivante » (19/11/2026) : interface dynamique, nette et professionnelle, aux couleurs du logo.
+   Mouvements courts (≤ 0,6 s), utiles (retour visuel, hiérarchie), et coupés si l'utilisateur limite les animations.
+   ================================================================================================ */
+/* Typographie : titres plus affirmés, chiffres alignés */
+h1, h2, h3 { text-wrap: balance; }
+p { text-wrap: pretty; }
+.prix-simulation, .prix-barre b, .prix-formule, .chiffres b, .bandeau-chiffres b { font-variant-numeric: tabular-nums; }
+
+/* Titres de section : surtitre en pastille + trait dégradé qui se dessine à l'apparition */
+.titre-section .surtitre { display: inline-flex; align-items: center; gap: 8px; padding: 5px 12px; border-radius: 999px; font-size: 12.5px; font-weight: 800;
+  letter-spacing: .06em; text-transform: uppercase; color: var(--primaire); background: color-mix(in srgb, var(--marque) 12%, transparent); }
+.titre-section .surtitre::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--degrade); box-shadow: 0 0 0 3px color-mix(in srgb, var(--marque) 22%, transparent); }
+.titre-section h2 { position: relative; padding-bottom: 16px; }
+.titre-section h2::after { content: ""; position: absolute; left: 50%; bottom: 0; width: 64px; height: 4px; border-radius: 4px; background: var(--degrade);
+  transform: translateX(-50%) scaleX(0); transform-origin: center; transition: transform .6s cubic-bezier(.2, .8, .2, 1) .15s; }
+.titre-section.visible h2::after, .revele.visible .titre-section h2::after, .titre-section:not(.revele) h2::after { transform: translateX(-50%) scaleX(1); }
+
+/* Titre principal : dégradé du logo qui glisse lentement */
+.degrade-texte, .heros-2026 h1 .degrade-texte { background-size: 220% 100%; animation: cl-glisse 9s ease-in-out infinite alternate; }
+@keyframes cl-glisse { from { background-position: 0% 50%; } to { background-position: 100% 50%; } }
+
+/* Boutons : reflet lumineux au survol, pression au clic, focus net au clavier */
+.bouton { position: relative; overflow: hidden; isolation: isolate; transition: transform .18s cubic-bezier(.2, .8, .2, 1), box-shadow .25s, filter .2s; }
+.bouton:not(.secondaire):not(.danger)::after { content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 45%; z-index: -1; pointer-events: none;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .45), transparent); transform: translateX(-130%) skewX(-18deg); }
+.bouton:not(.secondaire):not(.danger):hover::after { animation: cl-reflet .75s ease; }
+@keyframes cl-reflet { to { transform: translateX(260%) skewX(-18deg); } }
+.bouton:hover { transform: translateY(-2px); }
+.bouton:active { transform: translateY(0) scale(.97); }
+:where(a, button, input, select, textarea, [tabindex]):focus-visible { outline: 3px solid color-mix(in srgb, var(--marque) 55%, transparent); outline-offset: 2px; border-radius: 10px; }
+
+/* Cartes cliquables : soulèvement + liseré dégradé qui apparaît */
+:where(a.carte, button.carte, .espace-carte, .carte.prestation, .choix-cleaneur-carte, button.formule, button.option) { position: relative;
+  transition: transform .25s cubic-bezier(.2, .8, .2, 1), box-shadow .25s, border-color .25s; }
+:where(a.carte, button.carte, .espace-carte, .carte.prestation, .choix-cleaneur-carte)::before { content: ""; position: absolute; inset: -1px; border-radius: inherit; padding: 1.5px;
+  background: var(--degrade); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude;
+  opacity: 0; transition: opacity .25s; pointer-events: none; }
+:where(a.carte, button.carte, .espace-carte, .carte.prestation, .choix-cleaneur-carte):hover { transform: translateY(-4px); box-shadow: var(--ombre-forte); }
+:where(a.carte, button.carte, .espace-carte, .carte.prestation, .choix-cleaneur-carte):hover::before { opacity: 1; }
+:where(a.carte, .espace-carte, .carte.prestation) .tuile-ico, :where(a.carte, .espace-carte, .carte.prestation) svg:first-child { transition: transform .35s cubic-bezier(.2, .8, .2, 1); }
+:where(a.carte, .espace-carte, .carte.prestation):hover .tuile-ico, :where(a.carte, .espace-carte, .carte.prestation):hover svg:first-child { transform: scale(1.08) rotate(-4deg); }
+.aller { transition: transform .2s; display: inline-block; }
+:where(a, button):hover > .aller, :where(a, button):hover .aller { transform: translateX(4px); }
+button.option.choisi, .segments button.choisi { box-shadow: 0 0 0 3px color-mix(in srgb, var(--marque) 18%, transparent); }
+
+/* Prix : il « respire » quand il change (le client voit l'effet de chaque choix) */
+@keyframes cl-prix { 0% { transform: scale(1); } 35% { transform: scale(1.12); color: var(--marque); text-shadow: 0 0 18px color-mix(in srgb, var(--marque) 45%, transparent); } 100% { transform: scale(1); } }
+.prix-change { display: inline-block; animation: cl-prix .6s cubic-bezier(.2, .8, .2, 1); transform-origin: left center; }
+.prix-delta { display: inline-block; margin-left: 8px; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 800; vertical-align: middle;
+  color: #05220F; background: linear-gradient(120deg, #0DC88D, #1AD934); animation: cl-delta 1.8s ease forwards; }
+.prix-delta.baisse { color: #062430; background: linear-gradient(120deg, #04BEE5, #5CCCF0); }
+@keyframes cl-delta { 0% { opacity: 0; transform: translateY(6px); } 15%, 75% { opacity: 1; transform: none; } 100% { opacity: 0; transform: translateY(-6px); } }
+
+/* Barre de lecture : un fin trait dégradé suit le défilement de la page */
+.progression-lecture { position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 90; pointer-events: none; transform-origin: 0 50%; transform: scaleX(0);
+  background: linear-gradient(90deg, #04BEE5, #0DC88D, #1AD934); }
+
+/* Sections douces : halos de couleur qui dérivent très lentement en fond */
+.bloc-doux { position: relative; overflow: hidden; isolation: isolate; }
+.bloc-doux::before, .bloc-doux::after { content: ""; position: absolute; z-index: -1; width: 520px; height: 520px; border-radius: 50%; filter: blur(70px); opacity: .16; pointer-events: none; }
+.bloc-doux::before { top: -180px; left: -160px; background: #04BEE5; animation: cl-halo 18s ease-in-out infinite alternate; }
+.bloc-doux::after { bottom: -200px; right: -160px; background: #1AD934; animation: cl-halo 22s ease-in-out infinite alternate-reverse; }
+@keyframes cl-halo { from { transform: translate(0, 0) scale(1); } to { transform: translate(60px, 40px) scale(1.15); } }
+
+/* Mode Cleaneur (Pro) : grille fine et halo vert, cartes à liseré lumineux, chiffres en vert néon */
+body.mode-cleaneur { background:
+  radial-gradient(900px 420px at 85% -10%, rgba(26, 217, 52, .12), transparent 70%),
+  radial-gradient(700px 380px at -10% 30%, rgba(13, 200, 141, .08), transparent 70%),
+  linear-gradient(rgba(181, 201, 199, .035) 1px, transparent 1px) 0 0 / 32px 32px,
+  linear-gradient(90deg, rgba(181, 201, 199, .035) 1px, transparent 1px) 0 0 / 32px 32px,
+  #0E1A1C; background-attachment: fixed; }
+body.mode-cleaneur .carte { background: linear-gradient(180deg, rgba(255, 255, 255, .03), transparent 40%), var(--surface); border-color: rgba(63, 224, 122, .14); }
+body.mode-cleaneur :where(.chiffres b, .bandeau-chiffres b, .tableau-chiffres b, .stat b) { color: #3FE07A; text-shadow: 0 0 22px rgba(26, 217, 52, .35); }
+body.mode-cleaneur .titre-section .surtitre { color: #3FE07A; background: rgba(26, 217, 52, .12); }
+body.mode-cleaneur .bloc-doux::before { background: #0DC88D; opacity: .10; }
+body.mode-cleaneur .bloc-doux::after { background: #1AD934; opacity: .10; }
+body.mode-cleaneur .progression-lecture { background: linear-gradient(90deg, #0DC88D, #1AD934); box-shadow: 0 0 12px rgba(26, 217, 52, .6); }
+
+/* Pastille de bascule : entrée en glissant + petit rebond de l'icône au survol */
+.pastille-mode { animation: cl-pastille .5s cubic-bezier(.2, .8, .2, 1) both; }
+.pastille-mode span { display: inline-block; transition: transform .35s cubic-bezier(.2, .8, .2, 1); }
+.pastille-mode:hover span { transform: rotate(180deg); }
+@keyframes cl-pastille { from { opacity: 0; transform: translate(-50%, 24px); } to { opacity: 1; transform: translate(-50%, 0); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .degrade-texte, .bloc-doux::before, .bloc-doux::after, .prix-change, .prix-delta, .pastille-mode { animation: none !important; }
+  .bouton::after { display: none; }
+  :where(a.carte, button.carte, .espace-carte, .carte.prestation, .choix-cleaneur-carte):hover, .bouton:hover { transform: none; }
+}

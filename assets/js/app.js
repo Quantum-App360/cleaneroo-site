@@ -115,7 +115,7 @@ export function brancherInscription(racine) {
   };
 }
 
-const titreSection = (titre, sous = "", surtitre = "") => `<div class="titre-section">${surtitre ? `<span class="surtitre">${surtitre}</span>` : ""}<h2>${titre}</h2>${sous ? `<p class="muet">${sous}</p>` : ""}</div>`;
+const titreSection = (titre, sous = "", surtitre = "") => `<div class="titre-section revele">${surtitre ? `<span class="surtitre">${surtitre}</span>` : ""}<h2>${titre}</h2>${sous ? `<p class="muet">${sous}</p>` : ""}</div>`;
 
 /* ------------------------------------------------------------------ Pages */
 
@@ -729,6 +729,22 @@ async function afficherPage() {
   brancherFormulesCleaneur(vue);
   window.scrollTo(0, 0);
 }
+
+/** Barre de lecture (19/11/2026) : un fin trait dégradé suit le défilement de la page. */
+const lecture = document.createElement("div");
+lecture.className = "progression-lecture";
+lecture.setAttribute("aria-hidden", "true");
+document.body.append(lecture);
+let lectureEnAttente = false;
+addEventListener("scroll", () => {
+  if (lectureEnAttente) return;
+  lectureEnAttente = true;
+  requestAnimationFrame(() => {
+    const max = document.documentElement.scrollHeight - innerHeight;
+    lecture.style.transform = `scaleX(${max > 0 ? Math.min(1, scrollY / max) : 0})`;
+    lectureEnAttente = false;
+  });
+}, { passive: true });
 
 /** Transition entre les pages : barre de progression en dégradé en haut, puis la page apparaît en fondu. */
 const barre = document.createElement("div");
