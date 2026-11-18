@@ -594,6 +594,14 @@ export const INCLUS_LOCATION = [
   ["grand", ["Vitres intérieures et extérieures accessibles", "Intérieur des placards", "Portes et luminaires", "Hotte et filtres",
     "Intérieur de l'électroménager", "Matelas aspirés", "Derrière les meubles"]],
 ];
+/** Toutes les tâches du forfait d'une formule (celles des formules précédentes comprises), pour la liste du Cleaneur. */
+export const inclusCumuleLocation = formuleId => {
+  const i = INCLUS_LOCATION.findIndex(([id]) => id === formuleId);
+  return INCLUS_LOCATION.slice(0, i < 0 ? 1 : i + 1).flatMap(([, t]) => t);
+};
+/** Pièce où se fait une tâche du forfait (chambre, salle de bain, cuisine ; sinon le séjour, « toutes pièces »). */
+export const pieceDuForfait = t => /lit|matelas/i.test(t) ? "chambre" : /cheveux|robinetterie/i.test(t) ? "sdb"
+  : /four|micro|réfrigérateur|vaisselle|hotte|électroménager|placards/i.test(t) ? "cuisine" : "sejour";
 /** Forfait d'une formule de location : { precedente: nom de la formule précédente ou "", taches: celles qu'elle ajoute }. */
 export const inclusLocation = formuleId => {
   const i = INCLUS_LOCATION.findIndex(([id]) => id === formuleId);

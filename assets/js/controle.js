@@ -1,6 +1,6 @@
 // Contrôle de fin de mission, pièce par pièce (7 novembre 2026) : pièces (ou zones) et tâches à cocher, calculées
 // à partir de la réservation (details). Même calcul dans l'appli (ControlePieces.kt) ; base : outils/base-controle.sql.
-import { RUBRIQUES, ETAPES_LOCATION } from "./catalogue.js";
+import { RUBRIQUES, ETAPES_LOCATION, ELEMENTS_TEXTILES, inclusCumuleLocation, pieceDuForfait } from "./catalogue.js";
 
 /** Tâches de base de chaque type de pièce (toujours faites, même sans option). */
 const BASE = {
@@ -42,6 +42,19 @@ export function piecesDe(rubriqueId, details = {}) {
   const r = RUBRIQUES.find(x => x.id === rubriqueId);
   const choisies = (r?.taches || []).filter(t => (details.taches || []).includes(t.id));
   const perso = (details.tachesPerso || []).map((t, i) => ({ id: `perso${i}`, nom: String(t).slice(0, 160) }));
+  // Hôtels et campings (18 novembre 2026, point 5 de l'app iPhone) : une pièce par type de logement de la rotation, une tâche par unité.
+  if (rubriqueId === "hospitality") {
+    const lignes = (details.panier || []).filter(l => (l.quantite || 0) > 0);
+    const unites = lignes.map(l => {
+      const nom = ELEMENTS_TEXTILES.find(e => e.id === l.elementId)?.nom || "Logement", n = Math.min(l.quantite, 80);
+      return { id: `u_${l.elementId}${l.tailleId ? `_${l.tailleId}` : ""}`.slice(0, 60), nom: `${nom} × ${l.quantite}`,
+        taches: Array.from({ length: n }, (_, i) => ({ id: `n${i + 1}`, nom: `${nom} n° ${i + 1}` })) };
+    });
+    const liste = unites.length ? unites : [{ id: "etablissement", nom: "Établissement", taches: [{ id: "base", nom: r?.inclus || "Rotation" }] }];
+    choisies.forEach(t => liste[0].taches.push({ id: t.id, nom: t.nom }));
+    liste[0].taches.push(...perso);
+    return liste;
+  }
   if (ZONES[rubriqueId]) {
     const zones = ZONES[rubriqueId].map(([id, nom, base]) => ({ id, nom, taches: base.map(([tid, tnom]) => ({ id: tid, nom: tnom })) }));
     const sanitaires = zones.find(z => z.id === "sanitaires");
@@ -64,6 +77,18 @@ export function piecesDe(rubriqueId, details = {}) {
   // Location saisonnière : étapes choisies, faites dans chaque chambre / salle de bain concernée
   if (rubriqueId === "rental") ETAPES_LOCATION.filter(e => (details.etapesChoisies || []).includes(e.id))
     .forEach(e => ajouter(e.piece === "entree" ? "entree" : e.piece, { id: `e_${e.id}`, nom: e.nom }, true));
+  // Location saisonnière : tâches du forfait de la formule (court séjour → grand ménage), chacune dans sa pièce.
+  if (rubriqueId === "rental") inclusCumuleLocation(details.formuleId).forEach((t, i) => {
+    const p = pieceDuForfait(t);
+    ajouter(p, { id: `f${i}`, nom: t }, p === "chambre" || p === "sdb");
+  });
+  // Linge : draps (chambres), serviettes et tapis (salles de bain), torchons (cuisine) ; sur place ou en laverie.
+  const laverie = details.drapsLieu === "laverie";
+  if (details.lavageDraps) ajouter("chambre", { id: "l_draps", nom: laverie ? "Draps portés à la laverie, lavés et rapportés" : "Draps lavés et séchés sur place" }, true);
+  if (details.lavageLinge) {
+    ajouter("sdb", { id: "l_serviettes", nom: laverie ? "Serviettes et tapis lavés en laverie et remis en place" : "Serviettes et tapis lavés, séchés et remis en place" }, true);
+    ajouter("cuisine", { id: "l_torchons", nom: "Torchons lavés et remis en place" });
+  }
   (details.etapesPerso || []).forEach((t, i) => ajouter("entree", { id: `ep${i}`, nom: String(typeof t === "string" ? t : t?.texte || "").slice(0, 160) }));
   perso.forEach(t => ajouter("sejour", t));
   return pieces.map(({ type, ...p }) => p);
