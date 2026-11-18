@@ -16,6 +16,7 @@ import { blocInvitationsPro, brancherInvitationsPro, blocCodeInvitation, branche
 import { RUBRIQUES, rubrique, TYPES_LOGEMENT, CATEGORIES_BIEN, categorieBien, typesDeCategorie } from "./catalogue.js";
 import { euros, dateLongue, heure, REGLES, sirenSiretValide } from "./regles.js";
 import { icone } from "./icones.js";
+import { VITRINES, vitrineEspace } from "./vitrine-espaces.js";
 import { traduire, tr } from "./langue.js";
 import {
   supabase, session, creerCompte, connecter, deconnecter, mdpOublie, nouveauMdp, monProfil, majProfil, ajouterStatut, ecouterDemandes,
@@ -80,7 +81,7 @@ export async function pageCompte(vue, param) {
   const s = await session();
   if (location.hash !== ici) return;
   if (param === "mdp" && s) return ecranNouveauMdp(vue);
-  if (!s) return ecranConnexion(vue, ["creer", "particulier", "entreprise", "cleaneur", "pro", "hotellerie"].includes(param) ? "creer" : "connexion", "", false, ["cleaneur", "pro", "entreprise"].includes(param) ? param : "client");
+  if (!s) return ecranConnexion(vue, ["creer", "particulier", "entreprise", "cleaneur", "pro", "hotellerie"].includes(param) ? "creer" : "connexion", "", false, VITRINES[param] ? param : "client");
   const [p, biens, demandes, parrain] = await Promise.all([monProfil().catch(() => null), synchroniserBiens().catch(() => []), demandesDuCompte().catch(() => []), monParrainage().catch(() => null)]);
   if (location.hash !== ici) return;
   if (!p) { vue.innerHTML = `<section class="bloc"><div class="etroit">${titre("Mon espace")}<p class="erreur">${tr("Le service est momentanément indisponible. Réessayez dans quelques minutes.")}</p></div></section>`; traduire(vue); return; }
@@ -96,7 +97,9 @@ export async function pageCompte(vue, param) {
   if (!admin && onglet !== p.espace) { p.espace = onglet; majProfil({ espace: onglet }).then(() => majLienCompte()).catch(() => null); }
   const docs = cleaneur && onglet === "cleaneur" ? await mesDocuments().catch(() => []) : [];
   if (location.hash !== ici) return;
-  const contenu = onglet === "hotellerie" ? ongletHotellerie(p, biens.filter(l => categorieBien(l) === "logement")) + `<details class="carte" style="margin-top:14px"><summary>Mes informations</summary>${formulaireProfil(p, false)}</details>`
+  const demande = !admin && voulu && !statuts.includes(voulu) ? voulu : null;
+  const contenu = demande ? vitrineEspace(demande) + `<button type="button" class="bouton plein" data-ajouter-statut="${demande}" style="margin-top:14px">Ajouter cet espace à mon compte</button>`
+    : onglet === "hotellerie" ? ongletHotellerie(p, biens.filter(l => categorieBien(l) === "logement")) + `<details class="carte" style="margin-top:14px"><summary>Mes informations</summary>${formulaireProfil(p, false)}</details>`
     : onglet === "entreprise" ? ongletEntreprise(p, biens, demandes) + `<details class="carte" style="margin-top:14px"><summary>Mes informations</summary>${formulaireProfil(p, false)}</details>`
     : onglet === "pro" ? ongletPro(p, biens.filter(l => categorieBien(l) === "logement")) + `<h2 class="titre-section">${icone("paiement", { tuile: true })}${tr("Mon abonnement")}</h2>${blocAbonnementPro(p, biens)}` + blocInvitationsPro()
       + `<details class="carte" style="margin-top:14px"><summary>Mes informations</summary>${formulaireProfil(p, false)}</details>`
@@ -162,8 +165,9 @@ export async function pageCompte(vue, param) {
     // Entreprise ou Conciergerie : la société est demandée, sauf si elle est déjà renseignée.
     if ((x === "pro" || x === "entreprise" || x === "hotellerie") && !(p.societe && sirenSiretValide(p.siret_societe || ""))) {
       const fa = vue.querySelector("#form-ajout-pro"); fa.dataset.statut = x; fa.classList.remove("masque");
-      fa.querySelector("[type=submit]").textContent = tr(x === "entreprise" ? "Ajouter l'espace Entreprise" : "Ajouter l'espace Conciergerie");
-      fa.querySelector("[name=societe]").focus(); return; }
+      fa.querySelector("[type=submit]").textContent = tr(x === "entreprise" ? "Ajouter l'espace Entreprise" : x === "hotellerie" ? "Ajouter l'espace Hôtels et campings" : "Ajouter l'espace Conciergerie");
+      const d = vue.querySelector("#ajout-espace"); if (d) d.open = true;
+      fa.scrollIntoView({ behavior: "smooth", block: "center" }); fa.querySelector("[name=societe]").focus(); return; }
     const noms = { cleaneur: "Cleaneur", particulier: "Particulier", entreprise: "Entreprise", pro: "Conciergerie", hotellerie: "Hôtels et campings" };
     if (!confirm(`${tr("Ajouter l'espace")} ${tr(noms[x])} ${tr("à votre compte ? Vos autres espaces sont conservés.")}`)) return;
     ajouter(x, b);
@@ -180,7 +184,7 @@ export async function pageCompte(vue, param) {
   // Espace demandé mais pas encore coché (ex. « Devenir Cleaneur ») : on propose de l'ajouter.
   if (voulu && !statuts.includes(voulu)) {
     const d = vue.querySelector("#ajout-espace");
-    if (d) { d.open = true; setTimeout(() => { d.scrollIntoView({ behavior: "smooth", block: "center" }); vue.querySelector(`[data-ajouter-statut="${voulu}"]`)?.click(); }, 300); }
+    if (d) d.open = true;
   }
   vue.querySelector("#devenir-cleaneur")?.addEventListener("click", e => ajouter("cleaneur", e.target));
   vue.querySelector("#deconnexion-compte").onclick = async () => { await deconnecter(); majLienCompte(); location.hash = "#/compte"; pageCompte(vue); };
@@ -208,7 +212,7 @@ function memoriserCoordonnees(p) {
 function ecranConnexion(vue, mode, message = "", ok = false, roleDefaut = "client") {
   const creer = mode === "creer";
   vue.innerHTML = `<section class="bloc"><div class="etroit">
-    ${titre("Mon espace", "Préparez dès maintenant votre espace : profil, biens, demandes ou dossier Cleaneur. " + OUVERTURE)}
+    ${VITRINES[roleDefaut] ? vitrineEspace(roleDefaut) + `<p class="petit" style="margin:4px 0 12px">${OUVERTURE}</p>` : titre("Mon espace", "Préparez dès maintenant votre espace : profil, biens, demandes ou dossier Cleaneur. " + OUVERTURE)}
     <div class="segments" style="margin:6px 0 14px"><button type="button" data-mode="connexion" class="${creer ? "" : "choisi"}">Se connecter</button>
       <button type="button" data-mode="creer" class="${creer ? "choisi" : ""}">Créer un compte</button></div>
     <form class="carte" id="form-compte" novalidate>
@@ -227,7 +231,7 @@ function ecranConnexion(vue, mode, message = "", ok = false, roleDefaut = "clien
       ${creer ? `<label class="case"><input type="checkbox" name="cgu"> <span>J'accepte les <a href="#/conditions">conditions d'utilisation</a> et la <a href="#/confidentialite">politique de confidentialité</a>.</span></label>` : ""}
       ${message ? `<p class="${ok ? "note" : "erreur"}" style="margin:10px 0 0">${message}</p>` : ""}
       <p class="erreur" id="erreur-compte" style="margin:10px 0 0"></p>
-      <button class="bouton plein" type="submit" style="margin-top:12px">${creer ? "Créer mon compte" : "Se connecter"}</button>
+      <button class="bouton plein" type="submit" style="margin-top:12px">${creer ? (VITRINES[roleDefaut] ? `${tr("Créer mon espace")} ${tr(NOMS_STATUTS[roleDefaut][0])}` : "Créer mon compte") : "Se connecter"}</button>
       ${creer ? "" : `<button class="lien-bouton" type="button" id="mdp-oublie">Mot de passe oublié ?</button>`}
       ${REGLES.CONNEXION_GOOGLE ? `<button class="bouton secondaire plein" type="button" id="connexion-google" style="margin-top:10px">Continuer avec Google</button>` : ""}
     </form></div></section>`;

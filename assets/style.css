@@ -2175,3 +2175,11 @@ body.salarie #carte-missions, body.salarie .legende-carte { display: none !impor
 
 .case.desactive { opacity: .55; }
 .formations-salarie { display: flex; flex-wrap: wrap; gap: 4px 6px; align-items: center; margin: 4px 0 0; }
+
+/* Présentation d'un espace (rubriques du haut) : accroche et fonctionnalités */
+.vitrine-espace { margin-bottom: 18px; }
+.vitrine-espace .titre-vitrine { font-size: clamp(24px, 4.2vw, 34px); line-height: 1.2; margin: 8px 0 16px; }
+.vitrine-points { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
+.vitrine-point { display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; margin: 0; }
+.vitrine-point b { display: block; margin-bottom: 2px; }
+.vitrine-point .petit { margin: 0; }
