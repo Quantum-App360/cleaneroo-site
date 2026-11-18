@@ -2212,30 +2212,32 @@ body.mode-cleaneur .barre-espaces .bascule-mode { background: rgba(255,255,255,.
 /* Transition « mousse et raclette » (mode.js) */
 .mousse-mode { position: fixed; inset: 0; z-index: 9999; pointer-events: none; overflow: hidden; --m1: #E3F6FD; --m2: #B9E6F7; --lame: #1F6F8B; }
 .mousse-mode.vers-cleaneur { --m1: #E9F8E1; --m2: #BFE8A8; --lame: #2E7D32; }
-.mousse { position: absolute; inset: 0; animation: mousse-fond .45s .25s ease forwards; background: transparent; }
-.mousse i { position: absolute; border-radius: 50%; transform: scale(0);
+.mousse { position: absolute; inset: 0; }
+.bande-mousse { position: absolute; left: 0; right: 0; overflow: hidden; animation: mousse-fond .45s .25s ease forwards; }
+.bande-mousse i { position: absolute; border-radius: 50%; transform: scale(0);
   background: radial-gradient(circle at 32% 28%, #fff 0 9%, rgba(255,255,255,.85) 10% 18%, transparent 19%), radial-gradient(circle at 50% 50%, var(--m1) 0 58%, var(--m2) 72%, rgba(255,255,255,.95) 74%, var(--m1) 80%);
   box-shadow: inset -6px -8px 18px rgba(255,255,255,.7), 0 2px 10px rgba(0,0,0,.06); animation: bulle .42s cubic-bezier(.3,1.6,.5,1) forwards; }
 .mousse-titre { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%) scale(.6); opacity: 0; z-index: 2; padding: 14px 26px; border-radius: 999px;
   background: rgba(255,255,255,.92); color: var(--lame); font-size: clamp(20px, 4vw, 30px); letter-spacing: .14em; text-transform: uppercase; box-shadow: 0 10px 30px rgba(0,0,0,.12);
   animation: titre-mousse .5s .45s ease forwards; }
-.mousse-mode.essuyage .mousse { animation: mousse-fond 0s forwards, essuyer .75s cubic-bezier(.55,.05,.35,1) forwards; }
-.raclette { position: absolute; top: -10%; height: 120%; left: -60px; width: 46px; transform: rotate(-6deg); opacity: 0; }
-.raclette .lame { position: absolute; left: 18px; top: 0; bottom: 0; width: 12px; border-radius: 6px; background: linear-gradient(90deg, #111, var(--lame) 45%, #222); box-shadow: 4px 0 14px rgba(0,0,0,.25); }
-.raclette .manche { position: absolute; left: -2px; top: 46%; width: 34px; height: 9%; border-radius: 8px; background: linear-gradient(90deg, #cfd8dc, #fff, #b0bec5); box-shadow: 0 4px 10px rgba(0,0,0,.2); }
-.mousse-mode.essuyage .raclette { opacity: 1; animation: raclette-passe .75s cubic-bezier(.55,.05,.35,1) forwards; }
+.mousse-titre.parti { animation: titre-parti .2s ease forwards; }
+/* Raclette de laveur de vitres vue de face : lame en caoutchouc (hauteur d'une bande), tige, poignée */
+.raclette { position: absolute; left: 0; top: 0; width: 30px; transform: translate(-200px, 0); z-index: 3; }
+.raclette .lame { position: absolute; right: 0; top: 7%; bottom: 7%; width: 13px; border-radius: 6px;
+  background: linear-gradient(90deg, #9aa7ad, #eceff1 40%, #b0bec5 68%, #263238 70%, #111); box-shadow: 3px 0 10px rgba(0,0,0,.25); }
+.raclette .tige { position: absolute; right: 11px; top: calc(50% - 4px); width: 48px; height: 8px; border-radius: 4px; background: linear-gradient(#cfd8dc, #90a4ae); }
+.raclette .poignee { position: absolute; right: 54px; top: calc(50% - 10px); width: 58px; height: 20px; border-radius: 10px; background: linear-gradient(var(--lame), #0b3d2a); box-shadow: 0 3px 8px rgba(0,0,0,.25); }
 .mousse-mode u { position: absolute; width: 7px; height: 11px; border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; background: radial-gradient(circle at 35% 30%, #fff, rgba(173,216,230,.55)); opacity: 0;
   box-shadow: 0 1px 3px rgba(0,0,0,.15); animation: goutte .9s ease-in forwards; }
 .mousse-mode s { position: absolute; width: var(--t); height: var(--t); opacity: 0; transform: scale(0) rotate(0);
   background: radial-gradient(circle, #fff 0 12%, transparent 13%), conic-gradient(from 45deg, transparent 0 10%, #fff 12% 13%, transparent 15% 35%, #fff 37% 38%, transparent 40% 60%, #fff 62% 63%, transparent 65% 85%, #fff 87% 88%, transparent 90%);
   filter: drop-shadow(0 0 6px rgba(255,255,255,.9)) drop-shadow(0 0 2px var(--lame)); animation: etincelle .6s ease forwards; }
 .mousse-mode .reflet { position: absolute; inset: -20%; opacity: 0; background: linear-gradient(115deg, transparent 40%, rgba(255,255,255,.55) 48%, rgba(255,255,255,.1) 54%, transparent 60%);
-  animation: reflet .7s 1.45s ease-out forwards; }
+  animation: reflet .7s 2.15s ease-out forwards; }
+@keyframes titre-parti { from { opacity: 1; transform: translate(-50%, -50%) scale(1); } to { opacity: 0; transform: translate(-50%, -50%) scale(.8); } }
 @keyframes bulle { to { transform: scale(1); } }
 @keyframes mousse-fond { to { background: var(--m1); } }
 @keyframes titre-mousse { to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
-@keyframes essuyer { from { clip-path: inset(0 0 0 0); } to { clip-path: inset(0 0 0 100%); } }
-@keyframes raclette-passe { from { left: -60px; } to { left: calc(100% + 20px); } }
 @keyframes goutte { 0% { opacity: 0; transform: translateY(0); } 20% { opacity: .9; } 100% { opacity: 0; transform: translateY(70px); } }
 @keyframes etincelle { 0% { opacity: 0; transform: scale(0) rotate(0); } 50% { opacity: 1; transform: scale(1.1) rotate(45deg); } 100% { opacity: 0; transform: scale(.4) rotate(90deg); } }
 @keyframes reflet { 0% { opacity: 1; transform: translateX(-60%); } 100% { opacity: 0; transform: translateX(60%); } }
