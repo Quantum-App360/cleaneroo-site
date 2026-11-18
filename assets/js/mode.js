@@ -22,17 +22,31 @@ export function boutonMode() {
     <span class="interrupteur" aria-hidden="true"><i></i></span><span>${tr(c ? "Retour mode client" : "Mode Cleaneur")}</span></button>`;
 }
 
-/** Animation de passage d'un mode à l'autre : un voile coloré balaie l'écran, l'interface change dessous. */
+/** Transition « mousse et raclette » (18 novembre 2026) : des bulles de savon gonflent et couvrent l'écran,
+ * l'interface change sous la mousse, une raclette essuie l'écran de gauche à droite en laissant des gouttes,
+ * puis des étincelles de propreté brillent. Mousse verte vers le mode Cleaneur, bleue vers le mode client (≈ 2 s). */
 function animer(versCleaneur, puis) {
   if (matchMedia("(prefers-reduced-motion: reduce)").matches) { puis(); return; }
+  const l = innerWidth, h = innerHeight, bulles = [], gouttes = [], etincelles = [];
+  // Bulles en quinconce, assez grosses et nombreuses pour couvrir tout l'écran
+  const pas = Math.max(70, Math.min(l, h) / 6);
+  for (let y = -pas / 2; y < h + pas; y += pas * 0.8)
+    for (let x = -pas / 2 + ((y / pas) % 2 ? pas / 2 : 0); x < l + pas; x += pas * 0.85) {
+      const t = pas * (1.1 + Math.random() * 0.7);
+      bulles.push(`<i style="left:${x - t / 2 + (Math.random() - .5) * pas * .4}px;top:${y - t / 2}px;width:${t}px;height:${t}px;animation-delay:${(Math.round((h - y) / h * 260 + Math.random() * 160))}ms"></i>`);
+    }
+  for (let i = 0; i < 14; i++) gouttes.push(`<u style="left:${8 + Math.random() * 84}%;top:${10 + Math.random() * 70}%;animation-delay:${900 + i * 40}ms"></u>`);
+  for (let i = 0; i < 7; i++) etincelles.push(`<s style="left:${8 + Math.random() * 84}%;top:${10 + Math.random() * 75}%;animation-delay:${1350 + i * 90}ms;--t:${18 + Math.random() * 22}px"></s>`);
   const v = document.createElement("div");
-  v.className = `voile-mode ${versCleaneur ? "vers-cleaneur" : "vers-client"}`;
+  v.className = `mousse-mode ${versCleaneur ? "vers-cleaneur" : "vers-client"}`;
   v.setAttribute("aria-hidden", "true");
-  v.innerHTML = `<div class="voile-contenu"><img src="/assets/img/logo-marque.svg" alt="" width="84" height="84"><b>${tr(versCleaneur ? "Mode Cleaneur" : "Mode client")}</b></div>`;
+  v.innerHTML = `<div class="mousse">${bulles.join("")}<b class="mousse-titre">${tr(versCleaneur ? "Mode Cleaneur" : "Mode client")}</b></div>
+    <div class="raclette"><span class="manche"></span><span class="lame"></span></div>${gouttes.join("")}${etincelles.join("")}<div class="reflet"></div>`;
   document.body.append(v);
-  setTimeout(puis, 520);                       // l'interface change pendant que le voile couvre l'écran
-  setTimeout(() => v.classList.add("sortie"), 900);
-  setTimeout(() => v.remove(), 1500);
+  setTimeout(puis, 620);                        // l'interface change pendant que la mousse couvre l'écran
+  setTimeout(() => v.classList.add("essuyage"), 760);
+  setTimeout(() => v.remove(), 2300);
+  setTimeout(() => v.isConnected && v.remove(), 4000);   // jamais plus de 4 s
 }
 
 /** Bascule : mode Cleaneur → page Cleaneur (choix ou son espace) ; mode client → accueil. */
