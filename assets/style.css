@@ -2183,3 +2183,39 @@ body.salarie #carte-missions, body.salarie .legende-carte { display: none !impor
 .vitrine-point { display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; margin: 0; }
 .vitrine-point b { display: block; margin-bottom: 2px; }
 .vitrine-point .petit { margin: 0; }
+
+/* ---- Deux interfaces : mode client / mode Cleaneur (mode.js, 18 novembre 2026) ---- */
+.bascule-mode { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 4px 14px 4px 6px; border-radius: 999px; border: 1px solid var(--separateur);
+  background: var(--surface); color: var(--texte); font: inherit; font-weight: 700; font-size: 14px; cursor: pointer; white-space: nowrap; }
+.bascule-mode .interrupteur { width: 38px; height: 22px; border-radius: 999px; background: var(--creux); position: relative; transition: background .25s; flex: none; }
+.bascule-mode .interrupteur i { position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.25); transition: transform .25s; }
+.bascule-mode.actif .interrupteur { background: linear-gradient(90deg, #45B49C, #5BB431); }
+.bascule-mode.actif .interrupteur i { transform: translateX(16px); }
+.barre-espaces .conteneur { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; }
+.barre-espaces .onglets-compte { flex: 1 1 520px; }
+.barre-espaces .bascule-mode { margin: 4px 0 8px; }
+.entete .actions-compte .bascule-mode { margin-right: 4px; }
+@media (max-width: 900px) { .entete .actions-compte .bascule-mode { display: none; } .nav .nav-compte .bascule-mode { display: inline-flex; } }
+/* Mode Cleaneur : une interface à part (en-tête sombre, accent vert) */
+body.mode-cleaneur .entete { background: #0F2A2D; }
+body.mode-cleaneur .entete .marque-nom, body.mode-cleaneur .entete .nav a, body.mode-cleaneur .entete .lien-connexion { color: #E8F5F0; }
+body.mode-cleaneur .entete .marque-nom::after { content: " PRO"; font-size: .62em; letter-spacing: .12em; color: #7FD3A6; vertical-align: super; }
+body.mode-cleaneur .entete .bascule-mode { background: rgba(255,255,255,.08); color: #fff; border-color: rgba(255,255,255,.2); }
+body.mode-cleaneur .barre-espaces { background: #0F2A2D; border-color: transparent; }
+body.mode-cleaneur .barre-espaces .bascule-mode { background: rgba(255,255,255,.08); color: #fff; border-color: rgba(255,255,255,.2); }
+/* Choix du mode Cleaneur : indépendant ou société */
+.choix-cleaneur { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin: 0 0 22px; }
+.choix-cleaneur-carte { display: flex; align-items: center; gap: 14px; text-decoration: none; color: inherit; padding: 18px; transition: transform .15s, box-shadow .15s; }
+.choix-cleaneur-carte:hover { transform: translateY(-2px); box-shadow: var(--ombre); }
+.choix-cleaneur-carte b { display: block; font-size: 17px; }
+.choix-cleaneur-carte .petit { margin: 4px 0 0; }
+/* Animation de bascule : un voile coloré balaie l'écran */
+.voile-mode { position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center; animation: voile-entree .5s cubic-bezier(.7,0,.3,1) forwards; }
+.voile-mode.vers-cleaneur { background: linear-gradient(120deg, #0F2A2D, #1E5C4A 55%, #5BB431); clip-path: circle(0 at 100% 0); }
+.voile-mode.vers-client { background: linear-gradient(120deg, #35B4E2, #45B49C 55%, #5BB431); clip-path: circle(0 at 0 0); }
+.voile-mode.sortie { animation: voile-sortie .55s ease-in forwards; }
+.voile-contenu { display: grid; justify-items: center; gap: 12px; color: #fff; font-size: 24px; letter-spacing: .14em; text-transform: uppercase; animation: voile-texte .9s ease both; }
+.voile-contenu img { background: #fff; border-radius: 24px; padding: 8px; box-shadow: 0 12px 30px rgba(0,0,0,.25); }
+@keyframes voile-entree { to { clip-path: circle(150% at 50% 50%); } }
+@keyframes voile-sortie { from { clip-path: circle(150% at 50% 50%); opacity: 1; } to { clip-path: circle(150% at 50% 50%); opacity: 0; } }
+@keyframes voile-texte { 0% { opacity: 0; transform: scale(.85); } 40%, 100% { opacity: 1; transform: none; } }

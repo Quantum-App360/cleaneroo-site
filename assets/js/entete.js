@@ -3,6 +3,7 @@
 // Le dernier profil connu est gardé sur l'appareil : l'en-tête s'affiche tout de suite, sans clignoter.
 import { tr, traduire } from "./langue.js";
 import { majCloche } from "./notifications.js";
+import { modeCleaneur, fixerMode, boutonMode } from "./mode.js";
 
 const CLE = "cleaneroo-moi";
 /** Pages fixes (villes, calculateur…) : les liens repartent vers l'accueil du site. */
@@ -26,7 +27,9 @@ export function typeEspace(p) {
 }
 
 const LIENS = {
-  visiteur: [["#/prestations", "Prestations"], ["#/estimer", "Estimer mon prix"], ["#/comment-ca-marche", "Comment ça marche"], ["#/devenir-cleaneur", "Devenir Cleaneur"]],
+  visiteur: [["#/prestations", "Prestations"], ["#/estimer", "Estimer mon prix"], ["#/comment-ca-marche", "Comment ça marche"]],
+  // Visiteur en mode Cleaneur : l'interface ne parle que du métier de Cleaneur.
+  visiteurCleaneur: [["#/mode-cleaneur", "Devenir Cleaneur"], ["#/comment-ca-marche", "Comment ça marche"]],
   // L'essentiel, selon l'espace ouvert ; on change d'espace depuis le bouton du compte (à droite).
   particulier: [["#/tableau", "Mon suivi"], ["#/mes-demandes", "Mes prestations"], ["#/mes-biens", "Mes biens"]],
   entreprise: [["#/compte/entreprise", "Mon espace"], ["#/mes-demandes", "Mes prestations"], ["#/prestations", "Prestations"]],
@@ -41,25 +44,32 @@ const NOM_ESPACE = { particulier: "Espace Particulier", entreprise: "Espace Entr
 export function rendreEntete(p) {
   const nav = document.querySelector(".entete .nav"), actions = document.querySelector(".entete .actions-compte");
   if (!nav || !actions) return;
-  const type = typeEspace(p), b = base();
+  let type = typeEspace(p);
+  const b = base();
+  // Mode Cleaneur / mode client (mode.js) : premier passage → déduit de l'espace ouvert.
+  try { if (!localStorage.getItem("cleaneroo-mode") && type === "cleaneur") fixerMode(true); } catch { /* rien */ }
+  const cleaneur = modeCleaneur();
+  document.body.classList.toggle("mode-cleaneur", cleaneur);
+  if (type === "cleaneur" && !cleaneur) type = (p?.statuts || []).find(x => ["particulier", "entreprise", "pro", "hotellerie"].includes(x)) || "particulier";
+  else if (cleaneur && type !== "visiteur" && type !== "admin") type = "cleaneur";
   const lien = ([href, nom]) => `<a href="${href.startsWith("#") ? b + href : (b ? "/" : "") + href}">${nom}</a>`;
   const initiale = (p?.prenom || "?").trim().charAt(0).toUpperCase() || "?";
   const html = type === "visiteur"
-    ? `<a class="lien-connexion" href="${b}#/compte">Se connecter</a><a class="bouton bouton-entete" href="${b}#/compte/creer">Créer mon espace</a>`
+    ? `${boutonMode()}<a class="lien-connexion" href="${b}#/compte">Se connecter</a><a class="bouton bouton-entete" href="${b}${cleaneur ? "#/compte/cleaneur" : "#/compte/creer"}">Créer mon espace</a>`
     : `${["particulier", "entreprise", "pro", "hotellerie"].includes(type) ? `<a class="bouton bouton-entete" href="${b}#/reserver${type === "pro" ? "/rental" : type === "entreprise" ? "/office" : type === "hotellerie" ? "/hospitality" : ""}">Réserver</a>` : ""}
-       <a class="cloche" href="${b}#/messages" title="${tr("Messages")}" aria-label="${tr("Messages")}">💬</a>
+       ${type !== "admin" ? boutonMode() : ""}<a class="cloche" href="${b}#/messages" title="${tr("Messages")}" aria-label="${tr("Messages")}">💬</a>
        <a class="cloche" href="${b}#/notifications" title="${tr("Notifications")}" aria-label="${tr("Notifications")}">🔔<span class="pastille-cloche" hidden></span></a>
        <a class="puce-compte" href="${b}#/compte" title="${tr("Mon espace")}"><span class="avatar">${initiale}</span><span class="qui"><b>${p.prenom || tr("Mon espace")}</b><small>${NOM_ESPACE[type]}</small></span></a>`;
   actions.innerHTML = html;
   // Téléphone : le panneau du menu reprend les liens puis le compte.
   // Plusieurs statuts (ex. Cleaneur et Particulier) : un lien direct vers chaque autre espace.
   const autres = type === "admin" || type === "visiteur" ? [] : (p.statuts || []).filter(x => x !== type && NOM_ESPACE[x]).map(x => [`#/compte/${x}`, NOM_ESPACE[x]]);
-  nav.innerHTML = [...LIENS[type], ...autres].map(lien).join("") + `<div class="nav-compte">${html}</div>`;
+  nav.innerHTML = [...LIENS[type === "visiteur" && cleaneur ? "visiteurCleaneur" : type], ...autres].map(lien).join("") + `<div class="nav-compte">${html}</div>`;
   // Logo : une fois connecté, il ramène à son espace (et non à la page d'accueil du site, toujours accessible depuis « Mon suivi »).
   const accueil = { visiteur: "#/", particulier: "#/tableau", entreprise: "#/compte/entreprise", pro: "#/compte/pro", hotellerie: "#/compte/hotellerie", cleaneur: "#/compte/cleaneur", admin: "#/tableau" }[type] || "#/";
   document.querySelectorAll(".entete .marque").forEach(m => { m.setAttribute("href", b + accueil); m.setAttribute("aria-label", type === "visiteur" ? "Cleaneroo, accueil" : tr("Mon espace")); });
   document.body.dataset.espace = type;
-  document.body.classList.toggle("acces-cleaneur", type === "cleaneur");
+  document.body.classList.toggle("acces-cleaneur", type === "cleaneur" && cleaneur);
   traduire(nav); traduire(actions);
   marquerActif();
   if (type !== "visiteur") majCloche().catch(() => null);

@@ -3,6 +3,7 @@ import { champCodeParrain, memoriserCodeParrain } from "./parrainage.js";
 import { RUBRIQUES, RACCOURCIS_VITRINE, rubrique, TYPES_LIEU, pastille } from "./catalogue.js";
 import { traduire, traduireCatalogue, selecteurLangue, tr, langue } from "./langue.js";
 import { barreOnglets } from "./espaces.js";
+import { modeCleaneur, fixerMode, boutonMode, brancherBascule, blocChoixCleaneur } from "./mode.js";
 import { euros, duree, dateLongue, dateHeure, heure, estPrelancement, joursAvantLancement, MESSAGE_LANCEMENT, REGLES } from "./regles.js";
 
 // Langue : catalogue traduit avant tout affichage.
@@ -25,7 +26,9 @@ import { transitionVitre } from "./vitre.js";
 import { compterPage } from "./compteur.js";
 import { suivreEnDirect, demoSuivi } from "./suivi-live.js";
 import { pageCompte, pageMesPrestations, arreterEcouteDemandes, retourEmail, majLienCompte, afficherAccesCleaneur } from "./compte.js";
-import { marquerActif, profilMemorise } from "./entete.js";
+import { marquerActif, profilMemorise, rendreEntete } from "./entete.js";
+const rendreEnteteMemorise = () => rendreEntete(profilMemorise());
+window.addEventListener("cleaneroo-mode", () => rendreEnteteMemorise());
 import { icone, teinte, ICONES_RUBRIQUES, ICONES_INTERFACE } from "./icones.js";
 import { pageTableau, arreterTableau } from "./tableau.js";
 import { compteRenduPieces } from "./controle-ecran.js";
@@ -425,7 +428,7 @@ function pageDevenir() {
   return `<section class="fond-cleaneroo" style="padding:40px 0 90px">${decor([[90, 20, 90], [4, 60, 60]], [])}
     <div class="conteneur"><h1>Devenir Cleaneur</h1><div class="trait-corail"></div><p>Travaillez à votre rythme, près de chez vous.</p>
       <div class="etiquettes"><span class="etiquette">Missions proches</span><span class="etiquette">Compte rendu guidé</span><span class="etiquette">Paiement sécurisé</span></div></div></section>
-  <section class="bloc"><div class="etroit"><div data-acces-cleaneur></div>${guideVideo("cleaneur", "page-devenir")}${exempleRevenu()}${blocOffreCleaneurs()}${etapes.map((t, i) => `<div class="carte" style="margin-bottom:10px"><b style="color:var(--corail-texte)">${i + 1}.</b> ${t}</div>`).join("")}
+  <section class="bloc"><div class="etroit">${blocChoixCleaneur()}<div data-acces-cleaneur></div>${guideVideo("cleaneur", "page-devenir")}${exempleRevenu()}${blocOffreCleaneurs()}${etapes.map((t, i) => `<div class="carte" style="margin-bottom:10px"><b style="color:var(--corail-texte)">${i + 1}.</b> ${t}</div>`).join("")}
     <div style="margin-top:18px">${formulaireInscription("cleaneur", true)}</div>
   </div></section>`;
 }
@@ -561,7 +564,7 @@ function pageIcones() {
 }
 
 const ROUTES = {
-  "": pageAccueil, "vitrine": pageAccueil, "prestations": pagePrestations, "comment-ca-marche": pageComment, "devenir-cleaneur": pageDevenir,
+  "": pageAccueil, "vitrine": pageAccueil, "prestations": pagePrestations, "comment-ca-marche": pageComment, "devenir-cleaneur": pageDevenir, "mode-cleaneur": pageDevenir,
   "inscription": () => pageInscription(), "confidentialite": pageConfidentialite, "conditions": pageConditions, "mentions-legales": pageMentions,
   "icones": pageIcones,
 };
@@ -583,12 +586,22 @@ async function afficherPage() {
   if (espace) espacePrecedent = espace;
   // Accès Cleaneur : l'accueil, les prestations, l'estimation et « Mes prestations » mènent à son espace.
   if (document.body.classList.contains("acces-cleaneur") && ["", "prestations", "reserver", "estimer", "mes-demandes", "mes-biens"].includes(route)) { location.replace("#/compte/cleaneur"); return; }
+  // Deux interfaces séparées : les pages Cleaneur passent en mode Cleaneur, les pages clients en mode client (mode.js).
+  brancherBascule();
+  if (["devenir-cleaneur", "mode-cleaneur"].includes(route) || (route === "compte" && param === "cleaneur")) { if (!modeCleaneur()) { fixerMode(true); rendreEnteteMemorise(); } }
+  else if (["reserver", "estimer", "prestations", "mes-demandes", "mes-biens", "tableau"].includes(route) || (route === "compte" && ["particulier", "entreprise", "pro", "hotellerie"].includes(param))) { if (modeCleaneur()) { fixerMode(false); rendreEnteteMemorise(); } }
+  if (route === "" && modeCleaneur()) { location.replace("#/mode-cleaneur"); return; }
+  if (route === "mode-cleaneur" && (profilMemorise()?.statuts || []).includes("cleaneur")) { location.replace("#/compte/cleaneur"); return; }
   compterPage(route, param);
   marquerActif();
   // Barre des espaces sur l'accueil (entre le logo et le bandeau de lancement) : Particulier, Pro, Cleaneur.
   // Connecté : ouvre son espace (ou propose de l'ajouter) ; sinon : création du compte adéquat. Même barre dans l'appli (Vitrine.kt).
   const barre = document.getElementById("barre-espaces");
-  if (barre) { barre.innerHTML = route === "" ? `<div class="barre-espaces"><div class="conteneur">${barreOnglets(null)}</div></div>` : ""; traduire(barre); }
+  if (barre) {
+    barre.innerHTML = route === "" ? `<div class="barre-espaces"><div class="conteneur">${barreOnglets(null, ["particulier", "entreprise", "pro", "hotellerie"])}${boutonMode()}</div></div>`
+      : route === "mode-cleaneur" || route === "devenir-cleaneur" ? `<div class="barre-espaces"><div class="conteneur">${boutonMode()}</div></div>` : "";
+    traduire(barre);
+  }
   document.body.classList.toggle("sans-rappel", route === "reserver" || route === "estimer");
   // Pages qui attendent le serveur : animation de chargement pendant l'attente.
   if (route === "messages") { window.scrollTo(0, 0); vue.innerHTML = pageChargement(); traduire(vue); await pageMessages(vue, chemin.split("/").slice(1).join("/")); return; }

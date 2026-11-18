@@ -3201,6 +3201,14 @@ const T = [
   ["Sous 48 h", "Within 48 h", "Entro 48 h", "En 48 h"],
   ["Dans la semaine", "Within the week", "In settimana", "En la semana"],
   // </rubriques-textes>
+  // Mode Cleaneur / mode client (18 novembre 2026)
+  ["Mode Cleaneur", "Cleaneur mode", "Modalità Cleaneur", "Modo Cleaneur"],
+  ["Retour mode client", "Back to client mode", "Torna alla modalità cliente", "Volver al modo cliente"],
+  ["Mode client", "Client mode", "Modalità cliente", "Modo cliente"],
+  ["Je suis Cleaneur indépendant", "I'm a self-employed Cleaneur", "Sono un Cleaneur indipendente", "Soy Cleaneur autónomo"],
+  ["Auto-entrepreneur : choisissez vos missions près de chez vous, déroulé guidé, paiement après validation du client.", "Self-employed: choose jobs near you, guided workflow, payment after the client's approval.", "Lavoratore autonomo: scegli le missioni vicino a te, svolgimento guidato, pagamento dopo la convalida del cliente.", "Autónomo: elige misiones cerca de ti, desarrollo guiado, pago tras la validación del cliente."],
+  ["Je référence ma société de nettoyage", "I list my cleaning company", "Registro la mia impresa di pulizie", "Registro mi empresa de limpieza"],
+  ["Vous avez des salariés : planning, missions attribuées à vos équipes, factures au nom de la société.", "You have employees: schedule, jobs assigned to your teams, invoices in the company's name.", "Hai dipendenti: pianificazione, missioni assegnate alle tue squadre, fatture intestate all'azienda.", "Tienes empleados: planificación, misiones asignadas a tus equipos, facturas a nombre de la empresa."],
   // Paiement Stripe (18 novembre 2026)
   ["Mode test", "Test mode", "Modalità test", "Modo de prueba"],
   ["Aucun débit réel. Carte d'essai : 4242 4242 4242 4242, date future, n'importe quel code.", "No real charge. Test card: 4242 4242 4242 4242, any future date, any code.", "Nessun addebito reale. Carta di prova: 4242 4242 4242 4242, data futura, qualsiasi codice.", "Ningún cargo real. Tarjeta de prueba: 4242 4242 4242 4242, fecha futura, cualquier código."],
