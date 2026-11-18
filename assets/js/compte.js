@@ -18,6 +18,7 @@ import { euros, dateLongue, heure, REGLES, sirenSiretValide } from "./regles.js"
 import { icone } from "./icones.js";
 import { VITRINES, vitrineEspace } from "./vitrine-espaces.js";
 import { brancherBadges } from "./badge.js";
+import { editeurTemoins, brancherTemoins } from "./temoins.js";
 import { traduire, tr } from "./langue.js";
 import {
   supabase, session, creerCompte, connecter, deconnecter, mdpOublie, nouveauMdp, monProfil, majProfil, ajouterStatut, ecouterDemandes,
@@ -553,7 +554,7 @@ export async function pageMesPrestations(vue, mode = "demandes", sous = null) {
         <div class="actions-bien"><button type="button" class="bouton petit" data-reserver-bien="${esc(l.id)}">${tr("Réserver")}</button>
           <button type="button" class="lien-bouton" data-modifier-bien="${esc(l.id)}">${tr("Modifier")}</button>
           ${c === "logement" ? `<button type="button" class="lien-bouton" data-badge-bien="${esc(l.id)}">${tr("Badge « Logement contrôlé »")}</button>` : ""}
-          <button type="button" class="lien-bouton" style="color:var(--erreur)" data-retirer-bien="${esc(l.id)}">${tr("Retirer")}</button></div><div data-zone-badge></div></div></div></div>`; }).join("")
+          <button type="button" class="lien-bouton" style="color:var(--erreur)" data-retirer-bien="${esc(l.id)}">${tr("Retirer")}</button></div><div data-zone-badge></div>${c === "logement" ? editeurTemoins(l) : ""}</div></div></div>`; }).join("")
         : vide({ logement: "Aucun logement enregistré.", local: "Aucun local enregistré.", vehicule: "Aucune voiture enregistrée.", loisirs: "Aucun van, camping-car ou caravane enregistré.", bateau: "Aucun bateau enregistré." }[ongletBiens],
           "Enregistrez-le une fois : il sera proposé automatiquement pour les bonnes prestations."); })()}
     <details class="carte" style="margin-top:12px" id="ajout-bien"><summary style="cursor:pointer;font-weight:700" id="titre-form-bien">＋ ${tr({ logement: "Ajouter un logement", local: "Ajouter un local", vehicule: "Ajouter une voiture", loisirs: "Ajouter un van, un camping-car ou une caravane", bateau: "Ajouter un bateau" }[ongletBiens])}</summary>
@@ -643,6 +644,7 @@ export async function pageMesPrestations(vue, mode = "demandes", sous = null) {
   });
   vue.querySelectorAll("[data-reserver-bien]").forEach(b => b.onclick = () => reserverPourLogement(b.dataset.reserverBien));
   brancherBadges(vue);
+  brancherTemoins(vue, biens, () => pageMesPrestations(vue, "biens"));
   vue.querySelectorAll("[data-retirer-bien]").forEach(b => b.onclick = async () => {
     if (!confirm(tr("Retirer ce bien ?"))) return;
     await supprimerBien(b.dataset.retirerBien).catch(() => null);

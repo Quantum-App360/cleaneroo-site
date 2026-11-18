@@ -91,7 +91,7 @@ export async function brancherControle(boite, m, surFin) {
           ${["ecart", "erreur"].includes(c.ia_statut) ? `<div class="justif">
               ${c.ia_statut === "ecart" ? `<button type="button" class="bouton plein" data-reprendre-piece>${tr("Je reprends la pièce")}</button>
                 <p class="petit">${tr("Corrigez ce que l'IA signale avant de partir, puis reprenez la photo après : le client ne verra que le résultat final.")}</p>` : ""}
-              <details ${c.ia_statut === "erreur" || (c.justification || "").trim() ? "open" : ""}><summary class="petit">${tr("Impossible à corriger ? Justifier")}</summary>
+              <details ${c.ia_statut === "erreur" || (c.justification || "").trim() ? "open" : ""}><summary class="petit">${tr("Écart voulu ou impossible à corriger ? Valider avec un commentaire")}</summary>
               <label class="champ">${tr("Justification (visible par le client)")}
               <textarea maxlength="600" rows="2" data-justif placeholder="${esc(tr("Ex. tache incrustée, impossible à retirer sans abîmer le tissu."))}">${esc(c.justification)}</textarea></label>
               <button type="button" class="bouton secondaire" data-enregistrer-justif>${tr("Enregistrer la justification")}</button></details></div>` : ""}

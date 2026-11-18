@@ -3,3 +3,5 @@
 -- 2. Badge « Logement contrôlé Cleaneroo » : biens.badge (uuid), fonctions lien_badge(bien) (propriétaire) et badge_controle(code) (public, sans donnée personnelle).
 -- 3. Pilote automatique : biens.donnees.pilote = { mode: "manuel" | "auto", plafondC, modele (référence du ménage modèle) } ;
 --    fonction serveur supabase/functions/pilote-auto, lancée à la 20e minute de chaque heure par pg_cron (tâche « pilote-auto », fonction tache_pilote_auto()).
+-- 4. Photos témoins : compartiment privé photos-temoins (<client>/<logement>/<pièce>.jpg), biens.donnees.temoins = { pieceId: chemin } ;
+--    la fonction controle-ia s'en sert de référence (état attendu) et note avec_temoin dans ia_resultat.

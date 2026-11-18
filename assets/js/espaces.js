@@ -14,6 +14,7 @@ import { blocFormulesCleaneur } from "./formules-cleaneur.js";
 import { preremplir, brouillonExemple } from "./reserver.js";
 import { editeurGuide, brancherGuides } from "./guides.js";
 import { editeurEtapesPhoto, brancherEtapesPhoto, etapesPhotoDe, etapesPersoDe } from "./etapes-bien.js";
+import { editeurTemoins, brancherTemoins } from "./temoins.js";
 import { editeurStock, editeurIncidents, brancherOutilsBiens, blocAujourdhui, blocMenages, blocRapports, stockBas, incidentsDe, consommerStock } from "./conciergerie.js";
 export { brancherMissions, demanderGeoloc } from "./missions.js";
 import { blocSociete, blocActiverSociete, blocSalarie } from "./societe.js";
@@ -258,7 +259,7 @@ export function ongletPro(p, biens, hotellerie = false) {
             ${SOURCES.map(([id, nom]) => `<label class="champ">Lien du calendrier ${nom}<input name="${id}" type="url" inputmode="url" maxlength="600" placeholder="https://…ics" value="${esc((l.calendriers || []).find(c => c.source === id)?.url)}"></label>`).join("")}
             <p class="erreur" data-erreur-cal></p><button class="bouton plein" type="submit">Enregistrer</button></form></details>
         ${cals.length ? blocPilote(l) : ""}
-        ${editeurGuide(l)}${editeurEtapesPhoto(l)}${editeurStock(l)}${editeurIncidents(l)}</div>`;
+        ${editeurGuide(l)}${editeurEtapesPhoto(l)}${editeurTemoins(l)}${editeurStock(l)}${editeurIncidents(l)}</div>`;
     }).join("") : `<div class="vide-compte"><p class="muet">Aucun bien enregistré pour l'instant.</p><p class="petit">Ajoutez vos biens dans « Mes prestations » ou lors d'une réservation.</p></div>`}</div>
     <p class="petit" id="aucun-bien" hidden>Aucun bien ne correspond à votre recherche.</p>
     <div class="boutons"><a class="bouton secondaire" href="#/mes-demandes">＋ Ajouter un bien</a><a class="bouton secondaire" href="#/reserver/${rubriqueMenage}">${hotellerie ? "Réserver une rotation" : "Réserver un ménage de location"}</a></div>
@@ -332,6 +333,7 @@ export function brancherPro(vue, p, biens, demandes, { majProfil, recharger }) {
   });
   brancherGuides(vue, biens, recharger);
   brancherEtapesPhoto(vue, biens, recharger);
+  brancherTemoins(vue, biens, recharger);
   brancherOutilsBiens(vue, biens, recharger);
   // Stock : chaque ménage terminé retire la consommation « par ménage » (une seule fois par ménage), puis l'espace se redessine.
   const consommes = consommerStock(biens, demandes);

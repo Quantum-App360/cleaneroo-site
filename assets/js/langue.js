@@ -3201,6 +3201,12 @@ const T = [
   ["Sous 48 h", "Within 48 h", "Entro 48 h", "En 48 h"],
   ["Dans la semaine", "Within the week", "In settimana", "En la semana"],
   // </rubriques-textes>
+  // Photos témoins (18 novembre 2026)
+  ["Photos témoins de l'état attendu", "Reference photos of the expected result", "Foto di riferimento dello stato atteso", "Fotos de referencia del estado esperado"],
+  ["Photographiez chaque pièce telle que vous voulez la retrouver (serviettes, tapis de bain, coussins à leur place). L'IA compare chaque ménage à ces photos.", "Photograph each room the way you want to find it (towels, bath mat, cushions in place). The AI compares every cleaning with these photos.", "Fotografa ogni stanza come vuoi ritrovarla (asciugamani, tappetino del bagno, cuscini al loro posto). L'IA confronta ogni pulizia con queste foto.", "Fotografía cada estancia tal como quieres encontrarla (toallas, alfombrilla de baño, cojines en su sitio). La IA compara cada limpieza con estas fotos."],
+  ["Connectez-vous pour enregistrer vos photos témoins.", "Log in to save your reference photos.", "Accedi per salvare le tue foto di riferimento.", "Inicia sesión para guardar tus fotos de referencia."],
+  ["Envoi de la photo…", "Sending the photo…", "Invio della foto…", "Enviando la foto…"],
+  ["Écart voulu ou impossible à corriger ? Valider avec un commentaire", "Intended difference or can't be fixed? Approve with a comment", "Differenza voluta o impossibile da correggere? Convalida con un commento", "¿Diferencia intencionada o imposible de corregir? Valida con un comentario"],
   // Forfait par formule et draps (18 novembre 2026)
   ["Balai ou aspirateur dans toutes les pièces", "Sweeping or vacuuming in every room", "Scopa o aspirapolvere in tutte le stanze", "Escoba o aspiradora en todas las estancias"],
   ["Lavage des sols", "Floors mopped", "Lavaggio dei pavimenti", "Fregado de suelos"],

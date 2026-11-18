@@ -2273,3 +2273,13 @@ body.mode-cleaneur .barre-espaces .bascule-mode { background: rgba(255,255,255,.
 /* Forfait de la formule (location saisonnière) */
 .liste-forfait { margin: 6px 0 0; padding-left: 18px; font-size: 14px; color: var(--texte2); }
 .liste-forfait li { margin: 2px 0; }
+
+/* Photos témoins de l'état attendu (temoins.js) */
+.temoins-bien { margin-top: 10px; }
+.temoins-bien > summary { cursor: pointer; font-weight: 700; color: var(--primaire); }
+.grille-temoins { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; }
+.temoin { display: grid; gap: 4px; cursor: pointer; text-align: center; }
+.temoin .vignette { aspect-ratio: 4 / 3; border-radius: 12px; background: var(--creux); display: grid; place-items: center; overflow: hidden; border: 2px dashed var(--separateur); }
+.temoin.pris .vignette { border: 2px solid #5BB431; }
+.temoin .vignette img { width: 100%; height: 100%; object-fit: cover; }
+.temoin .nom { font-size: 13px; color: var(--texte2); }
