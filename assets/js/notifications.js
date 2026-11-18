@@ -56,7 +56,7 @@ export function styles() {
   s.textContent = `.choix-periode{display:inline-flex;gap:4px;background:rgba(31,138,128,.08);border-radius:99px;padding:4px;margin-bottom:10px}
     .cloche{position:relative;display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:50%;text-decoration:none;font-size:1.2rem}
     .cloche:hover{background:rgba(31,138,128,.1)}
-    .pastille-cloche{position:absolute;top:2px;right:0;min-width:18px;height:18px;padding:0 5px;border-radius:99px;background:#E0654B;color:#fff;font-size:.7rem;font-weight:800;line-height:18px;text-align:center}
+    .pastille-cloche{position:absolute;top:2px;right:0;min-width:18px;height:18px;padding:0 5px;border-radius:99px;background:#E5383B;color:#fff;font-size:.7rem;font-weight:800;line-height:18px;text-align:center}
     .liste-notifications{display:flex;flex-direction:column;gap:8px}
     .notification{display:flex;align-items:flex-start;gap:12px;text-decoration:none;color:inherit;margin:0}
     .notification.non-lue{border-left:4px solid var(--primaire,#1F8A80)}.notification.non-lue b{font-weight:800}
