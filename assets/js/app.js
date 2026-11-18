@@ -302,6 +302,7 @@ function pageAccueil() {
     </div>
   </section>
   <section class="bandeau-chiffres"><div class="conteneur">${CHIFFRES.map(([n, l], i) => `<div data-teinte="${["turquoise", "corail", "soleil", "lilas"][i]}"><b>${n}</b><span>${l}</span></div>`).join("")}</div></section>
+  ${blocVideoPub()}
   ${connecte() ? `<section class="bloc"><div class="conteneur">
     ${titreSection("Un espace pour chacun", "Particuliers, entreprises, conciergeries et Cleaneurs : chacun a son espace, pensé pour son usage.", "Pour qui ?")}
     <div class="grille-4 espaces-accueil">${ESPACES_ACCUEIL.map(([ico, titre, texte, lien, action]) => `
@@ -335,6 +336,41 @@ function pageAccueil() {
       <h2>Prêts pour le 31 décembre ?</h2><p>Inscrivez-vous maintenant : les premiers inscrits sont prévenus en priorité.</p>
       <div class="boutons"><a class="bouton clair" href="#/estimer">Estimer mon prix</a></div></div>
       <div class="revele" id="inscription">${formulaireInscription()}</div></div></section>` : ""}`;
+}
+
+/** Vidéo pub (12 s, verticale) : muette en boucle, lancée seulement quand elle est visible ; bouton pour le son. */
+function blocVideoPub() {
+  return `<section class="bloc bloc-video"><div class="conteneur video-grille">
+    <div class="video-texte revele">
+      <span class="surtitre-video">En vidéo</span>
+      <h2>Cleaneroo en 12 secondes</h2>
+      <p class="muet">Réservez en deux minutes, suivez votre Cleaneur en direct et recevez un compte rendu photo : tout se passe sur votre téléphone.</p>
+      <div class="boutons"><a class="bouton" href="#/estimer">Estimer mon prix</a></div>
+    </div>
+    <div class="video-cadre revele">
+      <video class="video-pub" muted loop playsinline preload="none" width="720" height="1280" poster="assets/video/pub-cleaneroo.jpg?v=1" aria-label="Publicité Cleaneroo">
+        <source src="assets/video/pub-cleaneroo.mp4?v=1" type="video/mp4">
+      </video>
+      <button class="video-son" type="button" aria-pressed="false">Activer le son</button>
+    </div>
+  </div></section>`;
+}
+function brancherVideoPub(racine) {
+  const v = racine.querySelector(".video-pub");
+  if (!v) return;
+  const calme = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const lire = () => v.play().catch(() => {});
+  if (!calme && "IntersectionObserver" in window) {
+    new IntersectionObserver(es => es.forEach(e => e.isIntersecting ? lire() : v.pause()), { threshold: .4 }).observe(v);
+  } else v.controls = true;
+  const b = racine.querySelector(".video-son");
+  b.onclick = () => {
+    v.muted = !v.muted;
+    b.setAttribute("aria-pressed", String(!v.muted));
+    b.textContent = v.muted ? "Activer le son" : "Couper le son";
+    traduire(b);
+    if (!v.muted) { v.currentTime = 0; lire(); }
+  };
 }
 
 /** Réservation express de l'accueil : prestation + code postal → parcours prérempli. */
@@ -685,6 +721,7 @@ async function afficherPage() {
   vue.innerHTML = await page();
   brancherInscription(vue);
   brancherExpress(vue);
+  brancherVideoPub(vue);
   traduire(vue);
   reveler(vue);
   animerNotifs(vue);

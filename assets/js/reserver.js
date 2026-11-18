@@ -421,7 +421,7 @@ function questionnaire(enTete = true) {
   if (lieux && !bienFixe) h += titre(r.titreTypes || { car: "Gabarit du véhicule", construction: "Type de sol", kitchen: "Type d'établissement" }[b.rubriqueId] || "Type de lieu")
     + choix(lieux.map(l => [l.id, l.nom]), b.typeLieuId, "typeLieuId");
   if (b.rubriqueId !== "car") {
-    h += titre("Choisissez votre formule") + formules.map(f => `<button type="button" class="option ${f.id === b.formuleId ? "choisi" : ""}" data-champ="formuleId" data-valeur="${f.id}">
+    h += titre(r.titreFormules || "Choisissez votre formule") + formules.map(f => `<button type="button" class="option ${f.id === b.formuleId ? "choisi" : ""}" data-champ="formuleId" data-valeur="${f.id}">
       ${esc(f.nom)}${f.description ? `<span class="detail">${esc(f.description)}</span>` : ""}</button>`).join("");
     h += questionsFormule(r);
     if (b.rubriqueId === "special" && b.formuleId === "urgente") h += titre("Délai souhaité") + choix(DELAIS_URGENCE, b.delai || "48h", "delai");
@@ -431,7 +431,7 @@ function questionnaire(enTete = true) {
     if (forfait) h += `<div class="carte teintee" style="margin-top:6px"><b style="color:var(--primaire)">${tr("Inclus dans votre forfait")}</b>
       ${forfait.precedente ? `<p class="muet" style="margin:4px 0 0;font-size:14px">${tr("Tout le forfait")} « ${esc(tr(formules.find(f => f.id === forfait.precedente)?.nom || ""))} », ${tr("plus :")}</p>` : ""}
       <ul class="liste-forfait">${forfait.taches.map(t => `<li>${esc(tr(t))}</li>`).join("")}</ul></div>`;
-    else if (inclus) h += `<div class="carte teintee" style="margin-top:6px"><b style="color:var(--primaire)">Inclus dans votre forfait</b><p class="muet" style="margin:4px 0 0;font-size:14px">${esc(inclus)}</p></div>`;
+    else if (inclus) h += `<div class="carte teintee" style="margin-top:6px"><b style="color:var(--primaire)">${packsPour(r, b.typeLieuId).some(p => p.id === "prestige") ? "Inclus dans tous les niveaux" : "Inclus dans votre forfait"}</b><p class="muet" style="margin:4px 0 0;font-size:14px">${esc(inclus)}</p></div>`;
   }
   if (["textiles", "hospitality"].includes(b.rubriqueId)) h += panierTextiles();
   if (b.rubriqueId !== "car") {
@@ -463,8 +463,10 @@ function questionnaire(enTete = true) {
   if (b.rubriqueId === "rental") h += etapesLocation();
   if (b.rubriqueId === "car") h += questionsVehicule();
   if (!r.toujoursSurDevis && !["car", "construction", "special", "leisure", "boat", "hospitality"].includes(b.rubriqueId)) {
-    h += titre("État de saleté") + `<div class="segments">${Object.entries(SALISSURE).map(([k, s]) =>
-      `<button type="button" data-champ="salissure" data-valeur="${k}" class="${b.salissure === k ? "choisi" : ""}">${s.libelle}</button>`).join("")}</div>`;
+    // 18/11/2026 : plus d'« État de saleté » (subjectif) : la question objective « Dernier nettoyage en profondeur » règle le prix de départ,
+    // et le Cleaneur peut proposer un supplément sur place si l'état réel dépasse ce qui est décrit (le client accepte ou refuse).
+    if (!formuleDe(b).avecDernierNettoyage) h += titre("Dernier nettoyage en profondeur") + choix(DERNIERS_NETTOYAGES.map(d => [d.id, d.libelle]), b.dernierNettoyage, "dernierNettoyage");
+    h += `<p class="petit">${tr("Si l'état réel dépasse ce qui est décrit, le Cleaneur peut vous proposer sur place un supplément (15 à 60 min, au plus +25 %), avec photo. Vous l'acceptez ou le refusez.")}</p>`;
   }
   if (b.rubriqueId === "construction") h += questionsChantier();
   if (b.rubriqueId === "kitchen") h += equipementsCuisine();
@@ -478,12 +480,12 @@ function questionnaire(enTete = true) {
     const incluses = new Set((formules.find(f => f.id === actif)?.tacheIds) || []);
     if (formules.length) {
       const prixFormule = f => calculer(entreeEstimation({ ...b, taches: f.tacheIds.filter(id => chiffrees.some(t => t.id === id)) }, b.espace === "personnel", debutChoisi())).totalC;
-      h += titre("Votre formule") + `<div class="formules">${formules.map((f, i) => {
+      h += titre("Votre niveau de ménage") + `<div class="formules">${formules.map((f, i) => {
         const avant = i ? formules[i - 1].tacheIds : [];
         const ajouts = chiffrees.filter(t => f.tacheIds.includes(t.id) && !avant.includes(t.id));
         return `<button type="button" class="formule${f.id === actif ? " choisie" : ""}${f.id === "confort" ? " conseillee" : ""}" data-formule="${f.id}">
           ${f.id === "confort" ? `<span class="badge-formule">${tr("La plus choisie")}</span>` : ""}
-          <b class="nom-formule">${tr(f.nom)}</b>
+          <b class="nom-formule">${tr(f.nom)}</b>${f.id === "prestige" && r.sousTitrePremium ? `<span class="sous-formule">${tr(r.sousTitrePremium)}</span>` : ""}
           <span class="prix-formule">${euros(prixFormule(f))}</span>
           ${f.remisePct ? `<span class="remise-formule">−${f.remisePct} % ${tr("sur les tâches incluses")}</span>` : `<span class="remise-formule">${tr("Le ménage de base")}</span>`}
           <ul>${i === 0 ? `<li>${esc(r.inclus || tr("Ménage complet"))}</li>`
@@ -933,6 +935,13 @@ function appliquerParrainage() {
 }
 
 function rendre() {
+  // Anciens brouillons « Grand ménage » du logement : ménage ponctuel au niveau Premium (le grand ménage, depuis le 18/11/2026).
+  if (b && b.rubriqueId === "home" && b.formuleId === "grand") {
+    const premium = packsPour(rubrique("home"), b.typeLieuId).find(p => p.id === "prestige");
+    b = { ...b, formuleId: "ponctuel", taches: [...new Set([...(b.taches || []), ...(premium ? premium.tacheIds : [])])] };
+  }
+  // Plus d'« État de saleté » à choisir : seul « Dernier nettoyage en profondeur » règle la salissure.
+  if (b && !b.dernierNettoyage && b.salissure !== "NORMAL") b = { ...b, salissure: "NORMAL" };
   if (sim) return rendreSimulation();
   appliquerParrainage();
   const etape = b ? b.etape : 1;

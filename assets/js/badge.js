@@ -18,7 +18,7 @@ export async function pageBadge(vue, code) {
   const taux = b.pieces ? Math.round(b.premier_coup * 100 / b.pieces) : null;
   vue.innerHTML = `<section class="bloc badge-page"><div class="etroit">
     <div class="carte badge-controle">
-      <img src="/assets/img/logo-marque.svg?v=2" alt="" width="88" height="88">
+      <img src="/assets/img/logo-marque.svg?v=3" alt="" width="88" height="88">
       <span class="surtitre">${tr("Logement contrôlé Cleaneroo")}</span>
       <h1>${esc(tr(TYPES_LOGEMENT.find(t => t.id === b.type)?.nom || b.type || "Logement"))}${b.ville ? ` · ${esc(b.ville)}` : ""}</h1>
       ${b.dernier ? `<p class="badge-date">${icone("valide")} ${tr("Dernier ménage validé le")} <b>${dateLongue(new Date(b.dernier))}</b></p>`

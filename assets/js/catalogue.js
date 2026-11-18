@@ -130,8 +130,9 @@ export const RUBRIQUES = [
   { id: "home", nom: "Ménage du logement", sousTitre: "Ménage ponctuel ou régulier", icone: "logement", tauxHoraireC: 2690, salissureSurTemps: true,
     inclus: "Dépoussiérage des surfaces accessibles, aspiration et lavage des sols, cuisine, salle de bain et WC, poubelles, lits faits.",
     formules: [F("ponctuel", "Ménage ponctuel", "Un ménage complet, une seule fois.", 25, 120),
-      F("regulier", "Entretien régulier", "Chaque semaine ou tous les 15 jours, idéalement avec le même Cleaneur.", 30, 90),
-      F("grand", "Grand ménage", "Un nettoyage en profondeur, du sol au plafond.", 15, 120, 1.0, "PONCTUEL", true)],
+      F("regulier", "Entretien régulier", "Chaque semaine ou tous les 15 jours, idéalement avec le même Cleaneur.", 30, 90)],
+    // 18/11/2026 : « Grand ménage » n'est plus un type de ménage, c'est le niveau Premium (plus de doublon entre les deux choix).
+    titreFormules: "À quelle fréquence ?", sousTitrePremium: "Le grand ménage, du sol au plafond",
     taches: tachesLogement, packs: packsLogement, surfaceReferenceM2: 60,
     occasions: [{ id: "printemps", nom: "Ménage de printemps", packId: "prestige" }, { id: "recevoir", nom: "Avant de recevoir", packId: "confort" },
       { id: "vacances", nom: "Retour de vacances", packId: "essentiel", tachesEnPlus: ["frigo"] }, { id: "vente", nom: "Avant une vente ou une location", packId: "prestige" },

@@ -90,9 +90,9 @@ def gabarit(chemin, titre, description, corps, attrs="", indexer=True, og_type="
   <meta property="og:type" content="{og_type}">
   <meta property="og:locale" content="fr_FR">
   <meta name="twitter:card" content="summary_large_image">
-  <link rel="icon" href="/favicon.png?v=2">
-  <link rel="apple-touch-icon" href="/assets/img/icone-apple-180.png?v=2">
-  <link rel="icon" type="image/svg+xml" href="/assets/img/logo-marque.svg?v=2">
+  <link rel="icon" href="/favicon.png?v=3">
+  <link rel="apple-touch-icon" href="/assets/img/icone-apple-180.png?v=3">
+  <link rel="icon" type="image/svg+xml" href="/assets/img/logo-marque.svg?v=3">
   <link rel="preload" href="/assets/polices/plus-jakarta-sans.woff2" as="font" type="font/woff2" crossorigin>
   {chargement("page.js")}
 </head>
@@ -100,7 +100,7 @@ def gabarit(chemin, titre, description, corps, attrs="", indexer=True, og_type="
   <header class="entete">
     <div class="conteneur">
       <a class="marque" href="/" aria-label="Cleaneroo, accueil">
-        <img class="marque-tuile" src="/assets/img/logo-marque.svg?v=2" alt="" width="34" height="34">
+        <img class="marque-tuile" src="/assets/img/logo-marque.svg?v=3" alt="" width="34" height="34">
         <span class="marque-nom">Cleaneroo</span>
       </a>
       <nav class="nav" aria-label="Navigation principale">
@@ -124,7 +124,7 @@ def gabarit(chemin, titre, description, corps, attrs="", indexer=True, og_type="
 
   <footer class="fond-cleaneroo pied">
     <div class="conteneur">
-      <span class="marque marque-pied"><img class="marque-tuile" src="/assets/img/logo-marque.svg?v=2" alt="" width="34" height="34"><span class="marque-nom">Cleaneroo</span></span>
+      <span class="marque marque-pied"><img class="marque-tuile" src="/assets/img/logo-marque.svg?v=3" alt="" width="34" height="34"><span class="marque-nom">Cleaneroo</span></span>
       <div class="trait-corail"></div>
       <p style="margin:0 0 6px">Vos interventions de ménage, 100 % digitalisées.</p>
       <p class="titre-villes">Cleaneroo dans d'autres villes</p>
