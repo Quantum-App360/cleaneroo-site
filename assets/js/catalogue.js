@@ -584,6 +584,22 @@ export const RACCOURCIS_VITRINE = [
   ["textiles", "Canapés et textiles", "Shampoing, détachage"], ["windows", "Vitres et vitrines", "Fenêtres et baies"],
   ["car", "Véhicules", "Intérieur, extérieur — à la carte"], ["office", "Bureaux et cabinets", "Cabinets et agences"],
 ];
+/** Contenu du forfait de chaque formule de location saisonnière (18 novembre 2026, liste de l'utilisateur pour le court séjour) :
+ *  chaque formule reprend la précédente et ajoute ses tâches. Même liste dans l'appli (Catalogue.INCLUS_LOCATION). */
+export const INCLUS_LOCATION = [
+  ["court", ["Balai ou aspirateur dans toutes les pièces", "Lavage des sols", "Lits propres faits au carré", "Contrôle des toiles d'araignée",
+    "Bouches d'aération dépoussiérées", "Évacuation des cheveux (douche, baignoire, lavabo)", "Four et micro-ondes nettoyés", "Rangement complet"]],
+  ["semaine", ["Intérieur du réfrigérateur", "Vaisselle lavée et rangée", "Plinthes, interrupteurs et poignées"]],
+  ["long", ["Vitres intérieures accessibles", "Robinetterie détartrée", "Dessous des meubles et des lits"]],
+  ["grand", ["Vitres intérieures et extérieures accessibles", "Intérieur des placards", "Portes et luminaires", "Hotte et filtres",
+    "Intérieur de l'électroménager", "Matelas aspirés", "Derrière les meubles"]],
+];
+/** Forfait d'une formule de location : { precedente: nom de la formule précédente ou "", taches: celles qu'elle ajoute }. */
+export const inclusLocation = formuleId => {
+  const i = INCLUS_LOCATION.findIndex(([id]) => id === formuleId);
+  return i < 0 ? null : { precedente: i ? INCLUS_LOCATION[i - 1][0] : "", taches: INCLUS_LOCATION[i][1] };
+};
+
 export const RUBRIQUES_CREDIT_IMPOT = ["home", "windows", "textiles"];
 
 /** Trois parties de réservation, chacune avec ses prestations (même liste que Catalogue.parties dans l'appli).

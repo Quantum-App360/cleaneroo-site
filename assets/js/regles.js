@@ -87,7 +87,10 @@ export const REGLES = {
   SEUIL_ESPACE_PRO_BIENS: 3,     // à partir de 3 biens, le compte s'ouvre sur l'espace Pro
   BIENS_MAX: 200,
   // Option « Lavage des draps » (location saisonnière) : prix fixe par lit, le même dans toutes les zones.
-  LAVAGE_DRAPS_PAR_LIT_C: 1200,
+  LAVAGE_DRAPS_PAR_LIT_C: 1200,   // ancien prix unique = lit 2 places sur place (brouillons enregistrés avant le 18/11/2026)
+  // Lavage des draps (18 novembre 2026, prix validés par l'utilisateur) : sur place si machine et sèche-linge dans le logement, sinon en laverie.
+  DRAPS_PRIX_C: { sur_place: { un: 800, deux: 1200, king: 1400 }, laverie: { un: 1500, deux: 2200, king: 2600 } },
+  LAVERIE_TRAJET_MIN: 30,         // aller et retour à la laverie, une fois par ménage
   // Options en plus (7 novembre 2026, décision de l'utilisateur) : petits forfaits selon la taille de l'option, plus de prix au temps.
   // Petite (≤ 5 min) 2 €, moyenne (≤ 15 min) 4 €, grande 6 € ; le temps reste compté pour le planning du Cleaneur.
   OPTION_PETITE_C: 200, OPTION_MOYENNE_C: 400, OPTION_GRANDE_C: 600,

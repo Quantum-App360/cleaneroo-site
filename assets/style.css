@@ -2269,3 +2269,7 @@ body.mode-cleaneur .barre-espaces .bascule-mode { background: rgba(255,255,255,.
 .badge-chiffres div { background: var(--creux); border-radius: 14px; padding: 12px; display: grid; }
 .badge-chiffres b { font-size: 26px; background: var(--degrade); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .badge-chiffres span { font-size: 13px; color: var(--texte2); }
+
+/* Forfait de la formule (location saisonnière) */
+.liste-forfait { margin: 6px 0 0; padding-left: 18px; font-size: 14px; color: var(--texte2); }
+.liste-forfait li { margin: 2px 0; }

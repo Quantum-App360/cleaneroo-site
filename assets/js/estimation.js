@@ -89,8 +89,8 @@ export function calculer(entree) {
   // Option « Lavage des draps » (location saisonnière) : prix fixe par lit, le même dans toutes les zones.
   const lits = e.lavageDrapsLits || 0;
   if (lits > 0) {
-    const c = lits * REGLES.LAVAGE_DRAPS_PAR_LIT_C;
-    lignes.push({ libelle: `Lavage des draps × ${lits}`, montantC: c });
+    const c = e.drapsC ?? lits * REGLES.LAVAGE_DRAPS_PAR_LIT_C;
+    lignes.push({ libelle: `${e.drapsLaverie ? "Lavage des draps en laverie" : "Lavage des draps"} × ${lits}`, montantC: c });
     sousTotal += c;
   }
 
@@ -149,7 +149,7 @@ export function calculer(entree) {
   }
 
   // Véhicules : durée affichée d'au moins 30 min.
-  const drapsMin = lits * REGLES.LAVAGE_DRAPS_MIN_PAR_LIT;
+  const drapsMin = lits * REGLES.LAVAGE_DRAPS_MIN_PAR_LIT + (lits > 0 && e.drapsLaverie ? REGLES.LAVERIE_TRAJET_MIN : 0);
   const dureeTotale = vehicule ? Math.max(REGLES.DUREE_MIN_VEHICULE_MIN, dureeBase + tachesMin + persoMin) : dureeBase + tachesMin + persoMin + drapsMin;
   const deux = dureeTotale > REGLES.SEUIL_DEUX_CLEANEURS_MIN;
   const devis = r.toujoursSurDevis || e.surfaceM2 > REGLES.SEUIL_DEVIS_SURFACE_M2;
@@ -274,6 +274,16 @@ export const etapesDe = b => b.etapesChoisies ?? PACK_ETAPES_CONSEILLE;
 export const consommablesDe = b => b.consommablesChoisis ?? PACK_CONSOMMABLES_CONSEILLE;
 /** Option « Lavage des draps » : nombre de lits (par défaut un par chambre, un studio compte 1). */
 export const litsDe = b => Math.min(REGLES.LITS_MAX, Math.max(1, b.lits ?? Math.max(1, b.chambres ?? 1)));
+/** Lits à laver par taille (18 novembre 2026) : 1 place, 2 places, king size. Ancien brouillon (« lits ») : comptés en 2 places. */
+export const litsTailles = b => {
+  const un = b.lits1 ?? 0, king = b.litsKing ?? 0, deux = b.lits2 ?? (b.lits1 == null && b.litsKing == null ? litsDe(b) : 0);
+  return { un, deux, king, total: un + deux + king };
+};
+/** Prix du lavage des draps : selon le lieu (sur place / laverie) et la taille de chaque lit. */
+export const prixDrapsC = b => {
+  const t = litsTailles(b), p = REGLES.DRAPS_PRIX_C[b.drapsLieu === "laverie" ? "laverie" : "sur_place"];
+  return t.un * p.un + t.deux * p.deux + t.king * p.king;
+};
 /** Le ménage tient-il entre le départ des voyageurs et l'arrivée suivante ? */
 export const menageTientEntreVoyageurs = (b, dureeMin) => (b.departVoyageursH ?? 10) * 60 + dureeMin <= (b.arriveeSuivanteH ?? 16) * 60;
 
@@ -323,7 +333,9 @@ export function entreeEstimation(b, espacePersonnel, debut) {
     panier: b.rubriqueId === "textiles" || b.rubriqueId === "hospitality" ? b.panier || [] : [],
     minutesEnPlus: b.rubriqueId === "construction" ? (b.fenetres || 0) * REGLES.CHANTIER_MIN_PAR_FENETRE : 0,
     minimumApresMin: b.rubriqueId === "construction" ? REGLES.CHANTIER_MINIMUM_MIN : 0,
-    lavageDrapsLits: b.rubriqueId === "rental" && b.lavageDraps ? litsDe(b) : 0,
+    lavageDrapsLits: b.rubriqueId === "rental" && b.lavageDraps ? litsTailles(b).total : 0,
+    drapsC: b.rubriqueId === "rental" && b.lavageDraps ? prixDrapsC(b) : 0,
+    drapsLaverie: b.rubriqueId === "rental" && !!b.lavageDraps && b.drapsLieu === "laverie",
     zonePct: pctZone(b.codePostal),
     suiviSms: !!b.suiviSms,
     remiseParrainageC: b.remiseParrainageC || 0, cagnotteC: b.utiliserCagnotte ? b.cagnotteDispoC || 0 : 0,

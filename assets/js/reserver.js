@@ -1,11 +1,11 @@
 // Parcours de réservation en 5 étapes : copie de Reservation.kt (application Android).
 // 1 prestation · 2 questionnaire · 3 photos · 4 adresse, accès et créneau · 5 estimation, coordonnées et envoi.
-import { PARTIES, partie, partiePour, PARTIE_DE_L_ESPACE, rubriquesProposees, lieuxDuSecteur, categorieBien, categorieDeRubrique, categoriesDeRubrique, bienCompatible, typesDeCategorie, CATEGORIES_BIEN, TARIFS_SPECIAUX, RUBRIQUES, rubrique, formulesPour, TYPES_LIEU, TYPES_LOGEMENT, BESOINS_SPECIAUX, ACCUEIL, accueilAutonomeInterdit, photosObligatoires,
+import { PARTIES, partie, partiePour, PARTIE_DE_L_ESPACE, rubriquesProposees, lieuxDuSecteur, inclusLocation, categorieBien, categorieDeRubrique, categoriesDeRubrique, bienCompatible, typesDeCategorie, CATEGORIES_BIEN, TARIFS_SPECIAUX, RUBRIQUES, rubrique, formulesPour, TYPES_LIEU, TYPES_LOGEMENT, BESOINS_SPECIAUX, ACCUEIL, accueilAutonomeInterdit, photosObligatoires,
   ELEMENTS_TEXTILES, TAILLES_CANAPE, prixLigne, minutesLigne, libelleLigne, pastille,
   FREQUENCES, JOURS_SEMAINE, DERNIERS_NETTOYAGES, packsPour, remisePack,
   TACHES_A_TRAITER, TYPES_CHANTIER, equipementsPour, DELAIS_URGENCE, TYPES_IMMEUBLE, surfaceEffective, SELECTION_CONSEILLEE_VEHICULE, LIEUX_VEHICULE, FREQUENCES_VEHICULE, RUBRIQUES_LOGEMENT, vuesPhotos, vuesCompletes, PIECES_LOCATION, ETAPES_LOCATION, PACK_ETAPES_CONSEILLE, ETAPES_DEPART, prixEtapeLocationC, repetitionsEtape, CONSOMMABLES_LOCATION, PACK_CONSOMMABLES_CONSEILLE } from "./catalogue.js";
 import { calculer, entreeEstimation, SALISSURE, disponibilite, meilleurPack, tachesChiffrees, formuleDe, passagesPlanifies, datesPassages,
-  etapesDe, consommablesDe, menageTientEntreVoyageurs, frequenceDe, minutesEquipements, prixIndicatifEquipement, heuresEvenement, litsDe } from "./estimation.js";
+  etapesDe, consommablesDe, menageTientEntreVoyageurs, frequenceDe, minutesEquipements, prixIndicatifEquipement, heuresEvenement, litsDe, litsTailles } from "./estimation.js";
 import { REGLES, euros, duree, heure, dateCourte, dateLongue, estPrelancement, MESSAGE_LANCEMENT, DATE_PREMIERES_INTERVENTIONS, pctZone, libelleZone } from "./regles.js";
 import { envoyerDemande, secteurCouvert, rejoindreAttente, enregistrerBien, synchroniserBiens, marquerDonneesInvite } from "./donnees.js";
 import { etapesPhotoDe, etapesPersoDe } from "./etapes-bien.js";
@@ -425,8 +425,13 @@ function questionnaire(enTete = true) {
       ${esc(f.nom)}${f.description ? `<span class="detail">${esc(f.description)}</span>` : ""}</button>`).join("");
     h += questionsFormule(r);
     if (b.rubriqueId === "special" && b.formuleId === "urgente") h += titre("Délai souhaité") + choix(DELAIS_URGENCE, b.delai || "48h", "delai");
+    // Location saisonnière : le forfait change avec la formule (chaque formule plus chère comprend davantage de tâches).
+    const forfait = b.rubriqueId === "rental" ? inclusLocation(b.formuleId) : null;
     const inclus = (lieux || []).find(l => l.id === b.typeLieuId)?.inclus || r.inclus;
-    if (inclus) h += `<div class="carte teintee" style="margin-top:6px"><b style="color:var(--primaire)">Inclus dans votre forfait</b><p class="muet" style="margin:4px 0 0;font-size:14px">${esc(inclus)}</p></div>`;
+    if (forfait) h += `<div class="carte teintee" style="margin-top:6px"><b style="color:var(--primaire)">${tr("Inclus dans votre forfait")}</b>
+      ${forfait.precedente ? `<p class="muet" style="margin:4px 0 0;font-size:14px">${tr("Tout le forfait")} « ${esc(tr(formules.find(f => f.id === forfait.precedente)?.nom || ""))} », ${tr("plus :")}</p>` : ""}
+      <ul class="liste-forfait">${forfait.taches.map(t => `<li>${esc(tr(t))}</li>`).join("")}</ul></div>`;
+    else if (inclus) h += `<div class="carte teintee" style="margin-top:6px"><b style="color:var(--primaire)">Inclus dans votre forfait</b><p class="muet" style="margin:4px 0 0;font-size:14px">${esc(inclus)}</p></div>`;
   }
   if (["textiles", "hospitality"].includes(b.rubriqueId)) h += panierTextiles();
   if (b.rubriqueId !== "car") {
@@ -641,8 +646,14 @@ function etapesLocation() {
     + compteur("Arrivée suivante", "arriveeSuivanteH", b.arriveeSuivanteH ?? REGLES.ARRIVEE_SUIVANTE_DEFAUT_H, { min: REGLES.ARRIVEE_SUIVANTE_MIN_H, max: REGLES.ARRIVEE_SUIVANTE_MAX_H, unite: " h" })
     + `<p class="petit">Le ménage commence au départ des voyageurs et doit finir avant l'arrivée suivante.</p>`
     + caseCocher("Je souhaite cette prestation à chaque départ de voyageurs", "aChaqueDepart", !!b.aChaqueDepart) + `</div>`
-    + titre("Linge de lit") + `<div class="carte">${caseCocher("Lavage des draps", "lavageDraps", !!b.lavageDraps, `${euros(REGLES.LAVAGE_DRAPS_PAR_LIT_C)} par lit : draps et housses lavés, séchés et pliés.`)}
-      ${b.lavageDraps ? compteur("Nombre de lits", "lits", litsDe(b), { min: 1, max: REGLES.LITS_MAX }) : ""}</div>`
+    + titre("Linge de lit") + `<div class="carte">${caseCocher("Les draps propres sont fournis sur place", "drapsFournis", b.drapsFournis !== false, "Le Cleaneur fait les lits avec votre linge.")}
+      ${caseCocher("Lavage des draps", "lavageDraps", !!b.lavageDraps, "Draps et housses lavés, séchés et pliés.")}
+      ${b.lavageDraps ? (() => { const t = litsTailles(b), p = REGLES.DRAPS_PRIX_C[b.drapsLieu === "laverie" ? "laverie" : "sur_place"];
+        return choix([["sur_place", "Sur place (machine et sèche-linge dans le logement)"], ["laverie", "En laverie"]], b.drapsLieu || "sur_place", "drapsLieu")
+          + compteur(`${tr("Lits 1 place")} · ${euros(p.un)}`, "lits1", t.un, { min: 0, max: REGLES.LITS_MAX })
+          + compteur(`${tr("Lits 2 places")} · ${euros(p.deux)}`, "lits2", t.deux, { min: 0, max: REGLES.LITS_MAX })
+          + compteur(`${tr("Lits king size")} · ${euros(p.king)}`, "litsKing", t.king, { min: 0, max: REGLES.LITS_MAX })
+          + (b.drapsLieu === "laverie" ? `<p class="petit">${tr("Sans machine ni sèche-linge sur place, le Cleaneur porte les draps à la laverie : supplément forfaitaire compris dans le prix par lit.")}</p>` : ""); })() : ""}</div>`
     + repli("etapes-location", "Étapes photo et consommables", `${tr("Pack conseillé appliqué")} · ${etapes.length + perso.length} ${tr("étapes")}`,
         detail + `<div class="carte" style="margin-top:10px">${caseCocher("Mémoriser ces étapes pour ce logement", "memoriserEtapes", b.memoriserEtapes !== false)}</div>`);
 }
@@ -1068,7 +1079,7 @@ document.addEventListener("change", e => {
   const ds = e.target.dataset;
   if (sim && e.target.id === "sim-rubrique") { b = { ...nouveauBrouillon(e.target.value, b.espace), etape: 2, codePostal: b.codePostal || "" }; sauver(); return rendre(); }
   if (ds.texte) { b = { ...b, [ds.texte]: e.target.value }; sauver(); return rendre(); }  // (logementId gardé : seule la saisie d'une nouvelle adresse le vide)
-  if (ds.case === "lavageDraps") return maj({ lavageDraps: e.target.checked, lits: litsDe(b) });
+  if (ds.case === "lavageDraps") { const t = litsTailles(b); return maj({ lavageDraps: e.target.checked, lits1: t.un, lits2: t.deux || (t.total ? 0 : litsDe(b)), litsKing: t.king }); }
   if (ds.case) return maj({ [ds.case]: e.target.checked });
   if (ds.tache) return maj({ taches: e.target.checked ? [...b.taches, ds.tache] : b.taches.filter(x => x !== ds.tache) });
   if (ds.etape) { const l = etapesDe(b); return maj({ etapesChoisies: e.target.checked ? [...l, ds.etape] : l.filter(x => x !== ds.etape) }); }
