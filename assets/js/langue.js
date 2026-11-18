@@ -3201,6 +3201,8 @@ const T = [
   ["Sous 48 h", "Within 48 h", "Entro 48 h", "En 48 h"],
   ["Dans la semaine", "Within the week", "In settimana", "En la semana"],
   // </rubriques-textes>
+  ["Tout est déjà compris dans votre formule.", "Everything is already included in your package.", "È già tutto compreso nel tuo pacchetto.", "Todo está ya incluido en tu fórmula."],
+  ["Autres options", "Other options", "Altre opzioni", "Otras opciones"],
   // Badge, contrôle IA, pilote automatique (18 novembre 2026)
   ["Badge introuvable", "Badge not found", "Badge non trovato", "Distintivo no encontrado"],
   ["Ce lien n'est pas valable.", "This link is not valid.", "Questo link non è valido.", "Este enlace no es válido."],

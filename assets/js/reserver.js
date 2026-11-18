@@ -465,7 +465,6 @@ function questionnaire(enTete = true) {
   if (b.rubriqueId === "kitchen") h += equipementsCuisine();
   const chiffrees = tachesChiffrees(b), packs = packsPour(r, b.typeLieuId);
   if (chiffrees.length) {
-    if (packs.some(p => p.id === "confort") && packs.some(p => p.id === "prestige")) h += titre("Tâches complémentaires");
     // Trois formules (Standard · Confort · Premium) : prix total de chaque formule, ce qu'elle ajoute, puis les options en plus.
     const confort = packs.find(p => p.id === "confort"), premium = packs.find(p => p.id === "prestige");
     const formules = confort && premium ? [{ id: "standard", nom: "Standard", tacheIds: [] }, { ...confort, nom: "Confort" }, { ...premium, nom: "Premium" }] : [];
@@ -488,11 +487,16 @@ function questionnaire(enTete = true) {
     }
     // Options en plus : celles de la formule sont cochées et incluses ; les autres s'ajoutent à l'unité.
     const groupes = [...new Set(chiffrees.map(t => t.groupe))];
-    let options = groupes.map(g => (g ? `<p class="petit" style="margin:12px 0 4px"><b>${esc(g)}</b></p>` : "")
-      + `<div class="carte">${chiffrees.filter(t => t.groupe === g).map(t => incluses.has(t.id)
-        ? `<label class="case incluse"><input type="checkbox" checked disabled><span>${t.nom}</span><span class="info">${tr("Inclus")}</span></label>`
-        : `<label class="case"><input type="checkbox" data-tache="${t.id}" ${b.taches.includes(t.id) ? "checked" : ""}>
-      <span>${t.nom}</span><span class="info"><b>+${euros(t.prixC)}</b><small>${duree(t.minutes)}</small></span></label>`).join("")}</div>`).join("");
+    // L'essentiel d'abord (18 novembre 2026) : les tâches déjà comprises dans la formule ne sont plus listées ; on montre au plus
+    // 6 options utiles (celles des formules Confort et Premium, ou déjà cochées), le reste est rangé dans « Autres options ».
+    const ligneOption = t => `<label class="case"><input type="checkbox" data-tache="${t.id}" ${b.taches.includes(t.id) ? "checked" : ""}>
+      <span>${t.nom}</span><span class="info"><b>+${euros(t.prixC)}</b><small>${duree(t.minutes)}</small></span></label>`;
+    const libres = chiffrees.filter(t => !incluses.has(t.id));
+    const utiles = libres.filter(t => b.taches.includes(t.id) || dansPacks.has(t.id));
+    const essentielles = (utiles.length ? utiles : libres).slice(0, Math.max(6, libres.filter(t => b.taches.includes(t.id)).length));
+    const autres = libres.filter(t => !essentielles.includes(t));
+    let options = (essentielles.length ? `<div class="carte">${essentielles.map(ligneOption).join("")}</div>` : `<p class="petit">${tr("Tout est déjà compris dans votre formule.")}</p>`)
+      + (autres.length ? `<details class="autres-options"><summary class="petit">${tr("Autres options")} (${autres.length})</summary><div class="carte">${autres.map(ligneOption).join("")}</div></details>` : "");
     if (formules.length) options += `<p class="petit">${tr("Les tâches de la formule bénéficient de sa remise ; les options en plus sont au prix indiqué.")}</p>`;
     if (r.noteTaches) options += `<div class="note alerte" style="margin-top:10px">${esc(r.noteTaches)}</div>`;
     if (r.surfaceReferenceM2 > 0 && chiffrees.some(t => t.parSurface)) options += `<p class="petit">Tâches marquées à la surface : prix pour ${r.surfaceReferenceM2} ${["leisure", "boat"].includes(b.rubriqueId) ? "m de longueur" : "m²"}, au prorata au-delà.</p>`;
