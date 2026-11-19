@@ -2455,3 +2455,9 @@ body.mode-cleaneur .progression-lecture { background: linear-gradient(90deg, #0D
   .bouton::after { display: none; }
   :where(a.carte, button.carte, .espace-carte, .carte.prestation, .choix-cleaneur-carte):hover, .bouton:hover { transform: none; }
 }
+
+/* Contrastes (contrôle du 19/11/2026, textes ≥ 4,5:1 ; gros textes ≥ 3:1) */
+.lancement .compte { background: #B4502E; color: #fff; }
+.espace-carte .aller, .carte.prestation .aller, .prestation .aller, .tel-eta b, .surtitre-video { color: var(--primaire); }
+.flottant b, .flottant small { color: var(--texte); }
+body.mode-cleaneur .titre-liste.moins { color: #F07D86; }
