@@ -2461,3 +2461,15 @@ body.mode-cleaneur .progression-lecture { background: linear-gradient(90deg, #0D
 .espace-carte .aller, .carte.prestation .aller, .prestation .aller, .tel-eta b, .surtitre-video { color: var(--primaire); }
 .flottant b, .flottant small { color: var(--texte); }
 body.mode-cleaneur .titre-liste.moins { color: #F07D86; }
+
+/* Pastille de bascule rangée dans le coin en bas à droite (19/11/2026) : elle ne recouvre plus le contenu au centre */
+.pastille-mode { left: auto; right: max(20px, env(safe-area-inset-right)); bottom: max(20px, env(safe-area-inset-bottom)); transform: none;
+  padding: 9px 16px; font-size: 13.5px; animation-name: cl-pastille-coin; }
+.pastille-mode:hover { transform: translateY(-2px); }
+body:has(.barre-actions) .pastille-mode { bottom: 104px; }
+@keyframes cl-pastille-coin { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+@media (max-width: 860px) {
+  .pastille-mode { right: 12px; padding: 8px 13px; font-size: 13px; }
+  body:not(.sans-rappel) .pastille-mode { bottom: calc(80px + env(safe-area-inset-bottom)); }
+  body:not(.sans-rappel):has(.barre-actions) .pastille-mode { bottom: 150px; }
+}
