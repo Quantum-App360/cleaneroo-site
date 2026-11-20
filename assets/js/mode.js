@@ -83,23 +83,32 @@ export function basculer() {
   animer(vers, () => {
     fixerMode(vers);
     majPastilleMode();
+    // Vers le mode Cleaneur : on arrive sur l'espace de travail (Accueil du jour), pas sur une page d'explications.
+    if (vers) { try { localStorage.setItem("cleaneroo-sous-onglet-cleaneur", "aujourdhui"); } catch { /* rien */ } }
     location.hash = vers ? "#/mode-cleaneur" : "#/";
     window.dispatchEvent(new Event("cleaneroo-mode"));
   });
 }
 
-/** Pastille flottante en bas de l'écran (19 novembre 2026, comme l'appli iPhone) : toujours visible, dans les deux sens,
- * même dans l'espace Cleaneur sur téléphone où l'interrupteur de l'en-tête est rangé dans le menu. */
+/** Bascule compacte (20 novembre 2026) : la pastille flottante du bas masquait des boutons (litige, validation…).
+ * Elle est remplacée par un petit interrupteur dans la barre du haut, toujours visible, sur téléphone comme sur ordinateur
+ * (à côté de la langue) ; il ne recouvre plus rien. */
 export function majPastilleMode() {
-  let p = document.querySelector(".pastille-mode");
-  if (!p) {
-    p = document.createElement("button");
-    p.type = "button"; p.className = "pastille-mode"; p.setAttribute("data-bascule-mode", "");
-    document.body.append(p);
+  document.querySelector(".pastille-mode")?.remove();
+  const zone = document.querySelector(".entete .actions-entete");
+  if (!zone) return;
+  let b = zone.querySelector(".bascule-mini");
+  if (!b) {
+    b = document.createElement("button");
+    b.type = "button"; b.className = "bascule-mini"; b.setAttribute("data-bascule-mode", "");
+    zone.prepend(b);
   }
   const c = modeCleaneur();
-  p.classList.toggle("vers-client", c);
-  p.innerHTML = `<span aria-hidden="true">⇄</span>${tr(c ? "Passer en mode client" : "Passer en mode Cleaneur")}`;
+  b.classList.toggle("actif", c);
+  b.setAttribute("aria-pressed", String(c));
+  b.title = tr(c ? "Passer en mode client" : "Passer en mode Cleaneur");
+  b.setAttribute("aria-label", b.title);
+  b.innerHTML = `<span class="interrupteur" aria-hidden="true"><i></i></span><small>${tr(c ? "Cleaneur" : "Client")}</small>`;
 }
 
 /** Branche tous les interrupteurs présents dans la page (délégation : un seul écouteur). */

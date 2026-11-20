@@ -139,6 +139,7 @@ const NON_INCLUS = {
   communal: "Encombrants, traitement des nuisibles, entretien des espaces verts (tonte, taille).",
   windows: "Vitres au-delà de 6 m ou sans accès sécurisé (sur devis), réparation de joints.",
   outdoor: "Tonte, taille, élagage, nettoyage de toitures.",
+  pool: "Réparation de pompe, d'électrolyseur, de liner ou de volet ; vidange complète ; produits non cochés (ceux du client sont utilisés).",
   event: "Location de vaisselle, service en salle, évacuation de déchets en benne.",
   special: "Travaux de réparation après sinistre, débarras de mobilier volumineux sans visite préalable.",
 };
@@ -438,6 +439,36 @@ export const RUBRIQUES = [
     occasions: [{ id: "ete", nom: "Avant l'été", packId: "confort" }, { id: "evenement", nom: "Avant un événement", packId: "confort" }, { id: "vente", nom: "Avant une vente ou une location", packId: "prestige" }, { id: "autre", nom: "Autre", packId: "" }],
     naturesSalissure: ["Mousses et lichens", "Traces noires", "Taches d'huile", "Feuilles et débris"],
     noteTaches: "Hors prestation : tonte, taille, élagage et nettoyage de toitures." },
+  // Piscine (20 novembre 2026) : entretien régulier, mise en hivernage, remise en route et rattrapage d'eau verte, au forfait selon
+  // la taille du bassin. Produits (chlore, brome ou sel) : ceux du client sur place, ou fournis en option. Prix pensés pour être
+  // nettement sous les piscinistes (60 à 90 €/h, remise en route souvent 150 à 400 €), sans contrat annuel imposé.
+  { id: "pool", nom: "Piscine", sousTitre: "Entretien, hivernage et remise en route", icone: "exterieurs", tauxHoraireC: 3600, salissureSurTemps: false,
+    titreTypes: "Votre bassin",
+    formules: [F("entretien", "Entretien régulier", "Épuisette, aspirateur, skimmers, réglage du traitement", 0, 60, 1.0, "REGULIER", false, false),
+      F("hivernage", "Mise en hivernage", "Nettoyage complet, traitement d'hiver, niveau abaissé, matériel protégé", 0, 150, 1.0, "AUTRE", false, false),
+      F("remise", "Remise en route", "Après l'hiver : bâche retirée, bassin nettoyé, filtration relancée, eau équilibrée", 0, 180, 1.0, "AUTRE", false, false),
+      F("eau_verte", "Rattrapage eau verte", "Brossage, traitement choc, floculation, lavage du filtre, suivi du retour à l'eau claire", 0, 240, 1.0, "AUTRE", false, false)],
+    taches: [
+      T("analyse", "Analyse complète de l'eau (pH, chlore ou brome, TAC, stabilisant)", 1000, 10, { groupe: "Eau et traitement" }),
+      T("ligne_eau", "Nettoyage de la ligne d'eau", 1500, 20, { groupe: "Bassin" }),
+      T("brossage", "Brossage des parois et du fond", 2000, 25, { groupe: "Bassin" }),
+      T("filtre", "Lavage du filtre (contre-lavage) et du préfiltre de pompe", 1500, 15, { groupe: "Équipements" }),
+      T("local", "Local technique : contrôle et nettoyage", 1500, 15, { groupe: "Équipements" }),
+      T("couverture", "Nettoyage du volet roulant ou de la bâche", 2500, 30, { groupe: "Équipements" }),
+      T("bache", "Pose ou retrait de la bâche d'hiver", 2000, 25, { groupe: "Équipements" }),
+      T("margelles", "Margelles et plages", 2000, 25, { groupe: "Abords" }),
+      T("produits_chlore", "Produits fournis : chlore (galets et choc)", 2500, 5, { groupe: "Produits fournis par le Cleaneur" }),
+      T("produits_brome", "Produits fournis : brome", 3000, 5, { groupe: "Produits fournis par le Cleaneur" }),
+      T("produits_sel", "Produits fournis : sel pour électrolyseur", 2000, 5, { groupe: "Produits fournis par le Cleaneur" }),
+      T("produits_hiver", "Produits fournis : hivernage (anti-algues, anticalcaire)", 2500, 5, { groupe: "Produits fournis par le Cleaneur" }),
+    ],
+    packs: [
+      { id: "confort", nom: "Confort", remisePct: 10, tacheIds: ["analyse", "ligne_eau", "brossage", "filtre"] },
+      { id: "prestige", nom: "Premium", remisePct: 15, tacheIds: ["analyse", "ligne_eau", "brossage", "filtre", "local", "couverture", "margelles"] },
+    ],
+    frequences: [["semaine", "Chaque semaine (saison)"], ["deux_semaines", "Toutes les 2 semaines"], ["quatre_semaines", "Toutes les 4 semaines (hors saison)"]],
+    naturesSalissure: ["Eau trouble", "Algues", "Feuilles et débris", "Calcaire"],
+    noteTaches: "Produits de traitement : par défaut ceux que vous avez sur place (chlore, brome ou sel) ; cochez un produit pour que le Cleaneur l'apporte. Hors prestation : réparations de pompe, d'électrolyseur ou de liner." },
   { id: "event", nom: "Avant et après événement", sousTitre: "Profitez pleinement de votre événement", icone: "evenement", tauxHoraireC: 3200, salissureSurTemps: false,
     titreTypes: "Type d'événement",
     formules: [F("avant", "Avant l'événement", "Passage terminé avant le début", 50, 60, 0.9, "AUTRE", false, false), F("apres", "Après", "Passage à partir de la fin", 50, 60, 1.2, "AUTRE", false, false), F("avant_apres", "Avant et après (2 passages)", "Un passage avant le début, un autre à partir de la fin", 50, 60, 2.0, "AUTRE", false, false)],
@@ -652,13 +683,13 @@ export const RUBRIQUES_CREDIT_IMPOT = ["home", "windows", "textiles"];
  *  Le crédit d'impôt ne concerne que les particuliers (« personnel »). */
 export const PARTIES = [
   { id: "personnel", nom: "Particulier", detail: "Crédit d'impôt sur le ménage, les vitres et les textiles (services à la personne)",
-    rubriques: ["home", "rental", "moving", "textiles", "windows", "outdoor", "car", "leisure", "boat", "kitchen", "event", "construction", "special"] },
+    rubriques: ["home", "rental", "moving", "textiles", "windows", "outdoor", "pool", "car", "leisure", "boat", "kitchen", "event", "construction", "special"] },
   { id: "conciergerie", nom: "Conciergerie et locations", detail: "Locations saisonnières et logements gérés · facture au nom de votre société",
-    rubriques: ["rental", "home", "moving", "textiles", "windows", "outdoor", "leisure", "boat", "construction", "special"] },
+    rubriques: ["rental", "home", "moving", "textiles", "windows", "outdoor", "pool", "leisure", "boat", "construction", "special"] },
   { id: "hotellerie", nom: "Hôtels et campings", detail: "Rotations, renforts et saisons · facture au nom de votre établissement",
-    rubriques: ["hospitality", "windows", "outdoor", "textiles", "construction", "special"] },
+    rubriques: ["hospitality", "windows", "outdoor", "pool", "textiles", "construction", "special"] },
   { id: "professionnel", nom: "Entreprise", detail: "Bureaux, commerces, immeubles, cuisines pro · facture au nom de votre société",
-    rubriques: ["office", "commerce", "communal", "kitchen", "windows", "outdoor", "construction", "car", "leisure", "boat", "event", "textiles", "special"] },
+    rubriques: ["office", "commerce", "communal", "kitchen", "windows", "outdoor", "pool", "construction", "car", "leisure", "boat", "event", "textiles", "special"] },
 ];
 export const partie = id => PARTIES.find(p => p.id === id) || PARTIES[0];
 /** Partie qui propose cette prestation (la partie demandée si elle la propose, sinon la première qui la propose). */
@@ -682,7 +713,7 @@ export const CATEGORIES_BIEN = [["logement", "Logements", "logement"], ["local",
 const ADRESSE = ["logement", "local"];
 export const CATEGORIES_DE_RUBRIQUE = { home: ["logement"], rental: ["logement"], moving: ["logement"],
   office: ["local"], commerce: ["local"], communal: ["local"], hospitality: ["local"],
-  windows: ADRESSE, outdoor: ADRESSE, construction: ADRESSE, textiles: ADRESSE, special: ADRESSE, kitchen: ADRESSE, event: ADRESSE,
+  windows: ADRESSE, outdoor: ADRESSE, pool: ADRESSE, construction: ADRESSE, textiles: ADRESSE, special: ADRESSE, kitchen: ADRESSE, event: ADRESSE,
   car: ["vehicule"], leisure: ["loisirs"], boat: ["bateau"] };
 export const categorieBien = l => (l && l.categorie) || "logement";
 export const categoriesDeRubrique = id => CATEGORIES_DE_RUBRIQUE[id] || ADRESSE;
@@ -747,6 +778,8 @@ export const TYPES_LIEU = {
   windows: [L("fenetres_logement", "Fenêtres d'un logement", 1.0, "Vitres, faces intérieure et extérieure accessibles"), L("baies_veranda", "Baies vitrées et véranda", 1.1), L("vitrine_commerce", "Vitrine de commerce", 1.0), L("facades", "Bureaux et façades vitrées", 1.1)],
   leisure: [L("van", "Van aménagé ou fourgon", 0.9), L("profile", "Camping-car profilé ou capucine", 1.0), L("integral", "Camping-car intégral", 1.15), L("caravane", "Caravane", 0.9)],
   boat: [L("voilier", "Voilier", 1.0), L("moteur", "Bateau à moteur", 1.0), L("semi_rigide", "Semi-rigide", 0.7), L("vedette", "Vedette ou yacht (flybridge)", 1.2), L("catamaran", "Catamaran", 1.5)],
+  pool: [L("hors_sol", "Piscine hors-sol", 0.7), L("petite", "Petit bassin (jusqu'à 25 m² d'eau)", 0.8), L("moyenne", "Bassin moyen (25 à 50 m², ex. 8 × 4 m)", 1.0),
+    L("grande", "Grand bassin (50 à 80 m²)", 1.3), L("tres_grande", "Très grand bassin (plus de 80 m²)", 1.6), L("spa", "Spa ou jacuzzi", 0.5)],
   outdoor: [L("terrasse", "Terrasse / balcon", 1.0, "Balayage et lavage des sols"), L("jardin", "Jardin, allées et cour", 1.0), L("garage", "Garage, cave ou abri", 0.9), L("piscine", "Abords de piscine", 1.1, "Plages et margelles"), L("cour_immeuble", "Cour d'immeuble / parking extérieur", 0.9)],
   event: [L("mariage", "Mariage / réception", 1.1, "Salle, sols, tables, sanitaires"), L("fete", "Fête privée à domicile", 1.0, "Pièces de réception, cuisine, sanitaires"), L("seminaire", "Séminaire / événement d'entreprise", 1.0), L("salon", "Salon / exposition", 1.1), L("anniversaire", "Anniversaire / fête en salle", 1.0)],
   special: [L("cafards", "Cafards et blattes (désinsectisation)", 1.0, "Diagnostic, traitement gel et pulvérisation ciblée, passage de contrôle"),

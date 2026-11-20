@@ -324,6 +324,8 @@ const compteur = (lib, champ, val, { min = 0, max = 999, pas = 1, unite = "" } =
     <output>${val}${unite}</output>
     <button type="button" data-plus="${champ}" data-max="${max}" data-pas="${pas}" aria-label="Plus" ${val >= max ? "disabled" : ""}>+</button></span></div>`;
 const caseCocher = (lib, champ, val, info = "") => `<label class="case"><input type="checkbox" data-case="${champ}" ${val ? "checked" : ""}><span>${lib}${info ? `<span class="petit" style="display:block">${info}</span>` : ""}</span></label>`;
+/** Badge à cocher (20 novembre 2026, linge de la location) : un mot court au lieu d'une longue phrase ; le détail en info-bulle. */
+const badgeCase = (emoji, lib, champ, val, info = "") => `<label class="badge-case" title="${esc(tr(info))}"><input type="checkbox" data-case="${champ}" ${val ? "checked" : ""}><span>${emoji} ${tr(lib)}</span></label>`;
 const champTexte = (lib, champ, val, type = "text", extra = "") => `<label class="champ">${lib}<input type="${type}" data-texte="${champ}" value="${esc(val)}" ${extra}></label>`;
 
 /* ------------------------------------------------------------------ Étapes */
@@ -439,7 +441,7 @@ function questionnaire(enTete = true) {
   if (b.rubriqueId !== "car") {
     if (b.rubriqueId === "special" && TARIFS_SPECIAUX[b.typeLieuId]?.surface !== false) h += titre("Dimensions") + `<div class="carte">${compteur("Surface à traiter", "surface", b.surface, { min: 5, max: 5000, unite: " m²" })}`
       + (surfaceEffective(b) > REGLES.SEUIL_DEVIS_SURFACE_M2 ? `<p style="color:var(--alerte);font-size:14px">Au-delà de 300 m² : devis obligatoire.</p>` : "") + `</div>`;
-    if (!["textiles", "hospitality", "special"].includes(b.rubriqueId) && !logFixe && !(bienFixe && ["leisure", "boat"].includes(b.rubriqueId))) h += titre("Dimensions") + `<div class="carte">`
+    if (!["textiles", "hospitality", "special", "pool"].includes(b.rubriqueId) && !logFixe && !(bienFixe && ["leisure", "boat"].includes(b.rubriqueId))) h += titre("Dimensions") + `<div class="carte">`
       + (b.rubriqueId === "windows" ? compteur("Nombre de fenêtres", "fenetres", b.fenetres, { min: 1, max: 200 })
           + compteur("Surface vitrée approximative", "surfaceVitree", b.surfaceVitree ?? 20, { min: 1, max: 500, unite: " m²" })
           + `<p class="petit">La surface vitrée sert uniquement aux tâches à la surface.</p>`
@@ -651,9 +653,10 @@ function etapesLocation() {
     + compteur("Arrivée suivante", "arriveeSuivanteH", b.arriveeSuivanteH ?? REGLES.ARRIVEE_SUIVANTE_DEFAUT_H, { min: REGLES.ARRIVEE_SUIVANTE_MIN_H, max: REGLES.ARRIVEE_SUIVANTE_MAX_H, unite: " h" })
     + `<p class="petit">Le ménage commence au départ des voyageurs et doit finir avant l'arrivée suivante.</p>`
     + caseCocher("Je souhaite cette prestation à chaque départ de voyageurs", "aChaqueDepart", !!b.aChaqueDepart) + `</div>`
-    + titre("Linge") + `<div class="carte">${caseCocher("Draps et serviettes propres fournis sur place", "drapsFournis", b.drapsFournis !== false, "Le Cleaneur fait les lits et installe serviettes et tapis avec votre linge.")}
-      ${caseCocher("Lavage des draps", "lavageDraps", !!b.lavageDraps, "Draps et housses lavés, séchés et pliés.")}
-      ${caseCocher("Lavage des serviettes, tapis et torchons", "lavageLinge", !!b.lavageLinge, "Serviettes de bain, tapis de bain et de WC, torchons de cuisine.")}
+    + titre("Linge") + `<div class="carte"><div class="badges-linge">${badgeCase("🛏️", "Linge propre sur place", "drapsFournis", b.drapsFournis !== false, "Le Cleaneur fait les lits et installe serviettes et tapis avec votre linge.")}
+      ${badgeCase("🧺", "Laver les draps", "lavageDraps", !!b.lavageDraps, "Draps et housses lavés, séchés et pliés.")}
+      ${badgeCase("🧻", "Laver serviettes et torchons", "lavageLinge", !!b.lavageLinge, "Serviettes de bain, tapis de bain et de WC, torchons de cuisine.")}</div>
+      <p class="petit muet" style="margin:8px 0 0">${tr(b.drapsFournis !== false ? "Lits faits et serviettes installées avec votre linge." : "Pas de linge à installer.")}${b.lavageDraps ? " " + tr("Draps lavés, séchés, pliés.") : ""}${b.lavageLinge ? " " + tr("Serviettes, tapis et torchons lavés.") : ""}</p>
       ${b.lavageDraps || b.lavageLinge ? (() => { const t = litsTailles(b), p = REGLES.DRAPS_LAVERIE_C, laverie = b.drapsLieu === "laverie";
         const prixSurPlace = (b.lavageDraps ? REGLES.DRAPS_SUR_PLACE_FORFAIT_C : 0) + (b.lavageLinge ? REGLES.LINGE_SUR_PLACE_FORFAIT_C : 0);
         return `<p style="margin:10px 0 4px"><b>${tr("Machine à laver et sèche-linge dans le logement ?")}</b></p>`

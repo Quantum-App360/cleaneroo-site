@@ -2,7 +2,7 @@
 // et la boîte « À faire » (tout ce qui attend le client). Se met à jour en temps réel. Même écran dans l'appli (AccueilVivant.kt).
 import { guideVideo } from "./guide-video.js";
 import { badgeNiveau } from "./niveaux.js";
-import { reserverPourLogement, reserverAvecFavori, nomLogement, iconeBien } from "./reserver.js";
+import { reserverPourLogement, reserverAvecFavori, nomLogement, iconeBien, preremplir } from "./reserver.js";
 import { decorTableau } from "./commun.js";
 import { agendaParticulier } from "./agenda-particulier.js";
 import { rubrique } from "./catalogue.js";
@@ -124,6 +124,12 @@ export async function pageTableau(vue) {
   const enDirect = d && ["EN_ROUTE", "SUR_PLACE", "EN_COURS"].includes(d.statut);
   const r = d && rubrique(d.rubrique_id);
   const pro = (profil?.statuts || []).includes("pro") && profil?.espace === "pro";
+  // « Refaire » (20 novembre 2026) : les prestations déjà faites, reprises avec les mêmes réglages (adresse, formule, options) ;
+  // il ne reste qu'à choisir la date. Une par prestation et par adresse, les plus récentes d'abord.
+  const vus = new Set();
+  const refaire = demandes.filter(x => x.statut === "TERMINEE" && rubrique(x.rubrique_id) && !x.sur_devis)
+    .sort((a, b) => new Date(b.creneau || b.cree_le) - new Date(a.creneau || a.cree_le))
+    .filter(x => { const k = `${x.rubrique_id}|${x.rue}|${x.code_postal}`; if (vus.has(k)) return false; vus.add(k); return true; }).slice(0, 3);
   decorTableau(true);
   vue.innerHTML = `<section class="tableau"><div class="conteneur">
     <div class="tableau-entete">
@@ -131,7 +137,8 @@ export async function pageTableau(vue) {
         <h1>${tr("Bonjour")} ${esc(profil?.prenom || "")}</h1></div>
       <a class="bouton" href="#/reserver" data-choisir-prestation>＋ ${tr("Réserver")}</a>
     </div>
-    ${guideVideo("client", "particulier")}
+    ${demandes.length ? "" : guideVideo("client", "particulier")}
+    ${refaire.length ? `<div class="refaire"><span class="petit muet">${tr("En un geste")} :</span>${refaire.map(x => `<button type="button" class="puce-refaire" data-refaire="${esc(x.reference)}">${icone(rubrique(x.rubrique_id).icone)} ${tr("Refaire")} · ${esc(rubrique(x.rubrique_id).nom)}${x.ville ? ` · ${esc(x.ville)}` : ""}</button>`).join("")}</div>` : ""}
     <div class="tableau-grille">
       <article class="carte vivant${enDirect ? " en-direct" : ""}${d ? "" : " vide"}" data-teinte="${d ? (enDirect ? "corail" : "turquoise") : "lilas"}">
         ${d ? `<div class="vivant-haut"><span class="pastille-etat">${enDirect ? `<i></i>${tr("En direct")}` : esc(tr("Ma prochaine prestation"))}</span>
@@ -166,12 +173,25 @@ export async function pageTableau(vue) {
       <p class="petit" style="margin-top:0">${tr("Toutes vos prestations demandées, jour par jour. Touchez un jour pour voir le détail.")}</p>
       <div class="carte agenda-carte" id="agenda-particulier"></div>` : ""}
     <div id="carnet-favoris"></div>
+    ${pro ? "" : `<h2 class="titre-section">${icone("cle", { tuile: true })}${tr("Mon compte")}</h2>
+    <div class="grille-raccourcis tableau-raccourcis">
+      <a class="carte raccourci" href="#/compte/particulier" data-sous-voulu="factures">${icone("paiement", { tuile: true })}<b>${tr("Mes factures")}</b><span class="petit">${tr("PDF prêts à envoyer")}</span></a>
+      <a class="carte raccourci" href="#/compte/particulier" data-sous-voulu="profil">${icone("logement", { tuile: true })}<b>${tr("Mes informations")}</b><span class="petit">${tr("Coordonnées, préférences")}</span></a>
+      <a class="carte raccourci" href="#/compte/particulier" data-sous-voulu="parrainage">${icone("avis", { tuile: true })}<b>${tr("Parrainage")}</b><span class="petit">${tr("Invitez, gagnez des crédits")}</span></a>
+    </div>`}
     <p class="petit direct" style="margin-top:14px"><i></i>${tr("Mis à jour en temps réel")} · <a href="#/vitrine">${tr("Voir la page d'accueil du site")}</a></p>
   </div></section>`;
   traduire(vue);
   agendaParticulier(vue.querySelector("#agenda-particulier"), { demandes, biens });
   carnetFavoris(vue.querySelector("#carnet-favoris"));
   vue.querySelectorAll("[data-reserver-ici]").forEach(b => b.onclick = () => reserverPourLogement(b.dataset.reserverIci));
+  vue.querySelectorAll("[data-sous-voulu]").forEach(a => a.addEventListener("click", () => { try { localStorage.setItem("cleaneroo-sous-onglet-particulier", a.dataset.sousVoulu); } catch { /* rien */ } }));
+  vue.querySelectorAll("[data-refaire]").forEach(b => b.onclick = () => {
+    const x = refaire.find(y => y.reference === b.dataset.refaire); if (!x) return;
+    const { jour, heure, creneau, ...reglages } = x.details || {};
+    preremplir({ rubriqueId: x.rubrique_id, champs: { ...reglages, rue: x.rue || "", codePostal: x.code_postal || "", ville: x.ville || "", jour: "", heure: -1 } });
+    location.hash = `#/reserver/${x.rubrique_id}`;
+  });
   // Compte à rebours rafraîchi chaque minute ; écran redessiné à chaque changement d'une demande.
   arreterTableau();
   minuterie = setInterval(() => vue.querySelectorAll("[data-rebours]").forEach(e => { e.textContent = compteARebours(e.dataset.rebours); }), 30000);

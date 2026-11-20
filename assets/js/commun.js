@@ -86,7 +86,7 @@ export const blocEtapes = (liste = ETAPES) => `<div class="etapes etroit">${list
 export function blocReassurance({ compact = false } = {}) {
   const lignes = [
     ["cleaneurs", "Cleaneurs vérifiés", "Identité, SIRET, attestation URSSAF et assurance RC Pro contrôlés avant activation, puis une mission test."],
-    ["garantie", "Garantie remplacement", `Votre Cleaneur ne peut pas venir ? Remplaçant en priorité, sinon annulation sans frais et ${eurosRond(REGLES.GARANTIE_REMPLACEMENT_OFFERT_C)} offerts.`],
+    ["garantie", "Garantie remplacement", "Votre Cleaneur ne peut pas venir ? Un remplaçant vérifié en priorité, sinon annulation sans frais : rien n'est débité."],
     ["paiement", "Payé après validation", "Simple empreinte bancaire à la réservation, débit après votre accord."],
     ["photo", "Preuves photo avant et après", "L'état du logement à l'arrivée et au départ du Cleaneur (location saisonnière)."],
   ];

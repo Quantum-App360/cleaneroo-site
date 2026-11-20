@@ -436,7 +436,16 @@ export async function deciderDocument(id, accepte, motif = "") {
 /* Espace Pro : agenda relié aux calendriers iCal (Airbnb, Booking…). Lecture par le serveur (fonction agenda-ical). */
 const CLE_AGENDA = "cleaneroo-agenda";
 /** Réservations d'un calendrier : [{ debut, fin, titre, bloque }] (dates AAAA-MM-JJ). Erreur : { erreur }. */
+/** Calendrier de démonstration (20 novembre 2026) : un lien fixe, lu sans réseau, dont les séjours se recalculent chaque jour
+ * (départs dans 1, 3, 6, 9… jours) : on essaie l'agenda, le planning et le pilote automatique sans avoir d'annonce. */
+export const URL_CALENDRIER_DEMO = "https://cleaneroo.fr/demo/calendrier.ics";
+export function calendrierDemo(aujourdhui = new Date()) {
+  const j = n => { const d = new Date(aujourdhui.getFullYear(), aujourdhui.getMonth(), aujourdhui.getDate() + n); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
+  const sejours = [[-2, 1], [1, 3], [4, 6], [6, 9], [10, 14], [15, 17], [18, 22], [23, 25], [26, 30]];
+  return { evenements: sejours.map(([a, b], i) => ({ debut: j(a), fin: j(b), titre: `Réservation démo ${i + 1}`, bloque: false })) };
+}
 export async function lireCalendrier(url, forcer = false) {
+  if (url === URL_CALENDRIER_DEMO) return calendrierDemo();
   let cache = {};
   try { cache = JSON.parse(sessionStorage.getItem(CLE_AGENDA) || "{}"); } catch { /* rien */ }
   const c = cache[url];

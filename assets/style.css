@@ -2473,3 +2473,31 @@ body:has(.barre-actions) .pastille-mode { bottom: 104px; }
   body:not(.sans-rappel) .pastille-mode { bottom: calc(80px + env(safe-area-inset-bottom)); }
   body:not(.sans-rappel):has(.barre-actions) .pastille-mode { bottom: 150px; }
 }
+
+/* Bascule compacte client / Cleaneur dans la barre du haut (20 novembre 2026) : remplace la pastille flottante du bas. */
+.pastille-mode { display: none !important; }
+.bascule-mini { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 9px 0 5px; border-radius: 999px; border: 1px solid var(--separateur);
+  background: var(--surface); color: var(--texte2); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; flex: none; }
+.bascule-mini .interrupteur { width: 30px; height: 18px; border-radius: 999px; background: var(--creux); position: relative; transition: background .25s; }
+.bascule-mini .interrupteur i { position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25); transition: transform .25s; }
+.bascule-mini.actif .interrupteur { background: linear-gradient(90deg, #0DC88D, #1AD934); }
+.bascule-mini.actif .interrupteur i { transform: translateX(12px); }
+body.mode-cleaneur .bascule-mini { background: rgba(255,255,255,.08); color: #fff; border-color: rgba(255,255,255,.2); }
+@media (min-width: 1281px) { .bascule-mini { display: none; } }
+@media (max-width: 420px) { .bascule-mini small { display: none; } .bascule-mini { padding: 0 5px; } }
+@media print { .bascule-mini { display: none; } }
+/* « Refaire » en un geste sur l'accueil du compte (20 novembre 2026). */
+.refaire { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 14px; }
+.puce-refaire { display: inline-flex; align-items: center; gap: 6px; min-height: 38px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--separateur);
+  background: var(--surface); color: var(--texte); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+.puce-refaire .ico { width: 18px; height: 18px; color: var(--primaire); }
+.puce-refaire:hover { border-color: var(--primaire); }
+
+/* Linge de la location en badges (20 novembre 2026). */
+.badges-linge { display: flex; flex-wrap: wrap; gap: 8px; }
+.badge-case { position: relative; display: inline-flex; cursor: pointer; }
+.badge-case input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.badge-case span { display: inline-flex; align-items: center; gap: 6px; min-height: 42px; padding: 0 16px; border-radius: 999px; border: 1.5px solid var(--separateur);
+  background: var(--surface); font-weight: 700; font-size: 15px; transition: background .15s, border-color .15s, color .15s; }
+.badge-case input:checked + span { background: var(--primaire); border-color: var(--primaire); color: #fff; }
+.badge-case input:focus-visible + span { outline: 3px solid var(--primaire); outline-offset: 2px; }

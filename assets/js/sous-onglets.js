@@ -8,8 +8,8 @@ const GROUPES = {
   cleaneur: { onglets: [["societe", "Ma société"], ["aujourdhui", "Accueil"], ["missions", "Missions"], ["planning", "Planning"], ["dossier", "Mon dossier"], ["activite", "Activité"]],
     defaut: "aujourdhui", details: "dossier",
     regles: [["#espace-societe", "societe"], ["#espace-salarie", "aujourdhui"], ["#activer-societe", "dossier"], ["#selfie-jour, .tableau-cleaneur, #noter-clients", "aujourdhui"], ["#avis-recus, #niveau-cleaneur, #mon-activite, #formules-cleaneur, [data-factures], .parrainage, .bloc-parrainage", "activite"],
-      ["#ce-qui-manque, #formations-cleaneur, #bloc-invitation", "dossier"], ["#periodes-fermees, #creneaux-cleaneur", "planning"],
-      ["#missions-disponibles, #missions-incompatibles, .deroule-mission", "missions"]] },
+      ["#ce-qui-manque, #formations-cleaneur, #bloc-invitation, #comment-cleaneur", "dossier"], ["#periodes-fermees, #creneaux-cleaneur", "planning"],
+      ["#missions-disponibles, #missions-incompatibles", "missions"]] },
   // Particulier (13 novembre 2026) : le compte en trois rubriques (le suivi est dans « Mon suivi »).
   particulier: { onglets: [["profil", "Compte"], ["factures", "Factures"], ["parrainage", "Parrainage"]],
     defaut: "profil", details: null,

@@ -1,6 +1,7 @@
 // Litiges et Garantie Cleaneroo (11 novembre 2026, repris de l'appli iPhone de Vincent).
 // Sur la page de suivi d'une prestation terminée : « Signaler un problème » (prestation incomplète, non conforme, autre)
-// ou « Déclarer un dommage » (Garantie Cleaneroo, plafond 3 000 €), dans les 48 h après la fin, avec description et photos.
+// ou « Déclarer un dommage », dans les 48 h après la fin, avec description et photos. 20/11/2026 : Cleaneroo n'indemnise pas ;
+// un dommage relève de l'assurance des parties (RC Pro du Cleaneur, assurance habitation) et le client télécharge un dossier PDF prêt pour l'assureur.
 // Tant que le signalement est ouvert, la prestation n'est pas validée automatiquement. Décision dans gestion.html (onglet Litiges).
 // Même écran dans l'appli (Litiges.kt). Base : outils/base-litiges.sql.
 import { supabase, reduirePhoto } from "./donnees.js";
@@ -8,13 +9,13 @@ import { REGLES, euros, dateLongue } from "./regles.js";
 import { traduire, tr } from "./langue.js";
 
 export const MOTIFS_LITIGE = [["INCOMPLETE", "Prestation incomplète"], ["NON_CONFORME", "Prestation non conforme"], ["AUTRE", "Autre"]];
-export const STATUTS_LITIGE = { OUVERT: "En cours d'examen", REPRISE_GRATUITE: "Reprise gratuite", REMBOURSEMENT: "Remboursement", INDEMNISATION: "Indemnisation", REFUSE: "Refusé" };
+export const STATUTS_LITIGE = { OUVERT: "En cours d'examen", REPRISE_GRATUITE: "Reprise gratuite", REMBOURSEMENT: "Remboursement", INDEMNISATION: "Dossier transmis à l'assurance", REFUSE: "Refusé" };
 const MESSAGES = {
   etape: "Un problème ne peut être signalé qu'après la fin du ménage.",
   delai: "Le délai de 48 h après la fin du ménage est dépassé. Écrivez à contact@cleaneroo.fr.",
   deja: "Un signalement est déjà en cours d'examen pour cette prestation.",
   description: "Décrivez le problème en au moins 20 caractères.",
-  montant: "Indiquez le montant estimé du dommage (3 000 € maximum).",
+  montant: "Indiquez le montant estimé du dommage (jusqu'à 3 000 € ; au-delà, écrivez à contact@cleaneroo.fr).",
 };
 
 const MOTIFS_ACCES = { ABSENT: "Client absent", CLE_INTROUVABLE: "Clé ou code introuvable", ACCES_REFUSE: "Accès refusé", DANGEREUX: "Logement inaccessible ou dangereux" };
@@ -31,11 +32,11 @@ export async function blocLitige(boite, reference, jeton, statut) {
     <p class="petit" style="margin:4px 0 0">${tr("Indemnité due au Cleaneur :")} <b>${euros(acces.indemnite_c)}</b>. ${tr("Vous pouvez la contester ci-dessous dans les 48 h.")}</p></div>` : "";
   const ouverts = (liste || []).filter(l => l.statut === "OUVERT");
   const suivi = (liste || []).map(l => `<div class="petit" style="margin-top:6px">${dateLongue(new Date(l.cree_le))} · ${l.genre === "DOMMAGE" ? tr("Dommage") : tr(MOTIFS_LITIGE.find(m => m[0] === l.motif)?.[1] || "Autre")}
-    · <b>${tr(STATUTS_LITIGE[l.statut])}</b>${l.montant_decide_c ? ` · ${euros(l.montant_decide_c)}` : ""}${l.decision ? `<br>${l.decision.replace(/[<>&]/g, "")}` : ""}</div>`).join("");
+    · <b>${tr(STATUTS_LITIGE[l.statut])}</b>${l.montant_decide_c ? ` · ${euros(l.montant_decide_c)}` : ""}${l.decision ? `<br>${l.decision.replace(/[<>&]/g, "")}` : ""}${l.genre === "DOMMAGE" ? `<br><button type="button" class="bouton secondaire petit-bouton" data-dossier-assurance="1" style="margin-top:6px">📄 ${tr("Dossier pour l'assurance (PDF)")}</button>` : ""}</div>`).join("");
   boite.innerHTML = infoAcces + `<details class="carte" style="margin:12px 0" ${ouverts.length || acces ? "open" : ""}><summary>${acces ? "Contester" : "Un problème avec ce ménage ?"}</summary>
     ${suivi ? `<div style="margin:8px 0">${suivi}</div>` : ""}
     ${ouverts.length ? `<p class="petit">Votre signalement est en cours d'examen : la prestation n'est pas validée automatiquement en attendant. Réponse sous 72 h.</p>` : `
-    <p class="petit" style="margin:8px 0">Dans les ${REGLES.GARANTIE_DECLARATION_H} h après la fin du ménage, signalez un problème ou déclarez un dommage (Garantie Cleaneroo, jusqu'à ${euros(REGLES.GARANTIE_PLAFOND_C)}). Nous examinons votre demande sous 72 h.</p>
+    <p class="petit" style="margin:8px 0">Dans les ${REGLES.GARANTIE_DECLARATION_H} h après la fin du ménage, signalez un problème ou déclarez un dommage. Un dommage est pris en charge par l'assurance RC Pro du Cleaneur ou votre assurance habitation : Cleaneroo vous prépare le dossier de preuves (photos horodatées, compte rendu) prêt à envoyer. Réponse sous 72 h.</p>
     <form data-form-litige novalidate>
       <div class="segments" style="margin-bottom:10px"><button type="button" data-genre="LITIGE" class="choisi">Signaler un problème</button><button type="button" data-genre="DOMMAGE">Déclarer un dommage</button></div>
       <label class="champ" data-champ-motif>Motif<select name="motif">${MOTIFS_LITIGE.map(([id, nom]) => `<option value="${id}">${nom}</option>`).join("")}</select></label>
@@ -46,6 +47,11 @@ export async function blocLitige(boite, reference, jeton, statut) {
       <p class="erreur" data-erreur-litige></p>
       <button type="submit" class="bouton plein">Envoyer</button></form>`}</details>`;
   traduire(boite);
+  boite.querySelectorAll("[data-dossier-assurance]").forEach(b => b.onclick = async () => {
+    b.disabled = true; const texte = b.textContent; b.textContent = tr("Préparation du dossier…");
+    try { await telechargerDossierAssurance(reference, jeton); } catch { alert(tr("Le dossier n'a pas pu être préparé. Réessayez.")); }
+    b.disabled = false; b.textContent = texte;
+  });
   const f = boite.querySelector("[data-form-litige]");
   if (!f) return;
   let genre = "LITIGE";
@@ -80,4 +86,22 @@ export async function blocLitige(boite, reference, jeton, statut) {
     }
     blocLitige(boite, reference, jeton, statut);
   };
+}
+
+/** Dossier PDF pour l'assurance (20 novembre 2026) : parties, prestation, dommage déclaré, photos du dommage et photos avant / après
+ * horodatées de chaque pièce. Préparé dans le navigateur (pdf.js), prêt à envoyer à l'assureur. */
+export async function telechargerDossierAssurance(reference, jeton) {
+  const [{ dossierAssurancePdf, remettre }, { rubrique }, { data: x, error }] = await Promise.all([import("./pdf.js"), import("./catalogue.js"),
+    supabase.rpc("dossier_assurance", { p_reference: reference, p_jeton: jeton || null })]);
+  if (error || !x) throw new Error("dossier");
+  const l = x.dommages?.[0] || {};
+  const signer = async (bucket, c) => (await supabase.storage.from(bucket).createSignedUrl(c, 600)).data?.signedUrl;
+  const photos = [];
+  for (const [i, c] of (l.photos || []).entries()) { const u = await signer("photos-demandes", c); if (u) photos.push({ url: u, legende: `Dommage · photo ${i + 1}` }); }
+  const heure = t => t ? new Date(t).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" }) : "";
+  for (const p of x.pieces || []) for (const [k, t] of [["avant", "avant_le"], ["apres", "apres_le"]]) if (p[k]) {
+    const u = await signer("photos-controles", p[k]).catch(() => null); if (u) photos.push({ url: u, legende: `${p.nom} · ${k === "avant" ? "avant" : "après"} · ${heure(p[t])}` });
+  }
+  const octets = await dossierAssurancePdf({ litige: l, demande: { ...x.demande, rubrique: rubrique(x.demande?.rubrique_id)?.nom || "", etapes: [] }, client: x.client, cleaneur: x.cleaneur, photos });
+  await remettre(octets, `dossier-assurance-${reference}.pdf`, "application/pdf", { partager: true });
 }

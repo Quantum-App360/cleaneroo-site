@@ -5,7 +5,7 @@ import { calculer, entreeEstimation } from "./estimation.js";
 import { REGLES, euros, dateLongue, dateCourte, sirenSiretValide, cleaneursRotation, duree } from "./regles.js";
 import { icone } from "./icones.js";
 import { traduire, tr, LOCALE } from "./langue.js";
-import { DOCUMENTS_CLEANEUR, enregistrerBien, lireCalendrier } from "./donnees.js";
+import { DOCUMENTS_CLEANEUR, enregistrerBien, lireCalendrier, URL_CALENDRIER_DEMO } from "./donnees.js";
 import { couleurBien, voies, morceau, erreurSejour, sejoursGardes, nuits, versIcs, sourceCalendrier } from "./agenda.js";
 import { afficherCarte, coordonnees } from "./cartes.js";
 import { guideVideo } from "./guide-video.js";
@@ -57,11 +57,10 @@ const nomBien = l => l.nom || `${(TYPES_LOGEMENT.find(t => t.id === l.typeLogeme
 export function ongletParticulier(p, biens, demandes) {
   // Refonte (13 novembre 2026) : un seul tableau de bord, « Mon suivi » ; « Mon espace » rassemble le compte (informations, factures, parrainage).
   const aVenir = demandes.filter(d => !["TERMINEE", "ANNULEE"].includes(d.statut)).length;
-  return `<div class="grille-raccourcis acces-particulier">
-      <a class="carte raccourci" href="#/tableau">${icone("sur-place", { tuile: true })}<b>Mon suivi</b><span class="petit">Ma prochaine prestation en direct</span></a>
-      <a class="carte raccourci" href="#/mes-demandes">${icone("calendrier", { tuile: true })}<b>Mes prestations</b><span class="petit">${aVenir} ${tr(aVenir > 1 ? "à venir" : "à venir")}</span></a>
-      <a class="carte raccourci" href="#/mes-biens">${icone("logement", { tuile: true })}<b>Mes biens</b><span class="petit">${biens.length} ${tr(biens.length > 1 ? "logements" : "logement")}</span></a>
-    </div>
+  // 20 novembre 2026 : l'accueil (« Mon suivi ») et « Mon espace » ne font plus doublon. L'accueil rassemble tout ce qui se passe
+  // (prestation en direct, à faire, agenda, refaire en un geste) ; ici ne reste que le compte : informations, factures, parrainage.
+  return `<p class="acces-particulier" style="margin:0 0 12px"><a class="lien-bouton" href="#/tableau">‹ ${tr("Mon accueil")}</a>
+      <span class="petit muet"> · ${aVenir} ${tr("prestation(s) à venir")} · ${biens.length} ${tr(biens.length > 1 ? "logements" : "logement")}</span></p>
 `;
 }
 
@@ -258,6 +257,7 @@ export function ongletPro(p, biens, hotellerie = false) {
           <form data-form-cal="${esc(l.id)}" novalidate style="margin-top:10px">
             <label class="champ">Nom du bien<input name="nom" maxlength="60" value="${esc(l.nom)}" placeholder="${esc(tr("Ex. : Studio Vieux-Port"))}"></label>
             ${SOURCES.map(([id, nom]) => `<label class="champ">Lien du calendrier ${nom}<input name="${id}" type="url" inputmode="url" maxlength="600" placeholder="https://…ics" value="${esc((l.calendriers || []).find(c => c.source === id)?.url)}"></label>`).join("")}
+            <p class="petit"><button type="button" class="lien-bouton" data-cal-demo>🧪 ${tr("Essayer avec un calendrier de démonstration")}</button></p>
             <p class="erreur" data-erreur-cal></p><button class="bouton plein" type="submit">Enregistrer</button></form></details>
         ${cals.length ? blocPilote(l) : ""}
         ${editeurGuide(l)}${editeurEtapesPhoto(l)}${editeurTemoins(l)}${editeurStock(l)}${editeurIncidents(l)}</div>`;
@@ -304,6 +304,11 @@ export function brancherSociete(vue, majProfil, recharger) {
 
 export function brancherPro(vue, p, biens, demandes, { majProfil, recharger }) {
   brancherSociete(vue, majProfil, recharger);
+  // Calendrier de démonstration : rempli dans « Autre calendrier », lu sans réseau ; il ne crée jamais de vraie réservation.
+  vue.querySelectorAll("[data-cal-demo]").forEach(b => b.onclick = () => { const f = b.closest("form"); f.autre.value = URL_CALENDRIER_DEMO; f.requestSubmit(); });
+  // Un calendrier vient d'être relié : le pilote automatique est proposé tout de suite (c'est lui qui crée les ménages tout seul).
+  try { const id = sessionStorage.getItem("cleaneroo-pilote-a-proposer"); if (id) { sessionStorage.removeItem("cleaneroo-pilote-a-proposer");
+    const d = vue.querySelector(`[data-bien="${CSS.escape(id)}"] .pilote-bien`); if (d) { d.open = true; const auto = d.querySelector("[value=auto]"); if (auto && !d.querySelector("[value=auto]:checked")) auto.checked = true; setTimeout(() => d.scrollIntoView({ block: "center" }), 300); } } } catch { /* rien */ }
   vue.querySelectorAll("[data-form-cal]").forEach(f => f.onsubmit = async e => {
     e.preventDefault();
     const l = biens.find(x => x.id === f.dataset.formCal), err = f.querySelector("[data-erreur-cal]");
@@ -317,7 +322,8 @@ export function brancherPro(vue, p, biens, demandes, { majProfil, recharger }) {
       if (r.erreur) { err.textContent = tr(r.erreur === "site" ? "Ce site de calendrier n'est pas encore accepté. Utilisez le lien Airbnb, Booking, Abritel ou Google."
         : r.erreur === "format" ? "Ce lien n'est pas un calendrier (.ics). Vérifiez que vous avez copié le lien d'export." : "Calendrier injoignable. Vérifiez le lien et réessayez."); return; }
     }
-    try { await enregistrerBien({ ...l, nom: f.nom.value.trim(), calendriers }); recharger(); }
+    const nouveau = calendriers.some(c => c.url !== URL_CALENDRIER_DEMO && !(l.calendriers || []).some(x => x.url === c.url));
+    try { await enregistrerBien({ ...l, nom: f.nom.value.trim(), calendriers }); if (nouveau && l.pilote?.mode !== "auto") { try { sessionStorage.setItem("cleaneroo-pilote-a-proposer", l.id); } catch { /* rien */ } } recharger(); }
     catch { err.textContent = tr("Le service est momentanément indisponible. Réessayez dans quelques minutes."); }
   });
   // Pilote automatique : modèle = dernier ménage (non annulé) réservé pour ce logement.
@@ -327,7 +333,8 @@ export function brancherPro(vue, p, biens, demandes, { majProfil, recharger }) {
     const mode = f.querySelector("[name=mode]:checked")?.value || "manuel", plafondC = Math.round((Number(f.plafond.value) || 0) * 100);
     const modele = (demandes || []).filter(d => d.details?.logementId === l.id && d.statut !== "ANNULEE" && !d.sur_devis)
       .sort((a, b) => new Date(b.cree_le) - new Date(a.cree_le))[0];
-    if (mode === "auto" && !modele) { err.textContent = tr("Réservez d'abord un premier ménage pour ce logement : il servira de modèle (prix et consignes)."); return; }
+    if (mode === "auto" && (l.calendriers || []).every(c => c.url === URL_CALENDRIER_DEMO)) { err.textContent = tr("Calendrier de démonstration : il sert à essayer l'agenda. Reliez le vrai calendrier de votre annonce pour activer le pilote automatique."); return; }
+        if (mode === "auto" && !modele) { err.textContent = tr("Réservez d'abord un premier ménage pour ce logement : il servira de modèle (prix et consignes)."); return; }
     if (mode === "auto" && plafondC <= 0) { err.textContent = tr("Indiquez un plafond mensuel : au-delà, rien n'est programmé sans vous."); return; }
     try { await enregistrerBien({ ...l, pilote: { mode, plafondC, modele: modele?.reference || "" } }); recharger(); }
     catch { err.textContent = tr("Le service est momentanément indisponible. Réessayez dans quelques minutes."); }
@@ -667,18 +674,18 @@ export function ongletCleaneur(p, docs, { dossier, profil }) {
   const salarie = !!p.employeur_id;
   return `${admin ? `<p style="margin:0 0 10px"><span class="tampon">Accès administrateur</span></p>` : ""}
     ${blocSalarie(p)}${blocSociete(p)}
-    ${guideVideo("cleaneur", "cleaneur")}
     <div id="missions-cleaneur">${chargeur("Chargement de vos missions…")}</div>
     ${salarie ? "" : `<h2 class="titre-section">${icone("paiement", { tuile: true })}Ma formule</h2>
     ${blocFormulesCleaneur(p)}`}
-    <h2 class="titre-section">${icone("termine", { tuile: true })}Le déroulé d'une mission</h2>
+    <details class="carte" id="comment-cleaneur"><summary>Comment se déroule une mission (rappel)</summary>
+    ${guideVideo("cleaneur", "cleaneur")}
     <ol class="deroule-mission">
       <li><b>J'accepte la mission</b><span class="petit">Adresse, horaires, tâches et prix sont connus avant d'accepter.</span></li>
       <li><b>Je suis en route</b><span class="petit">Le client est prévenu automatiquement.</span></li>
       <li><b>Je suis sur place</b><span class="petit">Arrivée confirmée par géolocalisation, photos d'état des lieux.</span></li>
       <li><b>Je coche mes tâches</b><span class="petit">Pièce par pièce : photo avant, tâches, photo après, contrôle par IA.</span></li>
       <li><b>Mission terminée</b><span class="petit">Le client valide, le paiement est versé.</span></li>
-    </ol>
+    </ol></details>
     ${salarie ? "" : admin ? `<details class="carte"><summary>Essayer le dépôt de documents (comme un Cleaneur)</summary><div style="margin-top:12px">${dossier}</div></details>`
       : `<details class="carte" ${p.dossier === "VALIDE" ? "" : "open"}><summary>Mon dossier Cleaneur</summary><div style="margin-top:12px">${dossier}</div></details>`}
     ${salarie ? "" : blocActiverSociete(p)}

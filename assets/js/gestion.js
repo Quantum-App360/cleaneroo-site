@@ -305,19 +305,38 @@ async function listeVisites() {
 
 /* Support (12 novembre 2026) : conversations « Cleaneroo · Support » ouvertes par les clients et les Cleaneurs. */
 async function listeSupport() {
-  const { data, error } = await supabase.rpc("fils_support");
+  const [{ data, error }, { data: dem }] = await Promise.all([supabase.rpc("fils_support"),
+    supabase.from("demandes_support").select("*").order("echeance", { ascending: true }).limit(300)]);
   if (error) { vue.innerHTML = `<p class="erreur">${esc(error.message)}</p>`; return; }
-  vue.innerHTML = `${titreBO()}
+  // Demandes à valider (assistant Cleaneroo, 20 novembre 2026) : réponse sous 48 h, notifiée au client.
+  const attente = (dem || []).filter(d => ["A_VALIDER", "EN_COURS"].includes(d.statut));
+  const blocDemandes = `<h2 class="titre-section">Demandes à valider (${attente.length})</h2>
+    ${(dem || []).map(d => { const retard = ["A_VALIDER", "EN_COURS"].includes(d.statut) && new Date(d.echeance) < new Date();
+      return `<details class="carte" style="margin-bottom:10px" ${["A_VALIDER", "EN_COURS"].includes(d.statut) ? "open" : ""}><summary><b>${esc(d.numero)}</b> · ${esc(d.categorie)} · ${esc(d.email)}
+        <span class="tampon">${{ A_VALIDER: "À valider", EN_COURS: "En cours", RESOLUE: "Résolue", REFUSEE: "Refusée" }[d.statut]}</span>
+        <span class="petit" style="${retard ? "color:var(--corail-texte);font-weight:800" : ""}">avant le ${new Date(d.echeance).toLocaleString("fr-FR")}</span></summary>
+        <p style="white-space:pre-wrap">${esc(d.resume)}</p>${d.reference ? `<p class="petit">Prestation ${esc(d.reference)}</p>` : ""}
+        ${d.reponse ? `<p class="petit"><b>Réponse :</b> ${esc(d.reponse)}</p>` : ""}
+        <form data-rep-support="${esc(d.id)}"><label class="champ">Réponse au client<textarea name="reponse" rows="3" maxlength="4000">${esc(d.reponse || "")}</textarea></label>
+          <select name="statut">${[["EN_COURS", "En cours"], ["RESOLUE", "Résolue"], ["REFUSEE", "Refusée"]].map(([v, t]) => `<option value="${v}" ${d.statut === v ? "selected" : ""}>${t}</option>`).join("")}</select>
+          <button class="bouton" type="submit">Enregistrer et notifier</button> <a class="lien-bouton" href="mailto:${esc(d.email)}?subject=${encodeURIComponent(`Votre demande ${d.numero}`)}">Répondre par e-mail</a></form></details>`; }).join("") || `<p class="muet">Aucune demande pour l'instant.</p>`}
+    <h2 class="titre-section">Conversations</h2>`;
+  vue.innerHTML = `${titreBO()}${blocDemandes}
     <p class="muet">${data.filter(f => f.non_lus).length} conversation(s) en attente de réponse · ${data.length} au total.</p>
     ${data.length ? data.map(f => `<a class="carte" style="display:flex;justify-content:space-between;gap:12px;margin-bottom:10px;text-decoration:none;color:inherit" target="_blank" rel="noopener"
       href="./#/messages/${encodeURIComponent(f.fil)}"><span><b>${esc([f.prenom, f.nom].filter(Boolean).join(" ") || "Compte supprimé")}</b><br><span class="petit">${esc(f.dernier || "")}</span></span>
       <span class="petit">${new Date(f.dernier_le).toLocaleString("fr-FR")}${f.non_lus ? ` · <b style="color:var(--corail-texte)">${f.non_lus} non lu(s)</b>` : ""}</span></a>`).join("")
       : `<p class="muet">Aucune conversation pour l'instant.</p>`}`;
   brancherOnglets();
+  vue.querySelectorAll("[data-rep-support]").forEach(f => f.onsubmit = async e => {
+    e.preventDefault();
+    const { error: er } = await supabase.rpc("repondre_support", { p_id: f.dataset.repSupport, p_statut: f.statut.value, p_reponse: f.reponse.value.trim() });
+    if (er) alert(er.message); else listeSupport();
+  });
 }
 
 /* Litiges et Garantie Cleaneroo (11 novembre 2026) : signalements des clients dans les 48 h, décision avec un motif. */
-const DECISIONS_LITIGE = [["REPRISE_GRATUITE", "Reprise gratuite"], ["REMBOURSEMENT", "Remboursement"], ["INDEMNISATION", "Indemnisation (Garantie)"], ["REFUSE", "Refuser"]];
+const DECISIONS_LITIGE = [["REPRISE_GRATUITE", "Reprise gratuite"], ["REMBOURSEMENT", "Remboursement"], ["INDEMNISATION", "Dossier transmis à l'assurance"], ["REFUSE", "Refuser"]];
 async function listeLitiges() {
   const { data, error } = await supabase.from("litiges").select("*").order("cree_le", { ascending: false }).limit(300);
   if (error) { vue.innerHTML = `<p class="erreur">${esc(error.message)}</p>`; return; }
@@ -326,7 +345,7 @@ async function listeLitiges() {
     const { data: u } = await supabase.storage.from("photos-demandes").createSignedUrl(c, 3600); liens[c] = u?.signedUrl || ""; }));
   const ouverts = data.filter(l => l.statut === "OUVERT").length;
   vue.innerHTML = `${titreBO()}
-    <p class="muet">${ouverts} signalement(s) à examiner · ${data.length} au total. Réponse au client sous 72 h ; indemnisation sous 5 jours ouvrés.</p>
+    <p class="muet">${ouverts} signalement(s) à examiner · ${data.length} au total. Réponse au client sous 72 h. Les dommages relèvent de l'assurance des parties : Cleaneroo fournit le dossier de preuves, sans indemniser.</p>
     ${data.map(l => `<div class="carte" style="margin-bottom:12px">
       <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><b>${esc(l.reference)} · ${l.genre === "DOMMAGE" ? "Dommage" : { INCOMPLETE: "Prestation incomplète", NON_CONFORME: "Prestation non conforme", AUTRE: "Autre" }[l.motif]}</b>
         <span class="tampon">${{ OUVERT: "À examiner", REPRISE_GRATUITE: "Reprise gratuite", REMBOURSEMENT: "Remboursement", INDEMNISATION: "Indemnisation", REFUSE: "Refusé" }[l.statut]}</span></div>

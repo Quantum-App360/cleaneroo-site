@@ -1,12 +1,14 @@
 // Factures (onglet « Factures » de chaque espace : Particulier, Pro, Cleaneur). Créées par la base quand une prestation est terminée :
 // prestation (du Cleaneur au client, établie par Cleaneroo pour son compte), frais de service et commission (de Cleaneroo).
-// PDF : page imprimable (Enregistrer en PDF). Professionnels : fichier électronique Factur-X (XML CII, profil MINIMUM).
+// 20 novembre 2026 : vraies factures PDF au format Factur-X (XML CII profil BASIC joint dans le PDF, pdf.js), pour tous ;
+// par période : archive ZIP, relevé PDF, export comptable CSV et envoi au comptable en un geste.
 // Même écran dans l'appli (Factures.kt). Les montants viennent de la base, jamais de l'IA (elle rédige seulement la description).
 import { supabase } from "./donnees.js";
 import { euros, dateLongue } from "./regles.js";
 import { traduire, tr } from "./langue.js";
 import { icone } from "./icones.js";
 import { blocAttestations, brancherAttestations } from "./attestations.js";
+import { facturePdf, relevePdf, csvComptable, archiveZip, remettre, xmlFacturX as xmlBasic } from "./pdf.js";
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const TYPES = { prestation: "Prestation", frais: "Frais de service", commission: "Commission Cleaneroo" };
@@ -23,25 +25,58 @@ export async function mesFactures(espace) {
   return data;
 }
 
-/** Bloc « Mes factures » : liste, total de l'année, PDF et Factur-X. */
+/** Bloc « Mes factures » : période, liste, totaux, PDF Factur-X, et outils pour la comptabilité. */
+const CLE_COMPTABLE = "cleaneroo-email-comptable";
+const moisDe = f => String(f.date_emission).slice(0, 7);
 export function blocFactures(liste, espace) {
   const an = new Date().getFullYear();
   const total = liste.filter(f => new Date(f.date_emission).getFullYear() === an).reduce((s, f) => s + f.total_ttc_c, 0);
+  const mois = [...new Set(liste.map(moisDe))].sort().reverse();
+  const nomMois = m => new Date(`${m}-01T12:00:00`).toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+  let comptable = ""; try { comptable = localStorage.getItem(CLE_COMPTABLE) || ""; } catch { /* rien */ }
   return `<h2 class="titre-section">${icone("paiement", { tuile: true })}Mes factures</h2>
-    <p class="petit" style="margin-top:0">${tr(espace === "cleaneur" ? "Les factures de vos prestations (établies pour votre compte) et les commissions Cleaneroo. Utile pour votre déclaration URSSAF."
-      : "Une facture est créée automatiquement à la fin de chaque prestation.")}</p>
-    ${liste.length ? `<div class="carte factures-liste">${liste.map(f => `<div class="ligne-facture">
+    <p class="petit" style="margin-top:0">${tr(espace === "cleaneur" ? "Les factures de vos prestations (établies pour votre compte) et les commissions Cleaneroo, en PDF Factur-X. Utile pour votre déclaration URSSAF et votre comptabilité."
+      : "Une vraie facture PDF est créée automatiquement à la fin de chaque prestation, au format Factur-X (facture électronique lisible par les logiciels comptables).")}</p>
+    ${liste.length ? `<div class="carte outils-factures">
+        <label class="champ" style="margin:0">${tr("Période")}<select data-periode-factures><option value="">${tr("Toutes")}</option>${[...new Set(liste.map(f => String(f.date_emission).slice(0, 4)))].sort().reverse().map(y => `<option value="${y}">${tr("Année")} ${y}</option>`).join("")}${mois.map(m => `<option value="${m}">${esc(nomMois(m))}</option>`).join("")}</select></label>
+        <div class="boutons-factures"><button type="button" class="bouton" data-zip-factures>⬇ ${tr("Tout télécharger (ZIP)")}</button>
+          <button type="button" class="bouton secondaire" data-releve-factures>${tr("Relevé PDF")}</button>
+          <button type="button" class="bouton secondaire" data-csv-factures>${tr("Export comptable (CSV)")}</button>
+          <button type="button" class="bouton secondaire" data-comptable-factures>✉ ${tr("Envoyer à mon comptable")}</button></div>
+        <label class="champ" style="margin:8px 0 0">${tr("E-mail de mon comptable (facultatif, gardé sur cet appareil)")}<input type="email" data-email-comptable value="${esc(comptable)}" maxlength="200" placeholder="comptable@cabinet.fr"></label>
+        <p class="petit muet" data-etat-factures style="margin:6px 0 0"></p></div>
+      <div class="carte factures-liste">${liste.map(f => `<div class="ligne-facture" data-mois="${moisDe(f)}">
         <div><b>${esc(f.numero)}</b><span class="petit">${esc(dateLongue(new Date(f.date_emission)))} · ${tr(TYPES[f.type])} · ${tr("prestation")} ${esc(f.reference)}</span></div>
         <b>${euros(f.total_ttc_c)}</b>
         <div class="actions-facture"><button type="button" class="bouton secondaire" data-pdf="${esc(f.id)}">PDF</button>
-          ${espace === "pro" || espace === "cleaneur" ? `<button type="button" class="lien-bouton" data-xml="${esc(f.id)}">Factur-X</button>` : ""}</div></div>`).join("")}
+          <button type="button" class="lien-bouton" data-xml="${esc(f.id)}" title="${tr("Fichier XML seul, déjà inclus dans le PDF")}">XML</button></div></div>`).join("")}
       <p class="petit" style="margin:10px 0 0">${tr("Total")} ${an} : <b>${euros(total)}</b></p></div>`
       : `<div class="vide-compte"><p class="muet">${tr("Aucune facture pour l'instant.")}</p><p class="petit">${tr("Vos factures apparaîtront ici après chaque prestation terminée.")}</p></div>`}`;
 }
 
 export function brancherFactures(boite, liste) {
-  boite.querySelectorAll("[data-pdf]").forEach(b => b.onclick = () => ouvrirPdf(liste.find(f => f.id === b.dataset.pdf)));
-  boite.querySelectorAll("[data-xml]").forEach(b => b.onclick = () => telecharger(liste.find(f => f.id === b.dataset.xml)));
+  const etat = t => { const e = boite.querySelector("[data-etat-factures]"); if (e) e.textContent = t; };
+  const choix = () => { const p = boite.querySelector("[data-periode-factures]")?.value || ""; return liste.filter(f => String(f.date_emission).startsWith(p)); };
+  const libelle = () => { const sel = boite.querySelector("[data-periode-factures]"); return sel?.value ? sel.options[sel.selectedIndex].text : tr("toutes périodes"); };
+  const occupe = async (b, travail) => { b.disabled = true; etat(tr("Préparation des documents…")); try { await travail(); etat(""); } catch { etat(tr("Le document n'a pas pu être préparé. Réessayez.")); } b.disabled = false; };
+  boite.querySelectorAll("[data-pdf]").forEach(b => b.onclick = () => occupe(b, async () => { const f = liste.find(x => x.id === b.dataset.pdf); await remettre(await facturePdf(f), `facture-${f.numero}.pdf`, "application/pdf", { partager: true }); }));
+  boite.querySelectorAll("[data-xml]").forEach(b => b.onclick = () => { const f = liste.find(x => x.id === b.dataset.xml); remettre(new TextEncoder().encode(xmlBasic(f)), `factur-x-${f.numero}.xml`, "application/xml"); });
+  boite.querySelector("[data-periode-factures]")?.addEventListener("change", e => boite.querySelectorAll(".ligne-facture").forEach(l => { l.hidden = !!e.target.value && !l.dataset.mois.startsWith(e.target.value); }));
+  const titre = () => `Relevé de factures · ${libelle()}`;
+  const zip = async () => remettre(await archiveZip(choix(), { titre: titre() }), `factures-cleaneroo-${(boite.querySelector("[data-periode-factures]")?.value || "tout")}.zip`, "application/zip", { partager: true });
+  boite.querySelector("[data-zip-factures]")?.addEventListener("click", e => occupe(e.currentTarget, zip));
+  boite.querySelector("[data-releve-factures]")?.addEventListener("click", e => occupe(e.currentTarget, async () => remettre(await relevePdf(choix(), { titre: titre() }), "releve-factures.pdf", "application/pdf", { partager: true })));
+  boite.querySelector("[data-csv-factures]")?.addEventListener("click", () => remettre(new TextEncoder().encode(csvComptable(choix())), "export-comptable.csv", "text/csv"));
+  boite.querySelector("[data-email-comptable]")?.addEventListener("change", e => { try { localStorage.setItem(CLE_COMPTABLE, e.target.value.trim()); } catch { /* rien */ } });
+  // Envoyer à mon comptable : sur téléphone, partage direct de l'archive (e-mail, WhatsApp…) ; sinon l'archive est téléchargée
+  // et un e-mail prêt à envoyer s'ouvre (il ne reste qu'à joindre le fichier téléchargé).
+  boite.querySelector("[data-comptable-factures]")?.addEventListener("click", e => occupe(e.currentTarget, async () => {
+    const r = await zip();
+    if (r === "partage" || r === "annule") return;
+    const dest = boite.querySelector("[data-email-comptable]")?.value.trim() || "";
+    location.href = `mailto:${encodeURIComponent(dest)}?subject=${encodeURIComponent(`Factures Cleaneroo · ${libelle()}`)}&body=${encodeURIComponent(`Bonjour,\n\nVous trouverez ci-joint mes factures Cleaneroo (${libelle()}) : PDF au format Factur-X, relevé et export comptable.\n\nBien cordialement`)}`;
+    etat(tr("L'archive est téléchargée : joignez-la à l'e-mail qui vient de s'ouvrir."));
+  }));
 }
 
 /** Remplit un conteneur [data-factures="espace"] (appelé par l'onglet de l'espace). */
@@ -57,63 +92,6 @@ export async function afficherFactures(conteneur) {
   brancherAttestations(conteneur);
 }
 
-/* ------------------------------------------------------------------ Facture imprimable (PDF) */
-function htmlFacture(f) {
-  const e = f.emetteur || {}, d = f.destinataire || {}, pro = !!d.siret;
-  const lignes = (f.lignes || []).map(l => `<tr><td>${esc(l.libelle)}</td><td class="n">${l.quantite}</td><td class="n">${euros(l.prix_ht_c)}</td><td class="n">${l.tva_pct} %</td><td class="n">${euros(l.prix_ht_c * l.quantite)}</td></tr>`).join("");
-  return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>${esc(f.numero)}</title><style>
-    body{font:14px/1.45 system-ui,sans-serif;color:#16343A;margin:32px;max-width:780px} h1{font-size:22px;margin:0} .entete{display:flex;justify-content:space-between;gap:20px;margin-bottom:24px}
-    .bloc{border:1px solid #d5e2e2;border-radius:10px;padding:12px 14px;flex:1} table{width:100%;border-collapse:collapse;margin:18px 0} th,td{padding:8px;border-bottom:1px solid #e3eded;text-align:left}
-    .n{text-align:right;white-space:nowrap} .totaux{margin-left:auto;width:280px} .totaux div{display:flex;justify-content:space-between;padding:3px 0} .totaux .ttc{font-weight:800;font-size:16px;border-top:2px solid #16343A;margin-top:4px;padding-top:6px}
-    .petit{font-size:12px;color:#425E62} .description{background:#f3f7f7;border-radius:10px;padding:10px 14px} @media print{body{margin:12mm}}</style></head><body>
-    <div class="entete"><div><h1>Facture ${esc(f.numero)}</h1><p class="petit">Date : ${esc(new Date(f.date_emission).toLocaleDateString("fr-FR"))} · Prestation ${esc(f.reference)}</p></div>
-      <div class="petit" style="text-align:right">Cleaneroo<br>cleaneroo.fr</div></div>
-    <div class="entete"><div class="bloc"><b>Émetteur</b><br>${esc(e.nom)}<br>${e.siret ? `SIRET ${esc(e.siret)}<br>` : ""}${esc(e.adresse || "")}${e.tva_intracom ? `<br>TVA ${esc(e.tva_intracom)}` : ""}</div>
-      <div class="bloc"><b>Client</b><br>${esc(d.societe || d.nom)}${d.societe ? `<br>${esc(d.nom)}` : ""}<br>${d.siret ? `SIRET ${esc(d.siret)}<br>` : ""}${esc(d.adresse || "")}</div></div>
-    ${f.description ? `<p class="description">${esc(f.description)}</p>` : ""}
-    <table><thead><tr><th>Désignation</th><th class="n">Qté</th><th class="n">Prix unitaire HT</th><th class="n">TVA</th><th class="n">Total HT</th></tr></thead><tbody>${lignes}</tbody></table>
-    <div class="totaux"><div><span>Total HT</span><span>${euros(f.total_ht_c)}</span></div><div><span>TVA</span><span>${euros(f.tva_c)}</span></div><div class="ttc"><span>Total TTC</span><span>${euros(f.total_ttc_c)}</span></div></div>
-    <p class="petit">${esc(e.mention_tva || "")}${e.mandat ? `<br>${esc(e.mandat)}` : ""}<br>Facture acquittée : réglée en ligne par l'intermédiaire de Cleaneroo.
-      ${pro ? "<br>En cas de retard de paiement : pénalités au taux légal et indemnité forfaitaire de 40 € pour frais de recouvrement (art. L441-10 du Code de commerce)." : ""}</p>
-    <script>window.onload=()=>setTimeout(()=>window.print(),300)<\/script></body></html>`;
-}
-function ouvrirPdf(f) {
-  if (!f) return;
-  const w = window.open("", "_blank");
-  if (!w) return alert(tr("Autorisez les fenêtres de ce site pour ouvrir la facture."));
-  w.document.write(htmlFacture(f));
-  w.document.close();
-}
-
-/* ------------------------------------------------------------------ Factur-X : XML CII (profil MINIMUM) à joindre à la facture */
-function xmlFacturX(f) {
-  const e = f.emetteur || {}, d = f.destinataire || {}, x = s => esc(s || "");
-  const date = String(f.date_emission).replaceAll("-", ""), m = c => (c / 100).toFixed(2);
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<rsm:CrossIndustryInvoice xmlns:rsm="urn:un:unece:uncefact:data:standard:CrossIndustryInvoice:100" xmlns:ram="urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100" xmlns:udt="urn:un:unece:uncefact:data:standard:UnqualifiedDataType:100">
-  <rsm:ExchangedDocumentContext><ram:GuidelineSpecifiedDocumentContextParameter><ram:ID>urn:factur-x.eu:1p0:minimum</ram:ID></ram:GuidelineSpecifiedDocumentContextParameter></rsm:ExchangedDocumentContext>
-  <rsm:ExchangedDocument><ram:ID>${x(f.numero)}</ram:ID><ram:TypeCode>380</ram:TypeCode><ram:IssueDateTime><udt:DateTimeString format="102">${date}</udt:DateTimeString></ram:IssueDateTime></rsm:ExchangedDocument>
-  <rsm:SupplyChainTradeTransaction>
-    <ram:ApplicableHeaderTradeAgreement>
-      <ram:SellerTradeParty><ram:Name>${x(e.nom)}</ram:Name>${e.siret ? `<ram:SpecifiedLegalOrganization><ram:ID schemeID="0002">${x(e.siret.slice(0, 9))}</ram:ID></ram:SpecifiedLegalOrganization>` : ""}<ram:PostalTradeAddress><ram:CountryID>FR</ram:CountryID></ram:PostalTradeAddress>${e.tva_intracom ? `<ram:SpecifiedTaxRegistration><ram:ID schemeID="VA">${x(e.tva_intracom)}</ram:ID></ram:SpecifiedTaxRegistration>` : ""}</ram:SellerTradeParty>
-      <ram:BuyerTradeParty><ram:Name>${x(d.societe || d.nom)}</ram:Name>${d.siret ? `<ram:SpecifiedLegalOrganization><ram:ID schemeID="0002">${x(d.siret.slice(0, 9))}</ram:ID></ram:SpecifiedLegalOrganization>` : ""}</ram:BuyerTradeParty>
-    </ram:ApplicableHeaderTradeAgreement>
-    <ram:ApplicableHeaderTradeDelivery/>
-    <ram:ApplicableHeaderTradeSettlement><ram:InvoiceCurrencyCode>EUR</ram:InvoiceCurrencyCode>
-      <ram:SpecifiedTradeSettlementHeaderMonetarySummation><ram:TaxBasisTotalAmount>${m(f.total_ht_c)}</ram:TaxBasisTotalAmount><ram:TaxTotalAmount currencyID="EUR">${m(f.tva_c)}</ram:TaxTotalAmount><ram:GrandTotalAmount>${m(f.total_ttc_c)}</ram:GrandTotalAmount><ram:DuePayableAmount>0.00</ram:DuePayableAmount></ram:SpecifiedTradeSettlementHeaderMonetarySummation>
-    </ram:ApplicableHeaderTradeSettlement>
-  </rsm:SupplyChainTradeTransaction>
-</rsm:CrossIndustryInvoice>`;
-}
-function telecharger(f) {
-  if (!f) return;
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(new Blob([xmlFacturX(f)], { type: "application/xml" }));
-  a.download = `factur-x-${f.numero}.xml`;
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
-}
-
 function styles() {
   if (document.getElementById("style-factures")) return;
   const st = document.createElement("style");
@@ -123,6 +101,8 @@ function styles() {
   .ligne-facture div:first-child { display: flex; flex-direction: column; gap: 2px; }
   .actions-facture { display: flex; gap: 6px; align-items: center; }
   .actions-facture .bouton { min-height: 36px; padding: 0 14px; }
-  @media (max-width: 520px) { .ligne-facture { grid-template-columns: 1fr auto; } .actions-facture { grid-column: 1 / -1; } }`;
+  @media (max-width: 520px) { .ligne-facture { grid-template-columns: 1fr auto; } .actions-facture { grid-column: 1 / -1; } }
+  .outils-factures { margin-bottom: 12px; } .boutons-factures { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .boutons-factures .bouton { min-height: 40px; padding: 0 14px; font-size: 14px; }`;
   document.head.appendChild(st);
 }

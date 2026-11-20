@@ -133,7 +133,7 @@ const COMPARAISON = [
   ["Arrivée", "On attend sans nouvelles", "Suivi en direct, arrivée confirmée par géolocalisation"],
   ["Travail réalisé", "Aucune preuve", "Compte rendu photo avant / après, horodaté et signé"],
   ["Paiement", "À l'avance ou en espèces", "Seulement après votre validation"],
-  ["En cas de souci", "Votre parole contre la sienne", "Litige en 48 h et Garantie Cleaneroo"],
+  ["En cas de souci", "Votre parole contre la sienne", "Preuves photo horodatées et dossier prêt pour l'assurance"],
 ];
 const CHIFFRES = [["2 min", "pour réserver"], [String(RUBRIQUES.length), "prestations"], ["100 %", "digitalisé"], ["0 €", "avant validation"]];
 
@@ -435,7 +435,7 @@ function pageComment() {
       <a class="carte ligne-compte" href="#/suivi-demo" style="grid-column:1/-1">${icone("position", { tuile: true })}
         <div class="corps"><h3 style="margin:0">Suivez votre Cleaneur en direct</h3><p class="muet" style="margin:2px 0 0">Sur une carte, jusqu'à chez vous, comme une livraison. Voir la démonstration.</p></div><span class="aller" aria-hidden="true">›</span></a>
       <div class="carte"><h3>Vos garanties</h3><div class="trait-corail"></div>
-        <p class="muet" style="margin:0">Débit seulement après validation · Garantie Cleaneroo · Crédit d'impôt selon éligibilité · Cleaneurs vérifiés · Annulation gratuite jusqu'à 48 h avant.</p></div>
+        <p class="muet" style="margin:0">Débit seulement après validation · Dossier assurance prêt en cas de dommage · Crédit d'impôt selon éligibilité · Cleaneurs vérifiés · Annulation gratuite jusqu'à 48 h avant.</p></div>
     </div>
     <img src="assets/img/affiche.jpg" alt="Affiche « Comment ça marche ? »" loading="lazy" style="width:min(620px,100%);margin:36px auto 0;border-radius:18px;box-shadow:var(--ombre)">
   </div></section>`;
@@ -646,6 +646,8 @@ async function afficherPage() {
   if (route === "notifications") { window.scrollTo(0, 0); vue.innerHTML = pageChargement(); traduire(vue); await pageNotifications(vue, param); return; }
   if (route === "compte") { window.scrollTo(0, 0); vue.innerHTML = pageChargement(); traduire(vue); await pageCompte(vue, param); return; }
   if (route === "rejoindre") { window.scrollTo(0, 0); vue.innerHTML = pageChargement(); traduire(vue); const { pageRejoindre } = await import("./societe.js"); const { session: sessionCompte } = await import("./donnees.js"); await pageRejoindre(vue, param, !!(await sessionCompte().catch(() => null))); return; }
+  if (route === "aide") { window.scrollTo(0, 0); vue.innerHTML = pageChargement(); traduire(vue); const { pageAssistant } = await import("./assistant.js"); await pageAssistant(vue, param); return; }
+  if (route === "garantie") { window.scrollTo(0, 0); const { pageGarantie } = await import("./garantie.js"); pageGarantie(vue); return; }
   if (route === "importer-biens") { window.scrollTo(0, 0); vue.innerHTML = pageChargement(); traduire(vue); const { pageImportBiens } = await import("./import-biens.js"); await pageImportBiens(vue, param); return; }
   if (route === "formation") { window.scrollTo(0, 0); vue.innerHTML = pageChargement(); traduire(vue); const { pageFormation } = await import("./formations.js"); await pageFormation(vue, param); return; }
   if (route === "mes-demandes" || route === "mes-biens") {

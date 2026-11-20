@@ -127,7 +127,7 @@ export const REGLES = {
   // Plancher horaire (refonte du 20/11/2026, audit) : une formule ne descend jamais sous temps planifié × plancher, pour que le Cleaneur
   // garde au moins ~15,80 € net de l'heure. Le plancher l'emporte sur les plafonds ci-dessus.
   PLANCHER_HORAIRE_C: { home: 2690, rental: 2700, moving: 3000, car: 3800, textiles: 3000, kitchen: 3400, office: 2800, commerce: 2800,
-    communal: 2660, windows: 2850, outdoor: 3000, event: 3000, leisure: 3400, boat: 3400, hospitality: 2800, construction: 3600 },
+    communal: 2660, windows: 2850, outdoor: 3000, pool: 3400, event: 3000, leisure: 3400, boat: 3400, hospitality: 2800, construction: 3600 },
   OPTION_PETITE_MAX_MIN: 5, OPTION_MOYENNE_MAX_MIN: 15,
   // Option « Suivi par SMS » : 0,49 € par prestation, SMS au nom de Cleaneroo dans la langue de la réservation ; hors crédit d'impôt.
   OPTION_SMS_C: 49,
@@ -195,7 +195,7 @@ export const REGLES = {
   // Versements des Cleaneurs (repris de l'appli iPhone) : chaque vendredi, pour les missions validées jusqu'au mercredi minuit.
   VERSEMENT_JOUR_ISO: 5,          // vendredi (lundi = 1)
   VERSEMENT_LIMITE_JOUR_ISO: 3,   // mercredi
-  GARANTIE_REMPLACEMENT_OFFERT_C: 1500,
+  GARANTIE_REMPLACEMENT_OFFERT_C: 0,   // 20/11/2026 : plus d'avoir offert (rien à la charge de Cleaneroo)
   GARANTIE_DECLARATION_H: 48,
   AVIS_DELAI_JOURS: 14,
   TOLERANCE_RETARD_MIN: 30,
@@ -381,7 +381,7 @@ export function qualificationsRequises(rubriqueId, typeLieuId = "", taches = [])
     home: ["domicile"], rental: ["domicile", "location"], moving: ["domicile"], car: ["auto"], textiles: ["textiles"],
     construction: ["remise-etat"], kitchen: !t || t === "particulier" ? ["domicile"] : ["cuisine-pro", "haccp"],
     office: t === "medical" ? ["locaux-pro", "bionettoyage"] : ["locaux-pro"], commerce: ["locaux-pro"], communal: ["locaux-pro"],
-    windows: ["vitres"], outdoor: ["exterieurs"], event: ["evenementiel"], hospitality: ["domicile", "location"], leisure: ["auto"], boat: [],
+    windows: ["vitres"], outdoor: ["exterieurs"], pool: ["exterieurs"], event: ["evenementiel"], hospitality: ["domicile", "location"], leisure: ["auto"], boat: [],
     special: ["cafards", "punaises", "rats", "guepes"].includes(t) ? ["nuisibles"] : ["specialise"],
   }[rubriqueId] || [];
   // Selon les tâches cochées (comme l'appli de Vincent) : hauteur, machines, polissage, désinfection professionnelle.

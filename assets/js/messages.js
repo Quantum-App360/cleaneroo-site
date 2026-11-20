@@ -21,7 +21,9 @@ export async function pageMessages(vue, fil) {
   const { data: liste } = await supabase.rpc("mes_conversations");
   vue.innerHTML = `<section class="bloc"><div class="etroit"><h1>💬 ${tr("Messages")}</h1><div class="trait-corail"></div>
     <p class="petit">${tr("Une conversation s'ouvre avec votre Cleaneur (ou votre client) dès que la prestation est confirmée.")}</p>
-    <div class="liste-conversations">${(liste || []).map(c => `<a class="carte conversation${c.non_lus ? " non-lue" : ""}" href="#/messages/${encodeURIComponent(c.fil)}">
+    <div class="liste-conversations"><a class="carte conversation" href="#/aide"><span class="avatar-conv">🛟</span>
+      <span class="corps-conv"><b>${tr("Assistant Cleaneroo")}</b><span class="petit">${tr("Réponse immédiate · une demande à l'équipe si besoin (48 h)")}</span></span><span class="droite-conv">›</span></a>
+    ${(liste || []).map(c => `<a class="carte conversation${c.non_lus ? " non-lue" : ""}" href="#/messages/${encodeURIComponent(c.fil)}">
       <span class="avatar-conv">${c.fil.startsWith("support:") ? "🛟" : esc((c.avec || "?").charAt(0).toUpperCase())}</span>
       <span class="corps-conv"><b>${esc(nomFil(c))}</b><span class="petit">${c.dernier ? esc(c.dernier) : tr("Aucun message pour l'instant.")}</span></span>
       <span class="droite-conv"><span class="petit">${c.dernier_le ? heure(c.dernier_le) : ""}</span>${c.non_lus ? `<span class="pastille-cloche">${c.non_lus}</span>` : ""}</span></a>`).join("")}</div>
