@@ -17,13 +17,13 @@ export const SUJETS = {
   racine: { titre: "Comment puis-je vous aider ?", suite: ["prestation", "paiement", "retard", "probleme", "factures", "compte", "cleaneur", "conciergerie"] },
 
   prestation: { titre: "Ma prestation (modifier, annuler)", cles: ["modifier", "changer", "date", "horaire", "annuler", "annulation", "reporter", "déplacer"],
-    texte: `Vous pouvez **modifier la date ou annuler** depuis « Mes prestations » › votre prestation. Annulation **gratuite jusqu'à ${R.ANNULATION_GRATUITE_H} h avant** ; après, ${R.ANNULATION_TARDIVE_PCT} % du prix restent dus pour dédommager le Cleaneur. Le montant exact s'affiche avant de confirmer.`,
+    texte: `Vous pouvez **modifier la date ou annuler** depuis « Mes prestations » › votre prestation. Annulation **gratuite jusqu'à {annulH} h avant** ; après, {annulPct} % du prix restent dus pour dédommager le Cleaneur. Le montant exact s'affiche avant de confirmer.`,
     liens: [["Mes prestations", "#/mes-demandes"]], suite: ["annulation-cleaneur", "reserver"] },
   "annulation-cleaneur": { titre: "Mon Cleaneur a annulé", cles: ["cleaneur annule", "remplacement", "remplaçant"],
     texte: "Quand un Cleaneur se désiste, votre prestation est **remise en ligne aussitôt** pour un autre Cleaneur vérifié du secteur. Vous êtes prévenu dès qu'il est confirmé. Si personne n'est trouvé, la réservation bancaire est levée : vous ne payez rien.",
     liens: [["Suivre ma prestation", "#/tableau"]] },
   reserver: { titre: "Réserver, connaître le prix", cles: ["prix", "tarif", "combien", "devis", "réserver", "estimation"],
-    texte: `Le prix s'affiche **tout de suite**, sans devis, à chaque choix. Réservation au plus tard ${R.DELAI_MIN_RESERVATION_H} h à l'avance.`,
+    texte: `Le prix s'affiche **tout de suite**, sans devis, à chaque choix. Réservation au plus tard {delaiH} h à l'avance.`,
     liens: [["Estimer mon prix", "#/estimer"], ["Réserver", "#/reserver"]] },
 
   paiement: { titre: "Paiement et remboursement", cles: ["payer", "paiement", "carte", "débit", "prélèvement", "rembourse", "remboursement", "empreinte", "stripe"],
@@ -31,7 +31,7 @@ export const SUJETS = {
     liens: [["Mes prestations", "#/mes-demandes"]], suite: ["factures"] },
 
   retard: { titre: "Retard ou Cleaneur absent", cles: ["retard", "en retard", "absent", "pas venu", "personne", "attends"],
-    texte: `Suivez votre Cleaneur **en direct** depuis votre prestation. Un retard annoncé est toléré jusqu'à **${R.RETARD_TOLERE_MIN} min** ; au-delà, vous pouvez **annuler sans frais** depuis la page de la prestation. Personne n'est venu ? Signalez-le sur la prestation : rien ne vous sera facturé.`,
+    texte: `Suivez votre Cleaneur **en direct** depuis votre prestation. Un retard annoncé est toléré jusqu'à **{retardMin} min** ; au-delà, vous pouvez **annuler sans frais** depuis la page de la prestation. Personne n'est venu ? Signalez-le sur la prestation : rien ne vous sera facturé.`,
     liens: [["Ma prochaine prestation", "#/tableau"]] },
 
   probleme: { titre: "Résultat insatisfaisant, casse ou dommage", cles: ["litige", "sale", "mal fait", "pas propre", "casse", "cassé", "dommage", "dégât", "vol", "abîmé", "réclamation", "insatisfait"],
@@ -66,6 +66,9 @@ export function chercherSujet(texte) {
   return meilleur;
 }
 
+// Les chiffres sont remis après la traduction : les textes sont traduits tels quels (avec {annulH}…), comme dans l'appli.
+const remplir = s => s.replace("{annulH}", R.ANNULATION_GRATUITE_H).replace("{annulPct}", R.ANNULATION_TARDIVE_PCT)
+  .replace("{delaiH}", R.DELAI_MIN_RESERVATION_H).replace("{retardMin}", R.RETARD_TOLERE_MIN);
 const gras = s => esc(s).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
 const numero = () => { const d = new Date(); return `SUP-${String(d.getFullYear()).slice(2)}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`; };
 
@@ -88,7 +91,7 @@ export async function pageAssistant(vue, sujetDepart) {
   const montrer = id => {
     const x = SUJETS[id]; if (!x) return;
     historique.push({ de: "assistant", sujet: id });
-    const html = `${x.texte ? `<p>${gras(tr(x.texte))}</p>` : `<p><b>${tr(x.titre)}</b></p>`}
+    const html = `${x.texte ? `<p>${gras(remplir(tr(x.texte)))}</p>` : `<p><b>${tr(x.titre)}</b></p>`}
       ${x.liens?.length ? `<div class="liens-a">${x.liens.map(([l, h]) => `<a class="bouton secondaire petit-bouton" href="${h}">${tr(l)} ›</a>`).join("")}</div>` : ""}
       ${x.suite?.length ? `<div class="choix-a">${x.suite.map(k => `<button type="button" data-sujet="${k}">${tr(SUJETS[k].titre)}</button>`).join("")}</div>` : ""}
       ${id !== "racine" ? `<div class="resolu-a"><span class="petit">${tr("Cela répond à votre question ?")}</span>
