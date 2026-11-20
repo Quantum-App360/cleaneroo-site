@@ -129,12 +129,16 @@ export async function facturePdf(f) {
   try {
     const meta = doc.context.stream(new TextEncoder().encode(xmpFacturX(`Facture ${f.numero}`, maintenant.toISOString())), { Type: "Metadata", Subtype: "XML" });
     doc.catalog.set(PDFName.of("Metadata"), doc.context.register(meta));
-    // Lien AF au niveau du document (exigé par PDF/A-3 pour les fichiers associés)
-    const noms = doc.catalog.lookup(PDFName.of("Names"));
-    const ef = noms?.lookup(PDFName.of("EmbeddedFiles"))?.lookup(PDFName.of("Names"));
-    if (ef instanceof PDFArray && ef.size() >= 2) doc.catalog.set(PDFName.of("AF"), doc.context.obj([ef.get(1)]));
   } catch { /* métadonnées facultatives : le PDF reste valable */ }
-  return doc.save();
+  // pdf-lib n'écrit la pièce jointe qu'à l'enregistrement : on relit le PDF pour ajouter le lien AF du document
+  // (exigé par PDF/A-3 pour le fichier associé factur-x.xml).
+  const octets = await doc.save();
+  try {
+    const d2 = await lib.PDFDocument.load(octets, { updateMetadata: false });
+    const ef = d2.catalog.lookup(PDFName.of("Names"))?.lookup(PDFName.of("EmbeddedFiles"))?.lookup(PDFName.of("Names"));
+    if (ef instanceof PDFArray && ef.size() >= 2) { d2.catalog.set(PDFName.of("AF"), d2.context.obj([ef.get(1)])); return d2.save({ updateFieldAppearances: false }); }
+  } catch { /* sans le lien AF, la facture reste lisible et le XML présent */ }
+  return octets;
 }
 
 /* ------------------------------------------------------------------ Relevé mensuel (récapitulatif pour la comptabilité) */
