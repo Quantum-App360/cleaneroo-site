@@ -3476,6 +3476,7 @@ const T = [
   ["E-mail de votre comptable (facultatif)", "Your accountant's e-mail (optional)", "E-mail del tuo commercialista (facoltativo)", "E-mail de tu contable (opcional)"],
   ["Tout (ZIP)", "All (ZIP)", "Tutto (ZIP)", "Todo (ZIP)"],
   ["Au comptable", "To the accountant", "Al commercialista", "Al contable"],
+  ["Indiquez le montant estimé du dommage.", "Enter the estimated amount of the damage.", "Indica l'importo stimato del danno.", "Indica el importe estimado del daño."],
 ];
 
 const DICO = new Map();

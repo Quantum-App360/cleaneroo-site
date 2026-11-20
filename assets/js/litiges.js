@@ -1,4 +1,4 @@
-// Litiges et Garantie Cleaneroo (11 novembre 2026, repris de l'appli iPhone de Vincent).
+// Litiges et dommages (11 novembre 2026, repris de l'appli iPhone de Vincent).
 // Sur la page de suivi d'une prestation terminée : « Signaler un problème » (prestation incomplète, non conforme, autre)
 // ou « Déclarer un dommage », dans les 48 h après la fin, avec description et photos. 20/11/2026 : Cleaneroo n'indemnise pas ;
 // un dommage relève de l'assurance des parties (RC Pro du Cleaneur, assurance habitation) et le client télécharge un dossier PDF prêt pour l'assureur.
@@ -15,7 +15,7 @@ const MESSAGES = {
   delai: "Le délai de 48 h après la fin du ménage est dépassé. Écrivez à contact@cleaneroo.fr.",
   deja: "Un signalement est déjà en cours d'examen pour cette prestation.",
   description: "Décrivez le problème en au moins 20 caractères.",
-  montant: "Indiquez le montant estimé du dommage (jusqu'à 3 000 € ; au-delà, écrivez à contact@cleaneroo.fr).",
+  montant: "Indiquez le montant estimé du dommage.",
 };
 
 const MOTIFS_ACCES = { ABSENT: "Client absent", CLE_INTROUVABLE: "Clé ou code introuvable", ACCES_REFUSE: "Accès refusé", DANGEREUX: "Logement inaccessible ou dangereux" };
@@ -40,7 +40,7 @@ export async function blocLitige(boite, reference, jeton, statut) {
     <form data-form-litige novalidate>
       <div class="segments" style="margin-bottom:10px"><button type="button" data-genre="LITIGE" class="choisi">Signaler un problème</button><button type="button" data-genre="DOMMAGE">Déclarer un dommage</button></div>
       <label class="champ" data-champ-motif>Motif<select name="motif">${MOTIFS_LITIGE.map(([id, nom]) => `<option value="${id}">${nom}</option>`).join("")}</select></label>
-      <label class="champ" data-champ-montant style="display:none">Montant estimé du dommage (€)<input name="montant" type="number" min="1" max="${REGLES.GARANTIE_PLAFOND_C / 100}" inputmode="numeric"></label>
+      <label class="champ" data-champ-montant style="display:none">Montant estimé du dommage (€)<input name="montant" type="number" min="1" inputmode="numeric"></label>
       <label class="champ">Décrivez ce qui s'est passé<textarea name="description" rows="3" maxlength="2000"></textarea></label>
       <label class="bouton secondaire">Ajouter des photos<input type="file" accept="image/*" multiple hidden name="photos"></label>
       <p class="petit" data-nb-photos></p>
@@ -68,7 +68,7 @@ export async function blocLitige(boite, reference, jeton, statut) {
     const description = f.description.value.trim();
     if (description.length < 20) { err.textContent = tr(MESSAGES.description); return; }
     const montant = Math.round((Number(f.montant.value) || 0) * 100);
-    if (genre === "DOMMAGE" && (montant <= 0 || montant > REGLES.GARANTIE_PLAFOND_C)) { err.textContent = tr(MESSAGES.montant); return; }
+    if (genre === "DOMMAGE" && montant <= 0) { err.textContent = tr(MESSAGES.montant); return; }
     f.querySelector("[type=submit]").disabled = true;
     err.textContent = tr("Envoi en cours…");
     const chemins = [];

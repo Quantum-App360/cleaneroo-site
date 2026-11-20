@@ -335,7 +335,7 @@ async function listeSupport() {
   });
 }
 
-/* Litiges et Garantie Cleaneroo (11 novembre 2026) : signalements des clients dans les 48 h, décision avec un motif. */
+/* Litiges et dommages (11 novembre 2026) : signalements des clients dans les 48 h, décision avec un motif. */
 const DECISIONS_LITIGE = [["REPRISE_GRATUITE", "Reprise gratuite"], ["REMBOURSEMENT", "Remboursement"], ["INDEMNISATION", "Dossier transmis à l'assurance"], ["REFUSE", "Refuser"]];
 async function listeLitiges() {
   const { data, error } = await supabase.from("litiges").select("*").order("cree_le", { ascending: false }).limit(300);
@@ -348,14 +348,14 @@ async function listeLitiges() {
     <p class="muet">${ouverts} signalement(s) à examiner · ${data.length} au total. Réponse au client sous 72 h. Les dommages relèvent de l'assurance des parties : Cleaneroo fournit le dossier de preuves, sans indemniser.</p>
     ${data.map(l => `<div class="carte" style="margin-bottom:12px">
       <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><b>${esc(l.reference)} · ${l.genre === "DOMMAGE" ? "Dommage" : { INCOMPLETE: "Prestation incomplète", NON_CONFORME: "Prestation non conforme", AUTRE: "Autre" }[l.motif]}</b>
-        <span class="tampon">${{ OUVERT: "À examiner", REPRISE_GRATUITE: "Reprise gratuite", REMBOURSEMENT: "Remboursement", INDEMNISATION: "Indemnisation", REFUSE: "Refusé" }[l.statut]}</span></div>
+        <span class="tampon">${{ OUVERT: "À examiner", REPRISE_GRATUITE: "Reprise gratuite", REMBOURSEMENT: "Remboursement", INDEMNISATION: "Dossier transmis à l'assurance", REFUSE: "Refusé" }[l.statut]}</span></div>
       <div class="petit">Signalé le ${dateLongue(new Date(l.cree_le))}${l.montant_c ? ` · montant demandé ${euros(l.montant_c)}` : ""}</div>
       <p style="margin:8px 0">${esc(l.description)}</p>
       ${(l.photos || []).length ? `<div style="display:flex;gap:8px;flex-wrap:wrap">${l.photos.map(c => liens[c] ? `<a href="${esc(liens[c])}" target="_blank" rel="noopener"><img src="${esc(liens[c])}" alt="Photo" style="width:96px;height:96px;object-fit:cover;border-radius:10px"></a>` : "").join("")}</div>` : ""}
       ${l.reponse_cleaneur ? `<p class="petit"><b>Réponse du Cleaneur :</b> ${esc(l.reponse_cleaneur)}</p>` : ""}
       ${l.statut === "OUVERT" ? `<form data-decider-litige="${l.id}" novalidate style="margin-top:10px">
         <label class="champ">Décision<select name="statut">${DECISIONS_LITIGE.map(([v, n]) => `<option value="${v}">${n}</option>`).join("")}</select></label>
-        <label class="champ">Montant (€, remboursement ou indemnisation)<input name="montant" type="number" min="0" max="3000" inputmode="numeric"></label>
+        <label class="champ">Montant remboursé (€, remboursement seulement)<input name="montant" type="number" min="0" max="3000" inputmode="numeric"></label>
         <label class="champ">Motif envoyé au client<textarea name="decision" rows="2" maxlength="1000"></textarea></label>
         <button class="bouton plein" type="submit">Enregistrer la décision</button></form>`
         : `<p class="petit"><b>Décision :</b> ${esc(l.decision || "")}${l.montant_decide_c ? ` · ${euros(l.montant_decide_c)}` : ""}</p>`}</div>`).join("") || `<p class="muet">Aucun litige.</p>`}`;
