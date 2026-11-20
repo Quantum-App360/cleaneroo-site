@@ -1,6 +1,7 @@
 // Calcul de l'estimation : copie EXACTE de Estimation.kt (§ 8 du cahier des charges), dans le même ordre.
 import { REGLES, duree, DATE_PREMIERES_INTERVENTIONS, pctZone, libelleZone, fraisServicePct } from "./regles.js";
 import { prixSpecialC, minutesSpeciales, equipementsPour, surfaceEffective, TYPES_IMMEUBLE, tranchesConvives, minutesEtapesLocation, prixOptionsLocationC, PACK_ETAPES_CONSEILLE, PACK_CONSOMMABLES_CONSEILLE } from "./catalogue.js";
+import { ANCIENNES_FORMULES_LOCATION } from "./catalogue.js";
 import { rubrique, formulesPour, TYPES_LIEU, RUBRIQUES_CREDIT_IMPOT, TYPES_VITRES_ELIGIBLES, prixLigne, minutesLigne, libelleLigne,
   arrondiEuro, tachesPour, tacheChiffree, packsPour, remisePack } from "./catalogue.js";
 
@@ -20,14 +21,15 @@ const ENTREE_DEFAUT = {
   niveauxSupplementaires: 0, minutesEtapesLocation: 0, consommablesAControler: false, salissure: "NORMAL",
   taches: [], remisePackPct: 0, remisePackC: null, tachesPersonnalisees: 0, dimanche: false, creneauMalin: false,
   engagementMois: 0, espacePersonnel: true, typeLieuId: "", panier: [], minutesEnPlus: 0, minimumApresMin: 0,
-  lavageDrapsLits: 0, zonePct: 0, suiviSms: false, optionsLocationC: 0, formuleId: "", tachesFormule: [], fraisServicePct: 0,
+  lavageDrapsLits: 0, zonePct: 0, tauxC: 0, suiviSms: false, optionsLocationC: 0, formuleId: "", tachesFormule: [], fraisServicePct: 0,
   remiseParrainageC: 0, cagnotteC: 0,
 };
 
 export function calculer(entree) {
   const e = { ...ENTREE_DEFAUT, ...entree };
   const r = rubrique(e.rubriqueId);
-  const taux = r.tauxHoraireC ?? 0;
+  // Taux de la formule (location : 30 / 28,50 / 27 €/h selon le niveau, 20/11/2026), sinon celui de la prestation.
+  const taux = e.tauxC || r.tauxHoraireC || 0;
   const vehicule = e.rubriqueId === "car";
   const forfait = e.rubriqueId === "textiles" || e.rubriqueId === "hospitality";
   const panier = e.panier || [];
@@ -106,7 +108,14 @@ export function calculer(entree) {
       const brutFormule = taches.filter(t => (e.tachesFormule || []).includes(t.id)).reduce((s, t) => s + prixTache(t), 0);
       rem = Math.max(rem, brutFormule - arrondiEuro(baseFormule * plusPct / 100));
     }
-    lignes.push({ libelle: plusPct ? `Remise formule ${e.formuleId === "confort" ? "Confort" : "Premium"}` : `Remise pack (−${e.remisePackPct} %)`, montantC: -rem });
+    // Plancher horaire (20/11/2026, audit) : la remise ne fait jamais descendre la prestation sous temps planifié × plancher.
+    const plancherH = (REGLES.PLANCHER_HORAIRE_C || {})[e.rubriqueId];
+    if (plancherH) {
+      const minutesPlanifiees = (dureePrix || dureeBase) + tachesMin;
+      const plancherC = zone(Math.round(plancherH * minutesPlanifiees / 60));
+      rem = Math.max(0, Math.min(rem, sousTotal - plancherC));
+    }
+    if (rem > 0) lignes.push({ libelle: plusPct ? `Remise formule ${e.formuleId === "confort" ? "Confort" : "Premium"}` : `Remise pack (−${e.remisePackPct} %)`, montantC: -rem });
     sousTotal -= rem;
   }
 
@@ -221,7 +230,7 @@ export function heuresEvenement(b, dureeMin, heures) {
   return heures.filter(x => x * 60 + dureeMin <= debut * 60);
 }
 /** Formule choisie (la première par défaut). */
-export function formuleDe(b) { const f = formulesPour(rubrique(b.rubriqueId)); return f.find(x => x.id === b.formuleId) || f[0]; }
+export function formuleDe(b) { const f = formulesPour(rubrique(b.rubriqueId)); const id = b.rubriqueId === "rental" ? niveauLocation(b).formuleId : b.formuleId; return f.find(x => x.id === id) || f[0]; }
 /** Entretien régulier : chaque passage est une demande séparée, au même prix. */
 const bornerPassages = b => Math.min(REGLES.PASSAGES_MAX, Math.max(REGLES.PASSAGES_MIN, b.passages || REGLES.PASSAGES_DEFAUT));
 export const passagesPlanifies = b => (b.rubriqueId === "car" ? ((b.frequenceVehicule || "unique") !== "unique" ? bornerPassages(b) : 1)
@@ -256,8 +265,15 @@ export const minimumC = id => ({ car: REGLES.MINIMUM_COMMANDE_VEHICULE_C, textil
 export const complementMinimum = (totalC, minC) => Math.max(0, minC - totalC);
 
 /** Location saisonnière : temps de rotation. Un studio (0 chambre) compte comme 1 chambre. */
-export const tempsRotationLocation = (chambres, sdb, surface, coef) =>
-  (REGLES.ROTATION_BASE_MIN + REGLES.ROTATION_PAR_CHAMBRE_MIN * Math.max(1, chambres) + REGLES.ROTATION_PAR_SDB_MIN * Math.max(1, sdb) + REGLES.ROTATION_PAR_M2_MIN * surface) * coef;
+/** Location courte durée (20/11/2026) : temps Standard = 45 min + 30 min par pièce (chambres + séjour ; un studio compte 1 pièce),
+ *  + 20 min par salle de bain au-delà de la première, + 0,35 min par m² au-delà de 25 m² par pièce. Studio 1 h 15, T2 1 h 45, T3 2 h 15. */
+export const tempsRotationLocation = (chambres, sdb, surface, coef) => {
+  const pieces = Math.max(1, (chambres || 0) + ((chambres || 0) > 0 ? 1 : 0));
+  return (REGLES.ROTATION_BASE_MIN + REGLES.ROTATION_PAR_PIECE_MIN * pieces + REGLES.ROTATION_PAR_SDB_SUPP_MIN * Math.max(0, (sdb || 1) - 1)
+    + REGLES.ROTATION_PAR_M2_MIN * Math.max(0, (surface || 0) - REGLES.ROTATION_M2_PAR_PIECE * pieces)) * coef;
+};
+/** Niveau et durée de séjour d'un brouillon de location (les anciennes formules court / semaine / long / grand sont converties). */
+export const niveauLocation = b => { const a = ANCIENNES_FORMULES_LOCATION[b.formuleId]; return a ? { formuleId: a[0], sejour: b.sejour || a[1] } : { formuleId: b.formuleId || "standard", sejour: b.sejour || "court" }; };
 
 /** Disponibilité d'un créneau (ReglesMetier.disponibilite). jour : 1 = lundi … 7 = dimanche. */
 export function disponibilite(maintenant, creneau) {
@@ -283,13 +299,14 @@ export const litsTailles = b => {
 };
 /** Linge de toilette et de cuisine : forfait sur place, ou en laverie par salle de bain (serviettes, tapis) + torchons. */
 export const prixLingeC = b => b.drapsLieu === "laverie"
-  ? Math.max(1, b.sdb ?? 1) * REGLES.LINGE_LAVERIE_PAR_SDB_C + REGLES.TORCHONS_LAVERIE_C
+  ? Math.max(1, b.sdb ?? 1) * REGLES.LINGE_LAVERIE_PAR_SDB_C + REGLES.TORCHONS_LAVERIE_C + (b.lavageDraps ? 0 : REGLES.LAVERIE_TRAJET_C)
   : REGLES.LINGE_SUR_PLACE_FORFAIT_C;
 /** Prix du lavage des draps : selon le lieu (sur place / laverie) et la taille de chaque lit. */
 export const prixDrapsC = b => {
   const t = litsTailles(b), p = REGLES.DRAPS_LAVERIE_C;
   if (!t.total) return 0;
-  return b.drapsLieu === "laverie" ? t.un * p.un + t.deux * p.deux + t.king * p.king : REGLES.DRAPS_SUR_PLACE_FORFAIT_C;
+  // 20/11/2026 : sur place 5 € par lit ; en laverie, prix par lit + aller-retour (une fois par ménage, ajouté au linge s'il y en a).
+  return b.drapsLieu === "laverie" ? t.un * p.un + t.deux * p.deux + t.king * p.king + REGLES.LAVERIE_TRAJET_C : t.total * REGLES.DRAPS_SUR_PLACE_PAR_LIT_C;
 };
 /** Le ménage tient-il entre le départ des voyageurs et l'arrivée suivante ? */
 export const menageTientEntreVoyageurs = (b, dureeMin) => (b.departVoyageursH ?? 10) * 60 + dureeMin <= (b.arriveeSuivanteH ?? 16) * 60;
@@ -298,7 +315,7 @@ export const menageTientEntreVoyageurs = (b, dureeMin) => (b.departVoyageursH ??
 export function entreeEstimation(b, espacePersonnel, debut) {
   const r = rubrique(b.rubriqueId);
   const formules = formulesPour(r);
-  const f = formules.find(x => x.id === b.formuleId) || formules[0];
+  const f = formuleDe(b);
   const lieu = (TYPES_LIEU[b.rubriqueId] || []).find(x => x.id === b.typeLieuId);
   const coefLieu = lieu ? lieu.coef : 1.0;
   // Tâches proposées pour ce type de lieu, au prix du client (prorata de surface, gabarit, arrondi à l'euro).
@@ -309,7 +326,11 @@ export function entreeEstimation(b, espacePersonnel, debut) {
   const pack = meilleurPack(packsPour(r, b.typeLieuId), b.taches, chiffrees);
   let dureeImposee = 0, m2h = f.m2ParHeure, surface = surfaceEffective(b);
   // Temps de rotation exact (sans arrondi intermédiaire) : × formule, × salissure, + étapes, + consommables, puis quart d'heure.
-  if (b.rubriqueId === "rental") { dureeImposee = tempsRotationLocation(b.chambres, b.sdb, b.surface, 1.0); m2h = 0; }
+  if (b.rubriqueId === "rental") {
+    // Niveau (×1 / ×1,4 / ×2,1) puis durée du séjour : +20 % ou +35 % du temps Standard (20/11/2026).
+    const base = tempsRotationLocation(b.chambres, b.sdb, b.surface, 1.0), sejourPct = REGLES.SEJOUR_PCT[niveauLocation(b).sejour] || 0;
+    dureeImposee = base * f.coef + base * sejourPct / 100; m2h = 0;
+  }
   if (b.rubriqueId === "windows") { dureeImposee = Math.max(f.minimumMin, b.fenetres * 15); m2h = 0; surface = 0; }
   if (b.rubriqueId === "textiles" || b.rubriqueId === "hospitality") { m2h = 0; surface = 0; }
   // Prestations spécialisées : durée et prix fixés par le type d'intervention et la surface à traiter
@@ -323,7 +344,8 @@ export function entreeEstimation(b, espacePersonnel, debut) {
   return {
     rubriqueId: b.rubriqueId, surfaceM2: surface, m2ParHeure: m2h, minimumMin: f.minimumMin,
     prixImposeC: b.rubriqueId === "special" ? prixSpecialC(b.typeLieuId, b.surface, b.formuleId === "urgente") : 0,
-    coefTemps: ["car", "construction", "kitchen", "special"].includes(b.rubriqueId) ? 1.0 : b.rubriqueId === "rental" ? f.coef : f.coef * coefLieu,
+    coefTemps: ["car", "construction", "kitchen", "special", "rental"].includes(b.rubriqueId) ? 1.0 : f.coef * coefLieu,
+    tauxC: f.tauxC || 0,
     coefPrix: 1.0, // déjà appliqué aux tâches chiffrées
     dureeBaseImposeeMin: dureeImposee,
     niveauxSupplementaires: ["home", "moving"].includes(b.rubriqueId) ? Math.max(0, b.niveaux - 1) : 0,

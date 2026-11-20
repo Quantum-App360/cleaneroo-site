@@ -1,10 +1,10 @@
 // Parcours de réservation en 5 étapes : copie de Reservation.kt (application Android).
 // 1 prestation · 2 questionnaire · 3 photos · 4 adresse, accès et créneau · 5 estimation, coordonnées et envoi.
-import { PARTIES, partie, partiePour, PARTIE_DE_L_ESPACE, rubriquesProposees, lieuxDuSecteur, inclusLocation, categorieBien, categorieDeRubrique, categoriesDeRubrique, bienCompatible, typesDeCategorie, CATEGORIES_BIEN, TARIFS_SPECIAUX, RUBRIQUES, rubrique, formulesPour, TYPES_LIEU, TYPES_LOGEMENT, BESOINS_SPECIAUX, ACCUEIL, accueilAutonomeInterdit, photosObligatoires,
+import { PARTIES, partie, partiePour, PARTIE_DE_L_ESPACE, rubriquesProposees, lieuxDuSecteur, inclusLocation, SEJOURS_LOCATION, categorieBien, categorieDeRubrique, categoriesDeRubrique, bienCompatible, typesDeCategorie, CATEGORIES_BIEN, TARIFS_SPECIAUX, RUBRIQUES, rubrique, formulesPour, TYPES_LIEU, TYPES_LOGEMENT, BESOINS_SPECIAUX, ACCUEIL, accueilAutonomeInterdit, photosObligatoires,
   ELEMENTS_TEXTILES, TAILLES_CANAPE, prixLigne, minutesLigne, libelleLigne, pastille,
   FREQUENCES, JOURS_SEMAINE, DERNIERS_NETTOYAGES, packsPour, remisePack,
   TACHES_A_TRAITER, TYPES_CHANTIER, equipementsPour, DELAIS_URGENCE, TYPES_IMMEUBLE, surfaceEffective, SELECTION_CONSEILLEE_VEHICULE, LIEUX_VEHICULE, FREQUENCES_VEHICULE, RUBRIQUES_LOGEMENT, vuesPhotos, vuesCompletes, PIECES_LOCATION, ETAPES_LOCATION, PACK_ETAPES_CONSEILLE, ETAPES_DEPART, prixEtapeLocationC, repetitionsEtape, CONSOMMABLES_LOCATION, PACK_CONSOMMABLES_CONSEILLE } from "./catalogue.js";
-import { calculer, entreeEstimation, SALISSURE, disponibilite, meilleurPack, tachesChiffrees, formuleDe, passagesPlanifies, datesPassages,
+import { calculer, entreeEstimation, SALISSURE, disponibilite, meilleurPack, tachesChiffrees, formuleDe, niveauLocation, passagesPlanifies, datesPassages,
   etapesDe, consommablesDe, menageTientEntreVoyageurs, frequenceDe, minutesEquipements, prixIndicatifEquipement, heuresEvenement, litsDe, litsTailles } from "./estimation.js";
 import { REGLES, euros, duree, heure, dateCourte, dateLongue, estPrelancement, MESSAGE_LANCEMENT, DATE_PREMIERES_INTERVENTIONS, pctZone, libelleZone } from "./regles.js";
 import { envoyerDemande, secteurCouvert, rejoindreAttente, enregistrerBien, synchroniserBiens, marquerDonneesInvite } from "./donnees.js";
@@ -421,17 +421,19 @@ function questionnaire(enTete = true) {
   if (lieux && !bienFixe) h += titre(r.titreTypes || { car: "Gabarit du véhicule", construction: "Type de sol", kitchen: "Type d'établissement" }[b.rubriqueId] || "Type de lieu")
     + choix(lieux.map(l => [l.id, l.nom]), b.typeLieuId, "typeLieuId");
   if (b.rubriqueId !== "car") {
-    h += titre(r.titreFormules || "Choisissez votre formule") + formules.map(f => `<button type="button" class="option ${f.id === b.formuleId ? "choisi" : ""}" data-champ="formuleId" data-valeur="${f.id}">
+    h += titre(r.titreFormules || "Choisissez votre formule") + formules.map(f => `<button type="button" class="option ${f.id === formuleDe(b).id ? "choisi" : ""}" data-champ="formuleId" data-valeur="${f.id}">
       ${esc(f.nom)}${f.description ? `<span class="detail">${esc(f.description)}</span>` : ""}</button>`).join("");
     h += questionsFormule(r);
     if (b.rubriqueId === "special" && b.formuleId === "urgente") h += titre("Délai souhaité") + choix(DELAIS_URGENCE, b.delai || "48h", "delai");
     // Location saisonnière : le forfait change avec la formule (chaque formule plus chère comprend davantage de tâches).
-    const forfait = b.rubriqueId === "rental" ? inclusLocation(b.formuleId) : null;
+    const forfait = b.rubriqueId === "rental" ? inclusLocation(niveauLocation(b).formuleId) : null;
+    // Location : la durée du séjour qui précède ajoute du temps au Standard (20/11/2026).
+    if (b.rubriqueId === "rental") h += titre("Durée du séjour qui se termine") + choix(SEJOURS_LOCATION, niveauLocation(b).sejour, "sejour");
     const inclus = (lieux || []).find(l => l.id === b.typeLieuId)?.inclus || r.inclus;
     if (forfait) h += `<div class="carte teintee" style="margin-top:6px"><b style="color:var(--primaire)">${tr("Inclus dans votre forfait")}</b>
       ${forfait.precedente ? `<p class="muet" style="margin:4px 0 0;font-size:14px">${tr("Tout le forfait")} « ${esc(tr(formules.find(f => f.id === forfait.precedente)?.nom || ""))} », ${tr("plus :")}</p>` : ""}
-      <ul class="liste-forfait">${forfait.taches.map(t => `<li>${esc(tr(t))}</li>`).join("")}</ul></div>`;
-    else if (inclus) h += `<div class="carte teintee" style="margin-top:6px"><b style="color:var(--primaire)">${packsPour(r, b.typeLieuId).some(p => p.id === "prestige") ? "Inclus dans tous les niveaux" : "Inclus dans votre forfait"}</b><p class="muet" style="margin:4px 0 0;font-size:14px">${esc(inclus)}</p></div>`;
+      <ul class="liste-forfait">${forfait.taches.map(t => `<li>${esc(tr(t))}</li>`).join("")}</ul>${r.nonInclus ? `<p class="petit" style="margin:6px 0 0"><b>${tr("Non inclus :")}</b> ${esc(tr(r.nonInclus))}</p>` : ""}</div>`;
+    else if (inclus) h += `<div class="carte teintee" style="margin-top:6px"><b style="color:var(--primaire)">${packsPour(r, b.typeLieuId).some(p => p.id === "prestige") ? "Inclus dans tous les niveaux" : "Inclus dans votre forfait"}</b><p class="muet" style="margin:4px 0 0;font-size:14px">${esc(inclus)}</p>${r.nonInclus ? `<p class="petit" style="margin:6px 0 0"><b>${tr("Non inclus :")}</b> ${esc(tr(r.nonInclus))}</p>` : ""}</div>`;
   }
   if (["textiles", "hospitality"].includes(b.rubriqueId)) h += panierTextiles();
   if (b.rubriqueId !== "car") {

@@ -80,7 +80,7 @@ let onglet = "demandes";
 
 /** Rubriques du back-office : identifiant, nom, icône. */
 const RUBRIQUES_BO = [["demandes", "Demandes", "calendrier"], ["inscriptions", "Inscriptions au lancement", "avis"], ["dossiers", "Dossiers Cleaneurs", "cleaneurs"],
-  ["litiges", "Litiges", "garantie"], ["controle", "Contrôle des Cleaneurs", "photo"], ["support", "Support", "telephone"], ["secteurs", "Secteurs à recruter", "position"], ["visites", "Visites", "instantane"]];
+  ["litiges", "Litiges", "garantie"], ["controle", "Contrôle des Cleaneurs", "photo"], ["support", "Support", "telephone"], ["secteurs", "Secteurs à recruter", "position"], ["visites", "Visites", "instantane"], ["tarifs", "Tarifs", "paiement"], ["connexions", "Connexions logiciels", "logement"]];
 let compteurs = {};
 /** Chiffres clés (en tête et pastilles du menu), relus à chaque changement de rubrique. */
 async function chargerCompteurs() {
@@ -119,6 +119,18 @@ function dessinerKpi() {
 const ongletsHtml = () => "";
 const titreBO = () => `<h1 class="bo-titre">${RUBRIQUES_BO.find(r => r[0] === onglet)?.[1] || "Back-office"}</h1><div class="trait-corail"></div>`;
 const brancherOnglets = () => { dessinerNav(); vue.querySelectorAll("[data-onglet]").forEach(bt => bt.onclick = () => { onglet = bt.dataset.onglet; liste(); }); };
+
+/** Demandes de connexion directe à un logiciel de gestion (page « Importer mes logements », 20/11/2026). */
+async function listeConnexions() {
+  const { data, error } = await supabase.from("demandes_connexion").select("*").order("cree_le", { ascending: false }).limit(500);
+  if (error) { vue.innerHTML = `${titreBO()}<p class="erreur">${esc(error.message)}</p>`; return; }
+  vue.innerHTML = `${titreBO()}<p class="muet">Conciergeries qui veulent relier leur logiciel de gestion. Rappelez-les pour activer la connexion ; ne recevez jamais une clé d'accès par e-mail.</p>
+    ${data.length ? `<table class="tableau-simple"><tr><th>Date</th><th>Logiciel</th><th>Logements</th><th>Téléphone</th><th>Message</th><th>Statut</th></tr>
+    ${data.map(d => `<tr><td>${new Date(d.cree_le).toLocaleDateString("fr-FR")}</td><td>${esc(d.logiciel)}</td><td>${d.logements}</td><td>${esc(d.telephone)}</td><td>${esc(d.message)}</td>
+      <td><select data-statut-connexion="${d.id}">${["A_RAPPELER", "EN_COURS", "CONNECTEE", "ABANDON"].map(s => `<option ${d.statut === s ? "selected" : ""}>${s}</option>`).join("")}</select></td></tr>`).join("")}</table>`
+      : `<p class="petit">Aucune demande pour l'instant.</p>`}`;
+  vue.querySelectorAll("[data-statut-connexion]").forEach(s => s.onchange = () => supabase.from("demandes_connexion").update({ statut: s.value }).eq("id", s.dataset.statutConnexion));
+}
 
 async function listeInscriptions() {
   const { data, error } = await supabase.from("inscriptions").select("*").order("cree_le", { ascending: false }).limit(1000);
@@ -365,6 +377,8 @@ async function liste() {
   if (onglet === "litiges") return listeLitiges();
   if (onglet === "support") return listeSupport();
   if (onglet === "controle") return listeControle();
+  if (onglet === "tarifs") { const { ecranTarifs } = await import("./gestion-tarifs.js"); return ecranTarifs(vue, titreBO()); }
+  if (onglet === "connexions") return listeConnexions();
   const { data, error } = await supabase.from("demandes").select("*").order("cree_le", { ascending: false }).limit(300);
   if (error) { vue.innerHTML = `<p class="erreur">${esc(error.message)}</p>`; return; }
   const compte = s => data.filter(d => d.statut === s).length;

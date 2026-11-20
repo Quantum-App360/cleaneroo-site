@@ -10,6 +10,7 @@ import { euros, duree, dateLongue, dateHeure, heure, estPrelancement, joursAvant
 traduireCatalogue(RUBRIQUES, TYPES_LIEU);
 import { ouvrirReservation, ouvrirSimulateur, modeles, logements, nomLogement, brouillonExemple } from "./reserver.js";
 import { calculer, entreeEstimation } from "./estimation.js";
+import "./tarifs.js";   // dernière version des tarifs gardée sur l'appareil, appliquée avant le premier affichage
 import { supabase, suivre, annuler, memoriser, inscrire } from "./donnees.js";
 import { blocRetardClient, blocRemplacementClient } from "./retards.js";
 import { guideVideo } from "./guide-video.js";
@@ -645,6 +646,7 @@ async function afficherPage() {
   if (route === "notifications") { window.scrollTo(0, 0); vue.innerHTML = pageChargement(); traduire(vue); await pageNotifications(vue, param); return; }
   if (route === "compte") { window.scrollTo(0, 0); vue.innerHTML = pageChargement(); traduire(vue); await pageCompte(vue, param); return; }
   if (route === "rejoindre") { window.scrollTo(0, 0); vue.innerHTML = pageChargement(); traduire(vue); const { pageRejoindre } = await import("./societe.js"); const { session: sessionCompte } = await import("./donnees.js"); await pageRejoindre(vue, param, !!(await sessionCompte().catch(() => null))); return; }
+  if (route === "importer-biens") { window.scrollTo(0, 0); vue.innerHTML = pageChargement(); traduire(vue); const { pageImportBiens } = await import("./import-biens.js"); await pageImportBiens(vue, param); return; }
   if (route === "formation") { window.scrollTo(0, 0); vue.innerHTML = pageChargement(); traduire(vue); const { pageFormation } = await import("./formations.js"); await pageFormation(vue, param); return; }
   if (route === "mes-demandes" || route === "mes-biens") {
     const deja = vue.querySelector(".onglets-demandes") && route === "mes-demandes";
@@ -778,6 +780,8 @@ window.addEventListener("hashchange", afficher);
 await retourEmail();
 // La page s'affiche tout de suite ; le compte est relu ensuite (l'en-tête se met à jour tout seul).
 afficher();
+// Tarifs publiés depuis l'espace de gestion (20/11/2026) : relus en arrière-plan, la page se redessine s'ils ont changé.
+import("./tarifs.js").then(({ chargerTarifs }) => chargerTarifs(supabase)).then(change => { if (change) afficher(); }).catch(() => null);
 // Le profil vient d'être relu : si l'accueil invitait encore à s'inscrire alors que le compte est connecté, on le redessine.
 majLienCompte().then(() => { if (connecte() && document.querySelector("#vue .appel-2026, #vue .inscription-inspirante")) afficher(); });
 supabase.auth.onAuthStateChange((evt, sess) => { sessionActive = !!sess; });

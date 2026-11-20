@@ -6,6 +6,7 @@ import { blocLitige } from "./litiges.js";
 import { icone } from "./icones.js";
 import { traduire, tr, langue } from "./langue.js";
 import { piecesDe, pieceComplete } from "./controle.js";
+import { criteresDe } from "./catalogue.js";
 import { blocSupplementCleaneur } from "./supplement.js";
 import { controlesDe, enregistrerPieces, majPiece, deposerPhotoControle, lienPhotoControle, controleIA, signalerArrivee, signalementsDe } from "./donnees.js";
 import { chargeur } from "./commun.js";
@@ -66,6 +67,8 @@ export async function brancherControle(boite, m, surFin) {
       <button type="button" class="bouton" data-envoyer-signal style="margin-top:8px">${tr("Envoyer le signalement")}</button>
       <p class="erreur" data-erreur-signal></p></details>
     ${signalements}
+    ${criteresDe(m.rubrique_id, (m.details || {}).formuleId).length ? `<details class="carte teintee criteres-validation"><summary><b>✅ ${tr("Critères de validation avant de terminer")}</b></summary>
+      <ul class="petit">${criteresDe(m.rubrique_id, (m.details || {}).formuleId).map(c => `<li>${esc(tr(c))}</li>`).join("")}</ul></details>` : ""}
     <div data-supplement></div>
     <div class="controle-tete"><b>${tr("Contrôle pièce par pièce")}</b><span>${faites} / ${liste.length}</span></div>
     <div class="jauge"><i style="width:${Math.round(faites / liste.length * 100)}%"></i></div>

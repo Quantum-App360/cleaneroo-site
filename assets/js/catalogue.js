@@ -34,11 +34,9 @@ const tachesLogement = [
   T("lessive", "Lessive et pliage du linge", 1500, 20, linge),
   T("balcon", "Balcon", 1500, 20, ext), T("terrasse", "Terrasse (balayage et lavage)", 2500, 30, ext), T("poubelles", "Sortie des poubelles", 500, 5, ext),
 ];
-const essentiel = ["draps", "poubelles", "hauteurs", "plinthes"];
-const confort = [...essentiel, "vitres", "frigo", "microondes", "lessive"];
+const confort = ["draps", "poubelles", "hauteurs", "plinthes", "vitres", "frigo", "microondes", "lessive"];
 const prestige = [...confort, "four", "hotte", "placards_cuisine", "placards_armoires", "repassage", "balcon"];
 const packsLogement = [
-  { id: "essentiel", nom: "Essentiel", remisePct: 5, tacheIds: essentiel },
   { id: "confort", nom: "Confort", remisePct: 10, tacheIds: confort },
   { id: "prestige", nom: "Premium", remisePct: 15, tacheIds: prestige },
 ];
@@ -46,13 +44,13 @@ const packsLogement = [
 /* ---- Location saisonnière : étapes et consommables (généré) ---- */
 /* Bibliothèque d'étapes par pièce et consommables à contrôler : même contenu que Location.kt (appli). */
 export const PIECES_LOCATION = [["chambre", "Chambre"], ["sdb", "Salle de bain"], ["cuisine", "Cuisine"], ["sejour", "Séjour"], ["exterieur", "Extérieur"], ["entree", "Entrée et général"]];
-/** minutes = temps ajouté (0 = incluse). « Chambre » : une fois par chambre ; « Salle de bain » : une fois par salle de bain. */
+/** minutes = temps ajouté (0 = incluse ; 20/11/2026 : four, micro-ondes, réfrigérateur, lave-vaisselle et dessous des lits inclus dans le Standard). « Chambre » : une fois par chambre ; « Salle de bain » : une fois par salle de bain. */
 export const ETAPES_LOCATION = [
   { id: "lit_draps", nom: "Faire le lit avec des draps propres", piece: "chambre", minutes: 0 },
   { id: "changer_draps", nom: "Changer les draps et taies", piece: "chambre", minutes: 0 },
   { id: "serviettes_lit", nom: "Disposer les serviettes sur le lit", piece: "chambre", minutes: 0 },
   { id: "plaids", nom: "Plier plaids et couvertures", piece: "chambre", minutes: 0 },
-  { id: "sous_lit", nom: "Vérifier sous le lit et les meubles", piece: "chambre", minutes: 5 },
+  { id: "sous_lit", nom: "Vérifier sous le lit et les meubles", piece: "chambre", minutes: 0 },
   { id: "placards", nom: "Vider et ranger les placards / dressing", piece: "chambre", minutes: 10 },
   { id: "cintres", nom: "Remettre les cintres", piece: "chambre", minutes: 0 },
   { id: "douche", nom: "Nettoyer douche / baignoire et joints", piece: "sdb", minutes: 0 },
@@ -62,9 +60,9 @@ export const ETAPES_LOCATION = [
   { id: "savon", nom: "Remettre savon, gel douche, shampoing", piece: "sdb", minutes: 0 },
   { id: "seche_cheveux", nom: "Vérifier sèche-cheveux et rangements", piece: "sdb", minutes: 0 },
   { id: "plan_travail", nom: "Nettoyer plan de travail et évier", piece: "cuisine", minutes: 0 },
-  { id: "plaques", nom: "Nettoyer plaques, four et micro-ondes", piece: "cuisine", minutes: 20 },
-  { id: "frigo", nom: "Vider et nettoyer le réfrigérateur", piece: "cuisine", minutes: 15 },
-  { id: "lave_vaisselle", nom: "Vider le lave-vaisselle et ranger la vaisselle", piece: "cuisine", minutes: 10 },
+  { id: "plaques", nom: "Nettoyer plaques, four et micro-ondes", piece: "cuisine", minutes: 0 },
+  { id: "frigo", nom: "Vider et nettoyer le réfrigérateur", piece: "cuisine", minutes: 0 },
+  { id: "lave_vaisselle", nom: "Vider le lave-vaisselle et ranger la vaisselle", piece: "cuisine", minutes: 0 },
   { id: "controle_vaisselle", nom: "Contrôler la vaisselle (casse, manque)", piece: "cuisine", minutes: 10 },
   { id: "cafe", nom: "Détartrer / nettoyer la machine à café", piece: "cuisine", minutes: 10 },
   { id: "poubelles", nom: "Vider les poubelles et remettre des sacs", piece: "cuisine", minutes: 0 },
@@ -111,8 +109,8 @@ export const NATURES_SALISSURE_LOCATION = ["Calcaire", "Graisse", "Traces et mar
 /** Nombre de fois qu'une étape est faite : par chambre (un studio compte 1), par salle de bain, sinon une fois. */
 export const repetitionsEtape = (e, chambres, sdb) => (e.piece === "chambre" ? Math.max(1, chambres) : e.piece === "sdb" ? Math.max(1, sdb) : 1);
 /** Forfait d'une option selon sa durée : petite 2 €, moyenne 4 €, grande 6 € (REGLES.OPTION_*). */
-export const forfaitOptionC = minutes => minutes <= REGLES.OPTION_PETITE_MAX_MIN ? REGLES.OPTION_PETITE_C
-  : minutes <= REGLES.OPTION_MOYENNE_MAX_MIN ? REGLES.OPTION_MOYENNE_C : REGLES.OPTION_GRANDE_C;
+/** Refonte du 20/11/2026 : une étape en plus est payée au temps réel (30 €/h, arrondi à l'euro, 3 € au moins). */
+export const forfaitOptionC = minutes => Math.max(REGLES.OPTION_MIN_C, Math.round(minutes * REGLES.OPTION_TAUX_HORAIRE_C / 60 / 100) * 100);
 /** Prix d'une étape en plus (centimes) : son forfait, une fois par chambre ou salle de bain concernée ; 0 si incluse. */
 export const prixEtapeLocationC = (e, chambres, sdb) => (e.minutes ? forfaitOptionC(e.minutes) * repetitionsEtape(e, chambres, sdb) : 0);
 /** Prix de toutes les étapes en plus choisies et des étapes personnalisées (centimes). */
@@ -126,6 +124,24 @@ export const nombreEtapesLocation = (choisies, perso, chambres, sdb) =>
   ETAPES_LOCATION.filter(e => choisies.includes(e.id)).reduce((s, e) => s + repetitionsEtape(e, chambres, sdb), 0) + perso;
 /* ---- fin location ---- */
 
+/** « Non inclus » affiché sous chaque formule (lot 4 de la refonte du 20/11/2026) : le client sait ce qu'il n'achète pas. */
+const NON_INCLUS = {
+  home: "Déplacement de meubles lourds, travaux, nettoyage en hauteur au-delà d'un escabeau, linge fourni par Cleaneroo.",
+  car: "Lavage à l'eau à domicile, réparation de carrosserie, carénage.",
+  textiles: "Cuir abîmé, tissus non lavables à l'eau (étiquette « S » ou « X »), garantie de disparition des taches anciennes.",
+  leisure: "Réparation, vidange des eaux usées hors cassette, mécanique.",
+  boat: "Carénage (aire agréée obligatoire), mécanique, gréement.",
+  hospitality: "Linge fourni par Cleaneroo, maintenance technique.",
+  construction: "Évacuation de gravats, déchets de chantier en benne, décollage de peinture ou de ciment sur de grandes surfaces.",
+  kitchen: "Démontage technique des équipements, dégraissage des gaines d'extraction en toiture.",
+  office: "Vitres extérieures en hauteur, travaux, désinfection biocide professionnelle.",
+  commerce: "Vitres en hauteur sans accès sécurisé, évacuation de déchets volumineux.",
+  communal: "Encombrants, traitement des nuisibles, entretien des espaces verts (tonte, taille).",
+  windows: "Vitres au-delà de 6 m ou sans accès sécurisé (sur devis), réparation de joints.",
+  outdoor: "Tonte, taille, élagage, nettoyage de toitures.",
+  event: "Location de vaisselle, service en salle, évacuation de déchets en benne.",
+  special: "Travaux de réparation après sinistre, débarras de mobilier volumineux sans visite préalable.",
+};
 export const RUBRIQUES = [
   { id: "home", nom: "Ménage du logement", sousTitre: "Ménage ponctuel ou régulier", icone: "logement", tauxHoraireC: 2690, salissureSurTemps: true,
     inclus: "Dépoussiérage des surfaces accessibles, aspiration et lavage des sols, cuisine, salle de bain et WC, poubelles, lits faits.",
@@ -135,45 +151,46 @@ export const RUBRIQUES = [
     titreFormules: "À quelle fréquence ?", sousTitrePremium: "Le grand ménage, du sol au plafond",
     taches: tachesLogement, packs: packsLogement, surfaceReferenceM2: 60,
     occasions: [{ id: "printemps", nom: "Ménage de printemps", packId: "prestige" }, { id: "recevoir", nom: "Avant de recevoir", packId: "confort" },
-      { id: "vacances", nom: "Retour de vacances", packId: "essentiel", tachesEnPlus: ["frigo"] }, { id: "vente", nom: "Avant une vente ou une location", packId: "prestige" },
+      { id: "vacances", nom: "Retour de vacances", packId: "", tachesEnPlus: ["frigo"] }, { id: "vente", nom: "Avant une vente ou une location", packId: "prestige" },
       { id: "autre", nom: "Autre", packId: "" }],
     frequences: [["semaine", "Chaque semaine"], ["deux_semaines", "Toutes les 2 semaines"], ["mois", "Chaque mois"]],
     moments: [["matin", "Le matin"], ["apres_midi", "L'après-midi"], ["peu_importe", "Peu importe"]] },
   { id: "rental", nom: "Location saisonnière", sousTitre: "Prêt pour vos prochains voyageurs", icone: "location", tauxHoraireC: 3000, salissureSurTemps: true, affichagePrix: "PAR_MENAGE",
-    inclus: "Ménage complet entre deux voyageurs, lits faits avec le linge fourni sur place, cuisine et sanitaires désinfectés, contrôle de l'inventaire et des consommables, photos de chaque pièce pour l'hôte.",
-    formules: [F("court", "Après un court séjour (1–4 nuits)", "Rotation standard.", 0, 0, 1.0),
-      F("semaine", "Après un séjour d'une semaine (5–9 nuits)", "Rotation approfondie.", 0, 0, 1.2),
-      F("long", "Après un long séjour (10 nuits et +)", "Rotation complète.", 0, 0, 1.45),
-      F("grand", "Grand ménage périodique", "Remise à niveau complète du logement.", 0, 0, 1.8, "AUTRE", true)],
+    inclus: "Ménage complet entre deux voyageurs, lits faits avec le linge fourni sur place, cuisine (four, micro-ondes et réfrigérateur compris) et sanitaires désinfectés, contrôle des consommables, objets oubliés et dégradations signalés, photos de chaque pièce pour l'hôte.",
+    // Refonte du 20/11/2026 (audit validé) : trois niveaux de service ; la durée du séjour ajoute du temps (question à part).
+    // Temps : Confort ×1,4, Premium ×2,1 ; taux : 30 €/h, 28,50 €/h, 27 €/h (plancher). Studio 37,50 / 52 / 74 €, T3 67,50 / 92 / 128 €.
+    formules: [{ ...F("standard", "Standard", "Rotation complète entre deux voyageurs.", 0, 0, 1.0), tauxC: REGLES.TAUX_LOCATION_C.standard },
+      { ...F("confort", "Confort", "Standard + finitions approfondies.", 0, 0, 1.4), tauxC: REGLES.TAUX_LOCATION_C.confort },
+      { ...F("premium", "Premium", "Remise à niveau du logement, extérieurs compris.", 0, 0, 2.1, "AUTRE", true), tauxC: REGLES.TAUX_LOCATION_C.premium }],
+    titreFormules: "Niveau de ménage",
+    nonInclus: "Démontage technique, plomberie, ventilation, linge fourni par Cleaneroo, achat des consommables, encombrants.",
     naturesSalissure: NATURES_SALISSURE_LOCATION },
   { id: "moving", nom: "Déménagement", sousTitre: "Un nouveau départ, du sol au plafond", icone: "demenagement", tauxHoraireC: 3200, salissureSurTemps: true,
-    inclus: "Nettoyage complet du logement vide. Nettoyage uniquement : Cleaneroo ne réalise ni peinture, ni rebouchage, ni réparation.",
-    formules: [F("emmenagement", "Nettoyage d'emménagement", "Logement vide, nettoyé avant votre arrivée", 10, 180, 1.0),
-      F("depart", "Nettoyage de départ / état des lieux", "Logement vidé, remis au propre pour l'état des lieux de sortie", 10, 180, 1.1)],
+    // Refonte du 20/11/2026 : l'intérieur du four, du réfrigérateur, des placards de cuisine, le détartrage et les sanitaires sont inclus dès le Standard
+    // (un état des lieux les contrôle toujours) ; minimum 149 € (4 h 40).
+    inclus: "Logement vide, toutes les pièces : sols, plinthes, portes, poignées, interrupteurs, radiateurs dépoussiérés, vitres intérieures. Cuisine : intérieur du four, du réfrigérateur, des placards et tiroirs. Sanitaires détartrés et désinfectés, joints nettoyés. Traces d'adhésif. Photos avant et après.",
+    nonInclus: "Peinture, rebouchage, réparation, débarras de meubles.",
+    formules: [F("emmenagement", "Nettoyage d'emménagement", "Logement vide, nettoyé avant votre arrivée", 9, 280, 1.0),
+      F("depart", "Nettoyage de départ / état des lieux", "Logement vidé, remis au propre pour l'état des lieux de sortie", 9, 280, 1.1)],
     // Tâches propres au déménagement (« à la surface » = chiffré pour 60 m²) et packs propres
     taches: [
-      T("four", "Intérieur du four", 2500, 30, { groupe: "Cuisine" }), T("frigo", "Intérieur du réfrigérateur", 1500, 20, { groupe: "Cuisine" }),
-      T("hotte", "Hotte et filtres", 1500, 20, { groupe: "Cuisine" }), T("placards_cuisine", "Intérieur des placards de cuisine", 2000, 30, { groupe: "Cuisine" }),
+      T("hotte", "Hotte et filtres", 1500, 20, { groupe: "Cuisine" }),
       T("penderies", "Intérieur des placards et penderies", 3000, 40, { groupe: "Pièces et rangements", parSurface: true }),
       T("vitres", "Vitres et encadrements", 3000, 45, { groupe: "Pièces et rangements", parSurface: true }),
       T("volets", "Volets et stores", 2500, 30, { groupe: "Pièces et rangements", parSurface: true }),
       T("murs", "Traces sur les murs (lessivage localisé)", 3500, 45, { groupe: "Pièces et rangements", parSurface: true }),
-      T("adhesif", "Traces d'adhésif et de scotch", 1500, 20, { groupe: "Pièces et rangements" }),
-      T("detartrage", "Détartrage renforcé (robinetterie, parois, joints)", 2500, 30, { groupe: "Salle de bains" }),
-      T("sanitaires", "Désinfection renforcée des sanitaires", 1500, 20, { groupe: "Salle de bains" }),
+      T("detartrage", "Détartrage complet des parois et carrelages", 2500, 30, { groupe: "Salle de bains" }),
       T("balcon", "Balcon ou terrasse", 2000, 25, { groupe: "Extérieurs et annexes" }),
       T("cave", "Cave ou garage (balayage, dépoussiérage)", 3500, 45, { groupe: "Extérieurs et annexes" }),
     ],
     packs: [
-      { id: "essentiel", nom: "Essentiel", remisePct: 5, tacheIds: ["sanitaires", "detartrage", "frigo", "adhesif"] },
-      { id: "confort", nom: "Confort", remisePct: 10, tacheIds: ["sanitaires", "detartrage", "frigo", "adhesif", "four", "vitres", "penderies"] },
-      { id: "prestige", nom: "Premium", remisePct: 15, tacheIds: ["sanitaires", "detartrage", "frigo", "adhesif", "four", "vitres", "penderies",
-        "hotte", "placards_cuisine", "volets", "murs", "balcon", "cave"] },
+      { id: "confort", nom: "Confort", remisePct: 10, tacheIds: ["vitres", "penderies", "volets", "hotte", "murs"] },
+      { id: "prestige", nom: "Premium", remisePct: 15, tacheIds: ["vitres", "penderies", "volets", "hotte", "murs", "balcon", "detartrage"] },
     ],
     surfaceReferenceM2: 60,
     naturesSalissure: ["Poussière de travaux", "Calcaire", "Graisse", "Traces et marques", "Moisissures", "Odeurs"] },
   { id: "car", nom: "Véhicules", sousTitre: "Nettoyage intérieur et extérieur", icone: "vehicule", tauxHoraireC: 4000, salissureSurTemps: false, affichagePrix: "MINIMUM_COMMANDE",
-    inclus: "100 % à la carte : choisissez les tâches.",
+    inclus: "100 % à la carte : choisissez les tâches. À domicile ou sur la voie publique, lavage sans eau uniquement (produits sans rinçage).",
     // Prix « citadine » ; le gabarit (100 / 115 / 130 / 145 %) s'applique au prix ET à la durée de chaque tâche.
     taches: [
       T("aspiration", "Aspiration complète (sièges, tapis, coffre)", 2500, 30, { groupe: "Intérieur" }),
@@ -187,7 +204,7 @@ export const RUBRIQUES = [
       T("ciel", "Ciel de toit", 2000, 20, { groupe: "Intérieur" }),
       T("poils", "Poils d'animaux", 2000, 20, { groupe: "Intérieur" }),
       T("anti_odeurs", "Traitement anti-odeurs", 2000, 15, { groupe: "Intérieur" }),
-      T("lavage_main", "Lavage extérieur à la main", 2500, 40, { groupe: "Extérieur" }),
+      T("lavage_main", "Lavage extérieur sans eau, à la main", 2500, 40, { groupe: "Extérieur" }),
       T("vitres_ext", "Vitres extérieures", 700, 10, { groupe: "Extérieur" }),
       T("jantes", "Jantes et pneus (nettoyage + brillant pneus)", 2000, 25, { groupe: "Extérieur" }),
       T("decontamination", "Décontamination des jantes (dépôts de freins)", 3000, 30, { groupe: "Extérieur" }),
@@ -198,7 +215,6 @@ export const RUBRIQUES = [
       T("moteur", "Compartiment moteur (nettoyage à sec)", 3000, 30, { groupe: "Rénovation et protection" }),
     ],
     packs: [
-      { id: "essentiel", nom: "Essentiel", remisePct: 5, tacheIds: ["aspiration", "tableau", "vitres_int", "coffre"] },
       { id: "confort", nom: "Confort", remisePct: 10, tacheIds: ["aspiration", "tableau", "vitres_int", "coffre", "lavage_main", "vitres_ext", "jantes"] },
       { id: "prestige", nom: "Premium", remisePct: 15, tacheIds: ["aspiration", "tableau", "vitres_int", "coffre", "lavage_main", "vitres_ext", "jantes", "plastiques_protection", "moquettes", "anti_odeurs", "bas_caisse", "cire"] },
     ] },
@@ -209,7 +225,6 @@ export const RUBRIQUES = [
       T("desodorisation", "Désodorisation", 1000, 10, { groupe: "Traitements" }), T("protection", "Protection anti-taches", 2500, 15, { groupe: "Traitements" }),
       T("sechage", "Séchage accéléré (ventilation)", 1000, 10, { groupe: "Traitements" })],
     packs: [
-      { id: "essentiel", nom: "Essentiel", remisePct: 5, tacheIds: ["detachage"] },
       { id: "confort", nom: "Confort", remisePct: 10, tacheIds: ["detachage", "desodorisation", "acariens"] },
       { id: "prestige", nom: "Premium", remisePct: 15, tacheIds: ["detachage", "desodorisation", "acariens", "protection", "sechage"] },
     ] },
@@ -271,10 +286,8 @@ export const RUBRIQUES = [
     T("haccp", "Fiche de traçabilité HACCP", 1500, 10, { groupe: "Hygiène et traçabilité", types: PROS_CUISINE }),
     ],
     packs: [
-    { id: "essentiel", nom: "Essentiel", remisePct: 5, tacheIds: ["surfaces", "eviers", "siphons", "poubelles"], types: PROS_CUISINE },
     { id: "confort", nom: "Confort", remisePct: 10, tacheIds: ["surfaces", "eviers", "siphons", "poubelles", "murs", "aerations", "poignees", "reserve"], types: PROS_CUISINE },
     { id: "prestige", nom: "Premium", remisePct: 15, tacheIds: ["surfaces", "eviers", "siphons", "poubelles", "murs", "aerations", "poignees", "reserve", "plafond", "plinthes", "vestiaires", "haccp"], types: PROS_CUISINE },
-    { id: "essentiel", nom: "Essentiel", remisePct: 5, tacheIds: ["eviers", "surfaces"], types: ["particulier"] },
     { id: "confort", nom: "Confort", remisePct: 10, tacheIds: ["eviers", "surfaces", "murs", "poignees"], types: ["particulier"] },
     { id: "prestige", nom: "Premium", remisePct: 15, tacheIds: ["eviers", "surfaces", "murs", "poignees", "vitres", "aerations", "congelateur"], types: ["particulier"] },
     ],
@@ -302,14 +315,13 @@ export const RUBRIQUES = [
       T("conteneurs", "Sortie et lavage des conteneurs poubelles", 1500, 15, { groupe: "Hygiène et sanitaires" }),
     ],
     packs: [
-      { id: "essentiel", nom: "Essentiel", remisePct: 5, tacheIds: ["contact", "conteneurs", "paillasson", "reassort"] },
       { id: "confort", nom: "Confort", remisePct: 10, tacheIds: ["contact", "conteneurs", "paillasson", "reassort", "claviers", "kitchenette", "vitrine", "comptoir", "attente"] },
       { id: "prestige", nom: "Premium", remisePct: 15, tacheIds: ["contact", "conteneurs", "paillasson", "reassort", "claviers", "kitchenette", "vitrine", "comptoir", "attente", "cloisons", "reunion", "ecrans", "moquette", "cabinets"] },
     ],
     surfaceReferenceM2: 100,
     frequences: [["plusieurs", "Plusieurs fois par semaine"], ["semaine", "Chaque semaine"], ["deux_semaines", "Toutes les 2 semaines"], ["mois", "Chaque mois"]],
     moments: [["avant", "Avant l'ouverture"], ["pendant", "Pendant les horaires d'ouverture"], ["apres", "Après la fermeture"], ["weekend", "Le week-end"]],
-    occasions: [{ id: "visite", nom: "Visite client ou audit", packId: "confort" }, { id: "inauguration", nom: "Inauguration / réouverture", packId: "prestige" }, { id: "avant_evt", nom: "Avant un événement", packId: "confort" }, { id: "apres_evt", nom: "Après un événement", packId: "essentiel" }, { id: "autre", nom: "Autre", packId: "" }] },
+    occasions: [{ id: "visite", nom: "Visite client ou audit", packId: "confort" }, { id: "inauguration", nom: "Inauguration / réouverture", packId: "prestige" }, { id: "avant_evt", nom: "Avant un événement", packId: "confort" }, { id: "apres_evt", nom: "Après un événement", packId: "" }, { id: "autre", nom: "Autre", packId: "" }] },
   { id: "commerce", nom: "Commerces et entrepôts", sousTitre: "Boutiques, magasins, ateliers et entrepôts", icone: "commerce", tauxHoraireC: 2950, salissureSurTemps: false,
     titreTypes: "Type de lieu",
     formules: [F("regulier", "Entretien régulier", "", 60, 60, 1.0, "REGULIER", false, false), F("ponctuel", "Nettoyage ponctuel", "", 60, 60, 1.15, "PONCTUEL", false, false), F("remise", "Remise en état des locaux", "", 60, 60, 1.6, "REMISE_EN_ETAT", true, false)],
@@ -339,14 +351,13 @@ export const RUBRIQUES = [
       T("conteneurs", "Sortie et lavage des conteneurs poubelles", 1500, 15, { groupe: "Stockage, atelier et déchets" }),
     ],
     packs: [
-      { id: "essentiel", nom: "Essentiel", remisePct: 5, tacheIds: ["contact", "conteneurs", "paillasson", "reassort"] },
       { id: "confort", nom: "Confort", remisePct: 10, tacheIds: ["contact", "conteneurs", "paillasson", "reassort", "kitchenette", "vitrine", "comptoir", "vestiaires", "etablis", "cartons", "araignees"] },
       { id: "prestige", nom: "Premium", remisePct: 15, tacheIds: ["contact", "conteneurs", "paillasson", "reassort", "kitchenette", "vitrine", "comptoir", "vestiaires", "etablis", "cartons", "araignees", "cloisons", "presentoirs", "miroirs", "reserve", "autolaveuse", "appareils", "rayonnages", "quais"] },
     ],
     surfaceReferenceM2: 100,
     frequences: [["plusieurs", "Plusieurs fois par semaine"], ["semaine", "Chaque semaine"], ["deux_semaines", "Toutes les 2 semaines"], ["mois", "Chaque mois"]],
     moments: [["avant", "Avant l'ouverture"], ["pendant", "Pendant les horaires d'ouverture"], ["apres", "Après la fermeture"], ["weekend", "Le week-end"]],
-    occasions: [{ id: "visite", nom: "Visite client ou audit", packId: "confort" }, { id: "inauguration", nom: "Inauguration / réouverture", packId: "prestige" }, { id: "avant_evt", nom: "Avant un événement", packId: "confort" }, { id: "apres_evt", nom: "Après un événement", packId: "essentiel" }, { id: "inventaire", nom: "Inventaire ou changement de collection", packId: "confort" }, { id: "autre", nom: "Autre", packId: "" }] },
+    occasions: [{ id: "visite", nom: "Visite client ou audit", packId: "confort" }, { id: "inauguration", nom: "Inauguration / réouverture", packId: "prestige" }, { id: "avant_evt", nom: "Avant un événement", packId: "confort" }, { id: "apres_evt", nom: "Après un événement", packId: "" }, { id: "inventaire", nom: "Inventaire ou changement de collection", packId: "confort" }, { id: "autre", nom: "Autre", packId: "" }] },
   { id: "communal", nom: "Immeubles et parties communes", sousTitre: "Étages, hall et annexes : prix selon le nombre d'étages", icone: "parties-communes", tauxHoraireC: 2800, salissureSurTemps: false,
     titreTypes: "Type d'immeuble",
     formules: [F("regulier", "Entretien régulier", "", 80, 60, 1.0, "REGULIER", false, false), F("ponctuel", "Ponctuel", "", 80, 60, 1.15, "PONCTUEL", false, false), F("remise", "Remise en état", "", 80, 60, 1.6, "REMISE_EN_ETAT", true, false)],
@@ -371,7 +382,6 @@ export const RUBRIQUES = [
       T("rampes_acces", "Rampes d'accès et caniveaux", 2500, 30, { groupe: "Parking", types: ["parking"] }),
     ],
     packs: [
-      { id: "essentiel", nom: "Essentiel", remisePct: 5, tacheIds: ["boites", "paillasson", "conteneurs", "rampes", "araignees"] },
       { id: "confort", nom: "Confort", remisePct: 10, tacheIds: ["boites", "paillasson", "conteneurs", "rampes", "araignees", "vitrerie", "ascenseur", "local_poubelles", "huile"] },
       { id: "prestige", nom: "Premium", remisePct: 15, tacheIds: ["boites", "paillasson", "conteneurs", "rampes", "araignees", "vitrerie", "ascenseur", "local_poubelles", "huile", "escaliers", "portes", "velos", "caves", "balayage", "rampes_acces"] },
     ],
@@ -393,7 +403,6 @@ export const RUBRIQUES = [
       T("hauteur", "Vitrages en hauteur (perche à eau pure, jusqu'à 6 m)", 3000, 30, { groupe: "Accès en hauteur" }),
     ],
     packs: [
-      { id: "essentiel", nom: "Essentiel", remisePct: 5, tacheIds: ["encadrements"] },
       { id: "confort", nom: "Confort", remisePct: 10, tacheIds: ["encadrements", "rails", "moustiquaires", "stores", "enseigne", "rideau"] },
       { id: "prestige", nom: "Premium", remisePct: 15, tacheIds: ["encadrements", "rails", "moustiquaires", "stores", "enseigne", "rideau", "volets", "etiquettes", "hauteur", "toiture"] },
     ],
@@ -421,7 +430,6 @@ export const RUBRIQUES = [
       T("encombrants", "Évacuation des encombrants légers (sacs)", 2000, 20, { groupe: "Évacuation", types: ["garage"] }),
     ],
     packs: [
-      { id: "essentiel", nom: "Essentiel", remisePct: 5, tacheIds: ["feuilles", "mobilier", "recoins", "huile"] },
       { id: "confort", nom: "Confort", remisePct: 10, tacheIds: ["feuilles", "mobilier", "recoins", "huile", "haute_pression", "barbecue", "garde_corps", "dechets_verts", "encombrants"] },
       { id: "prestige", nom: "Premium", remisePct: 15, tacheIds: ["feuilles", "mobilier", "recoins", "huile", "haute_pression", "barbecue", "garde_corps", "dechets_verts", "encombrants", "demoussage", "joints", "gouttieres", "rangement"] },
     ],
@@ -446,7 +454,6 @@ export const RUBRIQUES = [
       T("sanitaires", "Passage sanitaires pendant l'événement", 3000, 30, { groupe: "Pendant l'événement", types: ["mariage", "seminaire", "salon", "anniversaire"] }),
     ],
     packs: [
-      { id: "essentiel", nom: "Essentiel", remisePct: 5, tacheIds: ["tri", "evacuation", "tables"] },
       { id: "confort", nom: "Confort", remisePct: 10, tacheIds: ["tri", "evacuation", "tables", "sols", "traiteur", "cuisine_maison", "desodorisation"] },
       { id: "prestige", nom: "Premium", remisePct: 15, tacheIds: ["tri", "evacuation", "tables", "sols", "traiteur", "cuisine_maison", "desodorisation", "vaisselle", "exterieurs", "sanitaires"] },
     ],
@@ -455,7 +462,7 @@ export const RUBRIQUES = [
     affichagePrix: "FORFAIT",
     titreTypes: "Type d'intervention",
     formules: [F("planifiee", "Intervention planifiée", "Intervention à la date de votre choix", 0, 0, 1.0, "AUTRE", false, false), F("urgente", "Intervention urgente", "Intervention sous 24 à 48 h · +30 %", 0, 0, 1.0, "AUTRE", false, false)] },
-].map(r => ({ inclus: "", formules: [], taches: [], packs: [], toujoursSurDevis: false, affichagePrix: "HORAIRE",
+].map(r => ({ nonInclus: NON_INCLUS[r.id] || "", inclus: "", formules: [], taches: [], packs: [], toujoursSurDevis: false, affichagePrix: "HORAIRE",
   surfaceReferenceM2: 0, occasions: [], naturesSalissure: [], moments: MOMENTS_PAR_DEFAUT, frequences: FREQUENCES, titreTypes: "", noteTaches: "", ...r }));
 
 export const rubrique = id => RUBRIQUES.find(r => r.id === id);
@@ -491,13 +498,13 @@ export const remisePack = (p, chiffrees) => arrondiEuro(chiffrees.filter(t => p.
 /* Canapés et textiles : éléments du panier, prix forfaitaires TTC (la durée sert au planning, pas au prix). */
 const E = (id, nom, formuleId, prixC, minutes, o = {}) => ({ id, nom, formuleId, prixC, minutes, avecTaille: false, parM2: false, ...o });
 export const ELEMENTS_TEXTILES = [
-  E("canape_droit", "Canapé droit", "canape", 6900, 60, { avecTaille: true }), E("canape_angle", "Canapé d'angle", "canape", 10900, 105, { avecTaille: true }),
-  E("convertible", "Convertible (BZ, clic-clac)", "canape", 8900, 75, { avecTaille: true }), E("meridienne", "Méridienne / chaise longue", "canape", 8900, 75, { avecTaille: true }),
-  E("modulable", "Canapé modulable / panoramique", "canape", 13900, 120, { avecTaille: true }), E("fauteuil", "Fauteuil", "canape", 4500, 30),
-  E("matelas_bebe", "Matelas bébé", "matelas", 3900, 30), E("matelas_1", "Matelas 1 personne", "matelas", 5500, 45),
-  E("matelas_2", "Matelas 2 personnes", "matelas", 7500, 60), E("matelas_grand", "Matelas grand lit (160 cm et +)", "matelas", 8900, 75),
-  E("tapis_2", "Tapis jusqu'à 2 m", "tapis", 4500, 30), E("tapis_3", "Tapis de 2 à 3 m", "tapis", 6500, 45),
-  E("tapis_plus", "Tapis de plus de 3 m", "tapis", 8500, 60), E("moquette", "Moquette", "tapis", 600, 4, { parM2: true }),
+  E("canape_droit", "Canapé droit", "canape", 7500, 60, { avecTaille: true }), E("canape_angle", "Canapé d'angle", "canape", 11900, 105, { avecTaille: true }),
+  E("convertible", "Convertible (BZ, clic-clac)", "canape", 9800, 75, { avecTaille: true }), E("meridienne", "Méridienne / chaise longue", "canape", 9800, 75, { avecTaille: true }),
+  E("modulable", "Canapé modulable / panoramique", "canape", 15200, 120, { avecTaille: true }), E("fauteuil", "Fauteuil", "canape", 4900, 30),
+  E("matelas_bebe", "Matelas bébé", "matelas", 4300, 30), E("matelas_1", "Matelas 1 personne", "matelas", 6000, 45),
+  E("matelas_2", "Matelas 2 personnes", "matelas", 8200, 60), E("matelas_grand", "Matelas grand lit (160 cm et +)", "matelas", 9800, 75),
+  E("tapis_2", "Tapis jusqu'à 2 m", "tapis", 4900, 30), E("tapis_3", "Tapis de 2 à 3 m", "tapis", 7100, 45),
+  E("tapis_plus", "Tapis de plus de 3 m", "tapis", 9300, 60), E("moquette", "Moquette", "tapis", 700, 4, { parM2: true }),
   // Hôtels et campings : prix par logement, base 30 €/h (même taux que la location saisonnière).
   E("mh_2", "Mobil-home 1 à 2 chambres", "camping", 3500, 60), E("mh_3", "Mobil-home 3 chambres et plus", "camping", 4500, 80),
   E("chalet", "Chalet ou bungalow", "camping", 5500, 100), E("lodge", "Tente lodge ou safari", "camping", 2900, 45),
@@ -575,7 +582,9 @@ export function pastille(r) {
   switch (r.affichagePrix) {
     case "PAR_MENAGE": return `dès ${eurosRond(REGLES.MINIMUM_MENAGE_LOCATION_C)} le ménage`;
     case "MINIMUM_COMMANDE": return `dès ${eurosRond(REGLES.MINIMUM_COMMANDE_VEHICULE_C)}`;
-    case "PAR_ELEMENT": return `dès ${eurosRond(REGLES.PRIX_APPEL_TEXTILES_C)} l'élément`;
+    // 20/11/2026 : prix de l'élément le moins cher de CETTE prestation (les hôtels et campings commencent à 9 €, pas à 45 €).
+    case "PAR_ELEMENT": { const ids = (r.formules || []).map(f => f.id); const m = Math.min(...ELEMENTS_TEXTILES.filter(e => ids.includes(e.formuleId) && !e.parM2).map(e => e.prixC));
+      return `dès ${eurosRond(Number.isFinite(m) ? m : REGLES.PRIX_APPEL_TEXTILES_C)} l'élément`; }
     default: return `dès ${euros(r.tauxHoraireC)} / h`;
   }
 }
@@ -588,24 +597,52 @@ export const RACCOURCIS_VITRINE = [
 /** Contenu du forfait de chaque formule de location saisonnière (18 novembre 2026, liste de l'utilisateur pour le court séjour) :
  *  chaque formule reprend la précédente et ajoute ses tâches. Même liste dans l'appli (Catalogue.INCLUS_LOCATION). */
 export const INCLUS_LOCATION = [
-  ["court", ["Balai ou aspirateur dans toutes les pièces", "Lavage des sols", "Lits propres faits au carré", "Contrôle des toiles d'araignée",
-    "Bouches d'aération dépoussiérées", "Évacuation des cheveux (douche, baignoire, lavabo)", "Four et micro-ondes nettoyés", "Rangement complet"]],
-  ["semaine", ["Intérieur du réfrigérateur", "Vaisselle lavée et rangée", "Plinthes, interrupteurs et poignées"]],
-  ["long", ["Vitres intérieures accessibles", "Robinetterie détartrée", "Dessous des meubles et des lits"]],
-  ["grand", ["Vitres intérieures et extérieures accessibles", "Intérieur des placards", "Portes et luminaires", "Hotte et filtres",
-    "Intérieur de l'électroménager", "Matelas aspirés", "Derrière les meubles"]],
+  ["standard", ["Cuisine : plans, crédence, évier, plaque", "Four et micro-ondes, intérieur et extérieur", "Intérieur du réfrigérateur (clayettes, bacs, joints accessibles)",
+    "Lave-vaisselle vidé, vaisselle rangée", "Poubelles vidées, lavées, sacs neufs", "WC nettoyés et désinfectés", "Douche ou baignoire, parois, robinetterie, miroir",
+    "Cheveux retirés, évacuations contrôlées", "Grilles d'aération dépoussiérées", "Lits faits avec le linge fourni", "Sous les lits aspiré", "Meubles, poignées, interrupteurs, télécommandes",
+    "Vitres accessibles de l'intérieur", "Sols aspirés et lavés", "Consommables contrôlés, objets oubliés et dégradations signalés", "Photo de chaque pièce"]],
+  ["confort", ["Plinthes, portes et encadrements", "Traces sur les murs accessibles", "Dessous et pieds des meubles accessibles", "Détartrage renforcé et joints de douche",
+    "Hotte et filtres", "Joints du réfrigérateur et petits appareils", "Rails accessibles", "Canapé aspiré", "Vaisselle contrôlée (casse, manque)", "Équipements testés (TV, box, plaques)"]],
+  ["premium", ["Vitres intérieures et extérieures accessibles, encadrements, rails", "Volets accessibles", "Canapés et fauteuils selon leur revêtement", "Tapis aspirés en profondeur",
+    "Radiateurs", "Derrière les meubles déplaçables sans risque", "Four et accessoires dégraissés", "Réfrigérateur et congélateur vidés et nettoyés",
+    "Terrasse ou balcon balayés et lavés, mobilier et garde-corps", "Inspection complète des finitions"]],
 ];
+/** Critères de validation avant de terminer (lot 4 de la refonte du 20/11/2026) : ce que le Cleaneur vérifie, par niveau, cumulés. */
+export const CRITERES_VALIDATION = {
+  rental: [["standard", ["Aucun cheveu visible (bondes, oreillers, sols)", "Miroirs et robinetterie sans traces", "Poubelles vides avec sac neuf", "Lits faits sans pli",
+      "Réfrigérateur vide et sans odeur", "Consommables au seuil fixé par l'hôte, ou signalés", "Une photo par pièce, prise après"]],
+    ["confort", ["Plinthes et portes sans poussière", "Joints de douche sans dépôt", "Hotte sans film gras", "Équipements testés (TV, box, plaques)"]],
+    ["premium", ["Vitres sans traces à contre-jour", "Rails de fenêtres propres", "Terrasse balayée et lavée, photo comprise"]]],
+  moving: [["", ["Intérieur du four, du réfrigérateur et des placards photographié", "Joints et robinetterie détartrés", "Aucune trace d'adhésif", "Photos sur les mêmes vues qu'un état des lieux"]]],
+  car: [["", ["Lavage sans eau uniquement (domicile ou voie publique)", "Photos des 4 côtés avant intervention"]]],
+  textiles: [["", ["Test de tenue des couleurs sur une zone cachée", "Temps de séchage annoncé au client"]]],
+  kitchen: [["", ["Fiche de traçabilité HACCP remplie (établissements)"]]],
+  windows: [["", ["Pas d'échelle au-delà de 6 m ni sans accès sécurisé : refus et passage sur devis"]]],
+  special: [["", ["Numéro de Certibiocide saisi", "Équipements de protection photographiés", "Protocole écrit laissé au client"]]],
+};
+/** Critères applicables à une mission : communs + ceux du niveau choisi et des niveaux inférieurs. */
+export const criteresDe = (rubriqueId, formuleId = "") => {
+  const liste = CRITERES_VALIDATION[rubriqueId] || [];
+  const niveau = ANCIENNES_FORMULES_LOCATION[formuleId]?.[0] || formuleId || "standard";
+  const i = liste.findIndex(([id]) => id === niveau);
+  return liste.filter(([id], j) => !id || j <= Math.max(0, i)).flatMap(([, c]) => c);
+};
+/** Anciennes formules (avant le 20/11/2026) → niveau et durée de séjour (brouillons enregistrés). */
+export const ANCIENNES_FORMULES_LOCATION = { court: ["standard", "court"], semaine: ["standard", "semaine"], long: ["standard", "long"], grand: ["premium", "court"] };
+/** Durée du séjour qui précède le ménage : ajoute du temps au Standard. */
+export const SEJOURS_LOCATION = [["court", "1 à 4 nuits"], ["semaine", "5 à 9 nuits (+20 %)"], ["long", "10 nuits et plus (+35 %)"]];
 /** Toutes les tâches du forfait d'une formule (celles des formules précédentes comprises), pour la liste du Cleaneur. */
 export const inclusCumuleLocation = formuleId => {
-  const i = INCLUS_LOCATION.findIndex(([id]) => id === formuleId);
+  const i = INCLUS_LOCATION.findIndex(([id]) => id === (ANCIENNES_FORMULES_LOCATION[formuleId]?.[0] || formuleId));
   return INCLUS_LOCATION.slice(0, i < 0 ? 1 : i + 1).flatMap(([, t]) => t);
 };
 /** Pièce où se fait une tâche du forfait (chambre, salle de bain, cuisine ; sinon le séjour, « toutes pièces »). */
-export const pieceDuForfait = t => /lit|matelas/i.test(t) ? "chambre" : /cheveux|robinetterie/i.test(t) ? "sdb"
-  : /four|micro|réfrigérateur|vaisselle|hotte|électroménager|placards/i.test(t) ? "cuisine" : "sejour";
+export const pieceDuForfait = t => /\blits?\b|matelas/i.test(t) ? "chambre" : /cheveux|robinetterie|WC|douche|baignoire|détartrage/i.test(t) ? "sdb"
+  : /four|micro|réfrigérateur|vaisselle|hotte|électroménager|placards|cuisine|petits appareils|congélateur|poubelles/i.test(t) ? "cuisine"
+  : /terrasse|balcon|volets/i.test(t) ? "exterieur" : "sejour";
 /** Forfait d'une formule de location : { precedente: nom de la formule précédente ou "", taches: celles qu'elle ajoute }. */
 export const inclusLocation = formuleId => {
-  const i = INCLUS_LOCATION.findIndex(([id]) => id === formuleId);
+  const i = INCLUS_LOCATION.findIndex(([id]) => id === (ANCIENNES_FORMULES_LOCATION[formuleId]?.[0] || formuleId));
   return i < 0 ? null : { precedente: i ? INCLUS_LOCATION[i - 1][0] : "", taches: INCLUS_LOCATION[i][1] };
 };
 

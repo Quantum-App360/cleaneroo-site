@@ -208,6 +208,9 @@ ecrire("calculateur/index.html", gabarit("/calculateur/", "Combien coûte votre 
 
 # ------------------------------------------------------------------ Comparatifs (faits vérifiables uniquement : cases concurrent à remplir après contrôle)
 for c in CONCURRENTS:
+    # 20/11/2026 (audit) : une page comparative n'est publiée que si les faits du concurrent sont vérifiés et sourcés.
+    if not c["verifie"]:
+        continue
     date = e(c["date"]) or A_VERIFIER
     source = f'<a href="{e(c["source"])}" rel="nofollow noopener" target="_blank">{e(c["source"])}</a>' if c["source"] else A_VERIFIER
     lignes = "".join(

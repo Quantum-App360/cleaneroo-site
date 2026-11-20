@@ -23,13 +23,20 @@ export const REGLES = {
   VEHICULES_MIN: 1,
   VEHICULES_MAX: 20,
   DUREE_MIN_VEHICULE_MIN: 30,
-  MINIMUM_MENAGE_LOCATION_C: 2900,
+  MINIMUM_MENAGE_LOCATION_C: 3750,     // refonte du 20/11/2026 : plus petit ménage réel (studio Standard, 1 h 15)
   DUREE_MIN_TEXTILES_MIN: 60,
-  PRIX_APPEL_TEXTILES_C: 4500,
-  ROTATION_BASE_MIN: 20,
-  ROTATION_PAR_CHAMBRE_MIN: 20,
-  ROTATION_PAR_SDB_MIN: 20,
+  PRIX_APPEL_TEXTILES_C: 4300,         // matelas bébé, élément le moins cher après la hausse de 10 % (20/11/2026)
+  // Location courte durée (refonte du 20/11/2026) : Standard = 45 min + 30 min par pièce (chambres + séjour), + 20 min par salle de bain
+  // au-delà de la première, + 0,35 min par m² au-delà de 25 m² par pièce. Studio 1 h 15, T2 1 h 45, T3 2 h 15, T4 2 h 45, T5 3 h 15.
+  ROTATION_BASE_MIN: 45,
+  ROTATION_PAR_PIECE_MIN: 30,
+  ROTATION_PAR_SDB_SUPP_MIN: 20,
+  ROTATION_M2_PAR_PIECE: 25,
   ROTATION_PAR_M2_MIN: 0.35,
+  // Durée du séjour qui précède : temps ajouté au Standard (5 à 9 nuits +20 %, 10 nuits et plus +35 %).
+  SEJOUR_PCT: { court: 0, semaine: 20, long: 35 },
+  // Taux horaire de chaque niveau de location (le dernier est le plancher) : modifiables dans l'écran Tarifs.
+  TAUX_LOCATION_C: { standard: 3000, confort: 2850, premium: 2700 },
   PASSAGES_MIN: 2,
   PASSAGES_MAX: 12,
   PASSAGES_DEFAUT: 4,
@@ -38,7 +45,7 @@ export const REGLES = {
   OPTION_GENERIQUE_C: 1200,
   OPTION_GENERIQUE_MIN: 15,
   LINGE_PAR_PARURE_C: 400,
-  CONSOMMABLES_MIN: 10,
+  CONSOMMABLES_MIN: 0,              // 20/11/2026 : contrôle des consommables compris dans le temps Standard de la location
   CHANTIER_MIN_PAR_FENETRE: 15,
   CONVIVES_PAR_TRANCHE: 50,
   PALIERS_MAX: 40,
@@ -57,13 +64,19 @@ export const REGLES = {
   // Affichés à part dès le devis, hors crédit d'impôt.
   FRAIS_SERVICE_PARTICULIER_PCT: 5, FRAIS_SERVICE_PRO_PCT: 8,
   // Abonnement des conciergeries par tranche de logements (prix HT par mois) ; au-delà de 100 logements : sur devis ; 1er mois offert.
+  // Refonte du 20/11/2026 : grille continue (le prix ne baisse jamais quand on ajoute un logement), grands comptes au-delà de 100 logements.
+  // Prix = forfait de la tranche + parLogementC × (logements − debut). Plafond : jamais plus que les frais de service (8 %) du mois.
   ABONNEMENTS_PRO: [
     { id: "t1", max: 5, prixC: 2900, inclus: ["0 % de frais de service"] },
     { id: "t2", max: 15, prixC: 6900, inclus: ["0 % de frais de service", "Vue par logement", "Cleaneur attitré"] },
     { id: "t3", max: 40, prixC: 14900, inclus: ["0 % de frais de service", "Vue par logement", "Cleaneur attitré", "Facturation mensuelle groupée"] },
-    { id: "t4", max: 100, parLogementC: 300, inclus: ["0 % de frais de service", "Vue par logement", "Cleaneur attitré", "Facturation mensuelle groupée"] },
+    { id: "t4", max: 100, prixC: 14900, debut: 40, parLogementC: 250, inclus: ["0 % de frais de service", "Vue par logement", "Cleaneur attitré", "Facturation mensuelle groupée", "Import de tous vos logements"] },
+    { id: "t5", max: 300, prixC: 29900, debut: 100, parLogementC: 150, grandCompte: true, inclus: ["0 % de frais de service", "Vue par logement", "Cleaneur attitré", "Facturation mensuelle groupée", "Import de tous vos logements", "Connexion à votre logiciel de gestion", "Interlocuteur dédié", "Plusieurs utilisateurs", "Garantie rotation"] },
+    { id: "t6", max: 100000, prixC: 59900, debut: 300, parLogementC: 100, grandCompte: true, inclus: ["0 % de frais de service", "Vue par logement", "Cleaneur attitré", "Facturation mensuelle groupée", "Import de tous vos logements", "Connexion à votre logiciel de gestion", "Interlocuteur dédié", "Plusieurs utilisateurs", "Garantie rotation"] },
   ],
-  ABONNEMENT_PRO_SUR_DEVIS_LOGEMENTS: 100, ABONNEMENT_PRO_MOIS_OFFERTS: 1,
+  ABONNEMENT_PRO_SUR_DEVIS_LOGEMENTS: 100000, ABONNEMENT_PRO_MOIS_OFFERTS: 1,
+  ABONNEMENT_ANNUEL_MOIS_OFFERTS: 2,      // engagement annuel : 2 mois offerts
+  ESSAI_GRAND_COMPTE_JOURS: 30, ESSAI_GRAND_COMPTE_LOGEMENTS: 20,   // essai gratuit sur 20 logements avant de tout transférer
   OFFRE_LANCEMENT_MOIS: 3,
   OFFRE_LANCEMENT_FIN_INSCRIPTION: "2027-01-31",
   // Parrainage et cagnottes (7 novembre 2026, copie dans outils/base-parrainage.sql)
@@ -85,12 +98,14 @@ export const REGLES = {
   AGENDA_HORIZON_JOURS: 14,      // départs proposés « à programmer »
   AGENDA_CACHE_MIN: 15,          // calendrier relu au plus toutes les 15 min
   SEUIL_ESPACE_PRO_BIENS: 3,     // à partir de 3 biens, le compte s'ouvre sur l'espace Pro
-  BIENS_MAX: 200,
+  BIENS_MAX: 1000,   // 20/11/2026 : grandes conciergeries (import en masse)
   // Option « Lavage des draps » (location saisonnière) : prix fixe par lit, le même dans toutes les zones.
   LAVAGE_DRAPS_PAR_LIT_C: 1200,   // ancien prix unique = lit 2 places sur place (brouillons enregistrés avant le 18/11/2026)
   // Lavage des draps (18 novembre 2026, décision de l'utilisateur, prix du marché : laverie 3-5 € le lavage 8 kg + 1,20-2,50 € le séchage,
   // conciergeries ~10 € par lit 2 places) : machine ET sèche-linge dans le logement → forfait unique ; sinon laverie obligatoire, prix par lit.
-  DRAPS_SUR_PLACE_FORFAIT_C: 500,
+  DRAPS_SUR_PLACE_FORFAIT_C: 500,    // ancien forfait (brouillons avant le 20/11/2026)
+  DRAPS_SUR_PLACE_PAR_LIT_C: 500,    // refonte du 20/11/2026 : 5 € par lit (10 min de travail par lit)
+  LAVERIE_TRAJET_C: 1200,            // refonte du 20/11/2026 : aller-retour à la laverie, une fois par ménage
   DRAPS_LAVERIE_C: { un: 800, deux: 1000, king: 1200 },
   // Linge de toilette et de cuisine (serviettes, tapis de bain et de WC, torchons) : une machine de plus sur place ; en laverie, par salle de bain + torchons.
   LINGE_SUR_PLACE_FORFAIT_C: 300,
@@ -103,10 +118,16 @@ export const REGLES = {
   RISQUE_SANS_MENAGE_URGENT_H: 48, RISQUE_SANS_CLEANEUR_URGENT_H: 24, RISQUE_SANS_CLEANEUR_SURVEILLER_H: 72, RISQUE_RETARD_DEPART_MIN: 30,         // aller et retour à la laverie, une fois par ménage
   // Options en plus (7 novembre 2026, décision de l'utilisateur) : petits forfaits selon la taille de l'option, plus de prix au temps.
   // Petite (≤ 5 min) 2 €, moyenne (≤ 15 min) 4 €, grande 6 € ; le temps reste compté pour le planning du Cleaneur.
-  OPTION_PETITE_C: 200, OPTION_MOYENNE_C: 400, OPTION_GRANDE_C: 600,
+  OPTION_PETITE_C: 200, OPTION_MOYENNE_C: 400, OPTION_GRANDE_C: 600,   // anciens forfaits (brouillons avant le 20/11/2026)
+  // Refonte du 20/11/2026 : une étape en plus est payée au temps réel, 30 €/h arrondi à l'euro, 3 € au moins (5 min 3 €, 10 min 5 €, 15 min 8 €, 20 min 10 €).
+  OPTION_TAUX_HORAIRE_C: 3000, OPTION_MIN_C: 300,
   // Formules (7 novembre 2026, décision de l'utilisateur) : les tâches de Confort coûtent au plus 40 % du prix Standard,
   // celles de Premium au plus 90 % ; le prix des formules suit ainsi la taille du lieu (62 m² : ≈ 67 €, 94 €, 128 €).
   FORMULE_CONFORT_PLUS_PCT: 40, FORMULE_PREMIUM_PLUS_PCT: 90,
+  // Plancher horaire (refonte du 20/11/2026, audit) : une formule ne descend jamais sous temps planifié × plancher, pour que le Cleaneur
+  // garde au moins ~15,80 € net de l'heure. Le plancher l'emporte sur les plafonds ci-dessus.
+  PLANCHER_HORAIRE_C: { home: 2690, rental: 2700, moving: 3000, car: 3800, textiles: 3000, kitchen: 3400, office: 2800, commerce: 2800,
+    communal: 2660, windows: 2850, outdoor: 3000, event: 3000, leisure: 3400, boat: 3400, hospitality: 2800, construction: 3600 },
   OPTION_PETITE_MAX_MIN: 5, OPTION_MOYENNE_MAX_MIN: 15,
   // Option « Suivi par SMS » : 0,49 € par prestation, SMS au nom de Cleaneroo dans la langue de la réservation ; hors crédit d'impôt.
   OPTION_SMS_C: 49,
@@ -320,8 +341,10 @@ export const seuilRentabiliteProC = () => Math.ceil(REGLES.ABONNEMENT_CLEANEUR_C
 export const fraisServicePct = (particulier, abonne = false) => (particulier ? REGLES.FRAIS_SERVICE_PARTICULIER_PCT : abonne ? 0 : REGLES.FRAIS_SERVICE_PRO_PCT);
 /** Tranche d'abonnement conseillée pour un nombre de logements (null au-delà de 100 : sur devis). */
 export const tranchePour = n => REGLES.ABONNEMENTS_PRO.find(t => Math.max(1, n) <= t.max) || null;
-/** Prix mensuel HT d'une tranche pour n logements (centimes) : forfait, ou 3 € par logement au-delà de 40. */
-export const prixAbonnementProC = (t, n) => (t.parLogementC ? t.parLogementC * Math.max(41, n) : t.prixC);
+/** Prix mensuel HT d'une tranche pour n logements (centimes) : forfait de la tranche + prix par logement au-delà de son début. */
+export const prixAbonnementProC = (t, n) => t.prixC + (t.parLogementC ? t.parLogementC * Math.max(0, n - (t.debut || 0)) : 0);
+/** Abonnement réellement facturé pour un mois : jamais plus que les frais de service (8 %) qu'aurait coûté ce volume de ménages. */
+export const abonnementFactureC = (t, n, volumeMoisC) => Math.min(prixAbonnementProC(t, n), Math.round((volumeMoisC || 0) * REGLES.FRAIS_SERVICE_PRO_PCT / 100));
 /** Volume de ménages mensuel (centimes) à partir duquel l'abonnement coûte moins que les 8 % de frais (arrondi à l'euro supérieur). */
 export const seuilAbonnementProC = (t, n) => Math.ceil(prixAbonnementProC(t, n) * 100 / REGLES.FRAIS_SERVICE_PRO_PCT / 100) * 100;
 
@@ -345,8 +368,12 @@ export const indemniteAccesC = prixC => Math.min(REGLES.INDEMNITE_MAX_C, Math.ma
  * Même liste en base (modules_exiges_loi) et dans l'appli (Regles.MODULES_EXIGES_PAR_LA_LOI).
  */
 export const MODULES_EXIGES_PAR_LA_LOI = ["nuisibles"];
-export const formationsExigees = (rubriqueId, typeLieuId = "", taches = []) => qualificationsRequises(rubriqueId, typeLieuId, taches).filter(m => MODULES_EXIGES_PAR_LA_LOI.includes(m));
-export const formationsConseillees = (rubriqueId, typeLieuId = "", taches = []) => qualificationsRequises(rubriqueId, typeLieuId, taches).filter(m => !MODULES_EXIGES_PAR_LA_LOI.includes(m));
+/** Interventions spécialisées hors nuisibles (désinfection, après décès, sinistre, insalubrité) : produits biocides professionnels,
+ *  Certibiocide « désinfectants » obligatoire depuis le 1er janvier 2026 (20/11/2026, audit). Même règle en base (formations_exigees). */
+export const SPECIAUX_NUISIBLES = ["cafards", "punaises", "rats", "guepes"];
+export const formationsExigees = (rubriqueId, typeLieuId = "", taches = []) => [...new Set([...qualificationsRequises(rubriqueId, typeLieuId, taches).filter(m => MODULES_EXIGES_PAR_LA_LOI.includes(m)),
+  ...(rubriqueId === "special" && !SPECIAUX_NUISIBLES.includes(typeLieuId || "") ? ["biocides"] : [])])];
+export const formationsConseillees = (rubriqueId, typeLieuId = "", taches = []) => qualificationsRequises(rubriqueId, typeLieuId, taches).filter(m => !formationsExigees(rubriqueId, typeLieuId, taches).includes(m));
 
 export function qualificationsRequises(rubriqueId, typeLieuId = "", taches = []) {
   const t = typeLieuId || "";

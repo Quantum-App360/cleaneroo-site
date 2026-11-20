@@ -52,9 +52,12 @@ export async function blocPaiement(el, reference, jeton) {
     e.target.disabled = true;
     const r = await appeler({ action: "creer", reference, jeton });
     if (r.url) { location.href = r.url; return; }
+    if (r.erreur === "prix_corrige") { setTimeout(() => location.reload(), 4000); }
     e.target.disabled = false;
     el.querySelector("#erreur-paiement").textContent = tr(r.erreur === "non_configure" ? "Le paiement en ligne n'est pas encore activé."
       : r.erreur === "sur_devis" ? "Le prix de cette demande est sur devis : le paiement sera proposé avec le devis."
+      : r.erreur === "prix_corrige" ? "Le prix a été mis à jour selon nos tarifs en vigueur. Vérifiez le nouveau montant ci-dessus, puis garantissez votre réservation."
+      : r.erreur === "prix_a_verifier" ? "Le prix de cette demande doit être vérifié par notre équipe : nous revenons vers vous rapidement."
       : "Le service est momentanément indisponible. Réessayez dans quelques minutes.");
   };
 }

@@ -226,6 +226,7 @@ export function ongletPro(p, biens, hotellerie = false) {
       <a class="carte raccourci" href="#/reserver/${rubriqueMenage}">${icone("location", { tuile: true })}<b>Programmer un ménage</b><span class="petit">Entre deux voyageurs</span></a>
       <a class="carte raccourci" href="#agenda-pro">${icone("calendrier", { tuile: true })}<b>Ajouter un séjour</b><span class="petit">Sans calendrier relié</span></a>
       <a class="carte raccourci" href="#liste-biens">${icone("logement", { tuile: true })}<b>Mes biens</b><span class="petit">Calendriers, accès, étapes photo</span></a>
+      <a class="carte raccourci" href="#/importer-biens">${icone("logement", { tuile: true })}<b>Importer mes logements</b><span class="petit">Tableau Excel ou logiciel de gestion</span></a>
       <a class="carte raccourci" href="#liste-invitations">${icone("cleaneurs", { tuile: true })}<b>Mes Cleaneurs</b><span class="petit">Inviter vos habitués</span></a>
     </div>
     <h2 class="titre-section">${icone("sur-place", { tuile: true })}Aujourd'hui et demain</h2>
@@ -260,9 +261,9 @@ export function ongletPro(p, biens, hotellerie = false) {
             <p class="erreur" data-erreur-cal></p><button class="bouton plein" type="submit">Enregistrer</button></form></details>
         ${cals.length ? blocPilote(l) : ""}
         ${editeurGuide(l)}${editeurEtapesPhoto(l)}${editeurTemoins(l)}${editeurStock(l)}${editeurIncidents(l)}</div>`;
-    }).join("") : `<div class="vide-compte"><p class="muet">Aucun bien enregistré pour l'instant.</p><p class="petit">Ajoutez vos biens dans « Mes prestations » ou lors d'une réservation.</p></div>`}</div>
+    }).join("") : `<div class="vide-compte"><p class="muet">Aucun bien enregistré pour l'instant.</p><p class="petit">Ajoutez vos biens dans « Mes prestations », lors d'une réservation, ou <a href="#/importer-biens">importez-les tous en une fois</a>.</p></div>`}</div>
     <p class="petit" id="aucun-bien" hidden>Aucun bien ne correspond à votre recherche.</p>
-    <div class="boutons"><a class="bouton secondaire" href="#/mes-demandes">＋ Ajouter un bien</a><a class="bouton secondaire" href="#/reserver/${rubriqueMenage}">${hotellerie ? "Réserver une rotation" : "Réserver un ménage de location"}</a></div>
+    <div class="boutons"><a class="bouton secondaire" href="#/mes-demandes">＋ Ajouter un bien</a><a class="bouton secondaire" href="#/importer-biens">⇪ Importer mes logements</a><a class="bouton secondaire" href="#/reserver/${rubriqueMenage}">${hotellerie ? "Réserver une rotation" : "Réserver un ménage de location"}</a></div>
     <h2 class="titre-section" id="titre-menages">${icone("termine", { tuile: true })}Tous les ménages</h2>
     <div id="pro-menages">${chargeur("Chargement…", { petit: true })}</div>
     <h2 class="titre-section" id="titre-rapports">${icone("avis", { tuile: true })}Rapports mensuels</h2>

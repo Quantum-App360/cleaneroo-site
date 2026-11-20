@@ -29,8 +29,8 @@ function reserverAvec(rubriqueId, champs) {
 /* ------------------------------------------------------------------ Exemples de prix (pages ville) */
 const EXEMPLES = [
   ["home", { formuleId: "ponctuel" }, "Logement T2 · 62 m² · ménage ponctuel"],
-  ["rental", { formuleId: "court", surface: 25, chambres: 0 }, "Location saisonnière · studio 25 m²"],
-  ["rental", { formuleId: "court" }, "Location saisonnière · T2 62 m²"],
+  ["rental", { formuleId: "standard", surface: 25, chambres: 0 }, "Location saisonnière · studio 25 m²"],
+  ["rental", { formuleId: "standard" }, "Location saisonnière · T3 62 m²"],
   ["windows", { formuleId: "ponctuel", typeLieuId: "fenetres_logement", fenetres: 8 }, "Vitres · 8 fenêtres"],
   ["textiles", { formuleId: "canape", panier: [{ elementId: "canape_droit", tailleId: "t20", quantite: 1 }] }, "Canapé droit · 1,5 à 2 m"],
 ];

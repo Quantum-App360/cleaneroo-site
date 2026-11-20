@@ -387,6 +387,26 @@ export async function enregistrerBien(bien) {
   const s = await session();
   if (s) await supabase.from("biens").upsert({ id: bien.id, client_id: s.user.id, donnees: sansCode(bien), maj_le: new Date().toISOString() });
 }
+/** Import en masse (20/11/2026) : écrit tous les biens d'un coup sur l'appareil, puis dans le compte par paquets de 100. */
+export async function enregistrerBiens(biens) {
+  const ids = new Set(biens.map(b => b.id));
+  ecrireBiensLocaux([...biens, ...lireBiensLocaux().filter(l => !ids.has(l.id))]);
+  const s = await session();
+  if (!s) return { horsLigne: true };
+  const maintenant = new Date().toISOString();
+  for (let i = 0; i < biens.length; i += 100) {
+    const { error } = await supabase.from("biens").upsert(biens.slice(i, i + 100).map(b => ({ id: b.id, client_id: s.user.id, donnees: sansCode(b), maj_le: maintenant })));
+    if (error) throw new Error(error.message);
+  }
+  return { ok: biens.length };
+}
+/** Demande de connexion directe à un logiciel de gestion (connecteurs activés avec la conciergerie, après le lancement). */
+export async function demanderConnexionLogiciel({ logiciel, logements, telephone, message }) {
+  const s = await session();
+  if (!s) throw new Error("connexion");
+  const { error } = await supabase.from("demandes_connexion").insert({ client_id: s.user.id, logiciel: String(logiciel).slice(0, 80), logements, telephone: telephone.slice(0, 20), message: message.slice(0, 500) });
+  if (error) throw new Error(error.message);
+}
 export async function supprimerBien(id) {
   ecrireBiensLocaux(lireBiensLocaux().filter(l => l.id !== id));
   const s = await session();

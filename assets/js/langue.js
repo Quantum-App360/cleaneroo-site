@@ -3834,8 +3834,11 @@ export function selecteurLangue() {
     <div class="menu-langues" role="group" aria-label="Langue / Language">${Object.entries(LANGUES).map(([code, l]) =>
     `<button type="button" class="${code === langue ? "choisi" : ""}" data-langue="${code}" aria-pressed="${code === langue}"><span class="drapeau">${l.drapeau}</span>${l.nom}</button>`).join("")}</div></details>`;
 }
-document.addEventListener("click", e => {
-  const b = e.target.closest("[data-langue]");
-  if (b && b.dataset.langue !== langue) choisirLangue(b.dataset.langue);
-});
-document.documentElement.lang = langue;
+// Garde : ce fichier est aussi chargé par le serveur (fonction « paiement »), où il n'y a pas de page.
+if (typeof document !== "undefined") {
+  document.addEventListener("click", e => {
+    const b = e.target.closest("[data-langue]");
+    if (b && b.dataset.langue !== langue) choisirLangue(b.dataset.langue);
+  });
+  document.documentElement.lang = langue;
+}
