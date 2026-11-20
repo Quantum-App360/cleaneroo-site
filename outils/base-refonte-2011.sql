@@ -127,3 +127,8 @@ create trigger qualite_litige after insert or update of statut on public.litiges
 create or replace function public.qualite_cleaneur(p_cleaneur uuid) returns numeric language sql stable security definer set search_path to '' as $$
   select case when public.est_admin() or p_cleaneur = auth.uid() then (select round(avg(note), 1) from (select note from public.qualite_missions where cleaneur_id = p_cleaneur order by calcule_le desc limit 10) s) end;
 $$;
+
+-- Appliqué le 20/11/2026 après le contrôle de sécurité : fonctions de déclenchement non appelables, score qualité réservé aux comptes connectés.
+revoke execute on function public.qualite_apres_avis(), public.qualite_apres_litige(), public.qualite_apres_mission() from public, anon, authenticated;
+revoke execute on function public.qualite_cleaneur(uuid) from public, anon;
+grant execute on function public.qualite_cleaneur(uuid) to authenticated;
