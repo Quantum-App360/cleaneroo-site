@@ -2483,7 +2483,6 @@ body:has(.barre-actions) .pastille-mode { bottom: 104px; }
 .bascule-mini.actif .interrupteur { background: linear-gradient(90deg, #0DC88D, #1AD934); }
 .bascule-mini.actif .interrupteur i { transform: translateX(12px); }
 body.mode-cleaneur .bascule-mini { background: rgba(255,255,255,.08); color: #fff; border-color: rgba(255,255,255,.2); }
-@media (min-width: 1281px) { .bascule-mini { display: none; } }
 @media (max-width: 420px) { .bascule-mini small { display: none; } .bascule-mini { padding: 0 5px; } }
 @media print { .bascule-mini { display: none; } }
 /* « Refaire » en un geste sur l'accueil du compte (20 novembre 2026). */
