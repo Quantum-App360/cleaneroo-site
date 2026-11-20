@@ -4,11 +4,10 @@
 // (carte, Apple Pay, Google Pay, Link) ; il est ENCAISSÉ après la validation du client ; la réservation est LEVÉE si la demande est annulée.
 // Actions : creer (→ adresse de la page de paiement), verifier (retour de Stripe), encaisser, annuler.
 import { createClient } from "jsr:@supabase/supabase-js@2";
-// Prix vérifié par le serveur (refonte du 20 novembre 2026) : les MÊMES fichiers que le site, lus sur cleaneroo.fr au déploiement
-// (une seule source de règles), avec les tarifs publiés depuis l'espace de gestion. Après chaque changement des règles
-// dans assets/js, mettre le site en ligne PUIS redéployer cette fonction (le code est figé au déploiement).
-import { calculer, entreeEstimation } from "https://cleaneroo.fr/assets/js/estimation.js";
-import { appliquerTarifs } from "https://cleaneroo.fr/assets/js/tarifs.js";
+// Prix vérifié par le serveur (refonte du 20 novembre 2026) : les MÊMES fichiers que le site (assets/js/prix-serveur.js,
+// figés sur un commit du dépôt), avec les tarifs publiés depuis l'espace de gestion. Après chaque changement des règles
+// dans assets/js : pousser le site, remplacer le numéro de commit ci-dessous, puis redéployer cette fonction.
+import { calculer, entreeEstimation, appliquerTarifs } from "https://esm.sh/gh/Quantum-App360/cleaneroo-site@d49a0f9/assets/js/prix-serveur.js?target=deno";
 
 /** Date affichée à Paris (le serveur tourne en UTC) : dimanche et créneau malin se jugent à l'heure de Paris. */
 function heureDeParis(iso: string | null) {
