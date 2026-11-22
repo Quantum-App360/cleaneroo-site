@@ -128,12 +128,16 @@ export async function facturePdf(f) {
   pg.trait(); pg.espace(4);
   const col = [50, 330, 390, 465, 545];
   const ligneTab = (cells, gras = false) => { pg.place(16); const y = pg.y;
-    pg.p.drawText(propre(cells[0]).slice(0, 52), { x: col[0], y, size: 9.5, font: gras ? pg.f.gras : pg.f.normal, color: lib.rgb(0.09, 0.2, 0.23) });
+    // Désignation sur plusieurs lignes si besoin (jamais coupée), les montants restent sur la première.
+    const police = gras ? pg.f.gras : pg.f.normal, morceaux = [""];
+    for (const mot of propre(cells[0]).split(" ")) { const essai = morceaux.at(-1) ? `${morceaux.at(-1)} ${mot}` : mot;
+      if (police.widthOfTextAtSize(essai, 9.5) > 265 && morceaux.at(-1)) morceaux.push(mot); else morceaux[morceaux.length - 1] = essai; }
+    morceaux.forEach((m, k) => pg.p.drawText(m, { x: col[0], y: y - k * 12, size: 9.5, font: police, color: lib.rgb(0.09, 0.2, 0.23) }));
     pg.droite(cells[1], col[2] - 10, y, { taille: 9.5, gras }); pg.droite(cells[2], col[3] - 10, y, { taille: 9.5, gras }); pg.droite(cells[3], col[3] + 25, y, { taille: 9.5, gras }); pg.droite(cells[4], col[4], y, { taille: 9.5, gras });
-    pg.y -= 16; };
-  ligneTab(["Désignation", "Qté", "PU HT", "TVA", "Total HT"], true); pg.trait();
+    pg.y -= 16 + (morceaux.length - 1) * 12; };
+  ligneTab(["Désignation", "Qté", "PU HT", "TVA", "Total HT"], true); pg.trait(pg.y + 11);
   (f.lignes || []).forEach(l => ligneTab([l.libelle, String(l.quantite || 1), eur(l.prix_ht_c), `${l.tva_pct || 0} %`, eur(l.prix_ht_c * (l.quantite || 1))]));
-  pg.trait(); pg.espace(6);
+  pg.trait(pg.y + 11); pg.espace(6);
   [["Total HT", f.total_ht_c], ["TVA", f.tva_c], ["Total TTC", f.total_ttc_c]].forEach(([t, v], i) => { pg.place(16); pg.droite(t, 450, pg.y, { gras: i === 2, taille: i === 2 ? 12 : 10 }); pg.droite(eur(v), 545, pg.y, { gras: i === 2, taille: i === 2 ? 12 : 10 }); pg.y -= i === 2 ? 20 : 15; });
   pg.texte("Facture acquittée : réglée en ligne par l'intermédiaire de Cleaneroo. Net à payer : 0,00 €.", { taille: 9, gras: true });
   if (e.mention_tva) pg.texte(e.mention_tva, { taille: 8.5 });
@@ -193,7 +197,7 @@ export async function attestationPdf(a, { annee, mois = null, periode, nomPresta
   const jj = d => { const p = String(d || "").slice(0, 10).split("-"); return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : ""; };
   const duree = m => (m ? `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, "0")}` : "-");
   for (const liste of groupes.values()) {
-    const l0 = liste[0]; pg.espace(6); pg.trait(); pg.espace(4);
+    const l0 = liste[0]; pg.espace(6); pg.trait(); pg.espace(12);
     pg.texte(`Prestataire : ${l0.cleaneur}`, { gras: true });
     if (l0.adresse) pg.texte(l0.adresse, { taille: 9 });
     if (l0.siret) pg.texte(`SIRET ${l0.siret}`, { taille: 9 });
@@ -209,7 +213,7 @@ export async function attestationPdf(a, { annee, mois = null, periode, nomPresta
     pg.texte(`Total payé à ce prestataire : ${eur(liste.reduce((s, l) => s + (l.montant_c || 0), 0))}`, { taille: 9 });
   }
   if (!lignes.length) pg.texte("Aucune prestation ouvrant droit sur cette période.");
-  pg.espace(8); pg.trait(); pg.espace(4);
+  pg.espace(8); pg.trait(); pg.espace(14);
   pg.texte(`Total ouvrant droit au crédit d'impôt : ${eur(a?.total_eligible_c || 0)}`, { gras: true, taille: 12 });
   if (!mois) {
     const credit = Math.round(Math.min(a?.total_eligible_c || 0, plafondC) * pct / 100);
