@@ -6,6 +6,9 @@
 // suivants d'un entretien régulier (prélevés 3 jours avant) et pour un complément (supplément accepté sur place, pourboire).
 // Actions du client (lien de suivi ou compte) : creer (→ adresse de la page de paiement), verifier (retour de Stripe).
 // Actions du serveur (en-tête x-cle-alertes, base-paiement-reservation.sql) : rembourser, liberer, synchroniser.
+// Versements (Stripe Connect, base-pilote-connect.sql) : à la validation, la part du Cleaneur (prestation − commission + pourboire
+// + prime d'urgence) est transférée sur son compte de versement ; virement sur son IBAN chaque vendredi.
+// Actions du Cleaneur connecté : connect (→ formulaire Stripe : identité, IBAN), connect_etat (versements activés ?).
 // Ancien fonctionnement (empreinte) gardé pour les demandes déjà garanties : encaisser, annuler, statuts AUTORISE / ENCAISSE / ANNULE.
 import { createClient } from "jsr:@supabase/supabase-js@2";
 // Prix vérifié par le serveur (refonte du 20 novembre 2026) : les MÊMES fichiers que le site (assets/js/prix-serveur.js,
@@ -167,9 +170,51 @@ async function preleverPassage(admin: Admin, d: Demande) {
   }
 }
 
+/** Versement au Cleaneur (ou à sa société) d'une prestation validée : prestation − commission + pourboire + prime d'urgence,
+ *  d'après les factures émises à la validation. Sans compte de versement actif : en attente, réessayé dès qu'il est activé. */
+async function verser(admin: Admin, d: Demande) {
+  if (d.versement_statut === "VERSE" || !["LIBERE", "ENCAISSE"].includes(d.paiement_statut)) return d.versement_statut;
+  const payeur = d.societe_id ?? d.cleaneur_id;
+  if (!payeur) return d.versement_statut;
+  const { data: p } = await admin.from("profils").select("stripe_compte, stripe_compte_actif").eq("id", payeur).maybeSingle();
+  const { data: factures } = await admin.from("factures").select("type, total_ttc_c").eq("reference", d.reference);
+  const { data: avis } = await admin.from("avis").select("pourboire_c").eq("reference", d.reference).maybeSingle();
+  const presta = (factures || []).find((f: any) => f.type === "prestation")?.total_ttc_c ?? d.estimation_c ?? 0;
+  const commission = (factures || []).find((f: any) => f.type === "commission")?.total_ttc_c ?? 0;
+  const montant = presta - commission + (avis?.pourboire_c ?? 0) + (d.prime_urgence_c ?? 0);
+  if (montant <= 0) { await admin.from("demandes").update({ versement_statut: "RIEN", versement_c: 0 }).eq("id", d.id); return "RIEN"; }
+  if (!p?.stripe_compte || !p.stripe_compte_actif) {
+    if (d.versement_statut !== "COMPTE_A_ACTIVER") {
+      await admin.from("demandes").update({ versement_statut: "COMPTE_A_ACTIVER", versement_c: montant }).eq("id", d.id);
+      try { await admin.rpc("notifier", { p_dest: payeur, p_espace: "cleaneur", p_type: "paiement", p_niveau: "important", p_titre: "Activez vos versements",
+        p_texte: `${euros(montant)} vous attendent. Renseignez votre IBAN dans « Mon activité » pour les recevoir.`, p_reference: d.reference }); } catch { /* sans gravité */ }
+    }
+    return "COMPTE_A_ACTIVER";
+  }
+  try {
+    // Le transfert s'appuie sur le paiement du client quand il le couvre (fonds disponibles tout de suite).
+    let source: string | null = null;
+    if (d.paiement_intent && !String(d.paiement_intent).startsWith("pi_test_")) {
+      const pi = await stripe(`payment_intents/${d.paiement_intent}`).catch(() => null);
+      if (pi?.latest_charge && montant <= (pi.amount_received ?? 0)) source = typeof pi.latest_charge === "string" ? pi.latest_charge : pi.latest_charge.id;
+    }
+    const t = await stripe("transfers", { amount: String(montant), currency: "eur", destination: p.stripe_compte, transfer_group: d.reference,
+      "metadata[reference]": d.reference, description: `Cleaneroo ${d.reference}`, ...(source ? { source_transaction: source } : {}) }, `versement-${d.reference}`);
+    await admin.from("demandes").update({ versement_statut: "VERSE", versement_c: montant, versement_id: t.id,
+      paiement_journal: trace(d, { type: "versement", montant_c: montant, id: t.id }) }).eq("id", d.id);
+    try { await admin.rpc("notifier", { p_dest: payeur, p_espace: "cleaneur", p_type: "paiement", p_niveau: "standard", p_titre: "Paiement reçu",
+      p_texte: `${euros(montant)} pour la prestation ${d.reference} : viré sur votre compte bancaire vendredi.`, p_reference: d.reference }); } catch { /* sans gravité */ }
+    return "VERSE";
+  } catch (e) {
+    await admin.from("demandes").update({ versement_statut: "ECHEC", versement_c: montant,
+      paiement_journal: trace(d, { type: "versement_refuse", montant_c: montant, erreur: String((e as Error).message) }) }).eq("id", d.id);
+    return "ECHEC";
+  }
+}
+
 /** Toutes les 15 minutes : retours de Stripe non vérifiés, passages suivants à prélever, demandes impayées à rappeler ou annuler. */
 async function synchroniser(admin: Admin) {
-  const bilan = { verifies: 0, preleves: 0, rappels: 0, annules: 0 };
+  const bilan = { verifies: 0, preleves: 0, rappels: 0, annules: 0, verses: 0 };
   const maintenant = Date.now();
   // 1. Paiements faits sur Stripe dont le client n'est pas revenu sur le site ou l'appli.
   const { data: attente } = await admin.from("demandes").select("*").eq("paiement_statut", "EN_ATTENTE").not("paiement_session", "is", null)
@@ -187,7 +232,6 @@ async function synchroniser(admin: Admin) {
   const { data: impayees } = await admin.from("demandes").select("*").in("statut", ["VERIFICATION", "PUBLIEE", "CONFIRMEE"]).eq("sur_devis", false)
     .or("paiement_statut.is.null,paiement_statut.eq.EN_ATTENTE,paiement_statut.eq.ECHEC").limit(200);
   for (const d of impayees || []) {
-    if (d.details?.pilote) continue;
     const depart = Math.max(Date.parse(d.cree_le), d.prelancement ? OUVERTURE : 0);
     if (maintenant < depart) continue;                       // pré-réservation : rien à payer avant l'ouverture
     const journal = Array.isArray(d.paiement_journal) ? d.paiement_journal : [];
@@ -214,6 +258,10 @@ async function synchroniser(admin: Admin) {
       bilan.rappels++;
     }
   }
+  // 4. Versements en attente (compte du Cleaneur activé entre-temps, ou échec à réessayer).
+  const { data: aVerser } = await admin.from("demandes").select("*").eq("statut", "TERMINEE").in("paiement_statut", ["LIBERE", "ENCAISSE"])
+    .or("versement_statut.is.null,versement_statut.eq.COMPTE_A_ACTIVER,versement_statut.eq.ECHEC").limit(100);
+  for (const d of aVerser || []) if ((await verser(admin, d)) === "VERSE") bilan.verses++;
   return bilan;
 }
 
@@ -234,6 +282,39 @@ Deno.serve(async (req) => {
       const { data: cle } = await admin.from("config_privee").select("valeur").eq("cle", "alertes").maybeSingle();
       if (!cle?.valeur || req.headers.get("x-cle-alertes") !== cle.valeur) return reponse({ erreur: "refuse" }, 403);
       if (action === "synchroniser") return reponse(await synchroniser(admin));
+    }
+
+    // Compte de versement du Cleaneur connecté (Stripe Connect Express : identité et IBAN saisis chez Stripe, jamais chez Cleaneroo).
+    if (action === "connect" || action === "connect_etat") {
+      const jwt = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
+      const { data: u } = jwt ? await admin.auth.getUser(jwt) : { data: null };
+      const uid = u?.user?.id;
+      if (!uid) return reponse({ erreur: "connexion" }, 401);
+      const { data: p } = await admin.from("profils").select("id, role, stripe_compte, stripe_compte_actif").eq("id", uid).maybeSingle();
+      if (!p) return reponse({ erreur: "profil" }, 404);
+      if (action === "connect_etat") {
+        if (!p.stripe_compte) return reponse({ compte: false, actif: false });
+        const a = await stripe(`accounts/${p.stripe_compte}`);
+        const actif = a.capabilities?.transfers === "active" && !!a.payouts_enabled;
+        if (actif !== p.stripe_compte_actif) await admin.from("profils").update({ stripe_compte_actif: actif }).eq("id", uid);
+        return reponse({ compte: true, actif, a_completer: !a.details_submitted || (a.requirements?.currently_due || []).length > 0 });
+      }
+      let compte = p.stripe_compte;
+      if (!compte) {
+        try {
+          const a = await stripe("accounts", { type: "express", country: "FR", ...(u?.user?.email ? { email: u.user.email } : {}),
+            "capabilities[transfers][requested]": "true", "settings[payouts][schedule][interval]": "weekly",
+            "settings[payouts][schedule][weekly_anchor]": "friday", "metadata[profil]": uid }, `compte-${uid}`);
+          compte = a.id;
+          await admin.from("profils").update({ stripe_compte: compte, stripe_compte_actif: false }).eq("id", uid);
+        } catch (e) {
+          return reponse({ erreur: /connect/i.test(String((e as Error).message)) ? "connect_inactif" : "service", detail: String((e as Error).message) }, 503);
+        }
+      }
+      const base = SITES.includes(origine) ? origine : SITES[0];
+      const lien = await stripe("account_links", { account: compte, type: "account_onboarding",
+        refresh_url: `${base}/#/compte`, return_url: `${base}/#/compte` });
+      return reponse({ url: lien.url });
     }
 
     const { data: d } = await admin.from("demandes").select("*").eq("reference", String(reference ?? "")).maybeSingle();
@@ -265,6 +346,7 @@ Deno.serve(async (req) => {
       if (d.paiement_statut === "AUTORISE" && d.paiement_intent) {   // ancienne empreinte : encaissée à la validation
         await stripe(`payment_intents/${d.paiement_intent}/capture`, {});
         await maj({ paiement_statut: "ENCAISSE" });
+        await verser(admin, { ...d, paiement_statut: "ENCAISSE" });
         return reponse({ statut: "ENCAISSE" });
       }
       if (d.paiement_statut !== "PAYE") return reponse({ statut: d.paiement_statut });
@@ -284,6 +366,7 @@ Deno.serve(async (req) => {
         }
       }
       await maj({ paiement_statut: "LIBERE", paiement_c: paye, paiement_journal: journal });
+      await verser(admin, { ...d, paiement_statut: "LIBERE", paiement_c: paye, paiement_journal: journal });
       return reponse({ statut: "LIBERE" });
     }
 

@@ -90,10 +90,11 @@ async function blocVersements(el) {
   };
   const e = await appeler("connect_etat");
   if (!el.isConnected) return;
-  const [texte, bouton] = e.actif ? ["✓ Versements activés : chaque prestation validée vous est versée, puis virée sur votre compte bancaire chaque vendredi.", "Modifier mes informations bancaires"]
+  const [texte, bouton] = e.actif ? ["✓ Versements activés : chaque prestation vous est versée 48 h après la fin (délai de réclamation du client), puis virée sur votre compte bancaire le vendredi.", "Modifier mes informations bancaires"]
     : e.compte ? ["Votre compte de versement est à compléter (identité, IBAN) pour recevoir vos paiements.", "Compléter mon compte de versement"]
     : ["Renseignez votre identité et votre IBAN sur la page sécurisée de Stripe pour recevoir vos paiements : Cleaneroo ne conserve pas votre IBAN.", "Activer mes versements"];
   el.innerHTML = `<b>💳 ${tr("Mes versements")}</b><p class="petit" style="margin:4px 0 10px">${tr(texte)}</p>
+    <p class="petit" style="margin:0 0 10px">${tr("Moins-values (pénalité, remboursement après un litige) : retenues sur vos versements suivants, jamais plus de la moitié d'un versement.")}</p>
     <button type="button" class="bouton ${e.actif ? "secondaire" : "plein"}" data-versements>${tr(bouton)}</button><p class="erreur" data-erreur-versements style="margin:8px 0 0"></p>`;
   traduire(el);
   el.querySelector("[data-versements]").onclick = async ev => {

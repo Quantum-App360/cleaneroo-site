@@ -287,7 +287,7 @@ function blocPilote(l) {
       <label class="champ">${tr("Plafond mensuel (€)")}<input name="plafond" type="number" inputmode="numeric" min="0" step="1" value="${p.plafondC ? Math.round(p.plafondC / 100) : ""}"></label>
       <p class="petit">${tr("Prix et consignes : ceux de votre dernier ménage réservé pour ce logement. Au-delà du plafond, rien n'est programmé sans vous. Vous êtes prévenu à chaque ménage programmé.")}</p>
       <p class="petit">💳 ${tr("Paiement : chaque ménage programmé est prélevé automatiquement 3 jours avant sur la carte de votre dernier ménage payé, puis bloqué jusqu'à la validation.")}</p>
-      <label class="case"><input type="checkbox" name="validationIa" ${p.validationIa ? "checked" : ""}><span>🤖 ${tr("Validation par l'IA : si toutes les pièces du compte rendu sont jugées conformes, la prestation est validée tout de suite et le Cleaneur est payé. Sinon, vous validez vous-même, ou elle est validée automatiquement après 48 h.")}</span></label>
+      <label class="case"><input type="checkbox" name="validationIa" ${p.validationIa ? "checked" : ""}><span>🤖 ${tr("Validation par l'IA : si toutes les pièces du compte rendu sont jugées conformes, la prestation est validée tout de suite. Sinon, vous validez vous-même, ou elle est validée automatiquement après 48 h.")}</span></label>
       <p class="erreur" data-erreur-pilote></p><button class="bouton plein" type="submit">${tr("Enregistrer")}</button></form></details>`;
 }
 

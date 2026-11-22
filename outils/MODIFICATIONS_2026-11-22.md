@@ -56,3 +56,11 @@ Le logo officiel et les prix ne sont pas modifiés.
 1. Stripe (tableau de bord, mode test puis réel) : activer Connect (profil de plateforme, comptes Express, France).
 2. Supabase : appliquer `outils/base-pilote-connect.sql`, puis redéployer la fonction `paiement` (sans vérification JWT).
 3. Pousser le site et l'appli depuis le PC (git push), construire l'appli.
+
+## Litiges et moins-values dans les versements (22 novembre 2026, soir)
+- Le Cleaneur est versé 48 h après la fin (délai de réclamation du client), jamais avec un litige ouvert ; virement le vendredi.
+- Litige décidé « Remboursement de X € » : client remboursé sur sa carte automatiquement ; versement du Cleaneur réduit au prorata (il perd sa part, Cleaneroo rend sa commission sur X).
+- Déjà versé (cas exceptionnel) : part reprise sur le compte Stripe du Cleaneur, sinon moins-value « litige ».
+- Chaque versement retient les moins-values en cours (pénalités, litiges), au plus 50 % du versement.
+- Fichiers : `outils/base-litiges-versements.sql`, fonction `paiement` (action « litige »), `activite.js`, `missions.js`, `Activite.kt`, `EspacesCompte.kt`.
+- À faire relire par l'expert-comptable : partage de la commission en cas de remboursement.

@@ -221,7 +221,7 @@ export function blocPenalites(p) {
   if (!p || !(p.liste || []).length) return "";
   const reste = p.liste.reduce((s, x) => s + (x.reste_c || 0), 0);
   return `<div class="carte avertissements alerte"><b>💶 Pénalités</b>
-    ${p.liste.map(x => `<p class="petit" style="margin:4px 0 0">• ${esc(dateLongue(new Date(x.le)))} : ${tr(x.raison === "absence" ? "Absence sans prévenir" : "Annulation à moins de 24 h")} · ${euros(x.montant_c)}</p>`).join("")}
+    ${p.liste.map(x => `<p class="petit" style="margin:4px 0 0">• ${esc(dateLongue(new Date(x.le)))} : ${tr(x.raison === "absence" ? "Absence sans prévenir" : x.raison === "litige" ? "Remboursement client après litige" : "Annulation à moins de 24 h")} · ${euros(x.montant_c)}</p>`).join("")}
     ${reste ? `<p class="petit" style="margin:6px 0 0">${tr("Reste à retenir sur vos prochains versements :")} <b>${euros(reste)}</b></p>` : ""}
     <p class="petit" style="margin:4px 0 0">${tr("Réserve de garantie :")} ${euros(p.garantie_c || 0)}</p></div>`;
 }
