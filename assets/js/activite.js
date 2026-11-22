@@ -58,8 +58,9 @@ export async function blocActivite(boite, profil) {
         <div class="ligne-activite"><span>${tr("Primes d'urgence")}</span><span>+${euros(portefeuille.primes_c || 0)}</span></div>
         <div class="ligne-activite"><span>${tr("Moins-values")}</span><span>−${euros(portefeuille.moins_values_c || 0)}</span></div>
         <div class="ligne-activite total"><span>${tr("Net de l'année")}</span><b>${euros(netPortefeuille(portefeuille))}</b></div>
-        <p class="petit">${tr("Prochain versement :")} ${dateLongue(dateVersement(new Date()))}. ${tr("Votre IBAN sera saisi auprès du prestataire de paiement sécurisé à l'ouverture des paiements : Cleaneroo ne le conserve pas.")}</p>
+        <p class="petit">${tr("Prochain versement :")} ${dateLongue(dateVersement(new Date()))}.</p>
       </div>
+      <div class="carte" id="versements"><b>💳 ${tr("Mes versements")}</b><p class="petit">…</p></div>
       <div class="carte">
         <b>${tr("Documents")}</b>
         <div class="actions-activite">
@@ -73,8 +74,36 @@ export async function blocActivite(boite, profil) {
     boite.querySelectorAll("[data-reglage]").forEach(c => c.onchange = () => { reglages[c.dataset.reglage] = c.checked; garder(reglages); afficher(); });
     boite.querySelector("[data-export]").onclick = () => exporter(factures, avis);
     boite.querySelector("[data-devis]").onclick = () => devis(boite.querySelector(".devis-activite"), profil);
+    blocVersements(boite.querySelector("#versements"));
   };
   afficher();
+}
+
+/** Versements (Stripe Connect, 22/11/2026) : identité et IBAN saisis sur la page sécurisée de Stripe, jamais chez Cleaneroo.
+ *  Chaque prestation validée est versée au Cleaneur (prestation − commission + pourboire), puis virée sur son IBAN le vendredi. */
+async function blocVersements(el) {
+  if (!el) return;
+  const appeler = async action => {
+    const { data, error } = await supabase.functions.invoke("paiement", { body: { action } });
+    if (error) { try { return await error.context?.json(); } catch { return { erreur: "service" }; } }
+    return data || {};
+  };
+  const e = await appeler("connect_etat");
+  if (!el.isConnected) return;
+  const [texte, bouton] = e.actif ? ["✓ Versements activés : chaque prestation validée vous est versée, puis virée sur votre compte bancaire chaque vendredi.", "Modifier mes informations bancaires"]
+    : e.compte ? ["Votre compte de versement est à compléter (identité, IBAN) pour recevoir vos paiements.", "Compléter mon compte de versement"]
+    : ["Renseignez votre identité et votre IBAN sur la page sécurisée de Stripe pour recevoir vos paiements : Cleaneroo ne conserve pas votre IBAN.", "Activer mes versements"];
+  el.innerHTML = `<b>💳 ${tr("Mes versements")}</b><p class="petit" style="margin:4px 0 10px">${tr(texte)}</p>
+    <button type="button" class="bouton ${e.actif ? "secondaire" : "plein"}" data-versements>${tr(bouton)}</button><p class="erreur" data-erreur-versements style="margin:8px 0 0"></p>`;
+  traduire(el);
+  el.querySelector("[data-versements]").onclick = async ev => {
+    ev.target.disabled = true;
+    const r = await appeler("connect");
+    if (r.url) { location.href = r.url; return; }
+    ev.target.disabled = false;
+    el.querySelector("[data-erreur-versements]").textContent = tr(r.erreur === "connect_inactif" ? "Les versements en ligne ne sont pas encore activés. Réessayez bientôt."
+      : "Le service est momentanément indisponible. Réessayez dans quelques minutes.");
+  };
 }
 
 /** Tableur (CSV, séparateur « ; », lisible par Excel) : factures et pourboires, du plus ancien au plus récent. */

@@ -190,9 +190,13 @@ async function synchroniser(admin: Admin) {
     if (d.details?.pilote) continue;
     const depart = Math.max(Date.parse(d.cree_le), d.prelancement ? OUVERTURE : 0);
     if (maintenant < depart) continue;                       // pré-réservation : rien à payer avant l'ouverture
-    const limite = d.paiement_statut === "ECHEC" && d.creneau ? Date.parse(d.creneau) - DERNIER_DELAI_AVANT_H * H
-      : depart + (d.prelancement ? 2 * DELAI_PAIEMENT_H : DELAI_PAIEMENT_H) * H;
     const journal = Array.isArray(d.paiement_journal) ? d.paiement_journal : [];
+    // Prélèvement refusé : jusqu'à 24 h avant le passage (sans date : 24 h après le refus) ; sinon 24 h après la demande
+    // (48 h après l'ouverture pour une pré-réservation).
+    const refus = [...journal].reverse().find((x: any) => x.type === "prelevement_refuse");
+    const limite = d.paiement_statut === "ECHEC"
+      ? (d.creneau ? Date.parse(d.creneau) - DERNIER_DELAI_AVANT_H * H : Date.parse(refus?.le ?? d.maj_le) + DELAI_PAIEMENT_H * H)
+      : depart + (d.prelancement ? 2 * DELAI_PAIEMENT_H : DELAI_PAIEMENT_H) * H;
     if (maintenant >= limite) {
       if (d.paiement_session && d.paiement_statut === "EN_ATTENTE") {
         // Dernière vérification : le client a peut-être payé à l'instant.

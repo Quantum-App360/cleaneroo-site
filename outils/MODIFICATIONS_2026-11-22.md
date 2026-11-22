@@ -45,3 +45,14 @@ Le logo officiel et les prix ne sont pas modifiés.
 1. Appliquer `outils/base-paiement-reservation.sql` dans Supabase (SQL Editor). Le site et l'appli envoient la nouvelle colonne `groupe_paiement` : sans ce script, l'envoi d'une demande échoue.
 2. Redéployer la fonction `paiement` (supabase/functions/paiement/index.ts), sans vérification JWT (comme avant).
 3. Pousser le site (VERSION 2026112204 déjà générée), puis construire et tester l'appli (`lancer-tests-claude.bat`).
+
+## Pilote automatique prépayé, validation par l'IA, versements Stripe Connect (22 novembre 2026, fin d'après-midi)
+- Ménages du pilote automatique : prépayés comme les autres (carte du dernier ménage payé du client, prélevée 3 jours avant ; sans carte, rappel puis annulation sans frais à 24 h).
+- Validation par l'IA : case « Validation par l'IA » dans le pilote de chaque logement. Toutes les pièces conformes et aucun litige : validée dès la fin, le Cleaneur est payé ; sinon validation du client ou automatique à 48 h.
+- Stripe Connect : « Mes versements » dans « Mon activité » (site et appli) : identité et IBAN saisis chez Stripe ; à la validation, la part du Cleaneur (prestation − commission + pourboire + prime d'urgence) est transférée, virement chaque vendredi. Sans compte actif : en attente, versé dès l'activation.
+- Fichiers : `outils/base-pilote-connect.sql`, `supabase/functions/paiement/index.ts`, `assets/js/activite.js`, `espaces.js` ; appli : `Activite.kt`, `Badge.kt`, `Compte.kt`.
+
+## Mise en ligne de cette partie
+1. Stripe (tableau de bord, mode test puis réel) : activer Connect (profil de plateforme, comptes Express, France).
+2. Supabase : appliquer `outils/base-pilote-connect.sql`, puis redéployer la fonction `paiement` (sans vérification JWT).
+3. Pousser le site et l'appli depuis le PC (git push), construire l'appli.
