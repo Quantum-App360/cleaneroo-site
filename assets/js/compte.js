@@ -322,6 +322,10 @@ function formulaireProfil(p, cleaneur) {
     ${cleaneur ? `<div class="grille-2"><label class="champ">Numéro SIRET (14 chiffres)<input name="siret" inputmode="numeric" maxlength="17" value="${esc(p.siret)}"></label>
       <label class="champ">Périmètre d'intervention<select name="zone_km">${[...new Set([...REGLES.ZONES_KM, p.zone_km || REGLES.ZONE_KM_DEFAUT])].sort((a, b) => a - b)
         .map(km => `<option value="${km}" ${km === (p.zone_km || REGLES.ZONE_KM_DEFAUT) ? "selected" : ""}>${km} km autour de chez moi</option>`).join("")}</select></label></div>
+      <label class="champ">Adresse professionnelle (numéro et rue)<input name="adresse" maxlength="160" value="${esc(p.adresse || "")}" autocomplete="street-address"></label>
+      <p class="petit" style="margin:2px 0 6px">Déclaration « services à la personne » (si vous en avez une) : elle figure sur vos factures et sur les attestations fiscales de vos clients particuliers (crédit d'impôt).</p>
+      <div class="grille-2"><label class="champ">Numéro de déclaration SAP (récépissé NOVA)<input name="sap_numero" maxlength="40" value="${esc(p.sap_numero || "")}"></label>
+        <label class="champ">Date de la déclaration SAP<input name="sap_date" type="date" value="${esc(p.sap_date || "")}"></label></div>
       <div class="carte-perimetre" id="carte-perimetre" aria-label="Carte de votre zone d'intervention"></div>
       <p class="petit" id="legende-perimetre" style="margin:6px 0 12px"></p>
       <p style="margin:6px 0 4px;font-weight:600;font-size:14px">Prestations que je propose</p>
@@ -407,6 +411,8 @@ function brancherProfil(vue, p, cleaneur) {
         if (SIRET_REFUSE.includes(v.etat)) { err.textContent = `${tr(MESSAGES_SIRET[v.etat])}${v.nomOfficiel ? ` (${v.nomOfficiel})` : ""}`; return; }
         err.textContent = v.etat === "verifie" ? "" : tr(MESSAGES_SIRET[v.etat]);
       }
+      // Mentions des factures et attestations fiscales (22/11/2026) : adresse et déclaration « services à la personne ».
+      Object.assign(champs, { adresse: f.adresse.value.trim(), sap_numero: f.sap_numero.value.trim(), sap_date: f.sap_date.value || null });
       Object.assign(champs, { siret, zone_km: Number(f.zone_km.value) || REGLES.ZONE_KM_DEFAUT,
         prestations: [...f.querySelectorAll("[name=prestation]:checked")].map(c => c.value) });
       // Centre de la zone d'intervention : sert à savoir quels secteurs sont couverts (« Être prévenu »).

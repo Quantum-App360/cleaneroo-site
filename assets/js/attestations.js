@@ -1,5 +1,5 @@
 // Attestations fiscales et relevés comptables (12 novembre 2026). Cleaneroo n'avance pas le crédit d'impôt : le particulier reçoit
-// chaque mois une attestation (à joindre) et une attestation annuelle (déclaration de revenus, case 7DB) ; le client professionnel
+// chaque mois une attestation et une attestation annuelle en PDF (déclaration de revenus, case 7DB) ; le client professionnel
 // (conciergerie, entreprise) reçoit chaque mois un relevé comptable (PDF et tableau CSV). Le 1er du mois, une notification prévient
 // que le document du mois précédent est prêt (prevenir_documents_du_mois). Base : outils/base-attestations.sql. Même chose dans
 // l'appli (Attestations.kt).
@@ -30,7 +30,7 @@ export function blocAttestations(liste, espace) {
       <button type="button" class="bouton secondaire" data-releve="${a}-${m}">PDF</button><button type="button" class="lien-bouton" data-releve-csv="${a}-${m}">${tr("Tableur")}</button></div>`).join("")}</div>`;
   const annees = [...new Set(mois.map(([a]) => a))];
   return `<div class="carte attestations" style="margin-top:12px"><b>🧾 ${tr("Attestations fiscales (crédit d'impôt)")}</b>
-    <p class="petit" style="margin:4px 0 8px">${tr("Cleaneroo n'avance pas le crédit d'impôt : déclarez vos dépenses de services à la personne, les impôts vous remboursent 50 %. Une attestation par mois, et une pour l'année à joindre à votre déclaration.")}</p>
+    <p class="petit" style="margin:4px 0 8px">${tr("Cleaneroo n'avance pas le crédit d'impôt : déclarez vos dépenses de services à la personne, les impôts vous remboursent 50 %. Une attestation par mois, et une pour l'année : le total se reporte en case 7DB de votre déclaration.")}</p>
     ${annees.map(a => `<div class="ligne-attestation"><b>${tr("Année")} ${a}</b><button type="button" class="bouton" data-attestation="${a}">${tr("Attestation annuelle")}</button></div>`).join("")}
     ${mois.map(([a, m]) => `<div class="ligne-attestation"><span>${esc(nomMois(a, m))}</span><button type="button" class="bouton secondaire" data-attestation="${a}-${m}">PDF</button></div>`).join("")}</div>`;
 }
@@ -53,26 +53,14 @@ const STYLE_DOC = `body{font:14px/1.5 "Plus Jakarta Sans",system-ui,sans-serif;c
   .encadre{background:#eef7f5;border-radius:12px;padding:12px 14px}button{margin-top:16px}@media print{button{display:none}body{margin:12mm auto}}`;
 
 async function ouvrirAttestation(annee, mois) {
-  const w = window.open("", "_blank");
-  if (!w) return alert(tr("Autorisez les fenêtres de ce site pour ouvrir le document."));
-  const { data: a } = await supabase.rpc("attestation_fiscale", { p_annee: annee, p_mois: mois });
-  const c = a?.client || {}, lignes = a?.lignes || [];
+  // 22/11/2026 : vrai PDF, prêt à conserver ou à joindre à une déclaration papier (art. D7233-4 du Code du travail).
+  const { data: a, error } = await supabase.rpc("attestation_fiscale", { p_annee: annee, p_mois: mois });
+  if (error) return alert(tr("Le service est momentanément indisponible. Réessayez dans quelques minutes."));
+  const { attestationPdf, remettre } = await import("./pdf.js");
   const periode = mois ? nomMois(annee, mois) : `${tr("année")} ${annee}`;
-  const credit = Math.round(Math.min(a?.total_eligible_c || 0, REGLES.CREDIT_IMPOT_PLAFOND_C) * REGLES.CREDIT_IMPOT_PCT / 100);
-  w.document.write(`<!doctype html><html lang="${langue}"><head><meta charset="utf-8"><title>${esc(tr("Attestation fiscale"))} ${esc(periode)}</title><style>${STYLE_DOC}</style></head><body>
-    <p class="marque">Cleaneroo</p><h1>${esc(tr("Attestation fiscale — services à la personne"))}</h1><p class="petit">${esc(periode)}</p>
-    <div class="bloc"><b>${esc(tr("Bénéficiaire"))}</b><br>${esc(c.nom || "")}<br>${esc(c.adresse || "")}</div>
-    <p>${esc(tr("Sommes payées pour des prestations de services à la personne réalisées au domicile (article 199 sexdecies du Code général des impôts) :"))}</p>
-    <table><thead><tr><th>${esc(tr("Date"))}</th><th>${esc(tr("Prestation"))}</th><th>${esc(tr("Intervenant"))}</th><th>${esc(tr("Facture"))}</th><th class="n">${esc(tr("Montant payé"))}</th></tr></thead><tbody>
-    ${lignes.map(l => `<tr><td>${esc(dateCourte(l.date))}</td><td>${esc(tr(rubrique(l.rubrique_id)?.nom || ""))}</td><td>${esc(l.cleaneur)}${l.siret ? `<br><span class="petit">SIRET ${esc(l.siret)}</span>` : ""}${l.eligible ? "" : `<br><span class="petit">${esc(tr("Non déclaré services à la personne : n'ouvre pas droit"))}</span>`}</td>
-      <td>${esc(l.numero)}</td><td class="n">${euros(l.montant_c)}</td></tr>`).join("") || `<tr><td colspan="5">${esc(tr("Aucune prestation ouvrant droit sur cette période."))}</td></tr>`}</tbody></table>
-    <p class="total">${esc(tr("Total ouvrant droit au crédit d'impôt"))} : ${euros(a?.total_eligible_c || 0)}</p>
-    ${!mois ? `<div class="encadre">${esc(tr("Crédit d'impôt estimé"))} : <b>${euros(credit)}</b> (${REGLES.CREDIT_IMPOT_PCT} %)<br>
-      <span class="petit">${esc(tr("À déclarer dans votre déclaration de revenus de l'année suivante, rubrique « Emploi d'un salarié à domicile ou services à la personne » (case 7DB). Le crédit d'impôt vous est remboursé par l'administration fiscale. Conservez ce document."))}</span></div>`
-      : `<div class="encadre petit">${esc(tr("Attestation mensuelle : à conserver. Pour votre déclaration de revenus, utilisez l'attestation annuelle (case 7DB)."))}</div>`}
-    <p class="petit">${esc(tr("Attestation établie par Cleaneroo au nom et pour le compte des prestataires déclarés « services à la personne », dans le cadre de leur mandat de facturation. Sommes réglées en ligne par carte bancaire, aucun paiement en espèces."))}</p>
-    <button onclick="print()">${esc(tr("Imprimer ou enregistrer en PDF"))}</button></body></html>`);
-  w.document.close();
+  const octets = await attestationPdf(a, { annee, mois, periode, nomPrestation: id => tr(rubrique(id)?.nom || ""),
+    plafondC: REGLES.CREDIT_IMPOT_PLAFOND_C, pct: REGLES.CREDIT_IMPOT_PCT });
+  await remettre(octets, `attestation-fiscale-${annee}${mois ? `-${String(mois).padStart(2, "0")}` : ""}.pdf`, "application/pdf");
 }
 
 async function ouvrirReleve(annee, mois) {

@@ -1,4 +1,4 @@
-// Documents PDF de Cleaneroo (20 novembre 2026) : vraies factures PDF au format Factur-X (le XML CII, profil BASIC, est joint
+// Documents PDF de Cleaneroo (20 novembre 2026) : vraies factures PDF au format Factur-X (le XML CII, profil EN 16931 depuis le 22/11/2026, est joint
 // dans le PDF : un logiciel comptable ou une plateforme agréée lit la facture sans ressaisie), relevé mensuel, archive ZIP,
 // export comptable (CSV) et dossier de preuves pour l'assurance en cas de dommage. Tout est fabriqué dans le navigateur
 // (bibliothèques pdf-lib et fflate chargées à la demande) : rien à installer, rien d'envoyé à un tiers.
@@ -54,27 +54,34 @@ function enTete(pg, titre, sousTitre) {
   pg.y = 785; pg.texte(titre, { taille: 18, gras: true }); if (sousTitre) pg.texte(sousTitre, { taille: 9, couleur: [0.26, 0.37, 0.38] }); pg.espace(6);
 }
 
-/* ------------------------------------------------------------------ Factur-X (XML CII, profil BASIC) */
+/* ------------------------------------------------------------------ Factur-X (XML CII, profil EN 16931 : seul profil déclarable de la réforme, XP Z12-012) */
 const exonere = f => (f.lignes || []).every(l => !l.tva_pct);
 export function xmlFacturX(f) {
   const e = f.emetteur || {}, d = f.destinataire || {}, date = String(f.date_emission).slice(0, 10).replaceAll("-", "");
   const lignes = f.lignes?.length ? f.lignes : [{ libelle: f.description || "Prestation", quantite: 1, prix_ht_c: f.total_ht_c, tva_pct: f.total_ht_c ? Math.round(f.tva_c * 100 / f.total_ht_c) : 0 }];
   const motif = e.mention_tva || "TVA non applicable, art. 293 B du CGI";
+  // Date de la prestation (livraison) et notes : référence, catégorie de l'opération et, pour un client professionnel,
+  // les mentions de paiement exigées en France (PMT, PMD, AAB). 22/11/2026.
+  const det = f.details || {}, datePresta = String(det.date_prestation || "").slice(0, 10).replaceAll("-", "") || date;
+  const note = (sujet, texte) => `<ram:IncludedNote><ram:Content>${x(texte)}</ram:Content>${sujet ? `<ram:SubjectCode>${sujet}</ram:SubjectCode>` : ""}</ram:IncludedNote>`;
+  const notes = (f.reference ? note("", `Prestation ${f.reference}`) : "") + note("", "Catégorie de l'opération : prestation de services") +
+    (siren(d.siret) ? note("PMT", "Indemnité forfaitaire pour frais de recouvrement en cas de retard de paiement : 40 €.") +
+      note("PMD", "Pénalités de retard : taux d'intérêt légal (art. L441-10 du Code de commerce).") + note("AAB", "Pas d'escompte pour paiement anticipé.") : "");
   const cat = l => (l.tva_pct ? "S" : "E");
   const taux = [...new Set(lignes.map(l => l.tva_pct || 0))];
   const ventilation = taux.map(t => {
     const base = lignes.filter(l => (l.tva_pct || 0) === t).reduce((s, l) => s + l.prix_ht_c * (l.quantite || 1), 0);
-    return `<ram:ApplicableTradeTax><ram:CalculatedAmount>${m2(Math.round(base * t / 100))}</ram:CalculatedAmount><ram:TypeCode>VAT</ram:TypeCode>${t ? "" : `<ram:ExemptionReason>${x(motif)}</ram:ExemptionReason>`}<ram:BasisAmount>${m2(base)}</ram:BasisAmount><ram:CategoryCode>${t ? "S" : "E"}</ram:CategoryCode><ram:RateApplicablePercent>${t}</ram:RateApplicablePercent></ram:ApplicableTradeTax>`;
+    return `<ram:ApplicableTradeTax><ram:CalculatedAmount>${m2(Math.round(base * t / 100))}</ram:CalculatedAmount><ram:TypeCode>VAT</ram:TypeCode>${t ? "" : `<ram:ExemptionReason>${x(motif)}</ram:ExemptionReason>`}<ram:BasisAmount>${m2(base)}</ram:BasisAmount><ram:CategoryCode>${t ? "S" : "E"}</ram:CategoryCode>${!t && motif.includes("293 B") ? "<ram:ExemptionReasonCode>VATEX-FR-FRANCHISE</ram:ExemptionReasonCode>" : ""}<ram:RateApplicablePercent>${t}</ram:RateApplicablePercent></ram:ApplicableTradeTax>`;
   }).join("");
   const partie = (role, p) => `<ram:${role}><ram:Name>${x(p.societe || p.nom)}</ram:Name>${siren(p.siret) ? `<ram:SpecifiedLegalOrganization><ram:ID schemeID="0002">${siren(p.siret)}</ram:ID></ram:SpecifiedLegalOrganization>` : ""}<ram:PostalTradeAddress>${p.code_postal ? `<ram:PostcodeCode>${x(p.code_postal)}</ram:PostcodeCode>` : ""}${p.adresse ? `<ram:LineOne>${x(p.adresse)}</ram:LineOne>` : ""}${p.ville ? `<ram:CityName>${x(p.ville)}</ram:CityName>` : ""}<ram:CountryID>FR</ram:CountryID></ram:PostalTradeAddress>${p.tva_intracom ? `<ram:SpecifiedTaxRegistration><ram:ID schemeID="VA">${x(p.tva_intracom)}</ram:ID></ram:SpecifiedTaxRegistration>` : ""}</ram:${role}>`;
   return `<?xml version="1.0" encoding="UTF-8"?>
 <rsm:CrossIndustryInvoice xmlns:rsm="urn:un:unece:uncefact:data:standard:CrossIndustryInvoice:100" xmlns:qdt="urn:un:unece:uncefact:data:standard:QualifiedDataType:100" xmlns:ram="urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100" xmlns:udt="urn:un:unece:uncefact:data:standard:UnqualifiedDataType:100">
-<rsm:ExchangedDocumentContext><ram:GuidelineSpecifiedDocumentContextParameter><ram:ID>urn:cen.eu:en16931:2017#compliant#urn:factur-x.eu:1p0:basic</ram:ID></ram:GuidelineSpecifiedDocumentContextParameter></rsm:ExchangedDocumentContext>
-<rsm:ExchangedDocument><ram:ID>${x(f.numero)}</ram:ID><ram:TypeCode>380</ram:TypeCode><ram:IssueDateTime><udt:DateTimeString format="102">${date}</udt:DateTimeString></ram:IssueDateTime>${f.reference ? `<ram:IncludedNote><ram:Content>Prestation ${x(f.reference)}</ram:Content></ram:IncludedNote>` : ""}</rsm:ExchangedDocument>
+<rsm:ExchangedDocumentContext><ram:BusinessProcessSpecifiedDocumentContextParameter><ram:ID>S2</ram:ID></ram:BusinessProcessSpecifiedDocumentContextParameter><ram:GuidelineSpecifiedDocumentContextParameter><ram:ID>urn:cen.eu:en16931:2017</ram:ID></ram:GuidelineSpecifiedDocumentContextParameter></rsm:ExchangedDocumentContext>
+<rsm:ExchangedDocument><ram:ID>${x(f.numero)}</ram:ID><ram:TypeCode>380</ram:TypeCode><ram:IssueDateTime><udt:DateTimeString format="102">${date}</udt:DateTimeString></ram:IssueDateTime>${notes}</rsm:ExchangedDocument>
 <rsm:SupplyChainTradeTransaction>
 ${lignes.map((l, i) => `<ram:IncludedSupplyChainTradeLineItem><ram:AssociatedDocumentLineDocument><ram:LineID>${i + 1}</ram:LineID></ram:AssociatedDocumentLineDocument><ram:SpecifiedTradeProduct><ram:Name>${x(l.libelle)}</ram:Name></ram:SpecifiedTradeProduct><ram:SpecifiedLineTradeAgreement><ram:NetPriceProductTradePrice><ram:ChargeAmount>${m2(l.prix_ht_c)}</ram:ChargeAmount></ram:NetPriceProductTradePrice></ram:SpecifiedLineTradeAgreement><ram:SpecifiedLineTradeDelivery><ram:BilledQuantity unitCode="C62">${l.quantite || 1}</ram:BilledQuantity></ram:SpecifiedLineTradeDelivery><ram:SpecifiedLineTradeSettlement><ram:ApplicableTradeTax><ram:TypeCode>VAT</ram:TypeCode><ram:CategoryCode>${cat(l)}</ram:CategoryCode><ram:RateApplicablePercent>${l.tva_pct || 0}</ram:RateApplicablePercent></ram:ApplicableTradeTax><ram:SpecifiedTradeSettlementLineMonetarySummation><ram:LineTotalAmount>${m2(l.prix_ht_c * (l.quantite || 1))}</ram:LineTotalAmount></ram:SpecifiedTradeSettlementLineMonetarySummation></ram:SpecifiedLineTradeSettlement></ram:IncludedSupplyChainTradeLineItem>`).join("\n")}
 <ram:ApplicableHeaderTradeAgreement>${d.reference_acheteur ? `<ram:BuyerReference>${x(d.reference_acheteur)}</ram:BuyerReference>` : ""}${partie("SellerTradeParty", e)}${partie("BuyerTradeParty", d)}</ram:ApplicableHeaderTradeAgreement>
-<ram:ApplicableHeaderTradeDelivery><ram:ActualDeliverySupplyChainEvent><ram:OccurrenceDateTime><udt:DateTimeString format="102">${date}</udt:DateTimeString></ram:OccurrenceDateTime></ram:ActualDeliverySupplyChainEvent></ram:ApplicableHeaderTradeDelivery>
+<ram:ApplicableHeaderTradeDelivery><ram:ActualDeliverySupplyChainEvent><ram:OccurrenceDateTime><udt:DateTimeString format="102">${datePresta}</udt:DateTimeString></ram:OccurrenceDateTime></ram:ActualDeliverySupplyChainEvent></ram:ApplicableHeaderTradeDelivery>
 <ram:ApplicableHeaderTradeSettlement><ram:InvoiceCurrencyCode>EUR</ram:InvoiceCurrencyCode>${ventilation}<ram:SpecifiedTradePaymentTerms><ram:Description>Facture acquittée : réglée en ligne par l'intermédiaire de Cleaneroo.</ram:Description></ram:SpecifiedTradePaymentTerms>
 <ram:SpecifiedTradeSettlementHeaderMonetarySummation><ram:LineTotalAmount>${m2(f.total_ht_c)}</ram:LineTotalAmount><ram:TaxBasisTotalAmount>${m2(f.total_ht_c)}</ram:TaxBasisTotalAmount><ram:TaxTotalAmount currencyID="EUR">${m2(f.tva_c)}</ram:TaxTotalAmount><ram:GrandTotalAmount>${m2(f.total_ttc_c)}</ram:GrandTotalAmount><ram:TotalPrepaidAmount>${m2(f.total_ttc_c)}</ram:TotalPrepaidAmount><ram:DuePayableAmount>0.00</ram:DuePayableAmount></ram:SpecifiedTradeSettlementHeaderMonetarySummation></ram:ApplicableHeaderTradeSettlement>
 </rsm:SupplyChainTradeTransaction>
@@ -86,7 +93,7 @@ function xmpFacturX(titre, date) {
 <rdf:Description rdf:about="" xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/"><pdfaid:part>3</pdfaid:part><pdfaid:conformance>B</pdfaid:conformance></rdf:Description>
 <rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title><rdf:Alt><rdf:li xml:lang="x-default">${x(titre)}</rdf:li></rdf:Alt></dc:title></rdf:Description>
 <rdf:Description rdf:about="" xmlns:xmp="http://ns.adobe.com/xap/1.0/"><xmp:CreatorTool>cleaneroo.fr</xmp:CreatorTool><xmp:CreateDate>${date}</xmp:CreateDate></rdf:Description>
-<rdf:Description rdf:about="" xmlns:fx="urn:factur-x:pdfa:CrossIndustryDocument:invoice:1p0#"><fx:DocumentType>INVOICE</fx:DocumentType><fx:DocumentFileName>factur-x.xml</fx:DocumentFileName><fx:Version>1.0</fx:Version><fx:ConformanceLevel>BASIC</fx:ConformanceLevel></rdf:Description>
+<rdf:Description rdf:about="" xmlns:fx="urn:factur-x:pdfa:CrossIndustryDocument:invoice:1p0#"><fx:DocumentType>INVOICE</fx:DocumentType><fx:DocumentFileName>factur-x.xml</fx:DocumentFileName><fx:Version>1.0</fx:Version><fx:ConformanceLevel>EN 16931</fx:ConformanceLevel></rdf:Description>
 <rdf:Description rdf:about="" xmlns:pdfaExtension="http://www.aiim.org/pdfa/ns/extension/" xmlns:pdfaSchema="http://www.aiim.org/pdfa/ns/schema#" xmlns:pdfaProperty="http://www.aiim.org/pdfa/ns/property#">
 <pdfaExtension:schemas><rdf:Bag><rdf:li rdf:parseType="Resource"><pdfaSchema:schema>Factur-X PDFA Extension Schema</pdfaSchema:schema><pdfaSchema:namespaceURI>urn:factur-x:pdfa:CrossIndustryDocument:invoice:1p0#</pdfaSchema:namespaceURI><pdfaSchema:prefix>fx</pdfaSchema:prefix>
 <pdfaSchema:property><rdf:Seq>${["DocumentFileName", "DocumentType", "Version", "ConformanceLevel"].map(n => `<rdf:li rdf:parseType="Resource"><pdfaProperty:name>${n}</pdfaProperty:name><pdfaProperty:valueType>Text</pdfaProperty:valueType><pdfaProperty:category>external</pdfaProperty:category><pdfaProperty:description>${n}</pdfaProperty:description></rdf:li>`).join("")}</rdf:Seq></pdfaSchema:property></rdf:li></rdf:Bag></pdfaExtension:schemas></rdf:Description>
@@ -98,13 +105,25 @@ const TYPES = { prestation: "Prestation de ménage", frais: "Frais de service", 
 export async function facturePdf(f) {
   const { doc, page: pg } = await nouveauDoc(`Facture ${f.numero}`);
   const e = f.emetteur || {}, d = f.destinataire || {}, pro = !!d.siret;
-  enTete(pg, `Facture ${f.numero}`, `Émise le ${dateFr(f.date_emission)}${f.reference ? ` · prestation ${f.reference}` : ""} · ${TYPES[f.type] || ""}`);
+  const det = f.details || {};
+  enTete(pg, `Facture ${f.numero}`, `Émise le ${dateFr(f.date_emission)}${f.reference ? ` · prestation ${f.reference}` : ""} · ${TYPES[f.type] || ""}`
+    + ` · Catégorie de l'opération : prestation de services${det.date_prestation ? ` · Date de la prestation : ${dateFr(det.date_prestation)}` : ""}`);
   const haut = pg.y, bloc = (titre, lignes, xx) => { let y = haut; pg.p.drawText(propre(titre), { x: xx, y, size: 9, font: pg.f.gras, color: lib.rgb(0.05, 0.55, 0.5) }); y -= 14;
     lignes.filter(Boolean).forEach(l => { pg.p.drawText(propre(l).slice(0, 60), { x: xx, y, size: 10, font: pg.f.normal, color: lib.rgb(0.09, 0.2, 0.23) }); y -= 13; }); return y; };
-  const y1 = bloc("ÉMETTEUR", [e.nom, e.siret && `SIRET ${e.siret}`, e.adresse, [e.code_postal, e.ville].filter(Boolean).join(" "), e.tva_intracom && `TVA ${e.tva_intracom}`], 50);
-  const y2 = bloc("CLIENT", [d.societe || d.nom, d.societe && d.nom, d.siret && `SIRET ${d.siret}`, d.adresse, [d.code_postal, d.ville].filter(Boolean).join(" "), d.tva_intracom && `TVA ${d.tva_intracom}`], 320);
+  const y1 = bloc("ÉMETTEUR", [e.nom, e.siret && `SIRET ${e.siret}`, e.adresse, e.adresse ? "" : [e.code_postal, e.ville].filter(Boolean).join(" "), e.tva_intracom && `TVA ${e.tva_intracom}`,
+    e.sap_numero && `Déclaration SAP n° ${e.sap_numero}${e.sap_date ? ` du ${e.sap_date}` : ""}`], 50);
+  const sirenClient = siren(d.siret);
+  const y2 = bloc("CLIENT", [d.societe || d.nom, d.societe && d.nom, sirenClient && `SIREN ${sirenClient}${String(d.siret).replace(/\D/g, "").length === 14 ? ` · SIRET ${d.siret}` : ""}`, d.adresse,
+    d.adresse ? "" : [d.code_postal, d.ville].filter(Boolean).join(" "), d.tva_intracom && `TVA ${d.tva_intracom}`], 320);
   pg.y = Math.min(y1, y2) - 10;
   if (f.description) { pg.texte(f.description, { taille: 9.5, couleur: [0.26, 0.37, 0.38] }); pg.espace(4); }
+  // Services à la personne (art. D7233-1 du Code du travail) : intervenant, temps passé, prix forfaitaire et taux horaire.
+  if (det.intervenant?.nom) {
+    const duree = det.duree_min || 0;
+    pg.texte(`Intervenant : ${det.intervenant.nom} (identifiant ${det.intervenant.code || ""})${duree ? ` · Temps passé : ${Math.floor(duree / 60)} h ${String(duree % 60).padStart(2, "0")}` : ""}`, { taille: 9.5 });
+    if (det.taux_horaire_c) pg.texte(`Prix forfaitaire, soit ${eur(det.taux_horaire_c)} de l'heure de main-d'œuvre`, { taille: 9.5 });
+    pg.espace(4);
+  }
   // Tableau des lignes
   pg.trait(); pg.espace(4);
   const col = [50, 330, 390, 465, 545];
@@ -118,10 +137,11 @@ export async function facturePdf(f) {
   [["Total HT", f.total_ht_c], ["TVA", f.tva_c], ["Total TTC", f.total_ttc_c]].forEach(([t, v], i) => { pg.place(16); pg.droite(t, 450, pg.y, { gras: i === 2, taille: i === 2 ? 12 : 10 }); pg.droite(eur(v), 545, pg.y, { gras: i === 2, taille: i === 2 ? 12 : 10 }); pg.y -= i === 2 ? 20 : 15; });
   pg.texte("Facture acquittée : réglée en ligne par l'intermédiaire de Cleaneroo. Net à payer : 0,00 €.", { taille: 9, gras: true });
   if (e.mention_tva) pg.texte(e.mention_tva, { taille: 8.5 });
+  if (e.mention_sap) pg.texte(e.mention_sap, { taille: 8.5 });
   if (e.mandat) pg.texte(e.mandat, { taille: 8.5 });
   if (pro) pg.texte("En cas de retard de paiement : pénalités au taux légal et indemnité forfaitaire de 40 € pour frais de recouvrement (art. L441-10 du Code de commerce).", { taille: 8 });
   pg.espace(6);
-  pg.texte("Facture électronique Factur-X (profil BASIC, norme EN 16931) : le fichier factur-x.xml joint à ce PDF contient les mêmes données, lisibles directement par votre logiciel comptable ou votre plateforme de facturation.", { taille: 7.5, couleur: [0.4, 0.5, 0.5] });
+  pg.texte(pro ? "Facture électronique Factur-X (profil EN 16931) : le fichier factur-x.xml joint à ce PDF contient les mêmes données, lisibles directement par votre logiciel comptable ou votre plateforme agréée." : "Les données de cette facture sont aussi jointes au PDF (factur-x.xml). Pour votre crédit d'impôt, utilisez l'attestation fiscale annuelle.", { taille: 7.5, couleur: [0.4, 0.5, 0.5] });
   // Pièce jointe Factur-X + métadonnées XMP
   const { AFRelationship, PDFName, PDFArray } = lib;
   const xml = new TextEncoder().encode(xmlFacturX(f)), maintenant = new Date();
@@ -154,6 +174,51 @@ export async function relevePdf(liste, { titre, qui }) {
     l([new Date(f.date_emission).toLocaleDateString("fr-FR"), `${f.numero} · ${TYPES[f.type] || ""}`, eur(f.total_ht_c), eur(f.tva_c), eur(f.total_ttc_c)]));
   pg.trait(); l(["", "Total", eur(tot("total_ht_c")), eur(tot("tva_c")), eur(tot("total_ttc_c"))], true);
   pg.espace(8); pg.texte("Chaque facture du relevé est jointe en PDF Factur-X dans l'archive ZIP téléchargée avec ce relevé.", { taille: 8, couleur: [0.4, 0.5, 0.5] });
+  return doc.save();
+}
+
+/* ------------------------------------------------------------------ Attestation fiscale (services à la personne) */
+/** Attestation fiscale en PDF (art. D7233-4 du Code du travail), 22/11/2026 : une partie par prestataire (nom, adresse, SIRET,
+ *  numéro et date de déclaration SAP), chaque intervention (date, durée, intervenant et son identifiant, somme payée), le total
+ *  ouvrant droit au crédit d'impôt et la façon de le déclarer (case 7DB). Même contenu dans l'appli (Attestations.kt). */
+export async function attestationPdf(a, { annee, mois = null, periode, nomPrestation = id => id, plafondC, pct }) {
+  const titre = mois ? "Attestation fiscale mensuelle" : "Attestation fiscale annuelle";
+  const { doc, page: pg } = await nouveauDoc(`${titre} ${periode}`);
+  enTete(pg, titre, `Services à la personne · ${periode} · édité le ${dateFr(new Date())}`);
+  const c = a?.client || {}, lignes = a?.lignes || [];
+  pg.texte("Bénéficiaire", { gras: true, taille: 9 }); pg.texte(c.nom || ""); if (c.adresse) pg.texte(c.adresse); pg.espace(6);
+  pg.texte("Sommes effectivement payées pour des prestations de services à la personne réalisées à votre domicile (article 199 sexdecies du Code général des impôts) :", { taille: 9.5 });
+  const groupes = new Map();
+  lignes.forEach(l => { const k = l.siret || l.cleaneur; if (!groupes.has(k)) groupes.set(k, []); groupes.get(k).push(l); });
+  const jj = d => { const p = String(d || "").slice(0, 10).split("-"); return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : ""; };
+  const duree = m => (m ? `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, "0")}` : "-");
+  for (const liste of groupes.values()) {
+    const l0 = liste[0]; pg.espace(6); pg.trait(); pg.espace(4);
+    pg.texte(`Prestataire : ${l0.cleaneur}`, { gras: true });
+    if (l0.adresse) pg.texte(l0.adresse, { taille: 9 });
+    if (l0.siret) pg.texte(`SIRET ${l0.siret}`, { taille: 9 });
+    pg.texte(l0.eligible ? `Déclaration « services à la personne » n° ${l0.sap_numero}${l0.sap_date ? ` du ${l0.sap_date}` : ""}`
+      : "Prestataire non déclaré « services à la personne » : ces sommes n'ouvrent pas droit au crédit d'impôt.", { taille: 9 });
+    pg.espace(2);
+    const col = (cells, gras = false) => { pg.place(14); const y = pg.y, police = gras ? pg.f.gras : pg.f.normal, coul = lib.rgb(0.09, 0.2, 0.23);
+      [[cells[0], 50], [cells[1], 110], [cells[2], 165], [cells[3], 360]].forEach(([v, xx]) => pg.p.drawText(propre(v).slice(0, xx === 165 ? 40 : 30), { x: xx, y, size: 9, font: police, color: coul }));
+      pg.droite(cells[4], 545, y, { taille: 9, gras }); pg.y -= 14; };
+    col(["Date", "Durée", "Intervenant (identifiant)", "Prestation", "Payé"], true);
+    liste.forEach(l => col([jj(l.date_prestation || l.date), duree(l.duree_min), l.intervenant?.nom ? `${l.intervenant.nom} (${l.intervenant.code || ""})` : "",
+      nomPrestation(l.rubrique_id), eur(l.montant_c)]));
+    pg.texte(`Total payé à ce prestataire : ${eur(liste.reduce((s, l) => s + (l.montant_c || 0), 0))}`, { taille: 9 });
+  }
+  if (!lignes.length) pg.texte("Aucune prestation ouvrant droit sur cette période.");
+  pg.espace(8); pg.trait(); pg.espace(4);
+  pg.texte(`Total ouvrant droit au crédit d'impôt : ${eur(a?.total_eligible_c || 0)}`, { gras: true, taille: 12 });
+  if (!mois) {
+    const credit = Math.round(Math.min(a?.total_eligible_c || 0, plafondC) * pct / 100);
+    pg.texte(`Crédit d'impôt estimé : ${eur(credit)} (${pct} %, selon votre situation et dans la limite des plafonds)`, { gras: true });
+    pg.espace(4);
+    pg.texte("Comment déclarer : reportez le total ouvrant droit au crédit d'impôt dans votre déclaration de revenus de l'année suivante, case 7DB (« Emploi d'un salarié à domicile ou services à la personne »). Déclaration en ligne : rien à envoyer, conservez cette attestation et vos factures ; elles vous seront demandées en cas de contrôle. Déclaration papier : joignez cette attestation.", { taille: 9 });
+  } else pg.texte("Attestation mensuelle : à conserver. Pour votre déclaration de revenus, utilisez l'attestation annuelle (case 7DB).", { taille: 9 });
+  pg.espace(6);
+  pg.texte("Attestation établie par Cleaneroo au nom et pour le compte des prestataires, dans le cadre de leur mandat de facturation. Sommes réglées en ligne par carte bancaire, aucun paiement en espèces.", { taille: 8, couleur: [0.4, 0.5, 0.5] });
   return doc.save();
 }
 
