@@ -164,7 +164,7 @@ section.bloc { padding: 56px 0; }
 .pied a { color: #fff; opacity: .9; }
 .stores { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 18px; }
 .badge-store { display: inline-flex; align-items: center; gap: 10px; padding: 8px 16px 8px 12px; border-radius: 12px; background: #0d2a2d; border: 1px solid rgba(255,255,255,.35); color: #fff; line-height: 1.15; }
-.badge-store small { display: block; font-size: 11px; opacity: .85; }
+.badge-store small { display: block; font-size: 12px; opacity: .85; }
 .badge-store b { display: block; font-size: 18px; }
 
 /* ---------------------------------------------------------------- Formulaires (parcours de réservation) */
@@ -430,7 +430,7 @@ h3 { font-size: 18px; font-weight: 700; letter-spacing: -.01em; }
 .heros p.sous { font-size: clamp(16px, 1.5vw, 18.5px); line-height: 1.65; color: rgba(255,255,255,.82); max-width: 560px; opacity: 1; }
 .express { margin: 28px 0 18px; padding: 10px; border-radius: 22px; background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.20);
   box-shadow: 0 30px 60px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.18); }
-.express label { font-size: 11px; letter-spacing: .08em; color: rgba(255,255,255,.8); }
+.express label { font-size: 12px; letter-spacing: .08em; color: rgba(255,255,255,.8); }
 .express select, .express input { border-radius: 14px; box-shadow: inset 0 0 0 1px rgba(8,38,42,.06); }
 .express .bouton { background: var(--degrade-corail); min-height: 52px; padding: 0 24px; white-space: nowrap; }
 .express .bouton:hover { filter: brightness(1.06); }
@@ -576,7 +576,7 @@ label.champ input:focus, label.champ select:focus, label.champ textarea:focus, i
   .heros .grille { grid-template-columns: 1fr; }
   .scene { margin-top: 18px; }
   .surtitre-heros { font-size: 12px; }
-  .notif b { font-size: 13px; } .notif small { font-size: 11.5px; }
+  .notif b { font-size: 13px; } .notif small { font-size: 12px; }
   .notif.n2 { top: 52%; }
 }
 
@@ -834,7 +834,7 @@ a.ligne-compte:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba
 .bouton.petit { min-height: 42px; padding: 0 16px; font-size: 14px; }
 .bouton.petit svg { width: 18px; height: 18px; }
 .agenda-grille { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
-.agenda-grille .jour-sem { text-align: center; font-size: 11px; font-weight: 800; letter-spacing: .06em; color: var(--texte3); text-transform: uppercase; padding: 4px 0 6px; }
+.agenda-grille .jour-sem { text-align: center; font-size: 12px; font-weight: 800; letter-spacing: .06em; color: var(--texte3); text-transform: uppercase; padding: 4px 0 6px; }
 .agenda-grille .jour { position: relative; min-height: 76px; border-radius: 12px; border: 1px solid transparent; background: var(--creux); padding: 6px 7px; text-align: left; font: inherit; color: var(--texte); cursor: pointer; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start; transition: background .15s, border-color .15s; }
 .agenda-grille .jour:hover { border-color: color-mix(in srgb, var(--turquoise) 45%, transparent); }
 .agenda-grille .jour.hors { background: none; cursor: default; }
@@ -851,7 +851,7 @@ a.ligne-compte:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba
 .agenda-grille .badges { position: absolute; top: 6px; right: 6px; display: flex; gap: 3px; }
 .b-menage { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; background: var(--succes); color: #fff; font-style: normal; }
 .b-menage svg { width: 13px; height: 13px; }
-.b-plus { font-style: normal; font-size: 11px; font-weight: 800; color: var(--texte2); background: var(--surface); border-radius: 8px; padding: 1px 5px; }
+.b-plus { font-style: normal; font-size: 12px; font-weight: 800; color: var(--texte2); background: var(--surface); border-radius: 8px; padding: 1px 5px; }
 .agenda-legende { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 12px; }
 .agenda-legende span { display: inline-flex; align-items: center; gap: 6px; }
 .barre-leg { display: inline-block; width: 18px; height: 8px; border-radius: 4px; background: var(--c); }
@@ -875,9 +875,9 @@ a.ligne-compte:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba
 .liste-jour:first-child { border-top: 0; }
 .liste-date { flex: none; width: 54px; text-align: center; border-radius: 14px; background: var(--creux); padding: 6px 0; align-self: flex-start; }
 .liste-date b { display: block; font-size: 22px; line-height: 1.1; }
-.liste-date span { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--texte3); }
+.liste-date span { font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--texte3); }
 .liste-evts { flex: 1; min-width: 0; }
-.liste-date i { display: block; font-style: normal; font-size: 11px; font-weight: 600; color: var(--texte2); }
+.liste-date i { display: block; font-style: normal; font-size: 12px; font-weight: 600; color: var(--texte2); }
 .agenda-titre-liste { font-size: 18px; font-weight: 800; }
 .form-sejour { margin: 0 0 16px; padding: 16px; border-radius: var(--rayon); border: 1px solid color-mix(in srgb, var(--turquoise) 40%, transparent); background: color-mix(in srgb, var(--turquoise) 6%, var(--surface)); }
 .deux-champs { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
@@ -1053,7 +1053,7 @@ body { background: var(--fond); }
 .puce-compte:hover { border-color: color-mix(in srgb, var(--marque) 45%, transparent); box-shadow: var(--ombre); }
 .puce-compte .avatar { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--degrade); color: #fff; font-weight: 800; font-size: 15px; }
 .puce-compte .qui b { display: block; font-size: 14px; line-height: 1.15; max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.puce-compte .qui small { display: block; font-size: 11.5px; color: var(--texte3); line-height: 1.2; }
+.puce-compte .qui small { display: block; font-size: 12px; color: var(--texte3); line-height: 1.2; }
 .rappel-entete { background: none; border: 1px solid var(--separateur); color: var(--texte); box-shadow: none; min-height: 40px; padding: 0 11px; }
 .rappel-entete span { display: none; }
 .rappel-entete .ico { margin: 0; }
@@ -1127,7 +1127,7 @@ body.sans-defilement { overflow: hidden; }
   border: 1px solid var(--separateur); box-shadow: var(--ombre-forte); max-width: 600px; }
 .recherche-heros label { display: flex; flex-direction: column; gap: 4px; padding: 6px 10px; border-radius: 12px; margin: 0; }
 .recherche-heros label:focus-within { background: var(--creux); }
-.recherche-heros label span { font-size: 11.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--texte3); }
+.recherche-heros label span { font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--texte3); }
 .recherche-heros select, .recherche-heros input { border: 0; background: none; padding: 2px 0; font: inherit; font-size: 16px; font-weight: 600; color: var(--texte); outline: none; min-height: 30px; width: 100%; }
 .recherche-heros .bouton { min-height: 54px; border-radius: 14px; }
 .preuves { display: flex; flex-wrap: wrap; gap: 8px 22px; list-style: none; padding: 0; margin: 22px 0 0; color: var(--texte2); font-weight: 600; font-size: 14.5px; }
@@ -1498,7 +1498,7 @@ p.direct i { width: 8px; height: 8px; border-radius: 50%; background: #4FA82E; b
 .frise li::before { content: ""; position: absolute; top: 8px; left: -50%; right: 50%; height: 4px; background: var(--creux); border-radius: 2px; }
 .frise li:first-child::before { display: none; }
 .frise li span { position: relative; z-index: 1; width: 20px; height: 20px; border-radius: 50%; background: var(--surface); border: 3px solid var(--creux); }
-.frise li b { font-size: 11.5px; font-weight: 700; color: var(--texte3); line-height: 1.2; }
+.frise li b { font-size: 12px; font-weight: 700; color: var(--texte3); line-height: 1.2; }
 .frise li.fait::before, .frise li.actif::before { background: linear-gradient(90deg, var(--t2), var(--t)); }
 .frise li.fait span { background: var(--t); border-color: var(--t); }
 .frise li.actif span { border-color: var(--t); box-shadow: 0 0 0 5px color-mix(in srgb, var(--t) 22%, transparent); animation: etape-active 1.8s ease-in-out infinite; }
@@ -1541,7 +1541,7 @@ p.direct i { width: 8px; height: 8px; border-radius: 50%; background: #4FA82E; b
 
 /* Étapes de location : supplément en euros, durée en petit dessous */
 .case .info b { display: block; color: var(--texte); font-weight: 800; text-align: right; }
-.case .info small { display: block; font-size: 11.5px; color: var(--texte3); text-align: right; }
+.case .info small { display: block; font-size: 12px; color: var(--texte3); text-align: right; }
 
 /* ================================================================================================
    Contrôle de fin de mission, pièce par pièce (controle-ecran.js)
@@ -1581,7 +1581,7 @@ details.piece.complete .pastille-piece { background: #4FA82E; border-color: #4FA
 .ia-ecart .ico, .ia-erreur .ico { color: #E5603A; }
 .ia-erreur { background: var(--creux); }
 .ia-cours { padding: 0; }
-.gravite { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 800; margin-right: 4px; }
+.gravite { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 800; margin-right: 4px; }
 .g-faible { background: var(--creux); color: var(--texte2); } .g-moyenne { background: #FFF2CF; color: #8A5916; } .g-forte { background: #FFE6DC; color: #B4502E; }
 .justif { margin-top: 10px; display: grid; gap: 8px; }
 .justif textarea { width: 100%; }
@@ -1605,7 +1605,7 @@ details.piece.complete .pastille-piece { background: #4FA82E; border-color: #4FA
 .formule.choisie::after { content: "✓"; position: absolute; top: 12px; right: 14px; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; background: var(--marque); color: #fff; font-weight: 800; font-size: 13px; }
 .formule.conseillee { padding-top: 38px; }
 .sous-formule { font-size: 12.5px; font-weight: 700; color: var(--marque); }
-.badge-formule { position: absolute; top: 12px; left: 14px; padding: 3px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 800; color: #fff; background: linear-gradient(120deg, #0DC88D, #04BEE5); }
+.badge-formule { position: absolute; top: 12px; left: 14px; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 800; color: #fff; background: linear-gradient(120deg, #0DC88D, #04BEE5); }
 .nom-formule { font-size: 18px; }
 .prix-formule { font-size: 26px; font-weight: 800; letter-spacing: -.03em; background: linear-gradient(120deg, #0AA88F, #04BEE5); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .remise-formule { font-size: 12.5px; color: var(--texte3); font-weight: 700; }
@@ -1931,7 +1931,7 @@ body.avec-decor main, body.avec-decor #vue, body.avec-decor footer { position: r
   .tuiles-chiffres.tuiles-conciergerie { grid-template-columns: repeat(3, 1fr); gap: 8px; }
   .tuiles-conciergerie .tuile-chiffre { padding: 10px 6px; }
   .tuiles-conciergerie .tuile-chiffre b { font-size: 22px; }
-  .tuiles-conciergerie .tuile-chiffre span { font-size: 11.5px; line-height: 1.25; display: block; }
+  .tuiles-conciergerie .tuile-chiffre span { font-size: 12px; line-height: 1.25; display: block; }
 }
 /* Logement choisi à l'étape 1, rappelé à l'étape 2 (13 novembre 2026) */
 .logement-choisi { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin: 12px 0 0; padding: 10px 14px; border-radius: 14px;
@@ -2070,7 +2070,7 @@ body.avec-decor main, body.avec-decor #vue, body.avec-decor footer { position: r
 .ap-nav button:hover { background: color-mix(in srgb, var(--primaire) 10%, var(--surface)); transform: scale(1.05); }
 .ap-grille { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 5px; }
 .ap-grille.entete { margin-bottom: 4px; }
-.ap-grille.entete span { text-align: center; font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--texte3); }
+.ap-grille.entete span { text-align: center; font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--texte3); }
 .ap-jour { position: relative; min-height: 70px; border: 1px solid transparent; border-radius: 13px; background: var(--creux); padding: 6px; font: inherit; color: var(--texte);
   display: flex; flex-direction: column; align-items: flex-start; gap: 4px; cursor: pointer; transition: background .15s, border-color .15s, transform .15s; }
 .ap-jour:hover { border-color: color-mix(in srgb, var(--primaire) 40%, transparent); transform: translateY(-1px); }
@@ -2081,7 +2081,7 @@ body.avec-decor main, body.avec-decor #vue, body.avec-decor footer { position: r
 .ap-jour.occupe { background: color-mix(in srgb, var(--primaire) 9%, var(--surface)); }
 .ap-jour.choisi { border-color: var(--primaire); box-shadow: 0 4px 14px rgba(14, 59, 64, .14); }
 .ap-pastilles { display: flex; flex-wrap: wrap; gap: 3px; align-items: center; }
-.ap-pastilles em { font-style: normal; font-size: 11px; font-weight: 800; color: var(--texte2); }
+.ap-pastilles em { font-style: normal; font-size: 12px; font-weight: 800; color: var(--texte2); }
 .agenda-particulier .b-presta { box-shadow: 0 0 0 2px var(--surface), 0 0 0 3.5px var(--c, transparent); }
 .ap-legende { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 12px; font-size: 13px; }
 .ap-legende span { display: inline-flex; align-items: center; gap: 6px; }
@@ -2500,3 +2500,97 @@ body.mode-cleaneur .bascule-mini { background: rgba(255,255,255,.08); color: #ff
   background: var(--surface); font-weight: 700; font-size: 15px; transition: background .15s, border-color .15s, color .15s; }
 .badge-case input:checked + span { background: var(--primaire); border-color: var(--primaire); color: #fff; }
 .badge-case input:focus-visible + span { outline: 3px solid var(--primaire); outline-offset: 2px; }
+
+/* ================================================================================================
+   Lisibilité et charte (22/11/2026, audit graphique) : contrastes ≥ 4,5:1 avec les couleurs de la charte
+   (design/logo-officiel/CHARTE.md). Sur les dégradés du logo, le texte est à l'ENCRE du logo (#231F20) :
+   7,4:1 sur #04BEE5, 7,5:1 sur #0DC88D, 8,6:1 sur #1AD934 (le blanc n'y dépassait pas 2,2:1).
+   ================================================================================================ */
+:root { --encre-logo: #231F20; }
+
+/* Boutons et pastilles sur dégradé : texte à l'encre du logo */
+.bouton:not(.secondaire):not(.danger):not(.clair),
+.bouton.corail, .nav a.bouton, .express .bouton, .rappel-mobile .bouton,
+.entete .nav .nav-compte .bouton, .entete .nav .nav-compte .bouton:hover,
+.recherche-heros .bouton, .tableau-entete .bouton,
+.comparaison .entete-comp span:nth-child(3), .entete-pro,
+.puce-compte .avatar, .tel-avatar, .avatar-favori, .avatar,
+.agenda-grille .jour.aujourdhui .num, .ap-jour.auj .num,
+.deroule-mission li::before, .pin-cleaneur b, .etape .pastille b,
+.credit, .credit h3, .credit p { color: var(--encre-logo); }
+.credit p { opacity: 1; }
+.bouton:not(.secondaire):not(.danger):not(.clair) svg, .entete-pro svg { color: inherit; }
+/* Un seul dégradé pour les boutons du client : celui du mode client (bleu → vert d'eau du logo) */
+.recherche-heros .bouton, .tableau-entete .bouton { background: var(--degrade); }
+/* Petites pastilles de choix sur bleu (#0596C4 : 3,4:1 avec le blanc) */
+.rappel-mobile .choisi, .rappel-mobile [aria-pressed="true"], .creneau.choisi { color: var(--encre-logo); }
+
+/* Liens et textes colorés par prestation : teinte plus foncée pour le texte (comme le prévoit la charte) */
+[data-teinte="turquoise"] { --tt: #087A69; }
+[data-teinte="corail"]    { --tt: #A64626; }
+[data-teinte="lilas"]     { --tt: #1E7A5E; --tc: #DFF8EC; }
+[data-teinte="soleil"]    { --tt: #8A5916; }
+[data-teinte="ciel"]      { --tt: #0A6F93; }
+[data-teinte="menthe"]    { --tt: #2E6B1F; }
+/* « Rose » n'est pas dans la charte : remplacé par le corail */
+[data-teinte="rose"]      { --t: #E5603A; --t2: #FF9A6B; --tc: #FFE6DC; --tt: #A64626; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) [data-teinte] { --tt: var(--t); }
+  :root:not([data-theme="light"]) [data-teinte="ciel"] { --tt: #5DB4FF; }
+  :root:not([data-theme="light"]) [data-teinte="rose"] { --tc: color-mix(in srgb, #E5603A 22%, #142224); }
+}
+body.mode-cleaneur [data-teinte] { --tt: var(--t); }
+body.mode-cleaneur [data-teinte="ciel"] { --tt: #5DB4FF; }
+.carte[data-teinte] .aller, .flottant-2 b, .pastille-etat, .rebours, .frise li.actif b { color: var(--tt, var(--t)); }
+.offre-pro .phrase-offre { color: #087A69; }
+
+/* Violets hors charte remplacés par les couleurs du logo */
+:root { --pastel-3: #E1F7FC; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --pastel-3: #10303A; } }
+.etoile-decor.lilas { background: linear-gradient(135deg, #7FE3B0, #0DC88D); }
+.b-presta.etat-SUR_PLACE, .b-presta.etat-EN_COURS, .rot-etape.menage.etat-SUR_PLACE, .rot-etape.menage.etat-EN_COURS { background: #0A6F93; }
+.etat-texte.etat-EN_COURS, .etat-texte.etat-SUR_PLACE { color: #0A6F93; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .etat-texte.etat-EN_COURS, :root:not([data-theme="light"]) .etat-texte.etat-SUR_PLACE { color: #5CCCF0; } }
+
+/* Lancement annoncé une seule fois : le bandeau du haut (avec le compte à rebours) suffit */
+.lancement ~ * .heros-2026 .pastille-lancement, body:has(.lancement) .heros-2026 .pastille-lancement { display: none; }
+
+/* Téléphone : libellés entiers dans la barre des espaces (« Conciergerie » n'est plus coupé) */
+@media (max-width: 480px) {
+  .barre-espaces .onglets-compte a { padding: 6px 1px; font-size: 12px; letter-spacing: -.02em; }
+  .barre-espaces .onglets-compte a span { overflow: visible; text-overflow: clip; }
+}
+/* Téléphone : plus de bande vide sous le pied de page (la place de la barre « Être rappelé » est prise dans le pied) */
+@media (max-width: 860px) {
+  body:not(.sans-rappel) { padding-bottom: 0; }
+  body:not(.sans-rappel) .pied { padding-bottom: calc(56px + 68px + env(safe-area-inset-bottom)); }
+}
+
+/* Plus de bande vide sous le pied de page : l'espace réservé à l'ancienne pastille flottante (retirée) n'a plus lieu d'être */
+body::after { display: none; }
+
+/* Textes encore trop clairs, repérés page par page (22/11/2026) */
+/* Gris tertiaire : 4,5:1 au lieu de 4,49:1 sur le fond */
+:root { --texte3: #566C6F; }
+/* Textes couleur de marque : la teinte foncée prévue pour les textes (#0A6F93 côté client) au lieu du bleu vif #0596C4 (3,4:1) */
+.entete .nav a.actif, .lancement a, .tel-eta b, .titre-section .surtitre, .espace-carte .aller, .carte.prestation .aller,
+.controle-tete span, .sous-formule, .formule li::before, .case.incluse .info, .bloc-video .surtitre-video { color: var(--primaire); }
+.carte[data-teinte] .aller { color: var(--tt, var(--t)); }
+.etape .surtitre { color: var(--corail-texte); }
+/* En-têtes des espaces Entreprise, Conciergerie, Hôtels : texte à l'encre du logo sur le dégradé */
+.entete-pro :is(h1, h2, h3, p, span, small, b, strong, summary, label, li, .petit, .surtitre) { color: var(--encre-logo); }
+/* Pastilles et badges sur dégradé (« La plus choisie », « Badge Pro », compteur « À faire », « Archiver ») */
+.badge-formule, .a-faire-titre em, div.notif-fond, div.notif-fond * { color: var(--encre-logo); }
+div.notif-fond { background: linear-gradient(90deg, #0DC88D, #1AD934); }
+.offre-pro .badge-formule { color: #fff; }
+.entete-pro details.societe summary { color: var(--encre-logo); }
+body.mode-cleaneur .guide-video .lien-bouton { color: var(--texte2); }
+/* Chiffres clés : couleur pleine et foncée au lieu d'un dégradé clair (2 à 3:1) */
+.bandeau-chiffres [data-teinte] b { background: none; color: var(--tt, var(--texte)); -webkit-text-fill-color: currentColor; }
+/* Titre du héros : dégradé du logo dans ses teintes foncées pour rester lisible (≥ 4,8:1) en thème clair */
+@media not (prefers-color-scheme: dark) {
+  body:not(.mode-cleaneur) .heros-2026 h1 .degrade-texte { background-image: linear-gradient(100deg, #0A6F93, #087A69 55%, #1E7A5E); }
+}
+/* Onglets des espaces : un libellé long (« Hôtels et campings ») passe sur deux lignes au lieu de déborder sur l'onglet voisin */
+.onglets-compte a { text-align: center; }
+.onglets-compte a span { white-space: normal; line-height: 1.2; }
