@@ -2605,3 +2605,29 @@ body.mode-cleaneur .guide-video .lien-bouton { color: var(--texte2); }
 /* Onglets des espaces : un libellé long (« Hôtels et campings ») passe sur deux lignes au lieu de déborder sur l'onglet voisin */
 .onglets-compte a { text-align: center; }
 .onglets-compte a span { white-space: normal; line-height: 1.2; }
+
+/* Inscription Cleaneur (22/11/2026) : civilité */
+.civilite { border: 0; padding: 0; margin: 4px 0 10px; display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: center; }
+.civilite legend { font-weight: 600; font-size: 15px; margin-bottom: 4px; width: 100%; }
+.civilite .case { margin: 0; }
+
+/* Refonte de l'espace Cleaneur (22/11/2026) : segments de l'onglet Missions, comptes rendus */
+.segments-missions { margin: 0 0 14px; }
+.segments-missions button { font-size: 14px; padding: 0 8px; }
+[data-segment][hidden] { display: none !important; }
+.compte-rendu { margin-bottom: 10px; }
+.compte-rendu > summary { list-style: none; cursor: pointer; }
+.compte-rendu > summary::-webkit-details-marker { display: none; }
+.haut-cr { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.chiffres-cr, .montant-cr, .note-cr { margin: 4px 0 0; }
+.note-cr { color: var(--accent, #A64626); }
+.lien-cr { display: inline-block; margin-top: 6px; color: var(--primaire); font-weight: 600; font-size: 14px; }
+.compte-rendu[open] .lien-cr { display: none; }
+.etapes-cr { margin: 10px 0; padding-left: 18px; }
+.piece-cr { margin: 10px 0; }
+.photos-cr { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+.photos-cr figure { margin: 0; text-align: center; }
+.photos-cr img { width: 120px; height: 120px; object-fit: cover; border-radius: 10px; background: var(--creux); }
+.photos-cr figcaption { font-size: 12px; color: var(--texte2); }
+.prochaine-mission, .vide-jour { margin: 10px 0; }
+.tampon.rouge { background: color-mix(in srgb, var(--erreur, #C0392B) 14%, transparent); color: var(--erreur, #C0392B); }

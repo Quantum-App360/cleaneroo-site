@@ -5,11 +5,13 @@ import { tr, traduire } from "./langue.js";
 
 const GROUPES = {
   // Harmonisation (17 novembre 2026) : mêmes noms et même ordre dans tous les espaces — Accueil · Planning · Biens · Prestations · Équipe · Rapports · Compte.
-  cleaneur: { onglets: [["societe", "Ma société"], ["aujourdhui", "Accueil"], ["missions", "Missions"], ["planning", "Planning"], ["dossier", "Mon dossier"], ["activite", "Activité"]],
-    defaut: "aujourdhui", details: "dossier",
-    regles: [["#espace-societe", "societe"], ["#espace-salarie", "aujourdhui"], ["#activer-societe", "dossier"], ["#selfie-jour, .tableau-cleaneur, #noter-clients", "aujourdhui"], ["#avis-recus, #niveau-cleaneur, #mon-activite, #formules-cleaneur, [data-factures], .parrainage, .bloc-parrainage", "activite"],
-      ["#ce-qui-manque, #formations-cleaneur, #bloc-invitation, #comment-cleaneur", "dossier"], ["#periodes-fermees, #creneaux-cleaneur", "planning"],
-      ["#missions-disponibles, #missions-incompatibles", "missions"]] },
+  // Refonte du 22/11/2026 : quatre onglets, une question chacun — Aujourd'hui (que faire maintenant ?) · Missions (Disponibles, À venir,
+  // Terminées = comptes rendus) · Gains (combien je gagne ?) · Profil (dossier, disponibilités, formations). « Ma société » en tête pour une société.
+  cleaneur: { onglets: [["societe", "Ma société"], ["aujourdhui", "Aujourd'hui"], ["missions", "Missions"], ["gains", "Gains"], ["profil", "Profil"]],
+    defaut: "aujourdhui", details: "profil",
+    regles: [["#espace-societe", "societe"], ["#espace-salarie", "aujourdhui"], ["#cleaneur-aujourdhui", "aujourdhui"], ["#cleaneur-missions", "missions"],
+      ["#cleaneur-gains", "gains"], ["#cleaneur-profil", "profil"], ["#activer-societe", "profil"],
+      ["#mon-activite, #formules-cleaneur, [data-factures], .parrainage, .bloc-parrainage", "gains"], ["#bloc-invitation, #comment-cleaneur", "profil"]] },
   // Particulier (13 novembre 2026) : le compte en trois rubriques (le suivi est dans « Mon suivi »).
   particulier: { onglets: [["profil", "Compte"], ["factures", "Factures"], ["parrainage", "Parrainage"]],
     defaut: "profil", details: null,

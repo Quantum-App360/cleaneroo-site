@@ -64,3 +64,16 @@ Le logo officiel et les prix ne sont pas modifiés.
 - Chaque versement retient les moins-values en cours (pénalités, litiges), au plus 50 % du versement.
 - Fichiers : `outils/base-litiges-versements.sql`, fonction `paiement` (action « litige »), `activite.js`, `missions.js`, `Activite.kt`, `EspacesCompte.kt`.
 - À faire relire par l'expert-comptable : partage de la commission en cas de remboursement.
+
+## Inscription Cleaneur et refonte de l'espace Cleaneur (22 novembre 2026, soir — retour de Vincent)
+- Mode Cleaneur › « Créer un compte » : plus les statuts client. Deux formulaires : **Cleaneur indépendant** (civilité, prénom, nom, téléphone, e-mail)
+  et **Société de nettoyage** (raison sociale, SIRET/SIREN, civilité, prénom, nom, qualité dans la société, téléphone, e-mail, engagement de formation).
+  Bouton « Valider ma pré-inscription », puis arrivée sur « Profil › Mon dossier » pour envoyer les documents.
+- Espace Cleaneur en 4 onglets (une question chacun) : **Aujourd'hui** (prochaine action, alertes seulement si besoin, disponible pour une urgence) ·
+  **Missions** (Disponibles · À venir avec Ma journée · Terminées = **comptes rendus** : durée réelle, pièces, photos avant/après, signature,
+  validation, avis, montant et versement, bon PDF) · **Gains** (versement, niveau, avis, activité, factures, formule) · **Profil** (dossier,
+  profil, disponibilités, formations, aide). Appli : mêmes onglets dans la barre du bas (+ Messages).
+- Base : `outils/base-inscription-cleaneur.sql` (appliqué) : `profils.civilite`, `profils.qualite`, `nouveau_profil` (téléphone, société Cleaneur),
+  fonction `mes_comptes_rendus`.
+- Fichiers : site `compte.js`, `donnees.js`, `missions.js`, `sous-onglets.js`, `langue.js`, `style.css` ; appli `EcranCompte.kt`, `Compte.kt`,
+  `EspacesCompte.kt`, `EspaceCleaneurReel.kt`, `SousOnglets.kt`, `App.kt`, `ComptesRendus.kt` (nouveau), `Traductions21.kt`.

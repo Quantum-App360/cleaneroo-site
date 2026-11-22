@@ -148,36 +148,38 @@ function blocJournee(miennes) {
       : `<p class="petit muet" style="margin:8px 0 0">${tr("Aucune mission sur cette période.")}</p>`}
     ${liste.length ? `<p class="petit" style="margin:8px 0 0">${tr("Total estimé :")} <b>${euros(liste.reduce((s, m) => s + (m.estimation_c || 0), 0))}</b> · ${duree(liste.reduce((s, m) => s + (m.duree_min || 0), 0))}</p>` : ""}</div>`;
 }
-export function tableauDeBord(p, docs, miennes, dispo, t) {
+/** Refonte du 22/11/2026 : chaque partie dans son onglet — vue « aujourdhui » (urgence, recherche, tuiles), « gains » (versement, niveau,
+ *  avis, offre) ou « profil » (profil à compléter). Même découpage dans l'appli (TableauDeBordCleaneur). */
+export function tableauDeBord(p, docs, miennes, dispo, t, vue = "aujourdhui", recherche = true) {
   const etapes = preparationCleaneur(p, docs), faites = etapes.filter(e => e[1]).length, prochaine = etapes.find(e => !e[1]);
   const commission = (t?.formule === "pro" ? REGLES.COMMISSION_PRO_PB : REGLES.COMMISSION_GRATUIT_PB) / 100;
   const offre = new Date() <= finOffreLancement() || (t?.pro_offert_jusqu && new Date(t.pro_offert_jusqu) > new Date());
   const dispoJusqu = t?.dispo_urgence_jusqu ? new Date(t.dispo_urgence_jusqu) : null;
   const conforme = p.dossier === "VALIDE";
+  const auj = vue === "aujourdhui", gains = vue === "gains";
   return `<div class="tableau-cleaneur">
-    <p class="petit muet" style="margin:0">${esc(dateLongue(new Date()))}</p>
-    <p style="margin:2px 0 8px">Voici votre activité du jour.</p>
-    <p class="petit" style="margin:0 0 8px">💶 ${tr("Prochain versement :")} <b>${esc(dateLongue(dateVersement()))}</b> · ${tr("chaque vendredi, pour les missions validées jusqu'au mercredi minuit.")}</p>
+    ${auj ? `<p class="petit muet" style="margin:0 0 8px">${esc(dateLongue(new Date()))}</p>` : ""}
+    ${gains ? `<p class="petit" style="margin:0 0 8px">💶 ${tr("Prochain versement :")} <b>${esc(dateLongue(dateVersement()))}</b> · ${tr("chaque vendredi, pour les missions validées jusqu'au mercredi minuit.")}</p>
     <span class="badge-niveau">★ ${tr("Niveau")} ${tr(niveauDe(t?.missions_terminees || 0))} · ${tr("commission")} ${commission} %</span>
     ${t?.nb_avis ? `<p class="petit" style="margin:0">⭐ ${String(t.note_moyenne).replace(".", ",")} / 5 · ${t.nb_avis} ${tr(t.nb_avis > 1 ? "avis" : "avis")}${t.pourboires_c ? ` · ${tr("pourboires :")} ${euros(t.pourboires_c)}` : ""}</p>` : ""}
-    ${p.role === "admin" ? "" : `<details class="carte profil-a-completer"${faites < etapes.length ? "" : ""}><summary><span>👤 <b>${faites === etapes.length ? tr("Profil complet") : tr("Complétez votre profil")}</b></span><b class="compte">${faites}/${etapes.length}</b></summary>
+    ` : ""}
+    ${p.role === "admin" || vue !== "profil" ? "" : `<details class="carte profil-a-completer"${faites < etapes.length ? "" : ""}><summary><span>👤 <b>${faites === etapes.length ? tr("Profil complet") : tr("Complétez votre profil")}</b></span><b class="compte">${faites}/${etapes.length}</b></summary>
       <div class="jauge"><span style="width:${Math.round(faites / etapes.length * 100)}%"></span></div>
       ${prochaine ? `<p class="petit" style="margin:4px 0 0">${tr("Prochaine étape :")} ${tr(prochaine[0])}</p>` : ""}
       <ul class="liste-preparation" style="margin-top:10px">${etapes.map(([e, ok]) => `<li class="${ok ? "fait" : ""}"><span class="coche" aria-hidden="true">${ok ? "✓" : ""}</span><span>${e}</span></li>`).join("")}</ul></details>`}
-    ${offre ? `<a class="carte ligne-compte offre-tdb" href="#formules-cleaneur" data-aller="formules-cleaneur">🎁
+    ${offre && gains ? `<a class="carte ligne-compte offre-tdb" href="#formules-cleaneur" data-aller="formules-cleaneur">🎁
       <div class="corps"><b>${REGLES.OFFRE_LANCEMENT_MOIS} ${tr("mois Cleaneur Pro offerts")}</b><p class="petit" style="margin:2px 0 0">${tr("Pour tous les Cleaneurs inscrits jusqu'au")} ${esc(dateLongue(finOffreLancement()))} · ${tr("commission de")} ${REGLES.COMMISSION_PRO_PB / 100} % ${tr("au lieu de")} ${REGLES.COMMISSION_GRATUIT_PB / 100} %</p></div><span class="aller" aria-hidden="true">›</span></a>` : ""}
-    <label class="carte ligne-compte dispo-urgence"><span class="point-dispo${dispoJusqu ? " actif" : ""}"></span>
+    ${auj ? `<label class="carte ligne-compte dispo-urgence"><span class="point-dispo${dispoJusqu ? " actif" : ""}"></span>
       <div class="corps"><b>Disponible pour une urgence ?</b><p class="petit" style="margin:2px 0 0">${dispoJusqu
         ? `${tr("Vous recevez en priorité les missions urgentes jusqu'à")} ${heure(dispoJusqu.getHours(), dispoJusqu.getMinutes())}`
         : `${tr("Recevez en priorité les missions du jour pendant")} ${REGLES.URGENCE_DISPO_H} h`}</p></div>
       <input type="checkbox" class="interrupteur" data-dispo-urgence ${dispoJusqu ? "checked" : ""}></label>
-    <a class="recherche-mission" href="#missions-disponibles" data-aller="missions-disponibles">🔎
-      <div><b>Rechercher une mission</b><span>${tr("Les plus proches, celles qui comblent vos trous de planning")}</span></div><span aria-hidden="true">›</span></a>
+    ${recherche ? `<a class="recherche-mission" href="#missions-disponibles" data-aller="missions-disponibles">🔎
+      <div><b>Rechercher une mission</b><span>${tr("Les plus proches, celles qui comblent vos trous de planning")}</span></div><span aria-hidden="true">›</span></a>` : ""}
     <div class="tuiles-tdb">
       <a class="tuile-tdb" href="#missions-disponibles" data-aller="missions-disponibles"><b>${dispo.length}</b><span>${tr(dispo.length > 1 ? "missions disponibles" : "mission disponible")}</span></a>
       <a class="tuile-tdb${conforme ? " ok" : " alerte"}" href="#dossier" data-aller="dossier"><b>${conforme ? "✓" : "!"}</b><span>${tr(conforme ? "Dossier conforme" : "Dossier à compléter")}</span></a>
-    </div>
-    ${blocJournee(miennes)}</div>`;
+    </div>` : ""}</div>`;
 }
 function brancherTableau(boite, miennes, recharger) {
   boite.querySelectorAll("[data-aller]").forEach(a => a.onclick = e => {
@@ -185,6 +187,8 @@ function brancherTableau(boite, miennes, recharger) {
     if (!cible) return;
     e.preventDefault();
     if (cible.closest("details")) cible.closest("details").open = true;
+    const seg = cible.closest("[data-segment]")?.dataset.segment;
+    if (seg) choisirSegment(boite, seg);
     cible.scrollIntoView({ behavior: "smooth", block: "start" });
   });
   boite.querySelector("[data-dispo-urgence]")?.addEventListener("change", async e => { await dispoUrgence(e.target.checked).catch(() => null); recharger(); });
@@ -381,6 +385,65 @@ function blocSecteur(p, dispo) {
 }
 
 /** Remplit l'onglet Cleaneur : géolocalisation, aujourd'hui, prochaines missions, missions disponibles. */
+/* ------------------------------------------------------------------ Onglet Missions : Disponibles · À venir · Terminées (22/11/2026) */
+const CLE_SEGMENT = "cleaneroo-segment-missions";
+export function choisirSegment(boite, id) {
+  const boutons = [...boite.querySelectorAll("[data-segment-missions]")];
+  if (!boutons.some(b => b.dataset.segmentMissions === id)) id = boutons[0]?.dataset.segmentMissions;
+  boutons.forEach(b => { const oui = b.dataset.segmentMissions === id; b.classList.toggle("choisi", oui); b.setAttribute("aria-pressed", String(oui)); });
+  boite.querySelectorAll("[data-segment]").forEach(z => { z.hidden = z.dataset.segment !== id; });
+  try { localStorage.setItem(CLE_SEGMENT, id); } catch { /* rien */ }
+}
+function brancherSegments(boite, p, nbAVenir) {
+  let id = null; try { id = localStorage.getItem(CLE_SEGMENT); } catch { /* rien */ }
+  choisirSegment(boite, id || (nbAVenir || p.employeur_id ? "a_venir" : "disponibles"));
+  boite.querySelectorAll("[data-segment-missions]").forEach(b => b.onclick = () => choisirSegment(boite, b.dataset.segmentMissions));
+  boite.querySelectorAll("[data-segment-aller]").forEach(a => a.onclick = e => { e.preventDefault(); choisirSegment(boite, a.dataset.segmentAller);
+    document.querySelector('.sous-onglets [data-sous-onglet="missions"]')?.click(); });
+}
+
+/* ------------------------------------------------------------------ Comptes rendus des missions terminées (22/11/2026, comme ComptesRendus.kt) */
+const VERSEMENTS = { VERSE: "Versé · virement le vendredi", COMPTE_A_ACTIVER: "Activez vos versements (Gains)", ECHEC: "Versement à réessayer", RIEN: "Rien à verser" };
+const ETAPES_CR = [["en_route", "En route"], ["sur_place", "Arrivé sur place"], ["debut", "Début du ménage"], ["fin", "Fin du ménage"], ["depart", "Départ du logement"]];
+async function blocComptesRendus(z, salarie) {
+  if (!z) return;
+  z.innerHTML = `<h2 class="titre-section">🧾 ${tr("Mes comptes rendus")}</h2><p class="petit muet">${tr("Chargement…")}</p>`;
+  const { data, error } = await supabase.rpc("mes_comptes_rendus");
+  const l = error ? [] : (data || []);
+  const hm = iso => { const d = iso ? new Date(iso) : null; return d && !isNaN(d) ? heure(d.getHours(), d.getMinutes()) : ""; };
+  z.innerHTML = `<h2 class="titre-section">🧾 ${tr("Mes comptes rendus")}</h2>` + (l.length ? l.map(c => {
+    const e = c.etapes || {}, debut = e.debut ? new Date(e.debut) : null, fin = e.fin ? new Date(e.fin) : null;
+    const reelle = debut && fin && fin > debut ? Math.round((fin - debut) / 60000) : null;
+    const [etat, cl] = c.litige === "OUVERT" ? ["Réclamation en cours", " rouge"] : c.statut === "A_VALIDER" ? ["À valider par le client", ""] : ["Validée", " vert"];
+    return `<details class="carte compte-rendu" data-cr="${esc(c.reference)}"><summary>
+      <div class="haut-cr"><b>${esc(rubrique(c.rubrique_id)?.nom || c.rubrique_id)}</b><span class="tampon${cl}">${tr(etat)}</span></div>
+      <p class="petit" style="margin:2px 0">${c.creneau ? esc(dateLongue(new Date(c.creneau))) : ""} · ${esc(c.ville || "")} · ${tr("Client")} : ${esc(c.prenom || "")}</p>
+      <p class="petit chiffres-cr">⏱ ${duree(reelle || c.duree_min || 0)}${c.pieces ? ` · 🏠 ${c.pieces} ${tr(c.pieces > 1 ? "pièces" : "pièce")}` : ""}${c.photos ? ` · 📷 ${c.photos}` : ""}${c.signe ? ` · ✍️ ${tr("Signé")}` : ""}</p>
+      ${c.note ? `<p class="petit note-cr">${"★".repeat(c.note)}${"☆".repeat(5 - c.note)}${c.commentaire ? ` « ${esc(c.commentaire)} »` : ""}</p>` : ""}
+      ${salarie ? "" : `<p class="petit montant-cr"><b>${euros(c.versement_c || c.montant_c || 0)}</b>${c.pourboire_c ? ` + ${euros(c.pourboire_c)} ${tr("de pourboire")}` : ""}
+        <span class="muet"> · ${tr(VERSEMENTS[c.versement_statut] || (c.statut === "TERMINEE" ? "Versé 48 h après la fin" : "Après la validation"))}</span></p>`}
+      <span class="lien-cr">${tr("Voir le compte rendu")}</span></summary>
+      <div class="detail-cr"><ul class="petit etapes-cr">${ETAPES_CR.filter(([k]) => e[k]).map(([k, n]) => `<li>${tr(n)} : ${hm(e[k])}</li>`).join("")}</ul>
+        <div data-pieces-cr><p class="petit muet">${tr("Chargement…")}</p></div>${boutonBon(c.reference)}</div></details>`;
+  }).join("") : vide("Aucune mission terminée pour l'instant.", "Le compte rendu de chaque mission (photos, tâches, validation, avis) s'affichera ici."));
+  traduire(z);
+  brancherBons(z);
+  z.querySelectorAll("[data-cr]").forEach(d => d.addEventListener("toggle", async () => {
+    const zone = d.querySelector("[data-pieces-cr]");
+    if (!d.open || zone.dataset.charge) return;
+    zone.dataset.charge = "1";
+    const { data: pieces } = await supabase.from("controles_pieces").select("*").eq("reference", d.dataset.cr).order("ordre");
+    const lien = async chemin => chemin ? (await supabase.storage.from("photos-controles").createSignedUrl(chemin, 3600).catch(() => ({})))?.data?.signedUrl || "" : "";
+    const lignes = await Promise.all((pieces || []).map(async x => {
+      const t = x.taches || [], [av, ap] = await Promise.all([lien(x.photo_avant), lien(x.photo_apres)]);
+      return `<div class="piece-cr"><b>${esc(tr(x.nom))}</b> <span class="muet">· ${t.filter(y => y.fait).length}/${t.length} ${tr("tâches")}</span>
+        <div class="photos-cr">${[[av, "Avant"], [ap, "Après"]].filter(([u]) => u).map(([u, n]) => `<figure><img src="${esc(u)}" alt="${esc(tr(n))}" loading="lazy"><figcaption>${tr(n)}</figcaption></figure>`).join("")}</div>
+        ${x.justification ? `<p class="petit muet">« ${esc(x.justification)} »</p>` : ""}</div>`;
+    }));
+    zone.innerHTML = lignes.join("") || `<p class="petit muet">${tr("Aucune pièce enregistrée pour cette mission.")}</p>`;
+  }));
+}
+
 export async function brancherMissions(vue, p) {
   const boite = vue.querySelector("#missions-cleaneur");
   if (!boite) return;
@@ -397,36 +460,63 @@ export async function brancherMissions(vue, p) {
   const auj = new Date().toDateString();
   const duJour = miennes.filter(m => m.statut !== "CONFIRMEE" || (m.creneau && new Date(m.creneau).toDateString() === auj));
   const plusTard = miennes.filter(m => !duJour.includes(m));
+  // Refonte du 22/11/2026 : quatre parties rangées dans les onglets Aujourd'hui · Missions (Disponibles, À venir, Terminées) · Gains · Profil.
   boite.innerHTML = `
+  <div id="cleaneur-aujourdhui" class="cleaneur-partie">
     ${geo !== "granted" ? `<div class="carte teintee geoloc"><b>📍 Géolocalisation</b>
       <p class="petit" style="margin:4px 0 10px">${geo === "denied" ? "La géolocalisation est bloquée dans votre navigateur : autorisez-la dans les réglages du site (cadenas à gauche de l'adresse)."
         : "Elle sert à prévenir le client pendant votre trajet et à confirmer votre arrivée. Votre position n'est partagée que pendant le trajet."}</p>
       ${geo === "prompt" ? `<button type="button" class="bouton" id="autoriser-geoloc">Autoriser la géolocalisation</button>` : ""}</div>` : ""}
-    <div id="ce-qui-manque"></div>
     ${blocAvertissements(avert)}
-    ${blocPenalites(penalites)}
-    ${avert?.banni ? "" : blocSelfie(selfie)}
-    ${tableauDeBord(p, docs, miennes, dispo, tableau)}
+    ${avert?.banni || !miennes.length ? "" : blocSelfie(selfie)}
+    ${p.employeur_id ? "" : tableauDeBord(p, docs, miennes, dispo, tableau, "aujourdhui", !duJour.length)}
+    ${duJour.map((m, i) => (i === 0 ? `<h2 class="titre-section">▶ ${tr("Prochaine action")}</h2>` : i === 1 ? `<h2 class="titre-section">🕒 ${tr("Plus tard aujourd'hui")}</h2>` : "") + carteMission(m)).join("")}
+    ${!duJour.length && plusTard.length ? `<a class="carte ligne-compte prochaine-mission" href="#mes-missions-a-venir" data-segment-aller="a_venir">📅
+      <div class="corps"><b>${tr("Prochaine mission")}</b><p class="petit" style="margin:2px 0 0">${esc(rubrique(plusTard[0].rubrique_id)?.nom || "")} · ${plusTard[0].creneau ? esc(dateLongue(new Date(plusTard[0].creneau))) : ""} · ${esc(plusTard[0].ville)}</p></div><span aria-hidden="true">›</span></a>` : ""}
+    ${!duJour.length && !plusTard.length ? `<div class="carte vide-jour"><b>${tr("Aucune mission aujourd'hui")}</b><p class="petit" style="margin:4px 0 0">${tr("Les missions commencent le 1er janvier 2027. Elles s'afficheront ici, dans l'ordre de la journée.")}</p></div>` : ""}
+  </div>
+  <div id="cleaneur-missions" class="cleaneur-partie">
+    <div class="segments segments-missions">${[...(p.employeur_id ? [] : [["disponibles", `${tr("Disponibles")} (${dispo.length})`]]), ["a_venir", `${tr("À venir")} (${plusTard.length})`], ["terminees", tr("Terminées")]]
+      .map(([id, nom]) => `<button type="button" data-segment-missions="${id}">${nom}</button>`).join("")}</div>
+    <div data-segment="disponibles">
     ${blocSecteur(p, dispo)}
-    ${duJour.length ? `<h2 class="titre-section">${icone("termine", { tuile: true })}${tr("Missions du jour")}</h2>` : ""}
-    ${duJour.map(carteMission).join("")}
     ${miennes.length || dispo.length ? `<div class="carte-missions" id="carte-missions" role="img" aria-label="Carte des missions"></div>
       <p class="petit legende-carte"><span><i style="--c:#1F8A80"></i>Mes missions</span><span><i style="--c:#FA8C66"></i>Missions disponibles (zone approximative)</span></p>` : ""}
-    <h2 class="titre-section">${icone("calendrier", { tuile: true })}Mes prochaines missions</h2>
-    ${plusTard.length ? plusTard.map(carteMission).join("") : vide("Aucune mission pour l'instant.", "Prenez une mission ci-dessous : elle est à vous dès que vous la prenez.")}
-    <div id="noter-clients"></div>
-    <div id="avis-recus"></div>
-    <div id="niveau-cleaneur"></div>
-    <div id="formations-cleaneur"></div>
-    <div id="periodes-fermees"></div>
-    <div id="creneaux-cleaneur"></div>
 ${p.employeur_id ? "" : `    <h2 class="titre-section" id="missions-disponibles">${icone("position", { tuile: true })}Missions disponibles</h2>
     <p class="petit" style="margin-top:0">Missions en ligne pour les prestations que vous proposez et pour lesquelles vous êtes formé. Le premier Cleaneur qui la prend l'obtient.</p>
     <p class="petit" style="margin-top:0">${tr("Les plus proches et celles qui comblent vos trous de planning d'abord.")}</p>
     ${dispo.length ? dispo.map(carteDisponible).join("") : vide("Aucune mission disponible pour l'instant.", p.dossier === "VALIDE" || p.role === "admin" ? "" : "Votre dossier doit être validé pour voir et prendre des missions.")}
 `}    <div id="missions-incompatibles"></div>
+    </div>
+    <div data-segment="a_venir">
+    ${blocJournee(miennes)}
+    <h2 class="titre-section" id="mes-missions-a-venir">${icone("calendrier", { tuile: true })}${tr("Mes missions à venir")}</h2>
+    ${duJour.length ? `<p class="petit">${tr("Les missions du jour sont dans « Aujourd'hui ».")}</p>` : ""}
+    ${plusTard.length ? plusTard.map(carteMission).join("") : vide("Aucune mission pour l'instant.", p.employeur_id ? "" : "Prenez une mission dans « Disponibles » : elle est à vous dès que vous la prenez.")}
+    </div>
+    <div data-segment="terminees">
+    <div id="noter-clients"></div>
+    <div id="comptes-rendus"></div>
+    </div>
+  </div>
+  <div id="cleaneur-gains" class="cleaneur-partie">
+    ${p.employeur_id ? `<p class="petit">${tr("Votre rémunération est versée par votre employeur.")}</p>` : tableauDeBord(p, docs, miennes, dispo, tableau, "gains")}
+    ${blocPenalites(penalites)}
+    <div id="avis-recus"></div>
+    <div id="niveau-cleaneur"></div>
+  </div>
+  <div id="cleaneur-profil" class="cleaneur-partie">
+    ${p.employeur_id ? "" : tableauDeBord(p, docs, miennes, dispo, tableau, "profil")}
+    <div id="ce-qui-manque"></div>
+    <div id="formations-cleaneur"></div>
+    <details class="carte" id="mes-disponibilites"><summary><b>🗓️ ${tr("Mes disponibilités")}</b></summary>
+      <div id="periodes-fermees"></div>
+      <div id="creneaux-cleaneur"></div></details>
+  </div>
 `;
   traduire(boite);
+  brancherSegments(boite, p, plusTard.length);
+  blocComptesRendus(boite.querySelector("#comptes-rendus"), !!p.employeur_id);
   brancherTableau(boite, miennes, () => brancherMissions(vue, p));
   blocNoterClients(boite.querySelector("#noter-clients")).then(() => blocAvisRecus(boite.querySelector("#avis-recus")));
   if (p.role !== "admin") blocCeQuiMeManque(boite.querySelector("#ce-qui-manque"));

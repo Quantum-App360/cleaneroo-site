@@ -217,14 +217,43 @@ function memoriserCoordonnees(p) {
   } catch { /* navigation privée */ }
 }
 
+/** Inscription en mode Cleaneur (22 novembre 2026, retour de Vincent) : « Cleaneur indépendant » et « Société de nettoyage »
+ *  ont chacun leur formulaire, sans les statuts client. Pré-inscription, puis « Mon dossier » pour envoyer les documents. */
+const QUALITES = ["Gérant(e)", "Président(e)", "Directeur(rice) général(e)", "Responsable d'exploitation", "Associé(e)", "Autre"];
+let typeCleaneur = null;
+function typeCleaneurVoulu() {
+  if (typeCleaneur) return typeCleaneur;
+  try { if (sessionStorage.getItem("cleaneroo-societe-voulue") === "1") return "societe"; } catch { /* rien */ }
+  return "independant";
+}
+function blocInscriptionCleaneur(type) {
+  const soc = type === "societe";
+  return `<div class="segments" style="margin:0 0 12px"><button type="button" data-type-cleaneur="independant" class="${soc ? "" : "choisi"}">${tr("Cleaneur indépendant")}</button>
+      <button type="button" data-type-cleaneur="societe" class="${soc ? "choisi" : ""}">${tr("Société de nettoyage")}</button></div>
+    <p class="petit" style="margin:0 0 10px">${tr(soc ? "Pré-inscription de votre société : vous enverrez ensuite ses documents (Kbis ou SIRET, RC Pro, attestation URSSAF) depuis « Mon dossier »."
+      : "Pré-inscription en auto-entrepreneur : vous enverrez ensuite vos documents (pièce d'identité, SIRET, RC Pro, attestation URSSAF) depuis « Mon dossier ».")}</p>
+    ${soc ? `<div class="grille-2"><label class="champ">${tr("Raison sociale")}<input name="societe" maxlength="120" autocomplete="organization"></label>
+      <label class="champ">${tr("SIRET ou SIREN")}<input name="siretSociete" inputmode="numeric" maxlength="17"></label></div>` : ""}
+    <fieldset class="civilite"><legend>${tr("Civilité")}</legend>
+      <label class="case"><input type="radio" name="civilite" value="madame"> <span>${tr("Madame")}</span></label>
+      <label class="case"><input type="radio" name="civilite" value="monsieur"> <span>${tr("Monsieur")}</span></label></fieldset>
+    <div class="grille-2"><label class="champ">${tr("Prénom")}<input name="prenom" required maxlength="80" autocomplete="given-name"></label>
+      <label class="champ">${tr("Nom")}<input name="nom" required maxlength="80" autocomplete="family-name"></label></div>
+    ${soc ? `<label class="champ">${tr("Votre qualité dans la société")}<select name="qualite"><option value="">${tr("Choisissez…")}</option>${QUALITES.map(q => `<option value="${q}">${tr(q)}</option>`).join("")}</select></label>` : ""}
+    <label class="champ">${tr("Téléphone")}<input type="tel" name="telephone" required maxlength="20" autocomplete="tel"></label>
+    ${soc ? `<label class="case"><input type="checkbox" name="engagement"> <span>${tr("En tant qu'employeur, je forme mes salariés (hygiène, sécurité, gestes et produits, équipements de protection) et je réponds de leur formation. Une prestation réglementée n'est confiée qu'à un salarié qui a l'attestation exigée par la loi.")}</span></label>` : ""}`;
+}
+
 function ecranConnexion(vue, mode, message = "", ok = false, roleDefaut = "client") {
   const creer = mode === "creer";
+  const inscriptionCleaneur = creer && roleDefaut === "cleaneur", type = typeCleaneurVoulu();
   vue.innerHTML = `<section class="bloc"><div class="etroit">
     ${VITRINES[roleDefaut] ? vitrineEspace(roleDefaut) + `<p class="petit" style="margin:4px 0 12px">${OUVERTURE}</p>` : titre("Mon espace", "Préparez dès maintenant votre espace : profil, biens, demandes ou dossier Cleaneur. " + OUVERTURE)}
     <div class="segments" style="margin:6px 0 14px"><button type="button" data-mode="connexion" class="${creer ? "" : "choisi"}">Se connecter</button>
       <button type="button" data-mode="creer" class="${creer ? "choisi" : ""}">Créer un compte</button></div>
     <form class="carte" id="form-compte" novalidate>
-      ${creer ? `<p style="margin:0 0 4px;font-weight:700">Vous êtes :</p><p class="petit" style="margin:0 0 10px">Cochez une ou plusieurs cases : chaque statut ouvre son propre espace.</p>
+      ${inscriptionCleaneur ? blocInscriptionCleaneur(type) : ""}
+      ${creer && !inscriptionCleaneur ? `<p style="margin:0 0 4px;font-weight:700">Vous êtes :</p><p class="petit" style="margin:0 0 10px">Cochez une ou plusieurs cases : chaque statut ouvre son propre espace.</p>
         <div class="statuts-inscription">${Object.entries(NOMS_STATUTS).map(([v, [, t, ico, d]]) => `<label class="carte statut-choix">
           <input type="checkbox" name="statut" value="${v}" ${roleDefaut === v || (roleDefaut === "client" && v === "particulier") ? "checked" : ""}>${icone(ico, { tuile: true })}
           <span><b>${t}</b><small>${d}</small></span><i class="coche" aria-hidden="true"></i></label>`).join("")}</div>
@@ -240,12 +269,13 @@ function ecranConnexion(vue, mode, message = "", ok = false, roleDefaut = "clien
       ${creer ? `<label class="case"><input type="checkbox" name="cgu"> <span>J'accepte les <a href="#/conditions">conditions d'utilisation</a> et la <a href="#/confidentialite">politique de confidentialité</a>.</span></label>` : ""}
       ${message ? `<p class="${ok ? "note" : "erreur"}" style="margin:10px 0 0">${message}</p>` : ""}
       <p class="erreur" id="erreur-compte" style="margin:10px 0 0"></p>
-      <button class="bouton plein" type="submit" style="margin-top:12px">${creer ? (VITRINES[roleDefaut] ? `${tr("Créer mon espace")} ${tr(NOMS_STATUTS[roleDefaut][0])}` : "Créer mon compte") : "Se connecter"}</button>
+      <button class="bouton plein" type="submit" style="margin-top:12px">${inscriptionCleaneur ? tr("Valider ma pré-inscription") : creer ? (VITRINES[roleDefaut] ? `${tr("Créer mon espace")} ${tr(NOMS_STATUTS[roleDefaut][0])}` : "Créer mon compte") : "Se connecter"}</button>
       ${creer ? "" : `<button class="lien-bouton" type="button" id="mdp-oublie">Mot de passe oublié ?</button>`}
       ${REGLES.CONNEXION_GOOGLE ? `<button class="bouton secondaire plein" type="button" id="connexion-google" style="margin-top:10px">Continuer avec Google</button>` : ""}
     </form></div></section>`;
   traduire(vue);
   vue.querySelectorAll("[data-mode]").forEach(b => b.onclick = () => ecranConnexion(vue, b.dataset.mode, "", false, roleDefaut));
+  vue.querySelectorAll("[data-type-cleaneur]").forEach(b => b.onclick = () => { typeCleaneur = b.dataset.typeCleaneur; ecranConnexion(vue, mode, "", false, roleDefaut); });
   // Connexion avec Google (fournisseur activé dans Supabase) : retour sur « Mon compte ».
   vue.querySelector("#connexion-google")?.addEventListener("click", () =>
     supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: location.origin + location.pathname + "?vers=compte" } }));
@@ -268,6 +298,7 @@ function ecranConnexion(vue, mode, message = "", ok = false, roleDefaut = "clien
       if (r === "ok") { majLienCompte(); return pageCompte(vue); }
       return ecranConnexion(vue, mode, tr(r === "confirmer" ? "Confirmez d'abord votre e-mail : ouvrez le lien reçu, puis connectez-vous." : r === "incorrect" ? "E-mail ou mot de passe incorrect." : "Le service est momentanément indisponible. Réessayez dans quelques minutes."));
     }
+    if (inscriptionCleaneur) return inscrireCleaneur(f, email, erreur, vue, type);
     if (!f.prenom.value.trim() || !f.nom.value.trim()) return erreur("Indiquez votre prénom et votre nom.");
     if (f.mdp.value.length < 10) return erreur("Le mot de passe doit contenir au moins 10 caractères.");
     if (!f.cgu.checked) return erreur("Acceptez les conditions d'utilisation pour créer votre compte.");
@@ -295,6 +326,33 @@ function ecranConnexion(vue, mode, message = "", ok = false, roleDefaut = "clien
     await mdpOublie(email).catch(() => null);
     ecranConnexion(vue, "connexion", tr("Si un compte existe avec cet e-mail, vous allez recevoir un lien pour choisir un nouveau mot de passe."), true);
   });
+}
+
+/** Pré-inscription du Cleaneur (indépendant ou société) ; il arrive ensuite sur « Mon dossier » pour ses documents. */
+async function inscrireCleaneur(f, email, erreur, vue, type) {
+  const soc = type === "societe", civilite = f.querySelector("[name=civilite]:checked")?.value || "", tel = f.telephone.value.replace(/[^0-9+]/g, "");
+  if (soc && (!f.societe.value.trim() || !sirenSiretValide(f.siretSociete.value)))
+    return erreur("Indiquez la raison sociale et un SIRET (14 chiffres) ou un SIREN (9 chiffres) valable.");
+  if (!civilite) return erreur("Choisissez votre civilité.");
+  if (!f.prenom.value.trim() || !f.nom.value.trim()) return erreur("Indiquez votre prénom et votre nom.");
+  if (soc && !f.qualite.value) return erreur("Indiquez votre qualité dans la société.");
+  if (tel.replace(/\D/g, "").length < 10) return erreur("Indiquez un numéro de téléphone valable.");
+  if (soc && !f.engagement.checked) return erreur("Cochez l'engagement de formation de vos salariés pour continuer.");
+  if (f.mdp.value.length < 10) return erreur("Le mot de passe doit contenir au moins 10 caractères.");
+  if (!f.cgu.checked) return erreur("Acceptez les conditions d'utilisation pour créer votre compte.");
+  try {
+    demanderGeoloc();   // autorisation de géolocalisation dès l'inscription
+    const r = await creerCompte({ email, mdp: f.mdp.value, statuts: ["cleaneur"], prenom: f.prenom.value.trim(), nom: f.nom.value.trim(),
+      societe: soc ? f.societe.value.trim() : "", siretSociete: soc ? f.siretSociete.value : "", codeParrain: f.code_parrain.value,
+      civilite, telephone: tel, qualite: soc ? f.qualite.value : "", typeCleaneur: type, engagement: soc && f.engagement.checked });
+    oublierCodeParrain();
+    try { localStorage.setItem("cleaneroo-sous-onglet-cleaneur", "profil"); sessionStorage.removeItem("cleaneroo-societe-voulue"); } catch { /* rien */ }
+    typeCleaneur = null;
+    if (r === "connecte") { majLienCompte(); return pageCompte(vue); }
+    ecranConnexion(vue, "connexion", tr("Pré-inscription enregistrée. Ouvrez l'e-mail de confirmation que nous venons de vous envoyer, cliquez sur le lien, puis connectez-vous : vous arriverez sur « Mon dossier » pour envoyer vos documents."), true, "cleaneur");
+  } catch (err) {
+    erreur(/registered|already/i.test(err.message) ? "Un compte existe déjà avec cet e-mail : connectez-vous." : /password/i.test(err.message) ? "Mot de passe trop simple : choisissez-en un plus long ou plus varié." : "Le service est momentanément indisponible. Réessayez dans quelques minutes.");
+  }
 }
 
 function ecranNouveauMdp(vue, message = "") {
