@@ -1,13 +1,27 @@
 // Paiement Stripe d'une demande (site et application) — fonction serveur Supabase « paiement ».
 // La clé secrète Stripe (STRIPE_SECRET_KEY, clé de test sk_test_… pour l'instant) est dans les secrets Supabase, jamais dans le code.
-// Principe : à la réservation, le montant est seulement RÉSERVÉ (empreinte, capture manuelle) sur la page sécurisée Stripe
-// (carte, Apple Pay, Google Pay, Link) ; il est ENCAISSÉ après la validation du client ; la réservation est LEVÉE si la demande est annulée.
-// Actions : creer (→ adresse de la page de paiement), verifier (retour de Stripe), encaisser, annuler.
+// Principe (22 novembre 2026, règle de l'utilisateur) : le client PAIE en réservant, sur la page sécurisée Stripe (carte, Apple Pay,
+// Google Pay, Link). Le montant reste BLOQUÉ par Cleaneroo et n'est LIBÉRÉ pour le versement au Cleaneur qu'après la validation
+// (par le client, ou automatiquement 48 h après la fin). Demande annulée : REMBOURSÉE. La carte est enregistrée pour les passages
+// suivants d'un entretien régulier (prélevés 3 jours avant) et pour un complément (supplément accepté sur place, pourboire).
+// Actions du client (lien de suivi ou compte) : creer (→ adresse de la page de paiement), verifier (retour de Stripe).
+// Actions du serveur (en-tête x-cle-alertes, base-paiement-reservation.sql) : rembourser, liberer, synchroniser.
+// Ancien fonctionnement (empreinte) gardé pour les demandes déjà garanties : encaisser, annuler, statuts AUTORISE / ENCAISSE / ANNULE.
 import { createClient } from "jsr:@supabase/supabase-js@2";
 // Prix vérifié par le serveur (refonte du 20 novembre 2026) : les MÊMES fichiers que le site (assets/js/prix-serveur.js,
 // figés sur un commit du dépôt), avec les tarifs publiés depuis l'espace de gestion. Après chaque changement des règles
 // dans assets/js : pousser le site, remplacer le numéro de commit ci-dessous, puis redéployer cette fonction.
 import { calculer, entreeEstimation, appliquerTarifs } from "https://esm.sh/gh/Quantum-App360/cleaneroo-site@87ecf7d/assets/js/prix-serveur.js?target=deno";
+
+/** Passages suivants d'un entretien régulier : prélevés automatiquement ce nombre d'heures avant le passage. */
+const PRELEVEMENT_AVANT_H = 72;
+/** Demande non payée : annulée sans frais après ce délai (compté depuis l'ouverture pour les pré-réservations). */
+const DELAI_PAIEMENT_H = 24;
+/** Prélèvement refusé : le client a jusqu'à ce nombre d'heures avant le passage pour payer, sinon le passage est annulé. */
+const DERNIER_DELAI_AVANT_H = 24;
+/** Ouverture des réservations : 31 décembre 2026, 0 h à Paris. */
+const OUVERTURE = Date.parse("2026-12-30T23:00:00Z");
+const H = 3600_000;
 
 /** Date affichée à Paris (le serveur tourne en UTC) : dimanche et créneau malin se jugent à l'heure de Paris. */
 function heureDeParis(iso: string | null) {
@@ -34,16 +48,169 @@ const entetes = (origine: string) => ({
   "Content-Type": "application/json",
 });
 
-async function stripe(chemin: string, corps?: Record<string, string>) {
+/** Appel à l'API Stripe. cleIdem : clé d'idempotence (un même prélèvement n'est jamais fait deux fois, même si l'appel est rejoué). */
+async function stripe(chemin: string, corps?: Record<string, string>, cleIdem?: string) {
   const cle = Deno.env.get("STRIPE_SECRET_KEY") ?? "";
   const r = await fetch(`https://api.stripe.com/v1/${chemin}`, {
     method: corps ? "POST" : "GET",
-    headers: { Authorization: `Bearer ${cle}`, "Content-Type": "application/x-www-form-urlencoded" },
+    headers: { Authorization: `Bearer ${cle}`, "Content-Type": "application/x-www-form-urlencoded", ...(cleIdem ? { "Idempotency-Key": cleIdem } : {}) },
     body: corps ? new URLSearchParams(corps) : undefined,
   });
   const j = await r.json();
-  if (!r.ok) throw new Error(j?.error?.message ?? "stripe");
+  if (!r.ok) throw new Error(j?.error?.code ?? j?.error?.message ?? "stripe");
   return j;
+}
+
+type Demande = Record<string, any>;
+// deno-lint-ignore no-explicit-any
+type Admin = any;
+
+/** Le client est-il abonné Pro (0 % de frais de service) ? */
+async function estAbonne(admin: Admin, d: Demande) {
+  const { data: prof } = d.client_id ? await admin.from("profils").select("abonnement_pro").eq("id", d.client_id).maybeSingle() : { data: null };
+  return !!prof?.abonnement_pro && prof.abonnement_pro !== "aucun";
+}
+let tarifsCharges = false;
+async function chargerTarifs(admin: Admin) {
+  if (tarifsCharges) return;
+  const { data: t } = await admin.from("tarifs").select("version, donnees").eq("actif", true).order("version", { ascending: false }).limit(1).maybeSingle();
+  appliquerTarifs(t?.donnees || {}, t?.version || 0);
+  tarifsCharges = true;
+}
+/** Prix vérifié par le serveur : le prix enregistré par le navigateur doit être celui des règles (à 1 € près).
+ *  Renvoie le pourcentage de frais de service, ou une erreur (le prix est alors corrigé dans la demande). */
+async function verifierPrix(admin: Admin, d: Demande): Promise<{ pct: number; erreur?: string; estimation?: number }> {
+  await chargerTarifs(admin);
+  const abonne = await estAbonne(admin, d);
+  const verif = prixServeur(d, abonne);
+  const pctDefaut = d.espace === "personnel" ? 5 : abonne ? 0 : 8;
+  if (verif && !verif.normal.devisObligatoire) {
+    const initial = d.estimation_initiale_c ?? d.estimation_c ?? 0;
+    const proche = (x: number) => Math.abs(initial - x) <= 100;
+    if (!proche(verif.normal.totalC) && !proche(verif.variante.totalC)) {
+      if (d.estimation_initiale_c != null) return { pct: pctDefaut, erreur: "prix_a_verifier" };
+      const fraisC = Math.round(verif.normal.totalC * verif.normal.fraisServicePct / 100);
+      await admin.from("demandes").update({ estimation_c: verif.normal.totalC, credit_impot_c: verif.normal.creditImpotC,
+        details: { ...d.details, fraisServiceC: fraisC, fraisServicePct: verif.normal.fraisServicePct, prixCorrigeLe: new Date().toISOString(), prixNavigateurC: initial } }).eq("id", d.id);
+      return { pct: verif.normal.fraisServicePct, erreur: "prix_corrige", estimation: verif.normal.totalC };
+    }
+  }
+  // Frais de service recalculés (5 % particulier, 8 % pro, 0 % abonné), jamais repris tels quels du navigateur.
+  return { pct: verif?.normal.fraisServicePct ?? pctDefaut };
+}
+/** Même total que l'écran : prestation + frais de service − remises (parrainage, cagnotte). */
+const montantDe = (d: Demande, pct: number) =>
+  (d.estimation_c ?? 0) + Math.round((d.estimation_c ?? 0) * pct / 100) - (d.remise_parrainage_c ?? 0) - (d.cagnotte_c ?? 0);
+/** Frais de service retenus par le serveur au paiement (repris pour un complément). */
+const pctEnregistre = (d: Demande) => Number(d.details?.fraisServicePctServeur ?? d.details?.fraisServicePct ?? (d.espace === "personnel" ? 5 : 8));
+
+/** Trace de chaque opération (paiement, prélèvement, remboursement, complément) dans la demande. */
+function trace(d: Demande, entree: Record<string, unknown>) {
+  return [...(Array.isArray(d.paiement_journal) ? d.paiement_journal : []), { ...entree, le: new Date().toISOString() }].slice(-30);
+}
+async function notifierClient(admin: Admin, d: Demande, titre: string, texte: string, niveau = "important") {
+  if (!d.client_id) return;
+  try { await admin.rpc("notifier", { p_dest: d.client_id, p_espace: "client", p_type: "paiement", p_niveau: niveau, p_titre: titre, p_texte: texte, p_reference: d.reference }); } catch { /* sans gravité */ }
+}
+const euros = (c: number) => (c / 100).toFixed(2).replace(".", ",") + " €";
+const dateCourte = (iso: string | null) => iso ? new Intl.DateTimeFormat("fr-FR", { timeZone: "Europe/Paris", weekday: "long", day: "numeric", month: "long" }).format(new Date(iso)) : "";
+
+/** Prélèvement sur la carte enregistrée, sans le client (passage suivant, complément). Renvoie le PaymentIntent ou l'erreur. */
+async function prelever(d: Demande, montant: number, motif: string) {
+  return await stripe("payment_intents", {
+    amount: String(montant), currency: "eur", customer: d.paiement_client, payment_method: d.paiement_moyen,
+    off_session: "true", confirm: "true", "metadata[reference]": d.reference, "metadata[motif]": motif,
+    "automatic_payment_methods[enabled]": "true", "automatic_payment_methods[allow_redirects]": "never",
+    description: `Cleaneroo ${d.reference} · ${motif}`,
+  }, `${motif}-${d.reference}-${montant}`);
+}
+
+/** Session Stripe terminée : la demande est payée (bloquée) ; la carte est enregistrée pour les passages suivants du même entretien. */
+async function confirmerSession(admin: Admin, d: Demande, idSession: string) {
+  const s = await stripe(`checkout/sessions/${idSession}?expand[]=payment_intent`);
+  const pi = s.payment_intent;
+  if (s.status !== "complete" || !pi) return d.paiement_statut;
+  const ancien = pi.capture_method === "manual";   // ancienne empreinte
+  if (ancien && !["requires_capture", "succeeded"].includes(pi.status)) return d.paiement_statut;
+  if (!ancien && pi.status !== "succeeded") return d.paiement_statut;
+  const statut = ancien ? (pi.status === "succeeded" ? "ENCAISSE" : "AUTORISE") : "PAYE";
+  if (d.paiement_statut === statut) return statut;
+  const client = typeof s.customer === "string" ? s.customer : s.customer?.id ?? null;
+  const moyen = typeof pi.payment_method === "string" ? pi.payment_method : pi.payment_method?.id ?? null;
+  await admin.from("demandes").update({ paiement_statut: statut, paiement_intent: pi.id, paiement_c: pi.amount, paiement_client: client, paiement_moyen: moyen,
+    paiement_journal: trace(d, { type: "paiement", montant_c: pi.amount, id: pi.id }) }).eq("id", d.id);
+  if (statut === "PAYE" && d.groupe_paiement && client && moyen) {
+    // Passages suivants : carte enregistrée, prélevés 3 jours avant chacun ; visibles des Cleaneurs dès maintenant.
+    await admin.from("demandes").update({ paiement_statut: "A_PRELEVER", paiement_client: client, paiement_moyen: moyen, paiement_test: d.paiement_test })
+      .eq("groupe_paiement", d.groupe_paiement).neq("id", d.id).is("paiement_statut", null).neq("statut", "ANNULEE");
+  }
+  if (statut === "PAYE") await notifierClient(admin, d, "Paiement reçu", `${euros(pi.amount)} : le montant reste bloqué jusqu'à votre validation de la prestation. Votre demande est transmise aux Cleaneurs.`, "standard");
+  return statut;
+}
+
+/** Passage suivant : prix revérifié, puis prélevé sur la carte enregistrée. En cas de refus : ECHEC, le client paie depuis son suivi. */
+async function preleverPassage(admin: Admin, d: Demande) {
+  const v = await verifierPrix(admin, d);
+  if (v.erreur === "prix_a_verifier") return;
+  const dd = v.estimation != null ? { ...d, estimation_c: v.estimation } : d;
+  const montant = montantDe(dd, v.pct);
+  if (montant < 50 || !d.paiement_client || !d.paiement_moyen) return;
+  try {
+    const pi = await prelever(dd, montant, "passage");
+    if (pi.status !== "succeeded") throw new Error(pi.status);
+    await admin.from("demandes").update({ paiement_statut: "PAYE", paiement_intent: pi.id, paiement_c: montant,
+      details: { ...d.details, fraisServicePctServeur: v.pct }, paiement_journal: trace(d, { type: "prelevement", montant_c: montant, id: pi.id }) }).eq("id", d.id);
+  } catch (e) {
+    await admin.from("demandes").update({ paiement_statut: "ECHEC", paiement_journal: trace(d, { type: "prelevement_refuse", montant_c: montant, erreur: String((e as Error).message) }) }).eq("id", d.id);
+    await notifierClient(admin, d, "Paiement refusé",
+      `Le prélèvement de ${euros(montant)} pour votre passage du ${dateCourte(d.creneau)} a été refusé. Payez depuis votre suivi pour le confirmer, sinon il sera annulé sans frais 24 h avant.`);
+  }
+}
+
+/** Toutes les 15 minutes : retours de Stripe non vérifiés, passages suivants à prélever, demandes impayées à rappeler ou annuler. */
+async function synchroniser(admin: Admin) {
+  const bilan = { verifies: 0, preleves: 0, rappels: 0, annules: 0 };
+  const maintenant = Date.now();
+  // 1. Paiements faits sur Stripe dont le client n'est pas revenu sur le site ou l'appli.
+  const { data: attente } = await admin.from("demandes").select("*").eq("paiement_statut", "EN_ATTENTE").not("paiement_session", "is", null)
+    .gte("maj_le", new Date(maintenant - 48 * H).toISOString()).limit(100);
+  for (const d of attente || []) {
+    try { if (["PAYE", "AUTORISE", "ENCAISSE"].includes(await confirmerSession(admin, d, d.paiement_session))) bilan.verifies++; } catch { /* réessayé au prochain passage */ }
+  }
+  // 2. Passages suivants dont la date approche (ou sans date : tout de suite).
+  const { data: aPrelever } = await admin.from("demandes").select("*").eq("paiement_statut", "A_PRELEVER").in("statut", ["VERIFICATION", "PUBLIEE", "CONFIRMEE"]).limit(100);
+  for (const d of aPrelever || []) {
+    if (d.creneau && Date.parse(d.creneau) - maintenant > PRELEVEMENT_AVANT_H * H) continue;
+    await preleverPassage(admin, d); bilan.preleves++;
+  }
+  // 3. Demandes impayées : un rappel, puis annulation sans frais (rien n'a été débité).
+  const { data: impayees } = await admin.from("demandes").select("*").in("statut", ["VERIFICATION", "PUBLIEE", "CONFIRMEE"]).eq("sur_devis", false)
+    .or("paiement_statut.is.null,paiement_statut.eq.EN_ATTENTE,paiement_statut.eq.ECHEC").limit(200);
+  for (const d of impayees || []) {
+    if (d.details?.pilote) continue;
+    const depart = Math.max(Date.parse(d.cree_le), d.prelancement ? OUVERTURE : 0);
+    if (maintenant < depart) continue;                       // pré-réservation : rien à payer avant l'ouverture
+    const limite = d.paiement_statut === "ECHEC" && d.creneau ? Date.parse(d.creneau) - DERNIER_DELAI_AVANT_H * H
+      : depart + (d.prelancement ? 2 * DELAI_PAIEMENT_H : DELAI_PAIEMENT_H) * H;
+    const journal = Array.isArray(d.paiement_journal) ? d.paiement_journal : [];
+    if (maintenant >= limite) {
+      if (d.paiement_session && d.paiement_statut === "EN_ATTENTE") {
+        // Dernière vérification : le client a peut-être payé à l'instant.
+        try { if (["PAYE", "AUTORISE", "ENCAISSE"].includes(await confirmerSession(admin, d, d.paiement_session))) continue; } catch { continue; }
+        await stripe(`checkout/sessions/${d.paiement_session}/expire`, {}).catch(() => null);
+      }
+      await admin.from("demandes").update({ statut: "ANNULEE", paiement_journal: trace(d, { type: "annulee_impayee" }),
+        notes_admin: `${d.notes_admin || ""} Annulée sans frais : non payée.`.trim() }).eq("id", d.id).in("statut", ["VERIFICATION", "PUBLIEE", "CONFIRMEE"]);
+      await notifierClient(admin, d, "Demande annulée", "Le paiement n'a pas été fait à temps : la demande est annulée, rien n'a été débité. Vous pouvez réserver à nouveau en deux minutes.");
+      bilan.annules++;
+    } else if (maintenant - depart > H && !journal.some((x: any) => x.type === "rappel")) {
+      await admin.from("demandes").update({ paiement_journal: trace(d, { type: "rappel" }) }).eq("id", d.id);
+      await notifierClient(admin, d, "Paiement à finaliser",
+        "Votre demande sera transmise aux Cleaneurs dès le paiement. Sans paiement, elle sera annulée sans frais.");
+      bilan.rappels++;
+    }
+  }
+  return bilan;
 }
 
 Deno.serve(async (req) => {
@@ -55,9 +222,68 @@ Deno.serve(async (req) => {
     if (!Deno.env.get("STRIPE_SECRET_KEY")) return reponse({ erreur: "non_configure" }, 503);
     const { action, reference, jeton, session } = await req.json();
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    const test = (Deno.env.get("STRIPE_SECRET_KEY") ?? "").startsWith("sk_test_");
+
+    // Actions du serveur (déclencheurs et tâche planifiée) : clé privée des tâches automatiques.
+    const internes = ["rembourser", "liberer", "synchroniser"];
+    if (internes.includes(action)) {
+      const { data: cle } = await admin.from("config_privee").select("valeur").eq("cle", "alertes").maybeSingle();
+      if (!cle?.valeur || req.headers.get("x-cle-alertes") !== cle.valeur) return reponse({ erreur: "refuse" }, 403);
+      if (action === "synchroniser") return reponse(await synchroniser(admin));
+    }
+
     const { data: d } = await admin.from("demandes").select("*").eq("reference", String(reference ?? "")).maybeSingle();
     if (!d) return reponse({ erreur: "introuvable" }, 404);
-    // Accès : le lien de suivi (jeton) ou le compte du client connecté.
+    const maj = (champs: Record<string, unknown>) => admin.from("demandes").update(champs).eq("id", d.id);
+
+    if (action === "rembourser") {
+      if (d.statut !== "ANNULEE") return reponse({ statut: d.paiement_statut });
+      if (d.paiement_statut === "PAYE" && d.paiement_intent) {
+        // Remboursement intégral : les annulations possibles aujourd'hui sont toutes sans frais (client avant confirmation,
+        // retard de plus de 30 min, pas de remplaçant, non-paiement).
+        const r = await stripe("refunds", { payment_intent: d.paiement_intent, "metadata[reference]": d.reference }, `remboursement-${d.reference}`);
+        await maj({ paiement_statut: "REMBOURSE", paiement_journal: trace(d, { type: "remboursement", montant_c: r.amount, id: r.id }) });
+        await notifierClient(admin, d, "Remboursement en cours", `${euros(r.amount)} vous sont remboursés sur votre carte (5 à 10 jours selon votre banque).`);
+        return reponse({ statut: "REMBOURSE" });
+      }
+      if (d.paiement_statut === "AUTORISE" && d.paiement_intent) {
+        await stripe(`payment_intents/${d.paiement_intent}/cancel`, {});
+        await maj({ paiement_statut: "ANNULE" });
+        return reponse({ statut: "ANNULE" });
+      }
+      if (d.paiement_statut === "EN_ATTENTE" && d.paiement_session) await stripe(`checkout/sessions/${d.paiement_session}/expire`, {}).catch(() => null);
+      if (["A_PRELEVER", "ECHEC", "EN_ATTENTE"].includes(d.paiement_statut)) await maj({ paiement_statut: "ANNULE" });
+      return reponse({ statut: d.paiement_statut });
+    }
+
+    if (action === "liberer") {
+      if (d.statut !== "TERMINEE") return reponse({ statut: d.paiement_statut });
+      if (d.paiement_statut === "AUTORISE" && d.paiement_intent) {   // ancienne empreinte : encaissée à la validation
+        await stripe(`payment_intents/${d.paiement_intent}/capture`, {});
+        await maj({ paiement_statut: "ENCAISSE" });
+        return reponse({ statut: "ENCAISSE" });
+      }
+      if (d.paiement_statut !== "PAYE") return reponse({ statut: d.paiement_statut });
+      // Complément : supplément accepté sur place (le prix de la demande a augmenté) et pourboire laissé à la validation.
+      const { data: avis } = await admin.from("avis").select("pourboire_c").eq("reference", d.reference).maybeSingle();
+      const du = montantDe(d, pctEnregistre(d)) + (avis?.pourboire_c ?? 0) - (d.paiement_c ?? 0);
+      let journal = trace(d, { type: "libere" });
+      let paye = d.paiement_c ?? 0;
+      if (du >= 50 && d.paiement_client && d.paiement_moyen) {
+        try {
+          const pi = await prelever(d, du, "complement");
+          if (pi.status !== "succeeded") throw new Error(pi.status);
+          paye += du; journal = [...journal, { type: "complement", montant_c: du, id: pi.id, le: new Date().toISOString() }];
+        } catch (e) {
+          journal = [...journal, { type: "complement_refuse", montant_c: du, erreur: String((e as Error).message), le: new Date().toISOString() }];
+          await notifierClient(admin, d, "Complément à régler", `Le complément de ${euros(du)} (supplément accepté ou pourboire) n'a pas pu être prélevé. Notre équipe vous recontacte.`);
+        }
+      }
+      await maj({ paiement_statut: "LIBERE", paiement_c: paye, paiement_journal: journal });
+      return reponse({ statut: "LIBERE" });
+    }
+
+    // Actions du client : le lien de suivi (jeton) ou le compte du client connecté.
     let autorise = !!jeton && d.jeton === jeton;
     const auth = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
     if (!autorise && auth && d.client_id) {
@@ -65,35 +291,21 @@ Deno.serve(async (req) => {
       autorise = u?.user?.id === d.client_id;
     }
     if (!autorise) return reponse({ erreur: "refuse" }, 403);
-    const test = (Deno.env.get("STRIPE_SECRET_KEY") ?? "").startsWith("sk_test_");
-    const maj = (champs: Record<string, unknown>) => admin.from("demandes").update(champs).eq("id", d.id);
 
     if (action === "creer") {
       if (d.sur_devis) return reponse({ erreur: "sur_devis" }, 400);
       if (["ANNULEE", "TERMINEE"].includes(d.statut)) return reponse({ erreur: "statut" }, 400);
-      if (["AUTORISE", "ENCAISSE"].includes(d.paiement_statut)) return reponse({ erreur: "deja_paye" }, 400);
-      // Prix vérifié par le serveur : le prix enregistré par le navigateur doit être celui des règles (à 1 € près).
-      const { data: t } = await admin.from("tarifs").select("version, donnees").eq("actif", true).order("version", { ascending: false }).limit(1).maybeSingle();
-      appliquerTarifs(t?.donnees || {}, t?.version || 0);
-      const { data: prof } = d.client_id ? await admin.from("profils").select("abonnement_pro").eq("id", d.client_id).maybeSingle() : { data: null };
-      const abonne = !!prof?.abonnement_pro && prof.abonnement_pro !== "aucun";
-      const verif = prixServeur(d, abonne);
-      if (verif && !verif.normal.devisObligatoire) {
-        const initial = d.estimation_initiale_c ?? d.estimation_c ?? 0;
-        const proche = (x: number) => Math.abs(initial - x) <= 100;
-        if (!proche(verif.normal.totalC) && !proche(verif.variante.totalC)) {
-          if (d.estimation_initiale_c != null) return reponse({ erreur: "prix_a_verifier" }, 409);
-          const fraisC = Math.round(verif.normal.totalC * verif.normal.fraisServicePct / 100);
-          await maj({ estimation_c: verif.normal.totalC, credit_impot_c: verif.normal.creditImpotC,
-            details: { ...d.details, fraisServiceC: fraisC, fraisServicePct: verif.normal.fraisServicePct, prixCorrigeLe: new Date().toISOString(), prixNavigateurC: initial } });
-          return reponse({ erreur: "prix_corrige", estimation_c: verif.normal.totalC }, 409);
-        }
+      if (["AUTORISE", "ENCAISSE", "PAYE", "LIBERE", "A_PRELEVER"].includes(d.paiement_statut)) return reponse({ erreur: "deja_paye" }, 400);
+      if (d.prelancement && Date.now() < OUVERTURE) return reponse({ erreur: "prelancement" }, 400);
+      // Session déjà ouverte : peut-être payée entre-temps.
+      if (d.paiement_statut === "EN_ATTENTE" && d.paiement_session) {
+        const st = await confirmerSession(admin, d, d.paiement_session).catch(() => d.paiement_statut);
+        if (["PAYE", "AUTORISE", "ENCAISSE"].includes(st)) return reponse({ erreur: "deja_paye" }, 400);
       }
-      // Frais de service recalculés (5 % particulier, 8 % pro, 0 % abonné), jamais repris tels quels du navigateur.
-      const pct = d.espace === "personnel" ? 5 : abonne ? 0 : 8;
-      const fraisServeurC = Math.round((d.estimation_c ?? 0) * (verif?.normal.fraisServicePct ?? pct) / 100);
-      // Même total que l'écran : prestation + frais de service − remises (parrainage, cagnotte).
-      const montant = (d.estimation_c ?? 0) + fraisServeurC - (d.remise_parrainage_c ?? 0) - (d.cagnotte_c ?? 0);
+      const v = await verifierPrix(admin, d);
+      if (v.erreur === "prix_a_verifier") return reponse({ erreur: "prix_a_verifier" }, 409);
+      if (v.erreur === "prix_corrige") return reponse({ erreur: "prix_corrige", estimation_c: v.estimation }, 409);
+      const montant = montantDe(d, v.pct);
       if (montant < 50) return reponse({ erreur: "montant" }, 400);
       const base = SITES.includes(origine) ? origine : SITES[0];
       const retour = `${base}/?paiement={CHECKOUT_SESSION_ID}#/demande/${d.reference}/${d.jeton}`;
@@ -103,39 +315,34 @@ Deno.serve(async (req) => {
         "line_items[0][price_data][unit_amount]": String(montant),
         "line_items[0][price_data][product_data][name]": `Cleaneroo · réservation ${d.reference}`,
         "line_items[0][quantity]": "1",
-        "payment_intent_data[capture_method]": "manual",
+        // Débit immédiat ; la carte est gardée pour les passages suivants et un éventuel complément (supplément, pourboire).
+        "payment_intent_data[setup_future_usage]": "off_session",
         "payment_intent_data[metadata][reference]": d.reference,
         "payment_intent_data[description]": `Cleaneroo ${d.reference}`,
-        "metadata[reference]": d.reference,
+        customer_creation: "always",
         ...(d.email ? { customer_email: d.email } : {}),
         locale: "auto",
         success_url: retour,
         cancel_url: `${base}/#/demande/${d.reference}/${d.jeton}`,
       });
-      await maj({ paiement_statut: "EN_ATTENTE", paiement_session: s.id, paiement_c: montant, paiement_test: test });
+      await maj({ paiement_statut: "EN_ATTENTE", paiement_session: s.id, paiement_c: montant, paiement_test: test,
+        details: { ...d.details, fraisServicePctServeur: v.pct } });
       return reponse({ url: s.url });
     }
 
     if (action === "verifier") {
       const id = String(session ?? d.paiement_session ?? "");
       if (!id || id !== d.paiement_session) return reponse({ statut: d.paiement_statut });
-      const s = await stripe(`checkout/sessions/${id}?expand[]=payment_intent`);
-      const pi = s.payment_intent;
-      if (s.status === "complete" && pi && ["requires_capture", "succeeded"].includes(pi.status)) {
-        const statut = pi.status === "succeeded" ? "ENCAISSE" : "AUTORISE";
-        await maj({ paiement_statut: statut, paiement_intent: pi.id });
-        return reponse({ statut });
-      }
-      return reponse({ statut: d.paiement_statut });
+      return reponse({ statut: await confirmerSession(admin, d, id) });
     }
 
+    // Ancien fonctionnement (empreinte) : encaisser après validation, lever si annulée. Désormais fait par le serveur.
     if (action === "encaisser") {
       if (d.statut !== "TERMINEE" || d.paiement_statut !== "AUTORISE" || !d.paiement_intent) return reponse({ statut: d.paiement_statut });
       await stripe(`payment_intents/${d.paiement_intent}/capture`, {});
       await maj({ paiement_statut: "ENCAISSE" });
       return reponse({ statut: "ENCAISSE" });
     }
-
     if (action === "annuler") {
       if (d.statut !== "ANNULEE" || d.paiement_statut !== "AUTORISE" || !d.paiement_intent) return reponse({ statut: d.paiement_statut });
       await stripe(`payment_intents/${d.paiement_intent}/cancel`, {});

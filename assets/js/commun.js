@@ -74,7 +74,7 @@ export const ETAPES = [
   ["cleaneurs", "Choisissez votre Cleaneur", "Des Cleaneurs vérifiés (identité, SIRET, assurance) se proposent. Comparez prix, note et distance : c'est vous qui choisissez."],
   ["position", "Suivez l'intervention en direct", "« En route », arrivée confirmée par géolocalisation, selfie du jour : vous savez qui vient, et quand."],
   ["photo", "Recevez le compte rendu", "Tâches cochées et horodatées, photos avant / après, signature du Cleaneur : tout est dans votre espace."],
-  ["valide", "Validez, puis payez", "Vous n'êtes débité qu'après avoir validé. Crédit d'impôt selon éligibilité ; pourboire et avis si vous le souhaitez."],
+  ["valide", "Validez, le Cleaneur est payé", "Votre paiement reste bloqué jusqu'à votre validation, puis il est versé au Cleaneur. Crédit d'impôt selon éligibilité ; pourboire et avis si vous le souhaitez."],
 ];
 /** Les 3 étapes essentielles (pages ville) : réserver, suivre, valider puis payer. */
 export const ETAPES_COURTES = [ETAPES[0], ETAPES[2], ETAPES[4]];
@@ -86,8 +86,8 @@ export const blocEtapes = (liste = ETAPES) => `<div class="etapes etroit">${list
 export function blocReassurance({ compact = false } = {}) {
   const lignes = [
     ["cleaneurs", "Cleaneurs vérifiés", "Identité, SIRET, attestation URSSAF et assurance RC Pro contrôlés avant activation, puis une mission test."],
-    ["garantie", "Garantie remplacement", "Votre Cleaneur ne peut pas venir ? Un remplaçant vérifié en priorité, sinon annulation sans frais : rien n'est débité."],
-    ["paiement", "Payé après validation", "Simple empreinte bancaire à la réservation, débit après votre accord."],
+    ["garantie", "Garantie remplacement", "Votre Cleaneur ne peut pas venir ? Un remplaçant vérifié en priorité, sinon annulation sans frais : vous êtes remboursé."],
+    ["paiement", "Paiement protégé", "Payé en réservant, versé au Cleaneur seulement après votre validation."],
     ["photo", "Preuves photo avant et après", "L'état du logement à l'arrivée et au départ du Cleaneur (location saisonnière)."],
   ];
   return `<div class="reassurance${compact ? " compacte" : ""}">${lignes.map(([ic, t, d]) =>

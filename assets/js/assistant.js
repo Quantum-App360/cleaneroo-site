@@ -27,7 +27,7 @@ export const SUJETS = {
     liens: [["Estimer mon prix", "#/estimer"], ["Réserver", "#/reserver"]] },
 
   paiement: { titre: "Paiement et remboursement", cles: ["payer", "paiement", "carte", "débit", "prélèvement", "rembourse", "remboursement", "empreinte", "stripe"],
-    texte: "À la réservation, le montant est seulement **réservé** sur votre carte (page sécurisée Stripe). Il n'est **encaissé qu'après votre validation** de la prestation. Si la prestation est annulée dans les délais, la réservation est levée : rien n'est débité. Le délai d'affichage dépend de votre banque (souvent 2 à 7 jours).",
+    texte: "À la réservation, vous payez sur la page sécurisée Stripe. Le montant reste **bloqué** par Cleaneroo et n'est **versé au Cleaneur qu'après votre validation** de la prestation. Si la prestation est annulée, vous êtes **remboursé** ; le délai d'affichage dépend de votre banque (souvent 5 à 10 jours).",
     liens: [["Mes prestations", "#/mes-demandes"]], suite: ["factures"] },
 
   retard: { titre: "Retard ou Cleaneur absent", cles: ["retard", "en retard", "absent", "pas venu", "personne", "attends"],

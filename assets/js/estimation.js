@@ -216,6 +216,21 @@ export function tachesChiffrees(b) {
     return { ...c, prixC: c.prixC * n, minutes: c.minutes * n };
   });
 }
+/** Occasion choisie (22/11/2026) : les tâches de pack sont REMPLACÉES par celles du pack de l'occasion, plus ses tâches en plus ;
+ *  les options ajoutées par le client hors packs restent. Changer d'occasion ne garde donc jamais le niveau précédent.
+ *  Même règle que Reservation.kt (tachesPourOccasion). */
+export function tachesPourOccasion(b, occasionId) {
+  const r = rubrique(b.rubriqueId), o = (r.occasions || []).find(x => x.id === occasionId);
+  const packs = packsPour(r, b.typeLieuId), proposees = tachesChiffrees(b).map(t => t.id);
+  const dansPacks = new Set(packs.flatMap(p => p.tacheIds));
+  const enPlusOccasions = new Set((r.occasions || []).flatMap(x => x.tachesEnPlus || []));
+  const pack = packs.find(p => p.id === o?.packId);
+  const garder = (b.taches || []).filter(id => !dansPacks.has(id) && !enPlusOccasions.has(id));
+  const ajouts = [...(pack ? pack.tacheIds : []), ...(o?.tachesEnPlus || [])].filter(id => proposees.includes(id));
+  return [...new Set([...garder, ...ajouts])];
+}
+/** Niveau (standard, confort, prestige) que donne une occasion. */
+export const niveauOccasion = (r, occasionId) => (r.occasions || []).find(x => x.id === occasionId)?.packId || "standard";
 /** Cuisines : minutes des équipements choisis (proposés pour le type d'établissement). */
 export const minutesEquipements = b => equipementsPour(b.typeLieuId).reduce((s, e) => s + e.minutes * ((b.equipements || {})[e.id] || 0), 0);
 /** Cuisines : prix indicatif d'un équipement (temps × coefficients × taux, arrondi à l'euro). */

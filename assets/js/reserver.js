@@ -3,9 +3,10 @@
 import { PARTIES, partie, partiePour, PARTIE_DE_L_ESPACE, rubriquesProposees, lieuxDuSecteur, inclusLocation, SEJOURS_LOCATION, categorieBien, categorieDeRubrique, categoriesDeRubrique, bienCompatible, typesDeCategorie, CATEGORIES_BIEN, TARIFS_SPECIAUX, RUBRIQUES, rubrique, formulesPour, TYPES_LIEU, TYPES_LOGEMENT, BESOINS_SPECIAUX, ACCUEIL, accueilAutonomeInterdit, photosObligatoires,
   ELEMENTS_TEXTILES, TAILLES_CANAPE, prixLigne, minutesLigne, libelleLigne, pastille,
   FREQUENCES, JOURS_SEMAINE, DERNIERS_NETTOYAGES, packsPour, remisePack,
-  TACHES_A_TRAITER, TYPES_CHANTIER, equipementsPour, DELAIS_URGENCE, TYPES_IMMEUBLE, surfaceEffective, SELECTION_CONSEILLEE_VEHICULE, LIEUX_VEHICULE, FREQUENCES_VEHICULE, RUBRIQUES_LOGEMENT, vuesPhotos, vuesCompletes, PIECES_LOCATION, ETAPES_LOCATION, PACK_ETAPES_CONSEILLE, ETAPES_DEPART, prixEtapeLocationC, repetitionsEtape, CONSOMMABLES_LOCATION, PACK_CONSOMMABLES_CONSEILLE } from "./catalogue.js";
+  TACHES_A_TRAITER, TYPES_CHANTIER, photosPlusTardPossibles, equipementsPour, DELAIS_URGENCE, TYPES_IMMEUBLE, surfaceEffective, SELECTION_CONSEILLEE_VEHICULE, LIEUX_VEHICULE, FREQUENCES_VEHICULE, RUBRIQUES_LOGEMENT, vuesPhotos, vuesCompletes, PIECES_LOCATION, ETAPES_LOCATION, PACK_ETAPES_CONSEILLE, ETAPES_DEPART, prixEtapeLocationC, repetitionsEtape, CONSOMMABLES_LOCATION, PACK_CONSOMMABLES_CONSEILLE } from "./catalogue.js";
 import { calculer, entreeEstimation, SALISSURE, disponibilite, meilleurPack, tachesChiffrees, formuleDe, niveauLocation, passagesPlanifies, datesPassages,
-  etapesDe, consommablesDe, menageTientEntreVoyageurs, frequenceDe, minutesEquipements, prixIndicatifEquipement, heuresEvenement, litsDe, litsTailles } from "./estimation.js";
+  etapesDe, consommablesDe, menageTientEntreVoyageurs, frequenceDe, minutesEquipements, prixIndicatifEquipement, heuresEvenement, litsDe, litsTailles,
+  tachesPourOccasion, niveauOccasion } from "./estimation.js";
 import { REGLES, euros, duree, heure, dateCourte, dateLongue, estPrelancement, MESSAGE_LANCEMENT, DATE_PREMIERES_INTERVENTIONS, pctZone, libelleZone } from "./regles.js";
 import { envoyerDemande, secteurCouvert, rejoindreAttente, enregistrerBien, synchroniserBiens, marquerDonneesInvite } from "./donnees.js";
 import { etapesPhotoDe, etapesPersoDe } from "./etapes-bien.js";
@@ -15,6 +16,7 @@ import { profilMemorise } from "./entete.js";
 import { icone } from "./icones.js";
 import { blocReassurance } from "./commun.js";
 import { monParrainage } from "./parrainage.js";
+import { lancerPaiement } from "./paiement.js";
 import { session, monProfil, majProfil, supabase } from "./donnees.js";
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -482,15 +484,19 @@ function questionnaire(enTete = true) {
     const dansPacks = new Set(packs.flatMap(p => p.tacheIds));
     const actif = formuleActive(b, packs, chiffrees);
     const incluses = new Set((formules.find(f => f.id === actif)?.tacheIds) || []);
-    if (formules.length) {
+    const menuMenage = b.rubriqueId === "home" && formuleDe(b).genre === "PONCTUEL" && r.occasions.length > 0;
+    if (menuMenage) h += quelMenage(r, chiffrees, actif);
+    else if (formules.length) {
       const prixFormule = f => calculer(entreeEstimation({ ...b, taches: f.tacheIds.filter(id => chiffrees.some(t => t.id === id)) }, b.espace === "personnel", debutChoisi())).totalC;
+      const prixStandard = prixFormule(formules[0]);
       h += titre("Votre niveau de ménage") + `<div class="formules">${formules.map((f, i) => {
         const avant = i ? formules[i - 1].tacheIds : [];
         const ajouts = chiffrees.filter(t => f.tacheIds.includes(t.id) && !avant.includes(t.id));
+        const p = prixFormule(f);
         return `<button type="button" class="formule${f.id === actif ? " choisie" : ""}${f.id === "confort" ? " conseillee" : ""}" data-formule="${f.id}">
-          ${f.id === "confort" ? `<span class="badge-formule">${tr("La plus choisie")}</span>` : ""}
+          ${f.id === "confort" ? `<span class="badge-formule">${tr("Conseillée")}</span>` : ""}
           <b class="nom-formule">${tr(f.nom)}</b>${f.id === "prestige" && r.sousTitrePremium ? `<span class="sous-formule">${tr(r.sousTitrePremium)}</span>` : ""}
-          <span class="prix-formule">${euros(prixFormule(f))}</span>
+          <span class="prix-formule">${euros(p)}</span>${i && p > prixStandard ? `<span class="ecart-formule">+${euros(p - prixStandard)}</span>` : ""}
           ${f.remisePct ? `<span class="remise-formule">−${f.remisePct} % ${tr("sur les tâches incluses")}</span>` : `<span class="remise-formule">${tr("Le ménage de base")}</span>`}
           <ul>${i === 0 ? `<li>${esc(r.inclus || tr("Ménage complet"))}</li>`
             : `<li class="tout">${tr(i === 1 ? "Tout Standard, plus :" : "Tout Confort, plus :")}</li>${ajouts.map(t => `<li>${esc(t.nom)}</li>`).join("")}`}</ul>
@@ -611,6 +617,41 @@ function questionsVehicule() {
 const titreAction = (t, id, action) => `<div style="display:flex;align-items:baseline;gap:10px;margin:26px 0 10px"><h3 style="margin:0;flex:1">${t}</h3>`
   + `<button type="button" class="lien-bouton" id="${id}">${action}</button></div>`;
 /** Formule en cours : Premium ou Confort quand toutes ses tâches sont cochées (la plus complète d'abord), sinon Standard. */
+/** Niveaux, pour les pastilles d'occasion et les badges. */
+const NOMS_NIVEAUX = { standard: "Standard", confort: "Confort", prestige: "Premium" };
+/** « À quelle occasion ? » (hors ménage du logement) : pastilles avec le niveau qu'elles cochent. */
+function choixOccasions(r) {
+  const niveau = b.occasion ? niveauOccasion(r, b.occasion) : "";
+  return `<div class="choix">${r.occasions.map(o => `<button type="button" data-champ="occasion" data-valeur="${esc(o.id)}" class="${b.occasion === o.id ? "choisi" : ""}">
+      <span>${esc(tr(o.nom))}</span>${o.packId ? `<span class="tag-niveau">${tr(NOMS_NIVEAUX[o.packId])}</span>` : ""}</button>`).join("")}</div>`
+    + (niveau && niveau !== "standard" ? `<p class="petit note-occasion">✨ <span>${tr("Niveau présélectionné pour cette occasion :")}</span> <b>${tr(NOMS_NIVEAUX[niveau])}</b>. <span>${tr("Ajustez-le plus bas si besoin.")}</span></p>` : "");
+}
+/** « Quel ménage ? » (ménage ponctuel du logement, 22/11/2026) : l'occasion et le niveau en un seul choix. Chaque carte parle d'elle-même :
+ *  emoji, badge, prix total, écart avec le ménage classique, ce qu'elle ajoute. Les options restent ajustables juste en dessous. */
+function quelMenage(r, chiffrees, actif) {
+  const occ = r.occasions;
+  const choisie = occ.some(o => o.id === b.occasion) ? b.occasion : ({ prestige: "printemps", confort: "recevoir" }[actif] || occ[0].id);
+  const prix = id => calculer(entreeEstimation({ ...b, taches: tachesPourOccasion(b, id) }, b.espace === "personnel", debutChoisi())).totalC;
+  const base = prix(occ[0].id), deBase = new Set(tachesPourOccasion(b, occ[0].id));
+  const nomTache = id => chiffrees.find(t => t.id === id)?.nom;
+  const ajuste = niveauOccasion(r, choisie) !== actif;
+  return titre("Quel ménage ?") + `<p class="petit" style="margin:-4px 0 12px">${tr("Choisissez votre moment : le niveau et les tâches se règlent tout seuls. Vous pourrez ajuster les options juste en dessous.")}</p>
+    <div class="formules menages">${occ.map(o => {
+      const p = prix(o.id);
+      // Ce qui distingue la carte d'abord (four, placards… pour le grand ménage), puis ce qu'elle partage avec les autres.
+      const partage = id => occ.filter(x => tachesPourOccasion(b, x.id).includes(id)).length;
+      const ajouts = tachesPourOccasion(b, o.id).filter(id => !deBase.has(id)).sort((x, y) => partage(x) - partage(y)).map(nomTache).filter(Boolean);
+      return `<button type="button" class="formule menage${o.id === choisie ? " choisie" : ""}${o.conseille ? " conseillee" : ""}" data-champ="occasion" data-valeur="${esc(o.id)}">
+        <span class="badge-formule">${tr(o.badge)}</span>
+        <span class="emoji-menage" aria-hidden="true">${o.emoji}</span>
+        <b class="nom-formule">${tr(o.nom)}</b>
+        <span class="prix-formule">${euros(p)}</span>
+        <span class="ecart-formule">${p > base ? `+${euros(p - base)}` : tr("Le ménage de base")}</span>
+        <span class="detail-menage">${tr(o.description)}</span>
+        ${ajouts.length ? `<ul>${ajouts.slice(0, 3).map(n => `<li>${esc(n)}</li>`).join("")}${ajouts.length > 3 ? `<li class="tout">+ ${ajouts.length - 3} ${tr(ajouts.length - 3 > 1 ? "autres tâches" : "autre tâche")}</li>` : ""}</ul>` : ""}
+      </button>`; }).join("")}</div>
+    ${ajuste ? `<p class="petit ajuste-menage">✎ ${tr("Ajusté selon vos options : le prix tient compte de ce que vous avez coché ou décoché.")}</p>` : ""}`;
+}
 function formuleActive(b, packs, chiffrees) {
   const complet = id => { const p = packs.find(x => x.id === id); const ids = p ? p.tacheIds.filter(t => chiffrees.some(c => c.id === t)) : [];
     return ids.length > 0 && ids.every(t => b.taches.includes(t)); };
@@ -686,7 +727,8 @@ function questionsFormule(r) {
         ${compteur("Passages à planifier", "passages", b.passages || REGLES.PASSAGES_DEFAUT, { min: REGLES.PASSAGES_MIN, max: REGLES.PASSAGES_MAX })}
         <p class="petit">Chaque passage est une demande séparée, au même prix.</p></div>`;
   }
-  let h = f.genre === "PONCTUEL" && r.occasions.length ? titre("À quelle occasion ?") + choix(r.occasions.map(o => [o.id, o.nom]), b.occasion, "occasion") : "";
+  // Ménage du logement : l'occasion se choisit dans « Quel ménage ? » (cartes, avec le niveau) ; ailleurs, en pastilles avec leur niveau.
+  let h = f.genre === "PONCTUEL" && r.occasions.length && r.id !== "home" ? titre("À quelle occasion ?") + choixOccasions(r) : "";
   // Remise en état (et Grand ménage) : dernier nettoyage en profondeur
   if (f.avecDernierNettoyage) h += titre("Dernier nettoyage en profondeur") + choix(DERNIERS_NETTOYAGES.map(d => [d.id, d.libelle]), b.dernierNettoyage, "dernierNettoyage");
   // Nature des salissures (choix multiple, liste propre à la rubrique)
@@ -738,7 +780,9 @@ function etape3() {
       <label class="lien-bouton" style="cursor:pointer">Galerie<input type="file" accept="image/*" data-vue="${esc(v)}" hidden></label></div>`;
   }).join("")}</div>` : "";
   const location = b.rubriqueId === "rental";
-  const pret = obl ? (vues.length ? vuesCompletes(b, Object.keys(vuesPrises)) : photos.length > 0) : (location || photos.length > 0 || !!b.sansPhotos);
+  // 22/11/2026 : déménagement et fin de chantier : « Photos plus tard » (le Cleaneur les prend à son arrivée) ne bloque plus.
+  const plusTard = obl && photosPlusTardPossibles(b.rubriqueId);
+  const pret = obl ? (vues.length ? vuesCompletes(b, Object.keys(vuesPrises)) : photos.length > 0) || (plusTard && !!b.sansPhotos) : (location || photos.length > 0 || !!b.sansPhotos);
   return `<h2>${location ? "Une dernière remarque ?" : "Ajoutez des photos pour préciser votre besoin"}</h2>
     ${obl ? `<div class="note alerte" style="margin:10px 0">${b.rubriqueId === "kitchen" ? "4 photos obligatoires de la cuisine (4 angles)." : "Photos obligatoires de l'état actuel, pré-analysées (luminosité, pièce reconnue)."}</div>` : ""}
     ${location ? `<label class="champ" style="font-weight:400"><textarea data-texte="remarque" rows="4" maxlength="2000" placeholder="Ex. : arrivée des voyageurs à 16 h">${esc(b.remarque)}</textarea></label>` : ""}
@@ -747,8 +791,9 @@ function etape3() {
       <div class="boutons-photo"><label class="bouton secondaire" style="cursor:pointer">${icone("photo")} Prendre une photo<input type="file" id="photos-appareil" accept="image/*" capture="environment" hidden></label>
       <label class="bouton secondaire" style="cursor:pointer">+ Choisir dans la galerie<input type="file" id="photos" accept="image/*" multiple hidden></label></div>
       <p class="petit">12 photos maximum. Elles sont réduites avant l'envoi.</p></div>
-    ${obl ? "" : `<div class="carte" style="margin-top:10px">${caseCocher("Je ne peux pas encore photographier l'état actuel", "sansPhotos", !!b.sansPhotos)}</div>`}
-    ${actions(pret, pret ? "" : obl ? "Ajoutez une photo pour chaque vue." : "Ajoutez une photo ou cochez la case.")}`;
+    ${obl ? (plusTard ? `<div class="carte" style="margin-top:10px">${caseCocher("📷 Photos plus tard : le Cleaneur les prendra à son arrivée", "sansPhotos", !!b.sansPhotos, "Pour un logement ou un chantier pas encore accessible. Le prix reste une estimation : le Cleaneur peut proposer un supplément sur place, avec photo.")}</div>` : "")
+      : `<div class="carte" style="margin-top:10px">${caseCocher("Je ne peux pas encore photographier l'état actuel", "sansPhotos", !!b.sansPhotos)}</div>`}
+    ${actions(pret, pret ? "" : obl ? (plusTard ? "Ajoutez une photo pour chaque vue, ou choisissez « Photos plus tard »." : "Ajoutez une photo pour chaque vue.") : "Ajoutez une photo ou cochez la case.")}`;
 }
 
 function joursProposes() {
@@ -855,7 +900,7 @@ function etape5() {
   const contactOk = b.prenom.trim() && b.nom.trim() && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(b.email) && b.telephone.replace(/\D/g, "").length >= 10;
   const manque = !contactOk ? "Complétez vos coordonnées." : !b.cgv ? "Acceptez les conditions pour envoyer la demande." : "";
   return `<h2>Votre estimation</h2>
-    <p class="muet">${icone(r.icone)} ${r.nom} · ${duree(est.dureeMin)}${est.nombreCleaneurs === 2 ? " · 2 Cleaneurs" : ""}</p>
+    <p class="muet">${icone(r.icone)} ${r.nom} · ${est.nombreCleaneurs === 2 ? `2 Cleaneurs × ${duree(est.dureeMin)}` : duree(est.dureeMin)}</p>
     ${estPrelancement() ? `<div class="note" style="margin-top:10px"><span><b>Lancement le 31 décembre 2026.</b> ${MESSAGE_LANCEMENT} Votre pré-réservation est gratuite et sans engagement.</span></div>` : ""}
     <div class="carte" style="margin-top:12px">
       ${est.devisObligatoire ? `<h3 style="color:var(--primaire)">Sur devis</h3><p class="muet" style="margin:4px 0 0">Un professionnel qualifié évalue votre besoin et vous propose un devis. Aucun engagement.</p>`
@@ -885,9 +930,17 @@ function etape5() {
       ${b.suiviSms && b.accueil === "TIERS" && b.tiersNom.trim() ? caseCocher(`Envoyer aussi les SMS à ${esc(b.tiersNom.trim())}`, "smsTiers", !!b.smsTiers) : ""}</div>
     ${titre("Photos avant le ménage")}
     <div class="carte">${caseCocher("Photos avant exigées", "photosAvantExigees", !!b.photosAvantExigees, "Le Cleaneur photographie chaque pièce avant et après le ménage. Conseillé pour les locations saisonnières et les états des lieux. Sinon, il photographie chaque pièce après le ménage et signale tout problème constaté à son arrivée.")}</div>
-    <div class="note" style="margin-top:14px">Aucun paiement maintenant : vous ne serez débité qu'après avoir validé la prestation. Annulation gratuite jusqu'à 48 h avant ; ensuite 25 % du prix accepté.</div>
+    ${notePaiement(est)}
     <div class="carte" style="margin-top:12px">${caseCocher(`J'accepte les <a href="#/conditions" target="_blank">conditions d'utilisation</a> et la <a href="#/confidentialite" target="_blank">politique de confidentialité</a>`, "cgv", b.cgv)}</div>
-    ${verifierCouverture() === 0 ? blocAttente(r, contactOk) : actions(!manque && !envoi, manque, envoi ? "Envoi en cours…" : estPrelancement() ? "Envoyer ma pré-réservation" : est.devisObligatoire ? "Envoyer ma demande de devis" : "Envoyer ma demande", "envoyer")}`;
+    ${verifierCouverture() === 0 ? blocAttente(r, contactOk) : actions(!manque && !envoi, manque, envoi ? "Envoi en cours…" : estPrelancement() ? "Envoyer ma pré-réservation" : est.devisObligatoire ? "Envoyer ma demande de devis" : "Payer et envoyer ma demande", "envoyer")}`;
+}
+
+/** Paiement (22/11/2026, règle de l'utilisateur) : payé à l'envoi, bloqué jusqu'à la validation, versé ensuite au Cleaneur. */
+function notePaiement(est) {
+  if (estPrelancement()) return `<div class="note" style="margin-top:14px">💳 <span>${tr("Pré-réservation gratuite : rien n'est payé maintenant. À l'ouverture, vous paierez en ligne pour la confirmer ; le montant restera bloqué jusqu'à votre validation de la prestation.")}</span></div>`;
+  if (est.devisObligatoire) return `<div class="note" style="margin-top:14px">💳 <span>${tr("Aucun paiement maintenant : le paiement vous sera proposé avec le devis.")}</span></div>`;
+  return `<div class="note" style="margin-top:14px">💳 <span>${tr("Paiement sécurisé à l'envoi (carte, Apple Pay, Google Pay) : le montant est débité maintenant et reste bloqué par Cleaneroo jusqu'à votre validation de la prestation, puis il est versé au Cleaneur. Votre demande est transmise aux Cleaneurs dès le paiement. Demande annulée : vous êtes remboursé. Annulation gratuite jusqu'à 48 h avant ; ensuite 25 % du prix accepté.")}</span></div>`
+    + (passagesPlanifies(b) > 1 ? `<p class="petit" style="margin:6px 0 0">🔁 ${tr("Entretien régulier : le 1er passage est payé maintenant ; les suivants sont prélevés automatiquement sur la même carte, 3 jours avant chaque passage.")}</p>` : "");
 }
 
 function actions(ok, message = "", libelle = "Continuer", id = "suivant") {
@@ -1043,14 +1096,8 @@ document.addEventListener("click", async e => {
     if (ds.champ === "engagementMois") v = +v;
     if (ds.champ === "typeLogementId") { const tl = TYPES_LOGEMENT.find(x => x.id === v); return maj({ typeLogementId: v, surface: tl.surface, chambres: tl.chambres, sdb: tl.sdb, niveaux: tl.niveaux }); }
     if (ds.champ === "accueil" && v === b.accueil) return;
-    // L'occasion coche le pack indiqué (le client peut ensuite décocher) ; « Autre » ne coche rien.
-    if (ds.champ === "occasion") {
-      const o = rubrique(b.rubriqueId).occasions.find(x => x.id === v);
-      const p = packsPour(rubrique(b.rubriqueId), b.typeLieuId).find(x => x.id === o?.packId);
-      const proposees = tachesChiffrees(b).map(t => t.id);
-      const enPlus = (o?.tachesEnPlus || []).filter(id => proposees.includes(id));
-      return maj({ occasion: v, taches: [...new Set([...b.taches, ...(p ? p.tacheIds : []), ...enPlus])] });
-    }
+    // L'occasion REMPLACE le niveau (tâches de pack) par celui qu'elle indique ; les options personnelles restent (22/11/2026).
+    if (ds.champ === "occasion") return maj({ occasion: v, taches: tachesPourOccasion(b, v) });
     // Le dernier nettoyage présélectionne l'état de saleté.
     if (ds.champ === "dernierNettoyage") return maj({ dernierNettoyage: v, salissure: DERNIERS_NETTOYAGES.find(d => d.id === v).salissure });
     return maj({ [ds.champ]: v });
@@ -1164,41 +1211,59 @@ document.addEventListener("input", e => {
   }, 500); }
 });
 
+let totalPassages = 0;   // nombre de passages de l'envoi en cours (message en cas d'échec partiel)
 async function envoyer() {
   const debut = debutChoisi();
   const est = calculer(entreeEstimation(b, b.espace === "personnel", debut));
   envoi = true; rendre();
   try {
     const acces = { TIERS: { nom: b.tiersNom, telephone: b.tiersTel }, BOITE: { emplacement: b.boiteEmplacement, code: b.code }, AUTONOME: { code: b.code } }[b.accueil] || {};
-    const details = { ...b }; ["prenom", "nom", "email", "telephone", "rue", "codePostal", "ville", "code", "tiersNom", "tiersTel", "boiteEmplacement", "cgv", "etape"].forEach(k => delete details[k]);
+    const details = { ...b }; ["prenom", "nom", "email", "telephone", "rue", "codePostal", "ville", "code", "tiersNom", "tiersTel", "boiteEmplacement", "cgv", "etape", "passagesEnvoyes", "groupePaiement"].forEach(k => delete details[k]);
     details.lignes = est.lignes;
     details.langue = langue;
     details.fraisServicePct = est.fraisServicePct; details.fraisServiceC = est.fraisServiceC;   // frais de service Cleaneroo (à part)   // langue des SMS et des messages : celle de la réservation
     const nombre = passagesPlanifies(b);
     details.passages = nombre;
     const dates = debut && nombre > 1 && !estPrelancement() ? datesPassages(debut, frequenceDe(b), b.jours || [], nombre) : [debut];
-    let premiere = null;
+    // Passages déjà créés lors d'un essai précédent (22/11/2026) : jamais renvoyés, pour éviter les doublons.
+    totalPassages = dates.length;
+    // Paiement (22/11/2026) : tous les passages d'une même réservation partagent la carte du 1er (prélevés 3 jours avant chacun).
+    if (!b.groupePaiement) { b = { ...b, groupePaiement: crypto.randomUUID() }; sauver(); }
+    let premiere = (b.passagesEnvoyes || []).find(x => x.n === 0) || null;
     for (const [n, d] of dates.entries()) {
+    if ((b.passagesEnvoyes || []).some(x => x.n === n)) continue;
     const envoi1 = await envoyerDemande({
       rubrique_id: b.rubriqueId, details, estimation_c: est.totalC, credit_impot_c: est.creditImpotC, duree_min: est.dureeMin,
       remise_parrainage_c: n === 0 ? est.remiseParrainageC : 0, cagnotte_c: n === 0 ? est.cagnotteC : 0,
       nombre_cleaneurs: est.nombreCleaneurs, sur_devis: est.devisObligatoire, creneau: d ? d.toISOString() : null, flexible: b.flexible || (estPrelancement() && !d), prelancement: estPrelancement(),
       choix_cleaneur: choixEnvoye(), cleaneur_favori: choixEnvoye() === "favori" ? b.cleaneurFavori : null, espace: b.espace, prenom: b.prenom.trim(), nom: b.nom.trim(), email: b.email.trim(), telephone: b.telephone.trim(),
-      rue: b.rue.trim(), code_postal: b.codePostal.trim(), ville: b.ville.trim(), accueil: b.accueil || "PRESENT", acces,
+      rue: b.rue.trim(), code_postal: b.codePostal.trim(), ville: b.ville.trim(), accueil: b.accueil || "PRESENT", acces, groupe_paiement: b.groupePaiement,
       remarque: (dates.length > 1 ? `Passage ${n + 1}/${dates.length}. ` : "")
+        + (photosPlusTardPossibles(b.rubriqueId) && b.sansPhotos && !vuesCompletes(b, Object.keys(vuesPrises)) ? "Photos de l'état actuel à prendre à l'arrivée. " : "")
         + (b.rubriqueId === "boat" && (b.port || b.place) ? `Port : ${[b.port, b.place].filter(Boolean).join(", ")}${b.accesPonton ? ` · accès : ${b.accesPonton}` : ""}. ` : "") + b.remarque.trim(),
     }, n === 0 ? photos : [], b.accueil === "BOITE" ? photoBoite : null);
     premiere = premiere || envoi1;
+    b = { ...b, passagesEnvoyes: [...(b.passagesEnvoyes || []), { n, reference: envoi1.reference, jeton: envoi1.jeton }] };
+    sauver();
     }
     const { reference, jeton } = premiere;
+    const aPayer = !estPrelancement() && !est.devisObligatoire;
     const tel = b.telephone.trim();
     if (tel) session().then(x => x ? monProfil() : null).then(p => { if (p && !p.telephone) majProfil({ telephone: tel }); }).catch(() => null);
     memoriserCommande(b);
     try { localStorage.removeItem(CLE_BROUILLON); localStorage.removeItem(CLE_FAVORI_VOULU); } catch { /* rien */ }
     envoi = false; b = null; photos = []; photoBoite = null; infosParrain = null;
+    // Paiement tout de suite sur la page sécurisée Stripe ; sinon (service indisponible), le suivi propose « Payer ma réservation ».
+    if (aPayer) {
+      const url = await lancerPaiement(reference, jeton).catch(() => null);
+      if (url) { location.href = url; return; }
+    }
     location.hash = `#/demande/${reference}/${jeton}`;
   } catch (err) {
     envoi = false; rendre();
-    racine.querySelector(".barre-actions").insertAdjacentHTML("afterbegin", `<p class="erreur">L'envoi n'a pas abouti (${esc(err.message)}). Vérifiez votre connexion et réessayez.</p>`);
+    const faits = (b?.passagesEnvoyes || []).length;
+    racine.querySelector(".barre-actions").insertAdjacentHTML("afterbegin", faits
+      ? `<p class="erreur">${faits} ${tr(faits > 1 ? "passages enregistrés" : "passage enregistré")} ${tr("sur")} ${totalPassages}. ${tr("Réessayez : seuls les passages manquants seront envoyés, sans doublon.")}</p>`
+      : `<p class="erreur">L'envoi n'a pas abouti (${esc(err.message)}). Vérifiez votre connexion et réessayez.</p>`);
   }
 }

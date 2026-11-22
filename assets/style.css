@@ -1615,6 +1615,17 @@ details.piece.complete .pastille-piece { background: #4FA82E; border-color: #4FA
 .formule li.tout::before { content: ""; }
 .case.incluse { opacity: .75; }
 .case.incluse .info { color: var(--marque); font-weight: 800; }
+/* « Quel ménage ? » (22/11/2026) : l'occasion et le niveau en cartes parlantes */
+.formules.menages { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+.formule.menage { padding-top: 40px; }
+.emoji-menage { width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; font-size: 24px; background: color-mix(in srgb, var(--marque) 10%, var(--surface)); }
+.formule.menage:not(.conseillee) .badge-formule { background: color-mix(in srgb, var(--marque) 14%, var(--surface)); color: var(--primaire); }
+.detail-menage { font-size: 13px; color: var(--texte2); line-height: 1.35; }
+.ecart-formule { align-self: flex-start; padding: 2px 9px; border-radius: 999px; font-size: 12.5px; font-weight: 800; color: var(--primaire); background: color-mix(in srgb, var(--turquoise) 12%, var(--surface)); }
+.ajuste-menage { margin: 8px 0 0; font-weight: 700; color: var(--primaire); }
+.tag-niveau { margin-left: 6px; padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 800; color: var(--primaire); background: color-mix(in srgb, var(--turquoise) 14%, var(--surface)); white-space: nowrap; }
+.note-occasion { margin: 8px 0 0; }
+@media (max-width: 720px) { .formules.menages .formule.conseillee { order: 0; } .formule.menage ul { display: none; } }
 @media (max-width: 720px) { .formules { grid-template-columns: 1fr; } .formule.conseillee { order: -1; } }
 
 /* ================================================================================================

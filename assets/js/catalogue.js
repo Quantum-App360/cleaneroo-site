@@ -151,9 +151,13 @@ export const RUBRIQUES = [
     // 18/11/2026 : « Grand ménage » n'est plus un type de ménage, c'est le niveau Premium (plus de doublon entre les deux choix).
     titreFormules: "À quelle fréquence ?", sousTitrePremium: "Le grand ménage, du sol au plafond",
     taches: tachesLogement, packs: packsLogement, surfaceReferenceM2: 60,
-    occasions: [{ id: "printemps", nom: "Ménage de printemps", packId: "prestige" }, { id: "recevoir", nom: "Avant de recevoir", packId: "confort" },
-      { id: "vacances", nom: "Retour de vacances", packId: "", tachesEnPlus: ["frigo"] }, { id: "vente", nom: "Avant une vente ou une location", packId: "prestige" },
-      { id: "autre", nom: "Autre", packId: "" }],
+    // 22/11/2026 : « Quel ménage ? » réunit l'occasion et le niveau (Standard · Confort · Premium) en un seul choix, en cartes.
+    occasions: [
+      { id: "classique", nom: "Ménage classique", packId: "", emoji: "🧽", badge: "L'essentiel", description: "Le ménage complet du quotidien." },
+      { id: "recevoir", nom: "Avant de recevoir", packId: "confort", emoji: "🥂", badge: "Conseillé", conseille: true, description: "Draps, vitres et réfrigérateur en plus : tout est prêt pour vos invités." },
+      { id: "vacances", nom: "Retour de vacances", packId: "", tachesEnPlus: ["frigo"], emoji: "🧳", badge: "Frigo inclus", description: "Le ménage complet, avec le réfrigérateur vidé et nettoyé." },
+      { id: "printemps", nom: "Grand ménage de printemps", packId: "prestige", emoji: "🌸", badge: "Du sol au plafond", description: "Four, hotte, placards et armoires compris : le grand ménage complet." },
+      { id: "vente", nom: "Avant une vente ou une location", packId: "prestige", emoji: "🔑", badge: "Prêt pour les visites", description: "Le logement impeccable, du sol au plafond, avant les visites." }],
     frequences: [["semaine", "Chaque semaine"], ["deux_semaines", "Toutes les 2 semaines"], ["mois", "Chaque mois"]],
     moments: [["matin", "Le matin"], ["apres_midi", "L'après-midi"], ["peu_importe", "Peu importe"]] },
   { id: "rental", nom: "Location saisonnière", sousTitre: "Prêt pour vos prochains voyageurs", icone: "location", tauxHoraireC: 3000, salissureSurTemps: true, affichagePrix: "PAR_MENAGE",
@@ -551,7 +555,8 @@ export const TAILLES_CANAPE = [
   { id: "t3p", libelle: "plus de 3 m", prixC: 4000, minutes: 60 },
 ];
 /** Prestations spécialisées : délai souhaité (intervention urgente). */
-export const DELAIS_URGENCE = [["24h", "Sous 24 h"], ["48h", "Sous 48 h"], ["semaine", "Dans la semaine"]];
+// 22/11/2026 : plus de « Sous 24 h » (une réservation se fait au moins 24 h à l'avance).
+export const DELAIS_URGENCE = [["48h", "Sous 48 h"], ["semaine", "Dans la semaine"]];
 /** Événements : nombre de tranches de 50 convives (au moins 1). */
 export const tranchesConvives = convives => Math.max(1, Math.ceil((convives || 0) / REGLES.CONVIVES_PAR_TRANCHE));
 /** Immeubles (copropriété, résidence services) : surface totale = surface par palier × nombre de paliers. */
@@ -834,9 +839,11 @@ export const BESOINS_SPECIAUX = [["desinfection", "Désinfection approfondie"], 
 export const ACCUEIL = { PRESENT: "Je serai présent", TIERS: "Concierge / tiers", BOITE: "Boîte à clés", AUTONOME: "Accès autonome" };
 
 /** Chez les professionnels : pas d'accès autonome ni de boîte à clés. */
-export const accueilAutonomeInterdit = (rubriqueId, typeLieuId) =>
-  ["office", "commerce", "communal", "event", "special"].includes(rubriqueId) || (rubriqueId === "windows" && ["vitrine_commerce", "facades"].includes(typeLieuId));
+// 22/11/2026 : bureaux, commerces, parties communes et vitrines acceptent aussi la boîte à clés et l'accès autonome (badge, code).
+export const accueilAutonomeInterdit = (rubriqueId, typeLieuId) => ["event", "special"].includes(rubriqueId);
 export const photosObligatoires = rubriqueId => ["moving", "construction", "kitchen"].includes(rubriqueId);
+/** Déménagement et fin de chantier : le client n'a souvent pas encore accès aux lieux ; le Cleaneur peut prendre les photos à son arrivée. */
+export const photosPlusTardPossibles = rubriqueId => ["moving", "construction"].includes(rubriqueId);
 /** Rubriques qui décrivent un logement : type, chambres, salles de bain et niveaux (+15 min par niveau supplémentaire). */
 export const RUBRIQUES_LOGEMENT = ["home", "moving"];
 /** Étape 3 : vues à photographier (une photo par vue) ; obligatoires pour déménagement, fin de chantier, cuisines ; suggérées pour les bureaux. */

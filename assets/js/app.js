@@ -147,22 +147,22 @@ const NOTIFS = {
   fr: [
     [["position", "{p} est en route", "Arrivée dans {n} min"], ["sur-place", "{p} est sur place", "Arrivée confirmée par géolocalisation"], ["termine", "{p} a terminé", "Toutes les tâches sont cochées"]],
     [["photo", "Compte rendu reçu", "{n} photos avant / après"], ["avis", "Nouvel avis {e}", "« Impeccable, merci {p} ! »"], ["valide", "Tâches validées", "{n} tâches cochées et horodatées"]],
-    [["paiement", "Payé après validation", "Crédit d'impôt selon éligibilité"], ["instantane", "Prix affiché tout de suite", "Sans devis ni attente"], ["calendrier", "Réservé en 2 minutes", "{v} · créneau confirmé"]],
+    [["paiement", "Paiement protégé", "Crédit d'impôt selon éligibilité"], ["instantane", "Prix affiché tout de suite", "Sans devis ni attente"], ["calendrier", "Réservé en 2 minutes", "{v} · créneau confirmé"]],
   ],
   en: [
     [["position", "{p} is on the way", "Arriving in {n} min"], ["sur-place", "{p} is on site", "Arrival confirmed by geolocation"], ["termine", "{p} has finished", "Every task is ticked"]],
     [["photo", "Report received", "{n} before / after photos"], ["avis", "New review {e}", "“Spotless, thank you {p}!”"], ["valide", "Tasks approved", "{n} tasks ticked and time-stamped"]],
-    [["paiement", "Paid after approval", "Tax credit subject to eligibility"], ["instantane", "Price shown instantly", "No quote, no waiting"], ["calendrier", "Booked in 2 minutes", "{v} · slot confirmed"]],
+    [["paiement", "Protected payment", "Tax credit subject to eligibility"], ["instantane", "Price shown instantly", "No quote, no waiting"], ["calendrier", "Booked in 2 minutes", "{v} · slot confirmed"]],
   ],
   it: [
     [["position", "{p} è in arrivo", "Arrivo tra {n} min"], ["sur-place", "{p} è sul posto", "Arrivo confermato dalla geolocalizzazione"], ["termine", "{p} ha finito", "Tutti i compiti sono spuntati"]],
     [["photo", "Report ricevuto", "{n} foto prima / dopo"], ["avis", "Nuova recensione {e}", "«Impeccabile, grazie {p}!»"], ["valide", "Compiti convalidati", "{n} compiti spuntati e con orario"]],
-    [["paiement", "Pagato dopo la convalida", "Credito d'imposta secondo idoneità"], ["instantane", "Prezzo subito visibile", "Senza preventivo né attesa"], ["calendrier", "Prenotato in 2 minuti", "{v} · fascia confermata"]],
+    [["paiement", "Pagamento protetto", "Credito d'imposta secondo idoneità"], ["instantane", "Prezzo subito visibile", "Senza preventivo né attesa"], ["calendrier", "Prenotato in 2 minuti", "{v} · fascia confermata"]],
   ],
   es: [
     [["position", "{p} está en camino", "Llega en {n} min"], ["sur-place", "{p} está en el lugar", "Llegada confirmada por geolocalización"], ["termine", "{p} ha terminado", "Todas las tareas marcadas"]],
     [["photo", "Informe recibido", "{n} fotos antes / después"], ["avis", "Nueva reseña {e}", "«Impecable, ¡gracias {p}!»"], ["valide", "Tareas validadas", "{n} tareas marcadas con hora"]],
-    [["paiement", "Pagado tras validar", "Crédito fiscal según elegibilidad"], ["instantane", "Precio al instante", "Sin presupuesto ni esperas"], ["calendrier", "Reservado en 2 minutos", "{v} · franja confirmada"]],
+    [["paiement", "Pago protegido", "Crédito fiscal según elegibilidad"], ["instantane", "Precio al instante", "Sin presupuesto ni esperas"], ["calendrier", "Reservado en 2 minutos", "{v} · franja confirmada"]],
   ],
 };
 const hasard = l => l[Math.floor(Math.random() * l.length)];
@@ -249,7 +249,7 @@ const FONCTIONS_DIGITALES = [
   ["position", "Suivi en direct", "Votre Cleaneur sur la carte, comme une livraison, avec son heure d'arrivée."],
   ["photo", "Compte rendu photo", "Chaque pièce photographiée avant et après, horodatée, dans votre espace."],
   ["calendrier", "Agenda connecté", "Calendriers Airbnb et Booking reliés : les ménages se programment en un geste."],
-  ["paiement", "Payé après validation", "Vous validez le travail, puis le paiement part. Jamais avant."],
+  ["paiement", "Paiement protégé", "Vous payez en réservant ; l'argent reste bloqué et n'est versé au Cleaneur qu'après votre validation."],
 ];
 
 /** Maquette de l'application : carte du trajet, statut qui change, compte rendu photo et paiement (aucune image). */

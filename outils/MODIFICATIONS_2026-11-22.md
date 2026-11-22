@@ -23,3 +23,25 @@ Le logo officiel et les prix ne sont pas modifiés.
 - Liens colorés des cartes, chiffres clés et titre du héros en teintes foncées.
 - Téléphone : « Conciergerie » n'est plus coupé, lancement annoncé une seule fois, plus de bande vide sous le pied de page, onglets « Hôtels et campings » sur deux lignes au lieu de déborder.
 - Tailles 11 / 11,5 px → 12 px.
+
+# Réservation et paiement (22 novembre 2026, après-midi)
+
+## Parcours de réservation (site et appli Android)
+- **« Quel ménage ? »** (ménage ponctuel du logement) : l'occasion et le niveau réunis en 5 cartes (Ménage classique, Avant de recevoir, Retour de vacances, Grand ménage de printemps, Avant une vente ou une location) avec emoji, badge, prix total, écart de prix et tâches ajoutées. Mobile : cartes compactes.
+- **Occasion** : changer d'occasion REMPLACE le niveau (tâches de pack) au lieu de l'ajouter ; les options personnelles restent (`tachesPourOccasion`, site et appli, testé des deux côtés). Autres prestations : pastilles avec le niveau (Confort, Premium).
+- Badge « Conseillée » au lieu de « La plus choisie », écart de prix sur les niveaux, « 2 Cleaneurs × durée ».
+- Passages multiples : jamais de doublon ni de passage manquant annoncé comme envoyé.
+- Accès autonome et boîte à clés possibles pour bureaux, commerces, parties communes et vitrines.
+- Déménagement et fin de chantier : « Photos plus tard » (le Cleaneur les prend à son arrivée).
+- Urgence « Sous 24 h » retirée.
+
+## Paiement à la réservation, argent bloqué jusqu'à la validation
+- Règle : le client paie en envoyant sa demande (page Stripe, débit immédiat) ; le montant reste bloqué par Cleaneroo et n'est libéré pour le versement au Cleaneur qu'après la validation (ou la validation automatique à 48 h) ; demande annulée = remboursée ; demande non payée = invisible pour les Cleaneurs, rappel après 1 h, annulée sans frais après 24 h (pré-réservations : 48 h après l'ouverture).
+- Entretien régulier : 1er passage payé à l'envoi, les suivants prélevés automatiquement 3 jours avant (carte enregistrée) ; refus = le client paie depuis son suivi, sinon annulation 24 h avant.
+- Supplément accepté sur place et pourboire : prélevés à la validation sur la carte enregistrée.
+- Fichiers : `outils/base-paiement-reservation.sql` (base), `supabase/functions/paiement/index.ts` (serveur), `assets/js/paiement.js`, `reserver.js` ; appli : `Paiement.kt`, `Reservation.kt`, `Compte.kt`. Textes (vitrine, garanties, conditions, assistant) mis à jour dans les 4 langues : à faire relire par l'avocat.
+
+## Mise en ligne : dans cet ordre
+1. Appliquer `outils/base-paiement-reservation.sql` dans Supabase (SQL Editor). Le site et l'appli envoient la nouvelle colonne `groupe_paiement` : sans ce script, l'envoi d'une demande échoue.
+2. Redéployer la fonction `paiement` (supabase/functions/paiement/index.ts), sans vérification JWT (comme avant).
+3. Pousser le site (VERSION 2026112204 déjà générée), puis construire et tester l'appli (`lancer-tests-claude.bat`).
