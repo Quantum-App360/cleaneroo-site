@@ -3,6 +3,8 @@ import { langue, LOCALE } from "./langue.js";
 // Valeurs métier : copie EXACTE de app/.../Regles.kt (application Android). Toute modification se fait des deux côtés.
 // Montants en centimes, durées en minutes.
 export const REGLES = {
+  // WhatsApp « Support Cleaneroo » (22/11/2026) : numéro de Michael, lié au téléphone de Vincent (appareil connecté).
+  WHATSAPP_SUPPORT: "33626876518",
   // Conciergerie : seuil d'alerte par défaut d'un article du stock d'un bien (13 novembre 2026).
   STOCK_SEUIL_DEFAUT: 2,
   COMMISSION_BASE_PB: 1500,
@@ -460,3 +462,6 @@ export function dateVersement(d = new Date()) {
   const v = new Date(d.getFullYear(), d.getMonth(), d.getDate() + jours);
   return v;
 }
+
+/** Lien WhatsApp vers le support Cleaneroo, avec un message déjà écrit. */
+export const lienWhatsAppSupport = (texte = "Bonjour Cleaneroo, ") => `https://wa.me/${REGLES.WHATSAPP_SUPPORT}?text=${encodeURIComponent(texte)}`;

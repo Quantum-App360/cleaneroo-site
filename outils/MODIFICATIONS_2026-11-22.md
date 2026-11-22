@@ -77,3 +77,15 @@ Le logo officiel et les prix ne sont pas modifiés.
   fonction `mes_comptes_rendus`.
 - Fichiers : site `compte.js`, `donnees.js`, `missions.js`, `sous-onglets.js`, `langue.js`, `style.css` ; appli `EcranCompte.kt`, `Compte.kt`,
   `EspacesCompte.kt`, `EspaceCleaneurReel.kt`, `SousOnglets.kt`, `App.kt`, `ComptesRendus.kt` (nouveau), `Traductions21.kt`.
+
+## Plan de démarchage clients, partie 5 (22 novembre 2026, nuit)
+- Gestion › **Zones et partenaires** (`gestion-zones.js`) : zones (ville, rayon ~20 km), état calculé (En attente · Ouverte · Prioritaire · En pause)
+  avec Cleaneurs validés/actifs, couverture logement et location saisonnière, « Être prévenu », partenaires signés, demandes sans Cleaneur ;
+  pause à la main ; **Prévenir les inscrits** (notification aux comptes + liste avec liens WhatsApp / e-mail prêts) ; partenaires (codes, comptes,
+  clients actifs) ; origine des clients par canal.
+- **Codes partenaires et canal** : lien `cleaneroo.fr/?code=CODE` ou code saisi dans « Code de parrainage » ; `?utm_source=` = canal.
+- **Inviter mon client** (Cleaneur, onglet Gains, site et appli) : lien `?client=CODE`, partage WhatsApp/SMS, liste des clients apportés.
+  Commission : **0 % pendant 12 mois** sur leurs prestations avec ce Cleaneur, puis la moitié (le client paie toujours ses frais de service).
+- **Pages ville** : `generer_pages.py` ajoute une page pour chaque zone ouverte qui n'est pas encore dans `villes.js` (texte général à personnaliser).
+- **WhatsApp support** : 06 26 87 65 18 (Michael, téléphone de Vincent lié) ; bouton dans l'assistant d'aide et dans Profil (Cleaneur).
+- Base : `outils/base-demarchage.sql` (à appliquer).

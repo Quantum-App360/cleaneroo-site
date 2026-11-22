@@ -2,7 +2,8 @@
 // automatique), étapes Je pars › Je suis arrivé › Je commence › J'ai terminé, et partage de la position pendant le trajet.
 // Mêmes écrans que l'application (EspacesCompte.kt / ServiceTrajet.kt).
 import { rubrique } from "./catalogue.js";
-import { REGLES, euros, dateLongue, heure, duree, finOffreLancement, indemniteAccesC, dateVersement, conseilSecteur } from "./regles.js";
+import { REGLES, euros, dateLongue, heure, duree, finOffreLancement, indemniteAccesC, dateVersement, conseilSecteur, lienWhatsAppSupport } from "./regles.js";
+import { monParrainage, lienInviterClient } from "./parrainage.js";
 import { supabase, majProfil } from "./donnees.js";
 import { positionAdresse, distanceKm } from "./suivi-live.js";
 import { blocNoterClients, remplirNotesClients, blocAvisRecus } from "./avis-clients.js";
@@ -402,6 +403,30 @@ function brancherSegments(boite, p, nbAVenir) {
     document.querySelector('.sous-onglets [data-sous-onglet="missions"]')?.click(); });
 }
 
+/* ------------------------------------------------------------------ « Inviter mon client » (plan de démarchage, 22/11/2026)
+   Le Cleaneur fait venir ses propres clients : 0 % de commission Cleaneroo pendant 12 mois sur leurs prestations avec lui, puis la moitié.
+   Seul un nouveau compte client est rattaché (lien ou code du Cleaneur saisi à l'inscription). Même écran dans l'appli (InviterClient.kt). */
+async function blocInviterClient(z) {
+  if (!z) return;
+  const [d, r] = await Promise.all([monParrainage().catch(() => null), supabase.rpc("mes_clients_apportes")]);
+  if (!d?.code || !z.isConnected) return;
+  const lien = lienInviterClient(d.code), clients = r.error ? [] : (r.data || []);
+  const message = tr("Bonjour, je passe par Cleaneroo pour mes ménages : réservation en 2 minutes, paiement protégé jusqu'à votre validation, facture et attestation automatiques. Créez votre compte avec mon lien :") + " " + lien;
+  z.innerHTML = `<div class="carte inviter-client"><b>🤝 ${tr("Inviter mon client")}</b>
+    <p class="petit" style="margin:4px 0 8px">${tr("Vous avez déjà vos clients ? Faites-les venir sur Cleaneroo : 0 % de commission pendant 12 mois sur leurs prestations avec vous, puis la moitié. Paiement garanti, factures et attestations faites pour vous, remplaçant si vous êtes absent.")}</p>
+    <p class="petit" style="margin:0 0 8px">${tr("Votre code :")} <b class="code">${esc(d.code)}</b></p>
+    <div class="boutons-ligne"><a class="bouton" href="https://wa.me/?text=${encodeURIComponent(message)}" target="_blank" rel="noopener">💬 ${tr("Envoyer par WhatsApp")}</a>
+      <a class="bouton secondaire" href="sms:?&body=${encodeURIComponent(message)}">${tr("Par SMS")}</a>
+      <button type="button" class="bouton secondaire" data-copier-lien>${tr("Copier le lien")}</button></div>
+    ${clients.length ? `<p class="petit" style="margin:12px 0 4px"><b>${tr("Mes clients apportés")} (${clients.length})</b></p>
+      ${clients.map(c => `<p class="petit" style="margin:2px 0">${esc(c.prenom || "—")}${c.ville ? ` · ${esc(c.ville)}` : ""} · ${c.missions} ${tr(c.missions > 1 ? "prestations" : "prestation")}
+        · ${new Date(c.offert_jusqu) > new Date() ? `${tr("0 % jusqu'au")} ${esc(dateLongue(new Date(c.offert_jusqu)))}` : tr("commission réduite de moitié")}</p>`).join("")}` : ""}</div>`;
+  traduire(z);
+  z.querySelector("[data-copier-lien]").onclick = async e => {
+    try { await navigator.clipboard.writeText(lien); e.target.textContent = tr("Lien copié ✓"); } catch { prompt(tr("Copiez ce lien :"), lien); }
+  };
+}
+
 /* ------------------------------------------------------------------ Comptes rendus des missions terminées (22/11/2026, comme ComptesRendus.kt) */
 const VERSEMENTS = { VERSE: "Versé · virement le vendredi", COMPTE_A_ACTIVER: "Activez vos versements (Gains)", ECHEC: "Versement à réessayer", RIEN: "Rien à verser" };
 const ETAPES_CR = [["en_route", "En route"], ["sur_place", "Arrivé sur place"], ["debut", "Début du ménage"], ["fin", "Fin du ménage"], ["depart", "Départ du logement"]];
@@ -501,6 +526,7 @@ ${p.employeur_id ? "" : `    <h2 class="titre-section" id="missions-disponibles"
   </div>
   <div id="cleaneur-gains" class="cleaneur-partie">
     ${p.employeur_id ? `<p class="petit">${tr("Votre rémunération est versée par votre employeur.")}</p>` : tableauDeBord(p, docs, miennes, dispo, tableau, "gains")}
+    ${p.employeur_id ? "" : `<div id="inviter-client"></div>`}
     ${blocPenalites(penalites)}
     <div id="avis-recus"></div>
     <div id="niveau-cleaneur"></div>
@@ -512,11 +538,14 @@ ${p.employeur_id ? "" : `    <h2 class="titre-section" id="missions-disponibles"
     <details class="carte" id="mes-disponibilites"><summary><b>🗓️ ${tr("Mes disponibilités")}</b></summary>
       <div id="periodes-fermees"></div>
       <div id="creneaux-cleaneur"></div></details>
+    <a class="carte ligne-compte aide-whatsapp" href="${lienWhatsAppSupport("Bonjour Cleaneroo, je suis Cleaneur et j'ai une question : ")}" target="_blank" rel="noopener">💬
+      <div class="corps"><b>${tr("Une question ? Écrivez-nous sur WhatsApp")}</b><p class="petit" style="margin:2px 0 0">${tr("Le support Cleaneroo vous répond directement.")}</p></div><span aria-hidden="true">›</span></a>
   </div>
 `;
   traduire(boite);
   brancherSegments(boite, p, plusTard.length);
   blocComptesRendus(boite.querySelector("#comptes-rendus"), !!p.employeur_id);
+  blocInviterClient(boite.querySelector("#inviter-client"));
   brancherTableau(boite, miennes, () => brancherMissions(vue, p));
   blocNoterClients(boite.querySelector("#noter-clients")).then(() => blocAvisRecus(boite.querySelector("#avis-recus")));
   if (p.role !== "admin") blocCeQuiMeManque(boite.querySelector("#ce-qui-manque"));

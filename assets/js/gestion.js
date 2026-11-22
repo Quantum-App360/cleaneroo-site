@@ -80,7 +80,7 @@ let onglet = "demandes";
 
 /** Rubriques du back-office : identifiant, nom, icône. */
 const RUBRIQUES_BO = [["demandes", "Demandes", "calendrier"], ["inscriptions", "Inscriptions au lancement", "avis"], ["dossiers", "Dossiers Cleaneurs", "cleaneurs"],
-  ["litiges", "Litiges", "garantie"], ["controle", "Contrôle des Cleaneurs", "photo"], ["support", "Support", "telephone"], ["secteurs", "Secteurs à recruter", "position"], ["visites", "Visites", "instantane"], ["tarifs", "Tarifs", "paiement"], ["connexions", "Connexions logiciels", "logement"]];
+  ["litiges", "Litiges", "garantie"], ["controle", "Contrôle des Cleaneurs", "photo"], ["support", "Support", "telephone"], ["secteurs", "Secteurs à recruter", "position"], ["zones", "Zones et partenaires", "position"], ["visites", "Visites", "instantane"], ["tarifs", "Tarifs", "paiement"], ["connexions", "Connexions logiciels", "logement"]];
 let compteurs = {};
 /** Chiffres clés (en tête et pastilles du menu), relus à chaque changement de rubrique. */
 async function chargerCompteurs() {
@@ -393,6 +393,7 @@ async function liste() {
   if (onglet === "dossiers") return listeDossiers();
   if (onglet === "visites") return listeVisites();
   if (onglet === "secteurs") return listeSecteurs();
+  if (onglet === "zones") { const { ecranZones } = await import("./gestion-zones.js"); await ecranZones(vue, titreBO()); return brancherOnglets(); }
   if (onglet === "litiges") return listeLitiges();
   if (onglet === "support") return listeSupport();
   if (onglet === "controle") return listeControle();

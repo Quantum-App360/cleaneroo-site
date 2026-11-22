@@ -8,11 +8,18 @@ import { icone } from "./icones.js";
 const CLE = "cleaneroo-parrain";
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
-/** Code reçu par un lien (?parrain=CODE), gardé sur l'appareil jusqu'à l'inscription. */
+/** Code reçu par un lien, gardé sur l'appareil jusqu'à l'inscription : ?parrain=CODE (parrainage), ?code=CODE (partenaire, plan de
+ *  démarchage du 22/11/2026) ou ?client=CODE (« Inviter mon client » d'un Cleaneur). La base reconnaît lequel (origine_profil).
+ *  ?utm_source=… : canal d'origine (publicité, réseau social…). */
 export function memoriserCodeParrain() {
-  const m = (location.search + location.hash).match(/[?&]parrain=([A-Za-z0-9-]{4,20})/);
+  const q = location.search + location.hash;
+  const m = q.match(/[?&](?:parrain|code|client)=([A-Za-z0-9-]{3,20})/);
   if (m) try { localStorage.setItem(CLE, m[1].toUpperCase()); } catch { /* rien */ }
+  const c = q.match(/[?&]utm_source=([A-Za-z0-9_.-]{2,40})/);
+  if (c) try { localStorage.setItem("cleaneroo-canal", c[1].toLowerCase()); } catch { /* rien */ }
 }
+/** Lien « Inviter mon client » d'un Cleaneur : son client arrive sur la création de compte avec le code déjà rempli. */
+export const lienInviterClient = code => `${location.origin}/?client=${encodeURIComponent(code)}#/compte/creer`;
 export function codeParrainMemorise() { try { return localStorage.getItem(CLE) || ""; } catch { return ""; } }
 export function oublierCodeParrain() { try { localStorage.removeItem(CLE); } catch { /* rien */ } }
 export const lienParrainage = code => `${location.origin}/?parrain=${encodeURIComponent(code)}`;

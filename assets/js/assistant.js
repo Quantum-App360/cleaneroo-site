@@ -5,7 +5,7 @@
 // les notifications. Route #/aide. Même écran prévu dans l'appli (Assistant.kt).
 // Les chiffres (délais, pourcentages) viennent de regles.js : l'assistant dit toujours la même chose que le site.
 import { supabase, session, monProfil, demandesDuCompte } from "./donnees.js";
-import { REGLES, euros } from "./regles.js";
+import { REGLES, euros, lienWhatsAppSupport } from "./regles.js";
 import { rubrique } from "./catalogue.js";
 import { tr, traduire } from "./langue.js";
 import { esc } from "./commun.js";
@@ -125,7 +125,8 @@ export async function pageAssistant(vue, sujetDepart) {
         ${recentes.length ? `<label class="champ">${tr("Prestation concernée (facultatif)")}<select name="reference"><option value="">${tr("Aucune en particulier")}</option>
           ${recentes.map(x => `<option value="${esc(x.reference)}">${esc(x.reference)} · ${esc(rubrique(x.rubrique_id)?.nom || "")}${x.creneau ? ` · ${new Date(x.creneau).toLocaleDateString("fr-FR")}` : ""}</option>`).join("")}</select></label>` : ""}
         <label class="champ">${tr("Votre demande")}<textarea name="resume" rows="4" maxlength="4000" required>${esc(texte)}</textarea></label>
-        <p class="erreur" data-erreur-a></p><button class="bouton plein" type="submit">${tr("Envoyer à l'équipe")}</button></form>`);
+        <p class="erreur" data-erreur-a></p><button class="bouton plein" type="submit">${tr("Envoyer à l'équipe")}</button>
+        <a class="bouton secondaire plein bouton-whatsapp" href="${lienWhatsAppSupport()}" target="_blank" rel="noopener" style="margin-top:8px">💬 ${tr("Ou écrivez-nous sur WhatsApp")}</a></form>`);
     const f = d.querySelector("form");
     f.onsubmit = async ev => {
       ev.preventDefault();

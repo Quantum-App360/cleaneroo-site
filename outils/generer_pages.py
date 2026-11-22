@@ -22,6 +22,35 @@ e = lambda s: html.escape(s, quote=True)
 
 VILLES = json.loads(re.search(r"/\* <villes> \*/(.*?)/\* </villes> \*/", lire("assets/js/villes.js"), re.S).group(1))
 
+# ------------------------------------------------------------------ Zones ouvertes (plan de démarchage, 22/11/2026)
+# Chaque zone « Ouverte » ou « Prioritaire » de la gestion (fonction zones_ouvertes de la base) reçoit sa page ville. Une zone qui
+# n'est pas encore dans villes.js y est ajoutée avec un texte général (sans chiffre local) : à personnaliser ensuite dans villes.js.
+import unicodedata, urllib.request
+def slug(t):
+    t = unicodedata.normalize("NFD", t).encode("ascii", "ignore").decode().lower()
+    return re.sub(r"[^a-z0-9]+", "-", t).strip("-")
+def texte_general(n):
+    return [f"Cleaneroo intervient à {n} et alentours avec des Cleaneurs vérifiés : ménage du logement, location saisonnière, bureaux et commerces. Le prix s'affiche tout de suite, vous suivez l'intervention en direct et vous recevez un compte rendu photo.",
+            f"Cleaneroo works in {n} and the surrounding area with verified Cleaners: home cleaning, holiday rentals, offices and shops. The price is shown straight away, you follow the job live and receive a photo report.",
+            f"Cleaneroo interviene a {n} e dintorni con Cleaner verificati: pulizia della casa, affitti brevi, uffici e negozi. Il prezzo appare subito, segui l'intervento in diretta e ricevi un report fotografico.",
+            f"Cleaneroo trabaja en {n} y alrededores con Cleaners verificados: limpieza del hogar, alquiler vacacional, oficinas y comercios. El precio aparece al instante, sigues el servicio en directo y recibes un informe con fotos."]
+try:
+    m = re.search(r'supabaseUrl: "([^"]+)",\s*supabaseCle: "([^"]+)"', lire("assets/js/donnees.js"))
+    req = urllib.request.Request(m.group(1) + "/rest/v1/rpc/zones_ouvertes", data=b"{}", method="POST",
+        headers={"apikey": m.group(2), "Authorization": "Bearer " + m.group(2), "Content-Type": "application/json"})
+    zones = json.load(urllib.request.urlopen(req, timeout=15))
+    noms = {slug(v["nom"]) for v in VILLES}
+    nouvelles = [{"nom": z["ville"], "slug": slug(z["ville"]), "codePostal": z.get("code_postal") or "", "departement": z.get("departement") or "",
+                  "voisines": [], "texte": texte_general(z["ville"])} for z in zones if slug(z["ville"]) not in noms]
+    if nouvelles:
+        VILLES += nouvelles
+        src = lire("assets/js/villes.js")
+        bloc = json.dumps(VILLES, ensure_ascii=False, indent=2)
+        ecrire("assets/js/villes.js", re.sub(r"/\* <villes> \*/.*?/\* </villes> \*/", lambda _: "/* <villes> */ " + bloc + " /* </villes> */", src, flags=re.S))
+        print("Zones ouvertes ajoutées :", ", ".join(v["nom"] for v in nouvelles))
+except Exception as x:
+    print("Zones ouvertes non lues (pages ville inchangées) :", x)
+
 # Comparatifs : remplir source (adresse de la page publique du concurrent) et date de vérification après contrôle,
 # puis passer verifie à True (la page est alors indexée et ajoutée au plan du site).
 CONCURRENTS = [
@@ -157,7 +186,7 @@ for v in VILLES:
     corps = f"""  <section class="fond-cleaneroo heros-page">
     <div class="aurore" aria-hidden="true"><i></i><i></i></div>
     <div class="conteneur">
-      <span class="surtitre-heros"><i></i>{e(v["departement"])} · {n} et alentours</span>
+      <span class="surtitre-heros"><i></i>{e(v["departement"]) + " · " if v["departement"] else ""}{n} et alentours</span>
       <h1>Ménage et location saisonnière à {n}</h1>
       <p class="sous">Réservez un Cleaneur vérifié en 2 minutes : le prix s'affiche tout de suite et vous ne payez qu'après validation.</p>
       {boutons(v)}
@@ -171,7 +200,7 @@ for v in VILLES:
   <section class="bloc bloc-doux"><div class="conteneur etroit">
     <h2>Cleaneroo à {n}</h2>
     <p class="texte-local">{e(v["texte"][0])}</p>
-    <p class="voisines"><b>Communes voisines :</b> {e(", ".join(v["voisines"]))}</p>
+    {f'<p class="voisines"><b>Communes voisines :</b> {e(", ".join(v["voisines"]))}</p>' if v["voisines"] else ""}
   </div></section>
   <section class="bloc"><div class="conteneur">
     <div class="titre-section"><span class="surtitre">En 3 étapes</span><h2>Comment ça marche ?</h2></div>
@@ -184,7 +213,7 @@ for v in VILLES:
   </div></section>"""
     chemin = f"/menage/{v['slug']}/"
     titre = f"Ménage à {v['nom']} · Cleaneur vérifié · Cleaneroo"
-    desc = (f"Ménage à domicile et location saisonnière à {v['nom']} ({v['departement']}) et alentours : prix affiché tout de suite, "
+    desc = (f"Ménage à domicile et location saisonnière à {v['nom']}{' (' + v['departement'] + ')' if v['departement'] else ''} et alentours : prix affiché tout de suite, "
             f"Cleaneurs vérifiés, compte rendu photo, payé après validation.")
     ecrire(chemin.strip("/") + "/index.html", gabarit(chemin, titre, desc, corps, f' data-ville="{v["slug"]}"'))
     plan.append(chemin)

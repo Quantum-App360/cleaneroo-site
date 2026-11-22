@@ -246,7 +246,7 @@ export async function creerCompte({ email, mdp, statuts, prenom, nom, societe = 
   civilite = "", telephone = "", qualite = "", typeCleaneur = "", engagement = false }) {
   const st = ["particulier", "entreprise", "pro", "hotellerie", "cleaneur"].filter(x => statuts.includes(x));
   const { data, error } = await supabase.auth.signUp({ email, password: mdp,
-    options: { data: { statuts: st, prenom, nom, societe, secteur, civilite, telephone, qualite, type_cleaneur: typeCleaneur, engagement_formation: engagement ? "true" : "", siret_societe: siretSociete.replace(/\D/g, ""), code_parrain: codeParrain.trim().toUpperCase().slice(0, 20),
+    options: { data: { canal: (() => { try { return localStorage.getItem("cleaneroo-canal") || ""; } catch { return ""; } })(), statuts: st, prenom, nom, societe, secteur, civilite, telephone, qualite, type_cleaneur: typeCleaneur, engagement_formation: engagement ? "true" : "", siret_societe: siretSociete.replace(/\D/g, ""), code_parrain: codeParrain.trim().toUpperCase().slice(0, 20),
       role: st.includes("cleaneur") ? "cleaneur" : "client", espace: st.includes("pro") ? "pro" : st.includes("entreprise") ? "entreprise" : "particulier" }, emailRedirectTo: retour("compte") } });
   if (error) throw new Error(error.message);
   return data.session ? "connecte" : "confirmer";
