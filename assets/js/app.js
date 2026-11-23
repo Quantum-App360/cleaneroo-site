@@ -691,6 +691,8 @@ async function afficherPage() {
     if (fav) blocFavori(fav, decodeURIComponent(ref || ""), fav.dataset.rubrique);
     blocPaiement(document.getElementById("paiement-client"), decodeURIComponent(ref || ""), decodeURIComponent(jeton || ""));
     // Prix libre d'une conciergerie (23/11/2026) : détail du prix et « Augmenter le prix », pour la conciergerie connectée.
+    // Qui vient (23/11/2026) : photo d'identité vérifiée du Cleaneur et vitrine de sa société, sans aucune coordonnée.
+    if (document.getElementById("paiement-client")) import("./vitrine.js").then(m => m.blocQuiVient(document.getElementById("paiement-client"), decodeURIComponent(ref || ""))).catch(() => null);
     if (document.getElementById("paiement-client")) import("./prix-libre.js").then(m => m.blocPrixDemande(document.getElementById("paiement-client"), decodeURIComponent(ref || ""))).catch(() => null);
     blocRemplacementClient(document.getElementById("remplacement-client"), decodeURIComponent(ref || ""), decodeURIComponent(jeton || ""));
     blocConsommablesClient(document.getElementById("consommables-client"), decodeURIComponent(ref || ""), decodeURIComponent(jeton || ""));

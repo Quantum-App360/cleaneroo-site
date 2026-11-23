@@ -17,6 +17,7 @@ import { RUBRIQUES, rubrique, TYPES_LOGEMENT, CATEGORIES_BIEN, categorieBien, ty
 import { euros, dateLongue, heure, REGLES, sirenSiretValide } from "./regles.js";
 import { icone } from "./icones.js";
 import { VITRINES, vitrineEspace } from "./vitrine-espaces.js";
+import { blocVitrine, brancherVitrine } from "./vitrine.js";
 import { brancherBadges } from "./badge.js";
 import { editeurTemoins, brancherTemoins } from "./temoins.js";
 import { traduire, tr } from "./langue.js";
@@ -109,11 +110,12 @@ export async function pageCompte(vue, param) {
   if (location.hash !== ici) return;
   const demande = !admin && voulu && !statuts.includes(voulu) ? voulu : null;
   const contenu = demande ? vitrineEspace(demande) + `<button type="button" class="bouton plein" data-ajouter-statut="${demande}" style="margin-top:14px">Ajouter cet espace à mon compte</button>`
-    : onglet === "hotellerie" ? ongletHotellerie(p, biens.filter(l => categorieBien(l) === "logement")) + `<details class="carte" style="margin-top:14px"><summary>Mes informations</summary>${formulaireProfil(p, false)}</details>`
-    : onglet === "entreprise" ? ongletEntreprise(p, biens, demandes) + `<details class="carte" style="margin-top:14px"><summary>Mes informations</summary>${formulaireProfil(p, false)}</details>`
-    : onglet === "pro" ? ongletPro(p, biens.filter(l => categorieBien(l) === "logement")) + `<h2 class="titre-section">${icone("paiement", { tuile: true })}${tr("Mon abonnement")}</h2>${blocAbonnementPro(p, biens)}` + blocInvitationsPro()
+    : onglet === "hotellerie" ? ongletHotellerie(p, biens.filter(l => categorieBien(l) === "logement")) + blocVitrine(p) + `<details class="carte" style="margin-top:14px"><summary>Mes informations</summary>${formulaireProfil(p, false)}</details>`
+    : onglet === "entreprise" ? ongletEntreprise(p, biens, demandes) + blocVitrine(p) + `<details class="carte" style="margin-top:14px"><summary>Mes informations</summary>${formulaireProfil(p, false)}</details>`
+    : onglet === "pro" ? ongletPro(p, biens.filter(l => categorieBien(l) === "logement")) + `<h2 class="titre-section">${icone("paiement", { tuile: true })}${tr("Mon abonnement")}</h2>${blocAbonnementPro(p, biens)}` + blocInvitationsPro() + blocVitrine(p)
       + `<details class="carte" style="margin-top:14px"><summary>Mes informations</summary>${formulaireProfil(p, false)}</details>`
     : onglet === "cleaneur" ? ongletCleaneur(p, docs, { dossier: cleaneur ? blocDossier(p, docs) : "", profil: cleaneur ? formulaireProfil(p, true) : "" }) + (cleaneur ? blocCodeInvitation() : "")
+      + (cleaneur && (p.societe_equipe || (p.societe && p.siret_societe)) ? blocVitrine(p) : "")
     : ongletParticulier(p, biens, demandes) + formulaireProfil(p, false);
   const etiquette = admin ? ROLES.admin : statuts.map(x => NOMS_STATUTS[x][0]).join(" · ");
   const manquants = admin ? [] : ["particulier", "entreprise", "pro", "hotellerie", "cleaneur"].filter(x => !statuts.includes(x));
@@ -157,6 +159,7 @@ export async function pageCompte(vue, param) {
   if (onglet === "cleaneur" && cleaneur) { brancherEspaceSociete(vue, p); brancherActiverSociete(vue, () => pageCompte(vue, "cleaneur")); brancherSalarie(vue, p, () => pageCompte(vue, "cleaneur")); }
   if (onglet === "cleaneur" && cleaneur) { brancherDossier(vue, p); brancherMissions(vue, p); brancherFormulesCleaneur(vue, p, () => pageCompte(vue, "cleaneur")); brancherCodeInvitation(vue); blocActivite(vue.querySelector("#mon-activite"), p); }
   if (onglet === "entreprise") brancherSociete(vue, majProfil, () => pageCompte(vue, "entreprise"));
+  brancherVitrine(vue, p, () => pageCompte(vue, onglet));   // vitrine des professionnels (23/11/2026)
   if (onglet === "hotellerie") { brancherPro(vue, p, biens.filter(l => categorieBien(l) === "logement"), demandes, { majProfil, recharger: () => pageCompte(vue, "hotellerie") }); brancherRotation(vue); }
   if (onglet === "pro") { brancherPro(vue, p, biens.filter(l => categorieBien(l) === "logement"), demandes, { majProfil, recharger: () => pageCompte(vue) }); brancherInvitationsPro(vue); brancherAbonnementPro(vue, () => { majLienCompte(); pageCompte(vue, "pro"); }); }
   // Onglets à l'intérieur des espaces Cleaneur et Pro (la page ne défile plus sur des dizaines d'écrans).
@@ -518,7 +521,8 @@ function blocDossier(p, docs) {
           <span class="tampon">${STATUT_DOC[x.statut]}</span>${x.motif ? `<span class="erreur">${esc(x.motif)}</span>` : ""}
           ${x.statut !== "ACCEPTE" && modifiable ? `<button type="button" class="lien-bouton" style="padding:0;min-height:36px;color:var(--erreur)" data-retirer="${x.id}">Retirer</button>` : ""}</div>`).join("")}
         ${modifiable && ["identite", "rc_pro", "urssaf", "certibiocide"].includes(d.type) ? `<label class="champ petit" style="max-width:240px;margin-top:6px">${tr("Valable jusqu'au (facultatif)")}<input type="date" data-expire="${d.type}"></label>` : ""}
-        ${modifiable ? `<div class="boutons-photo"><label class="bouton secondaire">${icone("photo")} Scanner avec l'appareil photo<input type="file" accept="image/*" capture="environment" hidden data-doc="${d.type}"></label>
+        ${d.camera ? (modifiable || !liste.some(x => x.statut !== "REFUSE") ? `<div class="boutons-photo"><label class="bouton secondaire">${icone("photo")} ${tr("Prendre ma photo")}<input type="file" accept="image/*" capture="user" hidden data-doc="${d.type}"></label></div>` : "")
+          : modifiable ? `<div class="boutons-photo"><label class="bouton secondaire">${icone("photo")} Scanner avec l'appareil photo<input type="file" accept="image/*" capture="environment" hidden data-doc="${d.type}"></label>
           <label class="bouton secondaire">Choisir un fichier<input type="file" accept="image/*,application/pdf" hidden data-doc="${d.type}"></label></div>` : ""}
       </div>`;
     }).join("")}
@@ -555,6 +559,7 @@ function brancherDossier(vue, p) {
     e.target.disabled = false;
     err.textContent = tr(r === "profil" ? "Complétez d'abord votre profil : prénom, nom, téléphone, code postal, SIRET et au moins une prestation."
       : r === "documents" ? "Ajoutez les 4 documents obligatoires avant d'envoyer votre dossier."
+      : r === "photo" ? "Ajoutez votre photo d'identité (prise avec l'appareil photo) avant d'envoyer votre dossier."
       : r === "contrat" ? "Signez d'abord le contrat de prestataire (juste au-dessus)."
       : "Le service est momentanément indisponible. Réessayez dans quelques minutes.");
   });

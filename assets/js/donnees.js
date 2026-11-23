@@ -308,6 +308,8 @@ export async function ecouterDemandes(surChangement) {
 
 /** Documents du dossier Cleaneur. Types : identite, siret, rc_pro, urssaf (obligatoires), certibiocide (nuisibles). */
 export const DOCUMENTS_CLEANEUR = [
+  // Photo d'identité (23/11/2026) : prise avec l'appareil photo, montrée au client avant le ménage et comparée au selfie du jour.
+  { type: "photo_identite", nom: "Photo d'identité", aide: "Visage de face, sans lunettes de soleil ni casquette, sur un fond neutre, prise maintenant avec l'appareil photo. Elle est montrée à vos clients avant chaque ménage.", obligatoire: true, camera: true },
   { type: "identite", nom: "Pièce d'identité", aide: "Carte d'identité ou passeport en cours de validité, recto verso. Hors Union européenne : titre de séjour qui autorise à travailler.", obligatoire: true },
   { type: "siret", nom: "Justificatif SIRET", aide: "Avis de situation INSEE ou extrait Kbis de moins de 3 mois.", obligatoire: true },
   { type: "rc_pro", nom: "Assurance RC Pro", aide: "Attestation d'assurance responsabilité civile professionnelle en cours de validité.", obligatoire: true },

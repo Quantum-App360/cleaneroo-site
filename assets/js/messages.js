@@ -42,6 +42,7 @@ async function pageFil(vue, fil) {
       <label class="joindre" title="${tr("Joindre une photo")}">📷<input type="file" accept="image/*" hidden data-photo-message></label>
       <textarea rows="1" maxlength="2000" placeholder="${tr("Votre message…")}" data-texte-message></textarea>
       <button class="bouton" type="submit">${tr("Envoyer")}</button></form>
+    <p class="petit muet" style="margin:6px 0 0">🔒 ${tr("Numéros, e-mails, liens et réseaux sont masqués automatiquement : tout passe par Cleaneroo (paiement protégé, assurance, remplaçant).")}</p>
     <p class="erreur" data-erreur-message></p></div></section>`;
   traduire(vue);
   const bulles = vue.querySelector(".bulles");

@@ -11,7 +11,7 @@ const GROUPES = {
     defaut: "aujourdhui", details: "profil",
     regles: [["#espace-societe", "societe"], ["#espace-salarie", "aujourdhui"], ["#cleaneur-aujourdhui", "aujourdhui"], ["#cleaneur-missions", "missions"],
       ["#cleaneur-gains", "gains"], ["#cleaneur-profil", "profil"], ["#activer-societe", "profil"],
-      ["#mon-activite, #formules-cleaneur, [data-factures], .parrainage, .bloc-parrainage", "gains"], ["#bloc-invitation, #comment-cleaneur", "profil"]] },
+      ["#mon-activite, #formules-cleaneur, [data-factures], .parrainage, .bloc-parrainage", "gains"], ["#bloc-invitation, #comment-cleaneur", "profil"], ["#vitrine-pro", "societe"]] },
   // Particulier (13 novembre 2026) : le compte en trois rubriques (le suivi est dans « Mon suivi »).
   particulier: { onglets: [["profil", "Compte"], ["factures", "Factures"], ["parrainage", "Parrainage"]],
     defaut: "profil", details: null,
@@ -22,14 +22,14 @@ const GROUPES = {
     regles: [[".entete-pro, .grille-raccourcis, #chiffres-pro, #pro-aujourdhui, #a-programmer", "aujourdhui"], ["#semaine-pro, #agenda-pro", "planning"],
       ["#carte-biens, #liste-biens, #aucun-bien, .aide-ical, .outils-biens", "biens"], ["#pro-menages, #titre-menages", "menages"], ["#pro-rapports, #titre-rapports", "rapports"],
       ["#liste-invitations, #equipe", "equipe"],
-      ["#abonnement-pro, [data-factures], .parrainage, .bloc-parrainage", "compte"], ["details:has(#form-profil)", "compte"]] },
+      ["#abonnement-pro, [data-factures], .parrainage, .bloc-parrainage, #vitrine-pro", "compte"], ["details:has(#form-profil)", "compte"]] },
 };
 // Hôtels et campings : le même espace que la Conciergerie, avec le calculateur de rotation dans « Prestations ».
 GROUPES.hotellerie = { ...GROUPES.pro, regles: [[".calculateur-rotation", "menages"], ...GROUPES.pro.regles] };
 // Entreprise : Accueil (prochaine prestation, chiffres) · Prestations (réserver pour ses locaux) · Compte (société, informations, factures).
 GROUPES.entreprise = { onglets: [["accueil", "Accueil"], ["prestations", "Prestations"], ["compte", "Compte"]], defaut: "accueil", details: "compte",
   regles: [[".entete-pro, .tuiles-chiffres, .mise-en-avant, .guide-video", "accueil"], [".grille-raccourcis", "prestations"],
-    ["details:has(#form-profil), [data-factures], .parrainage, .bloc-parrainage, #equipe", "compte"]] };
+    ["details:has(#form-profil), [data-factures], .parrainage, .bloc-parrainage, #equipe, #vitrine-pro", "compte"]] };
 const CLE = e => `cleaneroo-sous-onglet-${e}`;
 
 /** Groupe d'un bloc : règle qui correspond (le bloc ou ce qu'il contient), sinon null. */

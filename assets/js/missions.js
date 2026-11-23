@@ -20,6 +20,7 @@ import { boutonBon, brancherBons } from "./demande-actions.js";
 import { blocCreneaux, scoresMissions, distances } from "./creneaux.js";
 import { preparationCleaneur } from "./espaces.js";
 import { icone } from "./icones.js";
+import { remplirChezQui } from "./vitrine.js";
 import { traduire, tr } from "./langue.js";
 import { missionsDisponibles, mesMissions, prendreMission, avancerMission, envoyerPosition, lienPhotoDemande,
   selfieDuJour, deposerSelfie, quitterLogement, selfiesAVerifier, deciderSelfie, lienSelfie, lienDocument,
@@ -162,6 +163,7 @@ export function tableauDeBord(p, docs, miennes, dispo, t, vue = "aujourdhui", re
     ${auj ? `<p class="petit muet" style="margin:0 0 8px">${esc(dateLongue(new Date()))}</p>` : ""}
     ${gains ? `<p class="petit" style="margin:0 0 8px">💶 ${tr("Prochain versement :")} <b>${esc(dateLongue(dateVersement()))}</b> · ${tr("chaque vendredi, pour les missions validées jusqu'au mercredi minuit.")}</p>
     <span class="badge-niveau">★ ${tr("Niveau")} ${tr(niveauDe(t?.missions_terminees || 0))} · ${tr("commission")} ${commission} %</span>
+    <p class="petit" style="margin:4px 0 8px">🤝 ${tr("Client fidèle : dès le 3e ménage avec un même client, votre commission passe à")} <b>${t?.formule === "pro" ? 9 : 15} %</b>.</p>
     ${t?.nb_avis ? `<p class="petit" style="margin:0">⭐ ${String(t.note_moyenne).replace(".", ",")} / 5 · ${t.nb_avis} ${tr(t.nb_avis > 1 ? "avis" : "avis")}${t.pourboires_c ? ` · ${tr("pourboires :")} ${euros(t.pourboires_c)}` : ""}</p>` : ""}
     ` : ""}
     ${p.role === "admin" || vue !== "profil" ? "" : `<details class="carte profil-a-completer"${faites < etapes.length ? "" : ""}><summary><span>👤 <b>${faites === etapes.length ? tr("Profil complet") : tr("Complétez votre profil")}</b></span><b class="compte">${faites}/${etapes.length}</b></summary>
@@ -290,7 +292,12 @@ function carteMission(m) {
       <div class="corps"><div class="haut"><h3>${r.nom}</h3><span class="tampon${m.statut === "A_VALIDER" ? " gris" : ""}">${etat}</span></div>
       <p class="muet" style="margin:2px 0 0">${quand(m)} · ${duree(m.duree_min)}</p></div></div>
     <p style="margin:10px 0 0"><b>${esc(m.rue)}, ${esc(m.code_postal)} ${esc(m.ville)}</b></p>
-    <p class="petit" style="margin:2px 0 0">Client : ${esc(m.prenom)}${m.telephone ? ` · <a href="tel:${esc(m.telephone)}">${esc(m.telephone)}</a>` : ""} · ${m.sur_devis ? "Sur devis" : euros(m.estimation_c)}</p>
+    <p class="petit" style="margin:2px 0 0">${tr("Client :")} ${esc(m.prenom)} · ${m.sur_devis ? tr("Sur devis") : euros(m.estimation_c)}</p>
+    <div data-chez-qui="${esc(m.reference)}"></div>
+    ${["CONFIRMEE", "EN_ROUTE", "SUR_PLACE", "EN_COURS"].includes(m.statut) ? `<div class="boutons boutons-acces" style="margin-top:8px">
+      <button type="button" class="bouton secondaire petit-bouton" data-signaler="devant" data-ref="${esc(m.reference)}">📍 ${tr("Je suis devant le logement")}</button>
+      <button type="button" class="bouton secondaire petit-bouton" data-signaler="acces" data-ref="${esc(m.reference)}">🔑 ${tr("Je ne trouve pas l'accès")}</button></div>
+      <p class="petit muet" style="margin:4px 0 0">💬 ${tr("Le client est prévenu tout de suite ; échangez avec lui dans la messagerie de la prestation.")}</p>` : ""}
     ${m.remarque ? `<p class="petit" style="margin:4px 0 0">« ${esc(m.remarque)} »</p>` : ""}
     ${m.urgence && m.prime_urgence_c ? `<p class="petit" style="margin:6px 0 0;color:var(--succes);font-weight:700">🚨 Mission d'urgence : prime de ${euros(m.prime_urgence_c)} comprise</p>` : ""}
     ${m.statut === "CONFIRMEE" ? `<div class="confirmation-mission">${(m.etapes || {}).confirme ? `<span class="tampon vert">✓ Mission confirmée</span>`
@@ -317,7 +324,7 @@ function carteMission(m) {
 export const MOTIFS_ACCES = [["ABSENT", "Client absent"], ["CLE_INTROUVABLE", "Clé ou code introuvable"], ["ACCES_REFUSE", "Accès refusé"], ["DANGEREUX", "Logement inaccessible ou dangereux"]];
 function blocAccesImpossible(m) {
   return `<details class="acces-impossible" style="margin-top:10px"><summary class="petit">Impossible d'entrer ?</summary>
-    <p class="petit" style="margin:6px 0">Appelez d'abord le client. Après ${REGLES.ATTENTE_ACCES_IMPOSSIBLE_MIN} min d'attente sur place, déclarez l'accès impossible : la mission est annulée et vous recevez une indemnité de ${euros(indemniteAccesC(m.estimation_c))}. En cas de danger, partez tout de suite.</p>
+    <p class="petit" style="margin:6px 0">${tr("Prévenez d'abord le client avec « Je ne trouve pas l'accès ».")} Après ${REGLES.ATTENTE_ACCES_IMPOSSIBLE_MIN} min d'attente sur place, déclarez l'accès impossible : la mission est annulée et vous recevez une indemnité de ${euros(indemniteAccesC(m.estimation_c))}. En cas de danger, partez tout de suite.</p>
     <label class="champ">Motif<select data-motif-acces>${MOTIFS_ACCES.map(([v, n]) => `<option value="${v}">${n}</option>`).join("")}</select></label>
     <label class="champ">Précisions (facultatif)<input data-note-acces maxlength="500"></label>
     <button type="button" class="bouton danger" data-acces-impossible="${esc(m.reference)}">Déclarer l'accès impossible</button></details>`;
@@ -330,7 +337,7 @@ function blocAcces(m) {
   let corps = "";
   if (m.accueil === "BOITE") corps = ligne(tr("Boîte à clés :"), a.emplacement || "") + (a.code ? ligne(tr("Code :"), a.code) : "")
     + (a.photo ? `<img class="photo-boite-mission" alt="${esc(tr("Boîte à clés"))}" data-photo-boite="${esc(a.photo)}">` : "");
-  else if (m.accueil === "TIERS") corps = ligne(tr("Accueil par :"), [a.nom, a.telephone].filter(Boolean).join(" · "));
+  else if (m.accueil === "TIERS") corps = ligne(tr("Accueil par :"), a.nom || "");   // jamais de numéro (23/11/2026)
   else if (m.accueil === "AUTONOME") corps = ligne(tr("Accès autonome :"), a.code || "");
   else corps = `<p class="petit" style="margin:2px 0 0">${tr("Le client sera présent.")}</p>`;
   return `<div class="acces-mission">${icone("cle")}<div>${corps}</div></div>`;
@@ -342,6 +349,7 @@ function carteDisponible(m) {
     <div class="corps"><div class="haut"><h3>${m.urgence ? `<span class="tampon urgence">🚨 Urgence</span> ` : ""}${r.nom}</h3><b>${m.sur_devis ? tr("Sur devis") : euros(m.estimation_c)}</b></div>
       ${m.urgence && m.prime_urgence_c ? `<p class="petit" style="margin:2px 0 0;color:var(--succes);font-weight:700">+ ${euros(m.prime_urgence_c)} de prime d'urgence</p>` : ""}
       <p class="muet" style="margin:2px 0 0">${quand(m)} · ${duree(m.duree_min)}${m.nombre_cleaneurs === 2 ? " · 2 Cleaneurs" : ""}</p>
+      <div data-chez-qui="${esc(m.reference)}"></div>
       <p class="petit" style="margin:2px 0 0">${esc(m.code_postal)} ${esc(m.ville)}${scores.has(m.reference) ? ` · <b style="color:var(--primaire)">${tr("Compatibilité")} ${Math.min(100, scores.get(m.reference))}/100</b>` : ""}</p><p class="petit" data-note-client="${esc(m.reference)}" style="margin:2px 0 0"></p><p class="erreur" data-erreur-prendre style="margin:4px 0 0"></p></div>
     ${m.choix_cleaneur === "directe" ? `<button type="button" class="bouton" data-prendre="${esc(m.reference)}">Prendre la mission</button>`
       : formulaireProposition(m, mesPropositions.find(x => x.reference === m.reference), distances.get(m.reference) ?? null)}</div>`;
@@ -553,6 +561,14 @@ ${p.employeur_id ? "" : `    <h2 class="titre-section" id="missions-disponibles"
   remplirNotesClients(boite);
   brancherRetards(boite);
   brancherGuidesMissions(boite);
+  // Vitrine du client professionnel et « Je suis devant le logement / Je ne trouve pas l'accès » (23/11/2026).
+  remplirChezQui(boite);
+  boite.querySelectorAll("[data-signaler]").forEach(b => b.onclick = async () => {
+    b.disabled = true;
+    const { data } = await supabase.rpc("signaler_acces", { p_reference: b.dataset.ref, p_type: b.dataset.signaler }).catch(() => ({ data: null }));
+    b.textContent = data === "ok" ? `✓ ${tr("Client prévenu")}` : tr("Réessayez dans un instant");
+    if (data !== "ok") b.disabled = false;
+  });
   brancherBons(boite);
   // Missions incompatibles, avec la raison (comme l'appli de Vincent).
   supabase.rpc("missions_incompatibles").then(({ data }) => {
