@@ -3678,6 +3678,16 @@ const T = [
   ["Visage de face, sans lunettes de soleil ni casquette, sur un fond neutre, prise maintenant avec l'appareil photo. Elle est montrée à vos clients avant chaque ménage.", "Face on, no sunglasses or cap, plain background, taken now with the camera. It is shown to your clients before each clean.", "Viso di fronte, senza occhiali da sole né cappello, su sfondo neutro, scattata ora con la fotocamera. Viene mostrata ai tuoi clienti prima di ogni pulizia.", "De frente, sin gafas de sol ni gorra, con fondo neutro, hecha ahora con la cámara. Se muestra a tus clientes antes de cada limpieza."],
   ["Ajoutez votre photo d'identité (prise avec l'appareil photo) avant d'envoyer votre dossier.", "Add your ID photo (taken with the camera) before sending your file.", "Aggiungi la tua foto d'identità (scattata con la fotocamera) prima di inviare il fascicolo.", "Añade tu foto de identidad (hecha con la cámara) antes de enviar tu expediente."],
   ["Numéros, e-mails, liens et réseaux sont masqués automatiquement : tout passe par Cleaneroo (paiement protégé, assurance, remplaçant).", "Phone numbers, e-mails, links and social accounts are hidden automatically: everything goes through Cleaneroo (protected payment, insurance, replacement).", "Numeri, e-mail, link e social vengono nascosti automaticamente: tutto passa da Cleaneroo (pagamento protetto, assicurazione, sostituto).", "Teléfonos, e-mails, enlaces y redes se ocultan automáticamente: todo pasa por Cleaneroo (pago protegido, seguro, sustituto)."],
+  // Cartes de l'espace Cleaneur (23/11/2026) : « Ma tournée », Liste / Carte des missions disponibles (tournee.js, CartesCleaneur.kt).
+  ["Ma tournée", "My round", "Il mio giro", "Mi ruta"],
+  ["Départ conseillé", "Suggested departure", "Partenza consigliata", "Salida recomendada"],
+  ["Environ {0} km et {1} min de route depuis votre secteur, 10 min de marge comprises.", "About {0} km and {1} min drive from your area, including a 10-min margin.", "Circa {0} km e {1} min di strada dalla tua zona, 10 min di margine compresi.", "Unos {0} km y {1} min de trayecto desde tu zona, 10 min de margen incluidos."],
+  ["{0} min depuis l'étape précédente", "{0} min from the previous stop", "{0} min dalla tappa precedente", "{0} min desde la parada anterior"],
+  ["Itinéraire de la tournée", "Route for the round", "Itinerario del giro", "Itinerario de la ruta"],
+  ["Carte", "Map", "Mappa", "Mapa"],
+  ["L'adresse exacte s'affiche une fois la mission prise. Touchez une épingle pour voir la mission.", "The exact address is shown once you take the job. Tap a pin to see the job.", "L'indirizzo esatto appare quando prendi la missione. Tocca un segnaposto per vedere la missione.", "La dirección exacta aparece cuando aceptas la misión. Toca un marcador para ver la misión."],
+  ["Exemple de journée", "Sample day", "Giornata di esempio", "Día de ejemplo"],
+  ["Voici à quoi ressemblera votre journée. Créez votre compte pour recevoir de vraies missions.", "This is what your day will look like. Create your account to receive real jobs.", "Ecco come sarà la tua giornata. Crea il tuo account per ricevere missioni vere.", "Así será tu día. Crea tu cuenta para recibir misiones reales."],
 ];
 
 const DICO = new Map();

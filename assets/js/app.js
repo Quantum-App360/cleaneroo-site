@@ -14,6 +14,7 @@ import "./tarifs.js";   // dernière version des tarifs gardée sur l'appareil, 
 import { supabase, suivre, annuler, memoriser, inscrire } from "./donnees.js";
 import { blocRetardClient, blocRemplacementClient } from "./retards.js";
 import { guideVideo } from "./guide-video.js";
+import { blocApercuTournee, brancherApercuTournee } from "./tournee.js";
 import { pageNotifications } from "./notifications.js";
 import { pageMessages } from "./messages.js";
 import { blocPropositionsClient } from "./propositions.js";
@@ -466,7 +467,7 @@ function pageDevenir() {
   return `<section class="fond-cleaneroo" style="padding:40px 0 90px">${decor([[90, 20, 90], [4, 60, 60]], [])}
     <div class="conteneur"><h1>Devenir Cleaneur</h1><div class="trait-corail"></div><p>Travaillez à votre rythme, près de chez vous.</p>
       <div class="etiquettes"><span class="etiquette">Missions proches</span><span class="etiquette">Compte rendu guidé</span><span class="etiquette">Paiement sécurisé</span></div></div></section>
-  <section class="bloc"><div class="etroit">${blocChoixCleaneur()}<div data-acces-cleaneur></div>${guideVideo("cleaneur", "page-devenir")}${exempleRevenu()}${blocOffreCleaneurs()}${etapes.map((t, i) => `<div class="carte" style="margin-bottom:10px"><b style="color:var(--corail-texte)">${i + 1}.</b> ${t}</div>`).join("")}
+  <section class="bloc"><div class="etroit">${blocChoixCleaneur()}<div data-acces-cleaneur></div>${guideVideo("cleaneur", "page-devenir")}${blocApercuTournee()}${exempleRevenu()}${blocOffreCleaneurs()}${etapes.map((t, i) => `<div class="carte" style="margin-bottom:10px"><b style="color:var(--corail-texte)">${i + 1}.</b> ${t}</div>`).join("")}
     <div style="margin-top:18px">${formulaireInscription("cleaneur", true)}</div>
   </div></section>`;
 }
@@ -737,6 +738,7 @@ async function afficherPage() {
   animerNotifs(vue);
   afficherAccesCleaneur(vue);
   brancherFormulesCleaneur(vue);
+  brancherApercuTournee(vue);
   window.scrollTo(0, 0);
 }
 

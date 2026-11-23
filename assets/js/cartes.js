@@ -91,8 +91,9 @@ const epingle = (L, couleur, texte = "") => L.divIcon({
 /**
  * Affiche une carte dans [boite] : marqueurs [{ lat, lon, couleur, texte, titre, popup, approx (rayon en m, adresse non communiquée) }],
  * cercle { lat, lon, km } (périmètre), marqueur déplaçable (onDeplace(lat, lon)) pour placer l'entrée du logement.
+ * trajet : trait pointillé reliant les épingles dans l'ordre (tournée de la journée). onChoix(i) : épingle touchée (i = m.i, sinon son rang).
  */
-export async function afficherCarte(boite, { marqueurs = [], cercle = null, deplacable = false, onDeplace = null, zoom = 16, plein = false } = {}) {
+export async function afficherCarte(boite, { marqueurs = [], cercle = null, deplacable = false, onDeplace = null, zoom = 16, plein = false, trajet = false, onChoix = null } = {}) {
   const L = await chargerLeaflet();
   if (!boite.isConnected) return null;
   if (boite._carte) { boite._carte.remove(); boite._carte = null; }
@@ -105,11 +106,15 @@ export async function afficherCarte(boite, { marqueurs = [], cercle = null, depl
     L.circle([cercle.lat, cercle.lon], { radius: cercle.km * 1000, color: "#1F8A80", weight: 2, fillColor: "#2EC4B6", fillOpacity: 0.16 }).addTo(carte);
     points.push(...[[cercle.lat - cercle.km / 111, cercle.lon], [cercle.lat + cercle.km / 111, cercle.lon]]);
   }
-  for (const m of marqueurs) {
+  if (trajet && marqueurs.length > 1) {
+    L.polyline(marqueurs.map(m => [m.lat, m.lon]), { color: "#087A69", weight: 3, opacity: 0.8, dashArray: "6 8" }).addTo(carte);
+  }
+  for (const [rang, m] of marqueurs.entries()) {
     const couleur = m.couleur || "#1F8A80";
     if (m.approx) L.circle([m.lat, m.lon], { radius: m.approx, color: couleur, weight: 1.5, fillColor: couleur, fillOpacity: 0.12 }).addTo(carte);
     const mk = L.marker([m.lat, m.lon], { icon: epingle(L, couleur, m.texte || ""), draggable: deplacable, keyboard: false, title: m.titre || "" }).addTo(carte);
     if (m.popup) mk.bindPopup(m.popup);
+    if (onChoix) mk.on("click", () => onChoix(Number.isInteger(m.i) ? m.i : rang));
     if (deplacable && onDeplace) mk.on("dragend", () => { const p = mk.getLatLng(); onDeplace(p.lat, p.lng); });
     points.push([m.lat, m.lon]);
   }

@@ -26,7 +26,7 @@ import { missionsDisponibles, mesMissions, prendreMission, avancerMission, envoy
   selfieDuJour, deposerSelfie, quitterLogement, selfiesAVerifier, deciderSelfie, lienSelfie, lienDocument,
   mesAvertissements, avertissementsCleaneurs, avertirCleaneur, leverBannissement,
   confirmerMission, coutAnnulation, annulerMissionCleaneur, mesPenalites, mesDocuments, tableauCleaneur, dispoUrgence } from "./donnees.js";
-import { afficherCarte, coordonnees } from "./cartes.js";
+import { blocTournee, brancherTournee, blocListeCarte, brancherListeCarte } from "./tournee.js";
 import { brancherControle } from "./controle-ecran.js";
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -345,7 +345,7 @@ function blocAcces(m) {
 
 function carteDisponible(m) {
   const r = rubrique(m.rubrique_id);
-  return `<div class="carte ligne-compte">${icone(r.icone, { tuile: true })}
+  return `<div class="carte ligne-compte" data-dispo="${esc(m.reference)}">${icone(r.icone, { tuile: true })}
     <div class="corps"><div class="haut"><h3>${m.urgence ? `<span class="tampon urgence">🚨 Urgence</span> ` : ""}${r.nom}</h3><b>${m.sur_devis ? tr("Sur devis") : euros(m.estimation_c)}</b></div>
       ${m.urgence && m.prime_urgence_c ? `<p class="petit" style="margin:2px 0 0;color:var(--succes);font-weight:700">+ ${euros(m.prime_urgence_c)} de prime d'urgence</p>` : ""}
       <p class="muet" style="margin:2px 0 0">${quand(m)} · ${duree(m.duree_min)}${m.nombre_cleaneurs === 2 ? " · 2 Cleaneurs" : ""}</p>
@@ -358,24 +358,6 @@ let mesPropositions = [];
 let scores = new Map();
 
 const vide = (t, plus = "") => `<div class="vide-compte"><p class="muet">${t}</p>${plus ? `<p class="petit">${plus}</p>` : ""}</div>`;
-
-/** Carte : mes missions à l'adresse exacte (vert), missions disponibles autour de leur commune (corail, adresse donnée à la prise). */
-async function carteDesMissions(boite, miennes, dispo) {
-  if (!boite) return;
-  const marqueurs = [];
-  for (const m of miennes) {
-    const pos = await coordonnees(m.rue, m.code_postal, m.ville);
-    if (pos) marqueurs.push({ ...pos, couleur: "#1F8A80", titre: rubrique(m.rubrique_id).nom, popup: `<b>${esc(rubrique(m.rubrique_id).nom)}</b><br>${esc(quand(m))}<br>${esc(m.rue)}, ${esc(m.ville)}` });
-  }
-  for (const m of dispo) {
-    const pos = await coordonnees("", m.code_postal, m.ville);
-    if (pos) marqueurs.push({ ...pos, couleur: "#FA8C66", approx: 1500, titre: rubrique(m.rubrique_id).nom,
-      popup: `<b>${esc(rubrique(m.rubrique_id).nom)}</b><br>${esc(quand(m))}<br>${esc(m.code_postal)} ${esc(m.ville)} · ${m.sur_devis ? tr("Sur devis") : euros(m.estimation_c)}` });
-  }
-  if (!boite.isConnected) return;
-  if (!marqueurs.length) { boite.nextElementSibling?.remove(); boite.remove(); return; }
-  afficherCarte(boite, { marqueurs, zoom: 13 }).catch(() => boite.remove());
-}
 
 /* Secteur (16 novembre 2026) : peu de missions dans le périmètre → conseil d'agrandir, avec les missions qu'il ferait gagner.
    Une notification est aussi envoyée, au plus une fois par semaine (alerte_secteur dans la base). Même encart dans l'appli. */
@@ -493,6 +475,9 @@ export async function brancherMissions(vue, p) {
   const auj = new Date().toDateString();
   const duJour = miennes.filter(m => m.statut !== "CONFIRMEE" || (m.creneau && new Date(m.creneau).toDateString() === auj));
   const plusTard = miennes.filter(m => !duJour.includes(m));
+  // « Ma tournée » (23/11/2026) : les missions du jour sur la carte, dans l'ordre, avec l'itinéraire et le départ conseillé.
+  const etapesJour = duJour.map(m => ({ titre: rubrique(m.rubrique_id)?.nom || m.rubrique_id, debut: m.creneau ? new Date(m.creneau) : null,
+    adresse: `${m.rue || ""}, ${m.code_postal || ""} ${m.ville || ""}`.replace(/^[,\s]+/, "").trim(), rue: m.rue, cp: m.code_postal, ville: m.ville }));
   // Refonte du 22/11/2026 : quatre parties rangées dans les onglets Aujourd'hui · Missions (Disponibles, À venir, Terminées) · Gains · Profil.
   boite.innerHTML = `
   <div id="cleaneur-aujourdhui" class="cleaneur-partie">
@@ -503,7 +488,7 @@ export async function brancherMissions(vue, p) {
     ${blocAvertissements(avert)}
     ${avert?.banni || !miennes.length ? "" : blocSelfie(selfie)}
     ${p.employeur_id ? "" : tableauDeBord(p, docs, miennes, dispo, tableau, "aujourdhui", !duJour.length)}
-    ${duJour.map((m, i) => (i === 0 ? `<h2 class="titre-section">▶ ${tr("Prochaine action")}</h2>` : i === 1 ? `<h2 class="titre-section">🕒 ${tr("Plus tard aujourd'hui")}</h2>` : "") + carteMission(m)).join("")}
+    ${duJour.map((m, i) => (i === 0 ? `<h2 class="titre-section">▶ ${tr("Prochaine action")}</h2>` : i === 1 ? `<h2 class="titre-section">🕒 ${tr("Plus tard aujourd'hui")}</h2>` : "") + carteMission(m) + (i === 0 ? `<div id="tournee-jour">${blocTournee(etapesJour)}</div>` : "")).join("")}
     ${!duJour.length && plusTard.length ? `<a class="carte ligne-compte prochaine-mission" href="#mes-missions-a-venir" data-segment-aller="a_venir">📅
       <div class="corps"><b>${tr("Prochaine mission")}</b><p class="petit" style="margin:2px 0 0">${esc(rubrique(plusTard[0].rubrique_id)?.nom || "")} · ${plusTard[0].creneau ? esc(dateLongue(new Date(plusTard[0].creneau))) : ""} · ${esc(plusTard[0].ville)}</p></div><span aria-hidden="true">›</span></a>` : ""}
     ${!duJour.length && !plusTard.length ? `<div class="carte vide-jour"><b>${tr("Aucune mission aujourd'hui")}</b><p class="petit" style="margin:4px 0 0">${tr("Les missions commencent le 1er janvier 2027. Elles s'afficheront ici, dans l'ordre de la journée.")}</p></div>` : ""}
@@ -513,11 +498,10 @@ export async function brancherMissions(vue, p) {
       .map(([id, nom]) => `<button type="button" data-segment-missions="${id}">${nom}</button>`).join("")}</div>
     <div data-segment="disponibles">
     ${blocSecteur(p, dispo)}
-    ${miennes.length || dispo.length ? `<div class="carte-missions" id="carte-missions" role="img" aria-label="Carte des missions"></div>
-      <p class="petit legende-carte"><span><i style="--c:#1F8A80"></i>Mes missions</span><span><i style="--c:#FA8C66"></i>Missions disponibles (zone approximative)</span></p>` : ""}
 ${p.employeur_id ? "" : `    <h2 class="titre-section" id="missions-disponibles">${icone("position", { tuile: true })}Missions disponibles</h2>
     <p class="petit" style="margin-top:0">Missions en ligne pour les prestations que vous proposez et pour lesquelles vous êtes formé. Le premier Cleaneur qui la prend l'obtient.</p>
     <p class="petit" style="margin-top:0">${tr("Les plus proches et celles qui comblent vos trous de planning d'abord.")}</p>
+    ${blocListeCarte(dispo.length)}
     ${dispo.length ? dispo.map(carteDisponible).join("") : vide("Aucune mission disponible pour l'instant.", p.dossier === "VALIDE" || p.role === "admin" ? "" : "Votre dossier doit être validé pour voir et prendre des missions.")}
 `}    <div id="missions-incompatibles"></div>
     </div>
@@ -599,7 +583,9 @@ ${p.employeur_id ? "" : `    <h2 class="titre-section" id="missions-disponibles"
   boite.querySelectorAll("[data-photo-boite]").forEach(async img => {
     try { img.src = await lienPhotoDemande(img.dataset.photoBoite); } catch { img.remove(); }
   });
-  carteDesMissions(boite.querySelector("#carte-missions"), miennes, dispo);
+  brancherTournee(boite.querySelector("#tournee-jour"), etapesJour, p.zone_lat != null && p.zone_lon != null ? { lat: Number(p.zone_lat), lon: Number(p.zone_lon) } : null);
+  brancherListeCarte(boite.querySelector('[data-segment="disponibles"]'), dispo, miennes,
+    { libelle: m => rubrique(m.rubrique_id)?.nom || "", quand, prix: m => m.sur_devis ? tr("Sur devis") : euros(m.estimation_c) });
   const recharger = () => brancherMissions(vue, p);
   boite.querySelector("#autoriser-geoloc")?.addEventListener("click", async () => { await demanderGeoloc(); recharger(); });
   // « Passer à N km » : le périmètre du profil est agrandi, la liste se recharge.
