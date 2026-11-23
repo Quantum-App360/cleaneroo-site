@@ -118,7 +118,6 @@ export function brancherBascule() {
   document.body.dataset.basculeBranchee = "1";
   document.addEventListener("click", e => {
     if (e.target.closest("[data-bascule-mode]")) { e.preventDefault(); basculer(); }
-    if (e.target.closest("[data-choix-societe]")) { try { sessionStorage.setItem("cleaneroo-societe-voulue", "1"); } catch { /* rien */ } }
   });
   document.body.classList.toggle("mode-cleaneur", modeCleaneur());
 }
@@ -126,11 +125,11 @@ export function brancherBascule() {
 /** Accueil du mode Cleaneur : deux façons de rejoindre Cleaneroo. */
 export function blocChoixCleaneur() {
   return `<div class="choix-cleaneur">
-    <a class="carte choix-cleaneur-carte" href="#/compte/cleaneur">${icone("cleaneurs", { tuile: true })}
+    <a class="carte choix-cleaneur-carte" href="#/compte/cleaneur/independant">${icone("cleaneurs", { tuile: true })}
       <div><b>${tr("Je suis Cleaneur indépendant")}</b>
       <p class="petit">${tr("Auto-entrepreneur : choisissez vos missions près de chez vous, déroulé guidé, paiement après validation du client.")}</p></div>
       <span class="aller" aria-hidden="true">›</span></a>
-    <a class="carte choix-cleaneur-carte" href="#/compte/cleaneur" data-choix-societe>${icone("bureaux", { tuile: true })}
+    <a class="carte choix-cleaneur-carte" href="#/compte/cleaneur/societe">${icone("bureaux", { tuile: true })}
       <div><b>${tr("Je référence ma société de nettoyage")}</b>
       <p class="petit">${tr("Vous avez des salariés : planning, missions attribuées à vos équipes, factures au nom de la société.")}</p></div>
       <span class="aller" aria-hidden="true">›</span></a>

@@ -275,7 +275,7 @@ export async function pageRejoindre(vue, code, connecte) {
       <p class="muet">${tr("Bonjour")} ${esc(inv.prenom)}, ${esc(inv.societe)} ${tr("vous invite à intervenir avec Cleaneroo : vos missions, votre selfie du jour, le trajet et le compte rendu, depuis votre téléphone.")}</p>
       <ol class="petit"><li>${tr("Créez votre accès (ou connectez-vous)")}</li><li>${tr("Envoyez votre pièce d'identité")}</li><li>${tr("Votre employeur vous attribue vos missions")}</li></ol>
       ${connecte ? `<button type="button" class="bouton plein" data-rejoindre>${tr("Rejoindre l'équipe")}</button>`
-        : `<a class="bouton plein" href="#/compte/creer" data-garder-code>${tr("Créer mon accès")}</a> <a class="bouton secondaire" href="#/compte" data-garder-code>${tr("J'ai déjà un compte")}</a>`}
+        : `<a class="bouton plein" href="#/compte/salarie" data-garder-code>${tr("Créer mon accès")}</a> <a class="bouton secondaire" href="#/compte" data-garder-code>${tr("J'ai déjà un compte")}</a>`}
       <p class="erreur" id="erreur-rejoindre"></p>`
     : `<h1>${tr("Lien d'invitation non valable")}</h1><p class="muet">${tr("Ce lien a expiré ou a été retiré. Demandez un nouveau lien à votre employeur.")}</p>`}
   </div></section>`;

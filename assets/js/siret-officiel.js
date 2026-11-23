@@ -39,6 +39,21 @@ export async function verifierSiret(numero, prenom, nom) {
   } catch { return { etat: "indisponible" }; }
 }
 
+/** Fiche officielle d'un SIRET / SIREN (23/11/2026) : raison sociale, adresse, active ou non — pour pré-remplir l'inscription.
+ *  null si le numéro est invalide, introuvable ou si le registre ne répond pas. */
+export async function ficheEntreprise(numero) {
+  const n = String(numero || "").replace(/\D/g, "");
+  if (!sirenSiretValide(n)) return null;
+  try {
+    const r = await fetch(`https://recherche-entreprises.api.gouv.fr/search?q=${n}&per_page=5`);
+    if (!r.ok) return null;
+    const e = ((await r.json()).results || []).find(x => x.siren === n.slice(0, 9));
+    if (!e) return null;
+    const et = n.length === 14 ? [e.siege, ...(e.matching_etablissements || [])].find(x => x?.siret === n) || e.siege : e.siege;
+    return { nom: e.nom_complet || e.nom_raison_sociale || "", adresse: et?.adresse || "", active: e.etat_administratif !== "C" && et?.etat_administratif !== "F" };
+  } catch { return null; }
+}
+
 /** Phrase à afficher pour chaque résultat. */
 export const MESSAGES_SIRET = {
   verifie: "SIRET vérifié sur le registre officiel : entreprise active, à votre nom.",

@@ -630,6 +630,8 @@ async function afficherPage() {
   else if (["reserver", "estimer", "prestations", "mes-demandes", "mes-biens", "tableau"].includes(route) || (route === "compte" && ["particulier", "entreprise", "pro", "hotellerie"].includes(param))) { if (modeCleaneur()) { fixerMode(false); rendreEnteteMemorise(); } }
   if (route === "" && modeCleaneur()) { location.replace("#/mode-cleaneur"); return; }
   if (route === "mode-cleaneur" && (profilMemorise()?.statuts || []).includes("cleaneur")) { location.replace("#/compte/cleaneur"); return; }
+  // Liens de démarchage (23/11/2026) : #/devenir-cleaneur/independant et #/devenir-cleaneur/societe ouvrent directement le bon formulaire.
+  if (route === "devenir-cleaneur" && ["independant", "societe"].includes(param)) { location.replace(`#/compte/cleaneur/${param}`); return; }
   compterPage(route, param);
   marquerActif();
   // Barre des espaces sur l'accueil (entre le logo et le bandeau de lancement) : Particulier, Pro, Cleaneur.

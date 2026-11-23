@@ -2,6 +2,7 @@
 // Un clic sur une rubrique ouvre SA page : ce qu'on y fait, puis « Créer mon espace » ou « Se connecter ».
 // Même contenu dans l'application (VitrineEspace dans EspacesCompte.kt).
 import { icone } from "./icones.js";
+import { guideVideo } from "./guide-video.js";
 
 export const VITRINES = {
   particulier: { nom: "Espace Particulier", accroche: "Le ménage de votre logement, réservé en deux minutes et suivi en direct.", ico: "logement", points: [
@@ -26,13 +27,24 @@ export const VITRINES = {
     ["calendrier", "Agenda iCal et planning", "Vos réservations créent les rotations à programmer."],
     ["cleaneurs", "Renforts pour vos pics d'activité", "Des Cleaneurs vérifiés, dans la limite légale chez un même établissement."],
     ["photo", "Compte rendu photo", "Chaque logement est contrôlé, pièce par pièce."]] },
-  cleaneur: { nom: "Espace Cleaneur", accroche: "Trouvez des missions près de chez vous, en auto-entrepreneur.", ico: "cleaneurs", points: [
+  cleaneur: { nom: "Espace Cleaneur", accroche: "Trouvez des missions près de chez vous, en auto-entrepreneur.", ico: "cleaneurs", video: "cleaneur",
+    documents: "Pièce d'identité, SIRET, assurance RC Pro et attestation URSSAF : vous les envoyez après la pré-inscription, depuis « Mon dossier ».", points: [
     ["position", "Missions près de chez vous", "Choisissez votre secteur, vos prestations et vos disponibilités."],
     ["valide", "Déroulé guidé", "Tâches et photos guidées, signature et compte rendu."],
     ["paiement", "Paiement après validation", "Versé après validation du client, pourboires compris."],
     ["avis", "Votre activité", "Chiffre d'affaires, cotisations URSSAF et factures calculés pour vous."],
     ["garantie", "Formations conseillées", "Guides et vidéos pour progresser : seules les formations exigées par la loi sont obligatoires."]] },
+  // Société de nettoyage (23/11/2026, retour de Vincent) : sa propre page, jamais la présentation de l'auto-entrepreneur.
+  societe: { nom: "Espace Société de nettoyage", accroche: "Référencez votre société de nettoyage : des missions près de chez vous pour vos équipes.", ico: "bureaux", video: "cleaneur",
+    documents: "Kbis ou SIRET, assurance RC Pro et attestation URSSAF de la société : vous les envoyez après la pré-inscription, depuis « Mon dossier ».", points: [
+    ["cleaneurs", "Vos équipes sur les missions", "Vous attribuez chaque mission à un salarié : selfie du jour, trajet et compte rendu depuis son téléphone."],
+    ["calendrier", "Planning de vos salariés", "Toutes les missions de la société et leurs intervenants au même endroit."],
+    ["paiement", "Paiement garanti", "Versé à la société après validation du client, chaque semaine."],
+    ["avis", "Factures au nom de la société", "Factures, relevés et chiffre d'affaires calculés pour vous."],
+    ["garantie", "Formations de vos salariés", "Vous formez vos salariés ; les prestations réglementées ne vont qu'aux salariés qui ont l'attestation exigée."]] },
 };
+// Vidéo de démonstration de chaque rubrique (23/11/2026) : réserver un ménage pour les espaces clients, devenir Cleaneur sinon.
+for (const id of ["particulier", "entreprise", "pro", "hotellerie"]) VITRINES[id].video = "client";
 
 /** Bloc de présentation d'un espace : surtitre, accroche et fonctionnalités. */
 export function vitrineEspace(id) {
@@ -43,5 +55,7 @@ export function vitrineEspace(id) {
     <h1 class="titre-vitrine">${v.accroche}</h1>
     <div class="vitrine-points">${v.points.map(([ico, t, d]) => `<div class="carte vitrine-point">${icone(ico, { tuile: true })}
       <div><b>${t}</b><p class="petit">${d}</p></div></div>`).join("")}</div>
+    ${v.documents ? `<p class="petit vitrine-documents">📄 <b>Documents à prévoir</b> : ${v.documents}</p>` : ""}
+    ${v.video ? `<div class="vitrine-video">${guideVideo(v.video, `vitrine-${id}`)}</div>` : ""}
   </div>`;
 }

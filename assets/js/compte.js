@@ -11,7 +11,7 @@ import { blocAbonnementPro, brancherAbonnementPro } from "./abonnement-pro.js";
 import { blocEquipe } from "./equipe.js";
 import { installerSousOnglets } from "./sous-onglets.js";
 import { verrouillerPrestations } from "./prestations-cleaneur.js";
-import { verifierSiret, MESSAGES_SIRET, SIRET_REFUSE } from "./siret-officiel.js";
+import { verifierSiret, MESSAGES_SIRET, SIRET_REFUSE, ficheEntreprise } from "./siret-officiel.js";
 import { blocInvitationsPro, brancherInvitationsPro, blocCodeInvitation, brancherCodeInvitation } from "./invitations.js";
 import { RUBRIQUES, rubrique, TYPES_LOGEMENT, CATEGORIES_BIEN, categorieBien, typesDeCategorie, SECTEURS_ENTREPRISE } from "./catalogue.js";
 import { euros, dateLongue, heure, REGLES, sirenSiretValide } from "./regles.js";
@@ -86,7 +86,12 @@ export async function pageCompte(vue, param) {
   const s = await session();
   if (location.hash !== ici) return;
   if (param === "mdp" && s) return ecranNouveauMdp(vue);
-  if (!s) return ecranConnexion(vue, ["creer", "particulier", "entreprise", "cleaneur", "pro", "hotellerie"].includes(param) ? "creer" : "connexion", "", false, VITRINES[param] ? param : "client");
+  if (!s) {
+    // Un espace = un parcours (23/11/2026, retour de Vincent) : l'adresse décide de la page (indépendant ou société pour un Cleaneur).
+    if (param === "cleaneur") typeCleaneur = location.hash.split("/")[3] === "societe" ? "societe" : "independant";
+    return ecranConnexion(vue, ["creer", "particulier", "entreprise", "cleaneur", "pro", "hotellerie", "salarie"].includes(param) ? "creer" : "connexion", "", false,
+      VITRINES[param] || param === "salarie" ? param : "client");
+  }
   const [p, biens, demandes, parrain] = await Promise.all([monProfil().catch(() => null), synchroniserBiens().catch(() => []), demandesDuCompte().catch(() => []), monParrainage().catch(() => null)]);
   if (location.hash !== ici) return;
   if (!p) { vue.innerHTML = `<section class="bloc"><div class="etroit">${titre("Mon espace")}<p class="erreur">${tr("Le service est momentanément indisponible. Réessayez dans quelques minutes.")}</p></div></section>`; traduire(vue); return; }
@@ -221,19 +226,15 @@ function memoriserCoordonnees(p) {
  *  ont chacun leur formulaire, sans les statuts client. Pré-inscription, puis « Mon dossier » pour envoyer les documents. */
 const QUALITES = ["Gérant(e)", "Président(e)", "Directeur(rice) général(e)", "Responsable d'exploitation", "Associé(e)", "Autre"];
 let typeCleaneur = null;
-function typeCleaneurVoulu() {
-  if (typeCleaneur) return typeCleaneur;
-  try { if (sessionStorage.getItem("cleaneroo-societe-voulue") === "1") return "societe"; } catch { /* rien */ }
-  return "independant";
-}
+function typeCleaneurVoulu() { return typeCleaneur === "societe" ? "societe" : "independant"; }
 function blocInscriptionCleaneur(type) {
   const soc = type === "societe";
-  return `<div class="segments" style="margin:0 0 12px"><button type="button" data-type-cleaneur="independant" class="${soc ? "" : "choisi"}">${tr("Cleaneur indépendant")}</button>
-      <button type="button" data-type-cleaneur="societe" class="${soc ? "choisi" : ""}">${tr("Société de nettoyage")}</button></div>
+  return `<div class="segments" style="margin:0 0 12px"><a href="#/compte/cleaneur/independant" class="${soc ? "" : "choisi"}">${tr("Cleaneur indépendant")}</a>
+      <a href="#/compte/cleaneur/societe" class="${soc ? "choisi" : ""}">${tr("Société de nettoyage")}</a></div>
     <p class="petit" style="margin:0 0 10px">${tr(soc ? "Pré-inscription de votre société : vous enverrez ensuite ses documents (Kbis ou SIRET, RC Pro, attestation URSSAF) depuis « Mon dossier »."
       : "Pré-inscription en auto-entrepreneur : vous enverrez ensuite vos documents (pièce d'identité, SIRET, RC Pro, attestation URSSAF) depuis « Mon dossier ».")}</p>
     ${soc ? `<div class="grille-2"><label class="champ">${tr("Raison sociale")}<input name="societe" maxlength="120" autocomplete="organization"></label>
-      <label class="champ">${tr("SIRET ou SIREN")}<input name="siretSociete" inputmode="numeric" maxlength="17"></label></div>` : ""}
+      <label class="champ">${tr("SIRET ou SIREN")}<input name="siretSociete" inputmode="numeric" maxlength="17"></label></div><p class="petit" data-fiche-siret></p>` : ""}
     <fieldset class="civilite"><legend>${tr("Civilité")}</legend>
       <label class="case"><input type="radio" name="civilite" value="madame"> <span>${tr("Madame")}</span></label>
       <label class="case"><input type="radio" name="civilite" value="monsieur"> <span>${tr("Monsieur")}</span></label></fieldset>
@@ -247,20 +248,26 @@ function blocInscriptionCleaneur(type) {
 function ecranConnexion(vue, mode, message = "", ok = false, roleDefaut = "client") {
   const creer = mode === "creer";
   const inscriptionCleaneur = creer && roleDefaut === "cleaneur", type = typeCleaneurVoulu();
+  // Espace de l'inscription : celui de l'onglet (un espace = un parcours) ; sans onglet, on demande d'abord le profil.
+  const espaceForm = !creer || inscriptionCleaneur ? null : roleDefaut === "salarie" ? "particulier" : NOMS_STATUTS[roleDefaut] ? roleDefaut : null;
+  const choixEspace = creer && !inscriptionCleaneur && !espaceForm;
+  const idVitrine = roleDefaut === "cleaneur" && type === "societe" ? "societe" : roleDefaut;
   vue.innerHTML = `<section class="bloc"><div class="etroit">
-    ${VITRINES[roleDefaut] ? vitrineEspace(roleDefaut) + `<p class="petit" style="margin:4px 0 12px">${OUVERTURE}</p>` : titre("Mon espace", "Préparez dès maintenant votre espace : profil, biens, demandes ou dossier Cleaneur. " + OUVERTURE)}
+    ${VITRINES[idVitrine] ? vitrineEspace(idVitrine) + `<p class="petit" style="margin:4px 0 12px">${OUVERTURE}</p>` : titre("Mon espace", "Préparez dès maintenant votre espace : profil, biens, demandes ou dossier Cleaneur. " + OUVERTURE)}
     <div class="segments" style="margin:6px 0 14px"><button type="button" data-mode="connexion" class="${creer ? "" : "choisi"}">Se connecter</button>
       <button type="button" data-mode="creer" class="${creer ? "choisi" : ""}">Créer un compte</button></div>
+    ${choixEspace ? `<p style="margin:0 0 4px;font-weight:700">${tr("Vous êtes :")}</p><p class="petit" style="margin:0 0 10px">${tr("Choisissez votre profil : le bon formulaire s'ouvre. Vous pourrez ajouter un autre espace plus tard, depuis votre compte.")}</p>
+      <div class="statuts-inscription">${Object.entries(NOMS_STATUTS).map(([v, [, t, ico, d]]) => `<a class="carte statut-choix" href="#/compte/${v === "cleaneur" ? "cleaneur/independant" : v}">${icone(ico, { tuile: true })}
+        <span><b>${tr(t)}</b><small>${tr(d)}</small></span><i class="aller" aria-hidden="true">›</i></a>`).join("")}</div>` : `
     <form class="carte" id="form-compte" novalidate>
       ${inscriptionCleaneur ? blocInscriptionCleaneur(type) : ""}
-      ${creer && !inscriptionCleaneur ? `<p style="margin:0 0 4px;font-weight:700">Vous êtes :</p><p class="petit" style="margin:0 0 10px">Cochez une ou plusieurs cases : chaque statut ouvre son propre espace.</p>
-        <div class="statuts-inscription">${Object.entries(NOMS_STATUTS).map(([v, [, t, ico, d]]) => `<label class="carte statut-choix">
-          <input type="checkbox" name="statut" value="${v}" ${roleDefaut === v || (roleDefaut === "client" && v === "particulier") ? "checked" : ""}>${icone(ico, { tuile: true })}
-          <span><b>${t}</b><small>${d}</small></span><i class="coche" aria-hidden="true"></i></label>`).join("")}</div>
-        <div id="champs-pro" class="${["pro", "entreprise", "hotellerie"].includes(roleDefaut) ? "" : "masque"}"><div class="grille-2">
-          <label class="champ">Raison sociale<input name="societe" maxlength="120" autocomplete="organization"></label>
-          <label class="champ">SIRET ou SIREN<input name="siretSociete" inputmode="numeric" maxlength="17"></label></div></div>
-        <div id="champ-secteur" class="${roleDefaut === "entreprise" ? "" : "masque"}">${champSecteur()}</div>
+      ${creer && espaceForm ? `<input type="hidden" name="statut" value="${espaceForm}">
+        <p class="petit" style="margin:0 0 10px">${roleDefaut === "salarie" ? tr("Votre accès pour intervenir avec votre employeur.") : `${tr("Création de votre")} <b>${tr(NOMS_STATUTS[espaceForm][0] === "Particulier" ? "espace Particulier" : `espace ${NOMS_STATUTS[espaceForm][0]}`)}</b>.`}
+          ${roleDefaut === "salarie" ? "" : `<a href="#/compte/creer">${tr("Ce n'est pas votre cas ? Changer d'espace")}</a>`}</p>
+        ${["pro", "entreprise", "hotellerie"].includes(espaceForm) ? `<div class="grille-2">
+          <label class="champ">${tr("SIRET ou SIREN")}<input name="siretSociete" inputmode="numeric" maxlength="17"></label>
+          <label class="champ">${tr("Raison sociale")}<input name="societe" maxlength="120" autocomplete="organization"></label></div><p class="petit" data-fiche-siret></p>` : ""}
+        ${espaceForm === "entreprise" ? champSecteur() : ""}
         <div class="grille-2"><label class="champ">Prénom<input name="prenom" required maxlength="80" autocomplete="given-name"></label>
           <label class="champ">Nom<input name="nom" required maxlength="80" autocomplete="family-name"></label></div>` : ""}
       <label class="champ">E-mail<input type="email" name="email" required maxlength="200" autocomplete="username"></label>
@@ -269,21 +276,29 @@ function ecranConnexion(vue, mode, message = "", ok = false, roleDefaut = "clien
       ${creer ? `<label class="case"><input type="checkbox" name="cgu"> <span>J'accepte les <a href="#/conditions">conditions d'utilisation</a> et la <a href="#/confidentialite">politique de confidentialité</a>.</span></label>` : ""}
       ${message ? `<p class="${ok ? "note" : "erreur"}" style="margin:10px 0 0">${message}</p>` : ""}
       <p class="erreur" id="erreur-compte" style="margin:10px 0 0"></p>
-      <button class="bouton plein" type="submit" style="margin-top:12px">${inscriptionCleaneur ? tr("Valider ma pré-inscription") : creer ? (VITRINES[roleDefaut] ? `${tr("Créer mon espace")} ${tr(NOMS_STATUTS[roleDefaut][0])}` : "Créer mon compte") : "Se connecter"}</button>
+      <button class="bouton plein" type="submit" style="margin-top:12px">${inscriptionCleaneur ? tr(type === "societe" ? "Pré-inscrire ma société" : "Valider ma pré-inscription") : creer ? (roleDefaut === "salarie" ? tr("Créer mon accès") : VITRINES[roleDefaut] ? `${tr("Créer mon espace")} ${tr(NOMS_STATUTS[roleDefaut][0])}` : "Créer mon compte") : "Se connecter"}</button>
       ${creer ? "" : `<button class="lien-bouton" type="button" id="mdp-oublie">Mot de passe oublié ?</button>`}
       ${REGLES.CONNEXION_GOOGLE ? `<button class="bouton secondaire plein" type="button" id="connexion-google" style="margin-top:10px">Continuer avec Google</button>` : ""}
-    </form></div></section>`;
+    </form>`}</div></section>`;
   traduire(vue);
   vue.querySelectorAll("[data-mode]").forEach(b => b.onclick = () => ecranConnexion(vue, b.dataset.mode, "", false, roleDefaut));
-  vue.querySelectorAll("[data-type-cleaneur]").forEach(b => b.onclick = () => { typeCleaneur = b.dataset.typeCleaneur; ecranConnexion(vue, mode, "", false, roleDefaut); });
+
   // Connexion avec Google (fournisseur activé dans Supabase) : retour sur « Mon compte ».
   vue.querySelector("#connexion-google")?.addEventListener("click", () =>
     supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: location.origin + location.pathname + "?vers=compte" } }));
   const f = vue.querySelector("#form-compte");
-  f.querySelectorAll("[name=statut]").forEach(c => c.onchange = () => {
-    if (["pro", "entreprise", "hotellerie"].includes(c.value))
-      vue.querySelector("#champs-pro").classList.toggle("masque", !["pro", "entreprise", "hotellerie"].some(v => f.querySelector(`[name=statut][value=${v}]`)?.checked));
-    vue.querySelector("#champ-secteur")?.classList.toggle("masque", !f.querySelector("[name=statut][value=entreprise]")?.checked);
+  if (!f) return;   // écran « Vous êtes : » : les cartes sont des liens
+  // SIRET tapé : la raison sociale se remplit depuis le registre officiel, et l'entreprise fermée est signalée tout de suite.
+  const champSiret = f.querySelector("[name=siretSociete]"), fiche = f.querySelector("[data-fiche-siret]");
+  if (champSiret && fiche) champSiret.addEventListener("input", async () => {
+    const n = champSiret.value.replace(/\D/g, "");
+    if (!sirenSiretValide(n)) { fiche.textContent = ""; return; }
+    fiche.textContent = tr("Recherche dans le registre officiel…");
+    const e = await ficheEntreprise(n);
+    if (champSiret.value.replace(/\D/g, "") !== n) return;
+    if (!e) { fiche.textContent = tr("Entreprise introuvable dans le registre officiel : vérifiez le numéro."); return; }
+    if (f.societe && !f.societe.value.trim()) f.societe.value = e.nom;
+    fiche.innerHTML = e.active ? `✓ ${esc(e.nom)}${e.adresse ? ` · ${esc(e.adresse)}` : ""}` : `⚠️ ${tr("Cette entreprise est fermée dans le registre officiel.")}`;
   });
   // Erreur affichée sous le formulaire : ce qui a été saisi est conservé.
   const erreur = t => { f.querySelector("#erreur-compte").textContent = tr(t); f.querySelector("[type=submit]").disabled = false; };
@@ -302,7 +317,7 @@ function ecranConnexion(vue, mode, message = "", ok = false, roleDefaut = "clien
     if (!f.prenom.value.trim() || !f.nom.value.trim()) return erreur("Indiquez votre prénom et votre nom.");
     if (f.mdp.value.length < 10) return erreur("Le mot de passe doit contenir au moins 10 caractères.");
     if (!f.cgu.checked) return erreur("Acceptez les conditions d'utilisation pour créer votre compte.");
-    const statuts = [...f.querySelectorAll("[name=statut]:checked")].map(c => c.value);
+    const statuts = [...f.querySelectorAll("[name=statut]")].map(c => c.value);
     if (!statuts.length) return erreur("Cochez au moins un statut : Particulier, Entreprise, Conciergerie ou Cleaneur.");
     const avecSociete = statuts.includes("pro") || statuts.includes("entreprise") || statuts.includes("hotellerie");
     if (statuts.includes("entreprise") && !f.secteur.value) return erreur("Choisissez votre secteur d'activité.");
@@ -346,7 +361,7 @@ async function inscrireCleaneur(f, email, erreur, vue, type) {
       societe: soc ? f.societe.value.trim() : "", siretSociete: soc ? f.siretSociete.value : "", codeParrain: f.code_parrain.value,
       civilite, telephone: tel, qualite: soc ? f.qualite.value : "", typeCleaneur: type, engagement: soc && f.engagement.checked });
     oublierCodeParrain();
-    try { localStorage.setItem("cleaneroo-sous-onglet-cleaneur", "profil"); sessionStorage.removeItem("cleaneroo-societe-voulue"); } catch { /* rien */ }
+    try { localStorage.setItem("cleaneroo-sous-onglet-cleaneur", "profil"); } catch { /* rien */ }
     typeCleaneur = null;
     if (r === "connecte") { majLienCompte(); return pageCompte(vue); }
     ecranConnexion(vue, "connexion", tr("Pré-inscription enregistrée. Ouvrez l'e-mail de confirmation que nous venons de vous envoyer, cliquez sur le lien, puis connectez-vous : vous arriverez sur « Mon dossier » pour envoyer vos documents."), true, "cleaneur");
