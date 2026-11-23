@@ -138,7 +138,7 @@ export function brancherListeCarte(conteneur, dispo, miennes, { libelle, quand, 
     const carte = vueDispo === "carte";
     conteneur.classList.toggle("vue-carte-dispo", carte);
     zone.hidden = !carte;
-    conteneur.querySelectorAll("[data-vue-dispo]").forEach(b => b.classList.toggle("actif", b.dataset.vueDispo === vueDispo));
+    conteneur.querySelectorAll("[data-vue-dispo]").forEach(b => b.classList.toggle("choisi", b.dataset.vueDispo === vueDispo));
     if (!carte) return;
     choisir(dispo.some(m => m.reference === choisie) ? choisie : dispo[0].reference);
     if (faite) return;

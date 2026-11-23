@@ -85,7 +85,7 @@ export async function coordonnees(rue, codePostal, ville) {
 
 /** Épingle aux couleurs d'un bien (même dessin que l'appli). */
 const epingle = (L, couleur, texte = "") => L.divIcon({
-  className: "epingle", html: `<span style="--c:${couleur}"><b>${texte}</b></span>`, iconSize: [32, 42], iconAnchor: [16, 40], popupAnchor: [0, -36],
+  className: "epingle", html: `<span style="--c:${couleur}"><b${String(texte).length > 2 ? ' style="font-size:8.5px;letter-spacing:-.3px"' : ""}>${texte}</b></span>`, iconSize: [32, 42], iconAnchor: [16, 40], popupAnchor: [0, -36],
 });
 
 /**
