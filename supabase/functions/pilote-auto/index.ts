@@ -56,7 +56,9 @@ Deno.serve(async (req) => {
     if (!urls.length) continue;
     const { data: modele } = await admin.from("demandes").select("*").eq("reference", String(p.modele || "")).eq("client_id", b.client_id).maybeSingle();
     if (!modele) { bilan.sans_modele++; continue; }
-    const prix = modele.estimation_c || 0, plafond = Number(p.plafondC) || 0;
+    // Prix du ménage fixé par la conciergerie pour ce logement (prix libre, 23/11/2026) ; sinon le prix du dernier ménage.
+    const prixLibre = Number(b.donnees?.prixMenageC) >= 1000 && ["conciergerie", "hotellerie"].includes(modele.espace) && modele.rubrique_id === "rental";
+    const prix = prixLibre ? Math.round(Number(b.donnees.prixMenageC)) : modele.estimation_c || 0, plafond = Number(p.plafondC) || 0;
     const jours = [...new Set((await Promise.all(urls.map(departs))).flat())].filter(j => j > aujourdhui && j <= limite).sort();
     if (!jours.length) continue;
     // Ménages déjà prévus pour ce logement (un seul ménage par départ)
@@ -79,10 +81,13 @@ Deno.serve(async (req) => {
       const heure = String(Number(modele.details?.departVoyageursH ?? 10)).padStart(2, "0");
       const reference = `CLN-${morceau()}-${morceau()}`;
       const { id: _i, reference: _r, jeton: _j, statut: _s, cree_le: _c, maj_le: _m, cleaneur_id: _cl, paiement_statut: _ps, paiement_session: _pss,
-        paiement_intent: _pi, paiement_c: _pc, paiement_test: _pt, notes_admin: _n, ...copie } = modele;
+        paiement_intent: _pi, paiement_c: _pc, paiement_test: _pt, notes_admin: _n, relance_le: _rl, versement_statut: _vs, versement_c: _vc,
+        versement_id: _vi, paiement_journal: _pj, ...copie } = modele;
       const { error } = await admin.from("demandes").insert({ ...copie, reference, creneau: `${j} ${heure}:00:00 Europe/Paris`,
         remise_parrainage_c: 0, cagnotte_c: 0, equipiers: [], societe_id: null,
-        details: { ...(modele.details || {}), pilote: true, depuisModele: modele.reference } });
+        ...(prixLibre ? { estimation_c: prix, estimation_initiale_c: prix } : {}),
+        details: { ...(modele.details || {}), pilote: true, depuisModele: modele.reference,
+          ...(prixLibre ? { prixLibre: true, fraisServiceC: Math.round(prix * Number(modele.details?.fraisServicePctServeur ?? modele.details?.fraisServicePct ?? 8) / 100) } : {}) } });
       if (error) continue;
       prevus.add(j); bilan.programmes++;
       (existants || []).push({ creneau: `${j}T${heure}:00:00`, estimation_c: prix, statut: "VERIFICATION", details: { pilote: true } });

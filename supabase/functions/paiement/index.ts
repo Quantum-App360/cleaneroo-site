@@ -6,6 +6,7 @@
 // suivants d'un entretien régulier (prélevés 3 jours avant) et pour un complément (supplément accepté sur place, pourboire).
 // Actions du client (lien de suivi ou compte) : creer (→ adresse de la page de paiement), verifier (retour de Stripe).
 // Actions du serveur (en-tête x-cle-alertes, base-paiement-reservation.sql) : rembourser, liberer, synchroniser.
+// Prix libres des conciergeries (base-prix-conciergeries.sql) : prix non recalculé ; la facture du Cleaneur porte déjà son net.
 // Versements (Stripe Connect, base-pilote-connect.sql) : à la validation, la part du Cleaneur (prestation − commission + pourboire
 // + prime d'urgence) est transférée sur son compte de versement ; virement sur son IBAN chaque vendredi.
 // Actions du Cleaneur connecté : connect (→ formulaire Stripe : identité, IBAN), connect_etat (versements activés ?).
@@ -87,6 +88,15 @@ async function verifierPrix(admin: Admin, d: Demande): Promise<{ pct: number; er
   const abonne = await estAbonne(admin, d);
   const verif = prixServeur(d, abonne);
   const pctDefaut = d.espace === "personnel" ? 5 : abonne ? 0 : 8;
+  // Prix libre d'une conciergerie (23/11/2026, montage B) : le prix est celui fixé par la conciergerie, pas la grille.
+  // Le prix conseillé (grille) est gardé pour le plancher de 80 % et le baromètre ; frais de service 8 % (0 % abonnée).
+  if (d.prix_libre) {
+    const prix = d.estimation_c ?? 0;
+    if (prix < 1000 || prix > 200000) return { pct: pctDefaut, erreur: "prix_a_verifier" };
+    if (d.conseil_c == null && verif && !verif.normal.devisObligatoire)
+      await admin.from("demandes").update({ conseil_c: verif.normal.totalC }).eq("id", d.id);
+    return { pct: abonne ? 0 : 8 };
+  }
   if (verif && !verif.normal.devisObligatoire) {
     const initial = d.estimation_initiale_c ?? d.estimation_c ?? 0;
     const proche = (x: number) => Math.abs(initial - x) <= 100;

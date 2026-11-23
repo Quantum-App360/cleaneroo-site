@@ -1,6 +1,7 @@
 // Espaces du compte : « Particulier », « Entreprise » (bureaux, commerces), « Conciergerie » (statut pro : conciergeries et SCI, agenda iCal, planning) et « Cleaneur ».
 // Mêmes écrans que l'application (EspacesCompte.kt). Les valeurs métier sont dans regles.js.
-import { TYPES_LOGEMENT, rubrique, ELEMENTS_TEXTILES, minutesLigne, prixLigne , secteurEntreprise } from "./catalogue.js";
+import { TYPES_LOGEMENT, rubrique, ELEMENTS_TEXTILES, minutesLigne, prixLigne , secteurEntreprise, bienCompatible } from "./catalogue.js";
+import { blocPrixBien, brancherPrixBiens } from "./prix-libre.js";
 import { calculer, entreeEstimation } from "./estimation.js";
 import { REGLES, euros, dateLongue, dateCourte, sirenSiretValide, cleaneursRotation, duree } from "./regles.js";
 import { icone } from "./icones.js";
@@ -259,6 +260,7 @@ export function ongletPro(p, biens, hotellerie = false) {
             ${SOURCES.map(([id, nom]) => `<label class="champ">Lien du calendrier ${nom}<input name="${id}" type="url" inputmode="url" maxlength="600" placeholder="https://…ics" value="${esc((l.calendriers || []).find(c => c.source === id)?.url)}"></label>`).join("")}
             <p class="petit"><button type="button" class="lien-bouton" data-cal-demo>🧪 ${tr("Essayer avec un calendrier de démonstration")}</button></p>
             <p class="erreur" data-erreur-cal></p><button class="bouton plein" type="submit">Enregistrer</button></form></details>
+        ${bienCompatible("rental", l) ? blocPrixBien(l) : ""}
         ${cals.length ? blocPilote(l) : ""}
         ${editeurGuide(l)}${editeurEtapesPhoto(l)}${editeurTemoins(l)}${editeurStock(l)}${editeurIncidents(l)}</div>`;
     }).join("") : `<div class="vide-compte"><p class="muet">Aucun bien enregistré pour l'instant.</p><p class="petit">Ajoutez vos biens dans « Mes prestations », lors d'une réservation, ou <a href="#/importer-biens">importez-les tous en une fois</a>.</p></div>`}</div>
@@ -285,7 +287,7 @@ function blocPilote(l) {
       <label class="case"><input type="radio" name="mode" value="manuel" ${auto ? "" : "checked"}><span>${tr("Manuel : je programme moi-même chaque ménage")}</span></label>
       <label class="case"><input type="radio" name="mode" value="auto" ${auto ? "checked" : ""}><span>${tr("Automatique : chaque départ de voyageurs programme son ménage tout seul")}</span></label>
       <label class="champ">${tr("Plafond mensuel (€)")}<input name="plafond" type="number" inputmode="numeric" min="0" step="1" value="${p.plafondC ? Math.round(p.plafondC / 100) : ""}"></label>
-      <p class="petit">${tr("Prix et consignes : ceux de votre dernier ménage réservé pour ce logement. Au-delà du plafond, rien n'est programmé sans vous. Vous êtes prévenu à chaque ménage programmé.")}</p>
+      <p class="petit">${tr("Prix : celui fixé pour ce logement (« Prix du ménage »), sinon celui du dernier ménage réservé ; consignes : celles du dernier ménage. Au-delà du plafond, rien n'est programmé sans vous. Vous êtes prévenu à chaque ménage programmé.")}</p>
       <p class="petit">💳 ${tr("Paiement : chaque ménage programmé est prélevé automatiquement 3 jours avant sur la carte de votre dernier ménage payé, puis bloqué jusqu'à la validation.")}</p>
       <label class="case"><input type="checkbox" name="validationIa" ${p.validationIa ? "checked" : ""}><span>🤖 ${tr("Validation par l'IA : si toutes les pièces du compte rendu sont jugées conformes, la prestation est validée tout de suite. Sinon, vous validez vous-même, ou elle est validée automatiquement après 48 h.")}</span></label>
       <p class="erreur" data-erreur-pilote></p><button class="bouton plein" type="submit">${tr("Enregistrer")}</button></form></details>`;
@@ -341,6 +343,7 @@ export function brancherPro(vue, p, biens, demandes, { majProfil, recharger }) {
     try { await enregistrerBien({ ...l, pilote: { ...(l.pilote || {}), mode, plafondC, modele: modele?.reference || "", validationIa: !!f.validationIa?.checked } }); recharger(); }
     catch { err.textContent = tr("Le service est momentanément indisponible. Réessayez dans quelques minutes."); }
   });
+  brancherPrixBiens(vue, biens, recharger);
   brancherGuides(vue, biens, recharger);
   brancherEtapesPhoto(vue, biens, recharger);
   brancherTemoins(vue, biens, recharger);

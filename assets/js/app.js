@@ -688,6 +688,8 @@ async function afficherPage() {
     const fav = document.getElementById("favori-client");
     if (fav) blocFavori(fav, decodeURIComponent(ref || ""), fav.dataset.rubrique);
     blocPaiement(document.getElementById("paiement-client"), decodeURIComponent(ref || ""), decodeURIComponent(jeton || ""));
+    // Prix libre d'une conciergerie (23/11/2026) : détail du prix et « Augmenter le prix », pour la conciergerie connectée.
+    if (document.getElementById("paiement-client")) import("./prix-libre.js").then(m => m.blocPrixDemande(document.getElementById("paiement-client"), decodeURIComponent(ref || ""))).catch(() => null);
     blocRemplacementClient(document.getElementById("remplacement-client"), decodeURIComponent(ref || ""), decodeURIComponent(jeton || ""));
     blocConsommablesClient(document.getElementById("consommables-client"), decodeURIComponent(ref || ""), decodeURIComponent(jeton || ""));
     blocPropositionsClient(document.getElementById("propositions-client"), decodeURIComponent(ref || ""), decodeURIComponent(jeton || ""));

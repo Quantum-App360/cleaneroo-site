@@ -165,6 +165,38 @@ function vierge(rubriqueId, espace, r, lieux) {
   };
 }
 
+/** Prix libre des conciergeries (23/11/2026, montage B) : pour un ménage de location réservé depuis l'espace Conciergerie
+ *  (ou Hôtels et campings) sur un logement dont le prix est fixé, ce prix remplace la grille. Le prix de la grille reste affiché
+ *  comme « prix conseillé » ; sous 80 % de celui-ci, seuls les Cleaneurs invités par la conciergerie voient le ménage. */
+export const ESPACES_PRIX_LIBRE = ["conciergerie", "hotellerie"];
+export const PLANCHER_PRIX_LIBRE = 0.8;
+function prixLibreDe(br) {
+  if (!br || br.rubriqueId !== "rental" || !ESPACES_PRIX_LIBRE.includes(br.espace) || !br.logementId) return 0;
+  const l = logements().find(x => x.id === br.logementId);
+  const prix = Math.round(Number(l?.prixMenageC) || 0);
+  return prix >= 1000 ? prix : 0;
+}
+/** Estimation d'une réservation : la grille, ou le prix fixé par la conciergerie pour ce logement. */
+function estimer(br, debut) {
+  const est = calculer(entreeEstimation(br, br.espace === "personnel", debut));
+  const prix = prixLibreDe(br);
+  if (!prix || est.devisObligatoire) return est;
+  const frais = Math.round(prix * (est.fraisServicePct || 0) / 100);
+  const remise = Math.min(est.remiseParrainageC || 0, prix), cagnotte = Math.max(0, Math.min(est.cagnotteC || 0, prix - remise));
+  const aPayer = prix + frais - remise - cagnotte;
+  return { ...est, prixLibre: true, prixConseilleC: est.totalC, totalC: prix,
+    lignes: [{ libelle: tr("Ménage de location · prix fixé pour ce logement"), montantC: prix }],
+    creditImpotC: 0, fraisServiceC: frais, remiseParrainageC: remise, cagnotteC: cagnotte, totalAPayerC: aPayer, apresCreditImpotC: aPayer };
+}
+/** Prix conseillé Cleaneroo (grille) d'un ménage de location pour ce logement, en centimes. */
+export function prixConseilleBien(l) {
+  const br = avecLogement(vierge("rental", "conciergerie", rubrique("rental"), TYPES_LIEU.rental), l);
+  return calculer(entreeEstimation(br, false, null)).totalC;
+}
+/** Prix fixé sous le plancher : message pour la conciergerie, sinon "". */
+export const messagePlancher = (prixC, conseilC) => conseilC && prixC < conseilC * PLANCHER_PRIX_LIBRE
+  ? tr("Sous 80 % du prix conseillé : seuls les Cleaneurs que vous avez invités verront ce ménage.") : "";
+
 let b = null;            // brouillon en cours
 let photos = [];         // fichiers choisis (non sauvegardés dans le brouillon)
 let vuesPrises = {};     // étape 3 : vue → fichier (une photo par vue)
@@ -896,7 +928,7 @@ async function prevenir() {
 function etape5() {
   const r = rubrique(b.rubriqueId);
   const debut = debutChoisi();
-  const est = calculer(entreeEstimation(b, b.espace === "personnel", debut));
+  const est = estimer(b, debut);
   const contactOk = b.prenom.trim() && b.nom.trim() && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(b.email) && b.telephone.replace(/\D/g, "").length >= 10;
   const manque = !contactOk ? "Complétez vos coordonnées." : !b.cgv ? "Acceptez les conditions pour envoyer la demande." : "";
   return `<h2>Votre estimation</h2>
@@ -907,6 +939,8 @@ function etape5() {
         : est.lignes.map(l => { const inclus = l.montantC === 0 && l.note === "inclus";
             return `<div class="ligne-montant"><span>${esc(l.libelle)}${l.note && !inclus ? `<span class="note-ligne">${l.note}</span>` : ""}</span><span>${inclus ? "Inclus" : euros(l.montantC)}</span></div>`; }).join("")
           + `<div class="ligne-montant total"><span>Total estimé</span><span>${euros(est.totalC)}</span></div>
+             ${est.prixLibre ? `<p class="petit">${tr("Prix conseillé Cleaneroo pour ce logement")} : <b>${euros(est.prixConseilleC)}</b>. ${tr("Les frais Cleaneroo sont compris dans ce prix : le Cleaneur reçoit le reste.")}</p>
+               ${messagePlancher(est.totalC, est.prixConseilleC) ? `<div class="note"><span>${messagePlancher(est.totalC, est.prixConseilleC)}</span></div>` : ""}` : ""}
              ${est.fraisServicePct ? `<div class="ligne-montant"><span>${tr("Frais de service Cleaneroo")} (${est.fraisServicePct} %)</span><span>${euros(est.fraisServiceC)}</span></div>`
                : b.abonnePro ? `<div class="ligne-montant"><span>${tr("Frais de service Cleaneroo")}</span><span>${tr("0 € (abonné)")}</span></div>` : ""}
              ${est.remiseParrainageC ? `<div class="ligne-montant remise"><span>${tr("Remise de parrainage")}</span><span>−${euros(est.remiseParrainageC)}</span></div>` : ""}
@@ -1024,7 +1058,7 @@ function rendre() {
   appliquerParrainage();
   const etape = b ? b.etape : 1;
   let est = null;
-  if (b && b.rubriqueId && etape > 1) est = calculer(entreeEstimation(b, b.espace === "personnel", debutChoisi()));
+  if (b && b.rubriqueId && etape > 1) est = estimer(b, debutChoisi());
   racine.innerHTML = `<section class="bloc" style="padding-top:28px"><div class="etroit">
     <div class="tete-etape petit">${etape > 1 ? `<button type="button" class="retour-haut" data-retour>‹ Retour</button>` : ""}<span>Étape ${etape} sur 5</span>
       ${est && !est.devisObligatoire ? `<b style="color:var(--primaire)">${est.fraisServicePct ? `${tr("Total à payer")} ${euros(est.totalAPayerC)}` : `Total estimé ${euros(est.totalC)}`}</b>` : ""}</div>
@@ -1214,14 +1248,16 @@ document.addEventListener("input", e => {
 let totalPassages = 0;   // nombre de passages de l'envoi en cours (message en cas d'échec partiel)
 async function envoyer() {
   const debut = debutChoisi();
-  const est = calculer(entreeEstimation(b, b.espace === "personnel", debut));
+  const est = estimer(b, debut);
   envoi = true; rendre();
   try {
     const acces = { TIERS: { nom: b.tiersNom, telephone: b.tiersTel }, BOITE: { emplacement: b.boiteEmplacement, code: b.code }, AUTONOME: { code: b.code } }[b.accueil] || {};
     const details = { ...b }; ["prenom", "nom", "email", "telephone", "rue", "codePostal", "ville", "code", "tiersNom", "tiersTel", "boiteEmplacement", "cgv", "etape", "passagesEnvoyes", "groupePaiement"].forEach(k => delete details[k]);
     details.lignes = est.lignes;
     details.langue = langue;
-    details.fraisServicePct = est.fraisServicePct; details.fraisServiceC = est.fraisServiceC;   // frais de service Cleaneroo (à part)   // langue des SMS et des messages : celle de la réservation
+    details.fraisServicePct = est.fraisServicePct; details.fraisServiceC = est.fraisServiceC;
+    delete details.prixLibre; delete details.prixConseilleC;
+    if (est.prixLibre) { details.prixLibre = true; details.prixConseilleC = est.prixConseilleC; }   // prix fixé par la conciergerie   // frais de service Cleaneroo (à part)   // langue des SMS et des messages : celle de la réservation
     const nombre = passagesPlanifies(b);
     details.passages = nombre;
     const dates = debut && nombre > 1 && !estPrelancement() ? datesPassages(debut, frequenceDe(b), b.jours || [], nombre) : [debut];
