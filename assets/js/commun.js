@@ -101,6 +101,11 @@ const PROFILS = [["particulier", "Particulier"], ["professionnel", "Professionne
 export const boutonRappel = (classe = "", ville = "") =>
   `<button type="button" class="bouton ${classe}" data-rappel data-ville="${esc(ville)}">${icone("telephone")}<span>Être rappelé</span></button>`;
 
+/** Encart « Besoin d'aide pour choisir ? » (page Prestations, étape 5 de la réservation), prompt du 23/11/2026. */
+export const encartAideRappel = () => `<div class="encart-rappel">${icone("telephone", { tuile: true })}
+  <p><b>Besoin d'aide pour choisir ?</b> <span>Un conseiller vous rappelle au créneau de votre choix.</span></p>
+  ${boutonRappel("rappel-encart")}</div>`;
+
 function fenetreRappel() {
   const radios = (nom, liste) => `<div class="segments">${liste.map(([v, l], i) =>
     `<label><input type="radio" name="${nom}" value="${v}" ${i === 0 ? "checked" : ""}><span>${l}</span></label>`).join("")}</div>`;
@@ -108,6 +113,7 @@ function fenetreRappel() {
     <form id="form-rappel" novalidate><input class="piege" name="site_web" tabindex="-1" autocomplete="off" aria-hidden="true">
       <button type="button" class="fermer" data-fermer aria-label="Fermer">${icone("menu").replace('d="M4 7h16M4 12h16M4 17h16"', 'd="M6 6l12 12M18 6 6 18"')}</button>
       <h2 id="titre-rappel">${icone("telephone")} Être rappelé</h2>
+      <p class="rappel-garantie">${icone("garantie")} Gratuit, sans engagement. Votre numéro ne sert qu'à vous rappeler.</p>
       <p class="muet">Laissez votre numéro : nous vous rappelons au créneau de votre choix.</p>
       <label class="champ">Prénom<input name="prenom" autocomplete="given-name" maxlength="80" required></label>
       <label class="champ">Téléphone<input name="telephone" type="tel" inputmode="numeric" autocomplete="tel" maxlength="14" placeholder="06 12 34 56 78" required></label>

@@ -35,7 +35,7 @@ import { icone, teinte, ICONES_RUBRIQUES, ICONES_INTERFACE } from "./icones.js";
 import { pageTableau, arreterTableau } from "./tableau.js";
 import { compteRenduPieces } from "./controle-ecran.js";
 import { blocFormulesCleaneur, brancherFormulesCleaneur } from "./formules-cleaneur.js";
-import { blocEtapes, blocReassurance, installerRappel, bandeauLancement, pageChargement, decorTableau, surveillerFormulaire, envoiRobot, CONTIENT_LIEN } from "./commun.js";
+import { blocEtapes, blocReassurance, installerRappel, encartAideRappel, bandeauLancement, pageChargement, decorTableau, surveillerFormulaire, envoiRobot, CONTIENT_LIEN } from "./commun.js";
 import "./fond-anime.js";
 import "./oeil.js";
 import "./choix-prestation.js";   // fenêtre animée « Réserver une prestation »   // œil pour afficher le mot de passe
@@ -292,6 +292,7 @@ function pageAccueil() {
           <label><span>Débuter ma prestation</span><select name="rubrique" required><option value="" disabled selected>Choisir une prestation</option>${RUBRIQUES.map(r => `<option value="${r.id}">${r.nom}</option>`).join("")}</select></label>
           <button class="bouton" type="submit">Commencer</button>
         </form>
+        <button type="button" class="lien-rappel-heros" data-rappel>${icone("telephone")}<span>Une question ? <b>Être rappelé gratuitement</b></span></button>
         ${blocRecommander()}
         <ul class="preuves"><li>${icone("garantie")}Cleaneurs vérifiés</li><li>${icone("paiement")}Payé après validation</li><li>${icone("credit-impot")}Crédit d'impôt selon éligibilité</li></ul>
       </div>
@@ -422,7 +423,8 @@ function pagePrestations() {
   <section class="bloc" style="padding-top:28px"><div class="conteneur"><div class="grille-3">${RUBRIQUES.map(r => `
     <a class="carte prestation" href="#/estimer/${r.id}">${icone(r.icone, { tuile: true })}<h3>${r.nom}</h3>
       <p class="muet" style="margin:4px 0 8px">${r.sousTitre}</p>
-      <span class="tampon">${pastille(r)}</span></a>`).join("")}</div></div></section>`;
+      <span class="tampon">${pastille(r)}</span></a>`).join("")}</div>
+    <div style="margin-top:22px">${encartAideRappel()}</div></div></section>`;
 }
 
 function pageComment() {

@@ -2215,6 +2215,12 @@ const T = [
   ["La colonne Cleaneroo décrit le service à l'ouverture des réservations.", "The Cleaneroo column describes the service when bookings open.", "La colonna Cleaneroo descrive il servizio all'apertura delle prenotazioni.", "La columna Cleaneroo describe el servicio con la apertura de las reservas."],
   ["Pré-réservation gratuite : le paiement sera proposé dès l'ouverture des réservations.", "Free pre-booking: payment will be offered as soon as bookings open.", "Pre-prenotazione gratuita: il pagamento sarà proposto all'apertura delle prenotazioni.", "Prerreserva gratuita: el pago se propondrá con la apertura de las reservas."],
   ["Les réservations ne sont pas encore ouvertes : le paiement sera proposé dès l'ouverture.", "Bookings are not open yet: payment will be offered at opening.", "Le prenotazioni non sono ancora aperte: il pagamento sarà proposto all'apertura.", "Las reservas aún no están abiertas: el pago se propondrá en la apertura."],
+  // « Être rappelé » (prompt du 23/11/2026, partie 1)
+  ["Gratuit, sans engagement. Votre numéro ne sert qu'à vous rappeler.", "Free, no commitment. Your number is only used to call you back.", "Gratis, senza impegno. Il vostro numero serve solo a richiamarvi.", "Gratis, sin compromiso. Su número solo sirve para llamarle."],
+  ["Une question ?", "A question?", "Una domanda?", "¿Una pregunta?"],
+  ["Être rappelé gratuitement", "Get a free call back", "Essere richiamati gratuitamente", "Recibir una llamada gratuita"],
+  ["Besoin d'aide pour choisir ?", "Need help choosing?", "Serve aiuto per scegliere?", "¿Necesita ayuda para elegir?"],
+  ["Un conseiller vous rappelle au créneau de votre choix.", "An advisor calls you back at the time of your choice.", "Un consulente vi richiama all'orario che preferite.", "Un asesor le llama en la franja que elija."],
   // Dommages voyageurs (24/11/2026)
   ["Dommages voyageurs", "Guest damage", "Danni degli ospiti", "Daños de huéspedes"],
   ["Constats du Cleaneur à son arrivée, un dossier par séjour, avec la date limite de la demande (14 jours après le départ sur Airbnb).", "The Cleaneur's findings on arrival, one file per stay, with the claim deadline (14 days after check-out on Airbnb).", "Constatazioni del Cleaneur al suo arrivo, una pratica per soggiorno, con la scadenza della richiesta (14 giorni dopo la partenza su Airbnb).", "Constataciones del Cleaneur a su llegada, un expediente por estancia, con la fecha límite de la reclamación (14 días después de la salida en Airbnb)."],

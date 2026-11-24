@@ -14,7 +14,7 @@ import { maPosition, adresseDe, chercherAdresse, afficherCarte } from "./cartes.
 import { traduire, langue, tr } from "./langue.js";
 import { profilMemorise } from "./entete.js";
 import { icone } from "./icones.js";
-import { blocReassurance } from "./commun.js";
+import { blocReassurance, encartAideRappel } from "./commun.js";
 import { monParrainage } from "./parrainage.js";
 import { lancerPaiement } from "./paiement.js";
 import { session, monProfil, majProfil, supabase } from "./donnees.js";
@@ -971,6 +971,7 @@ function etape5() {
       ${b.suiviSms && b.accueil === "TIERS" && b.tiersNom.trim() ? caseCocher(`Envoyer aussi les SMS à ${esc(b.tiersNom.trim())}`, "smsTiers", !!b.smsTiers) : ""}</div>
     ${titre("Photos avant le ménage")}
     <div class="carte">${caseCocher("Photos avant exigées", "photosAvantExigees", !!b.photosAvantExigees, "Le Cleaneur photographie chaque pièce avant et après le ménage. Conseillé pour les locations saisonnières et les états des lieux. Sinon, il photographie chaque pièce après le ménage et signale tout problème constaté à son arrivée.")}</div>
+    <div style="margin-top:14px">${encartAideRappel()}</div>
     ${notePaiement(est)}
     <div class="carte" style="margin-top:12px">${caseCocher(`J'accepte les <a href="#/conditions" target="_blank">conditions d'utilisation</a> et la <a href="#/confidentialite" target="_blank">politique de confidentialité</a>`, "cgv", b.cgv)}</div>
     ${reservationsFermees() ? blocFermees(contactOk) : verifierCouverture() === 0 ? blocAttente(r, contactOk) : actions(!manque && !envoi, manque, envoi ? "Envoi en cours…" : est.devisObligatoire ? "Envoyer ma demande de devis" : "Payer et envoyer ma demande", "envoyer")}`;

@@ -2693,3 +2693,34 @@ a.statut-choix { color: inherit; text-decoration: none; }
 .constats-dommage { margin: 8px 0; padding-left: 18px; }
 .constats-dommage li { margin: 4px 0; }
 .dossier-dommage .boutons { display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* ---------------------------------------------------------------- « Être rappelé » bien visible (prompt du 23/11/2026, partie 1)
+   Règle finale, qui remplace les précédentes (lignes « rappel-entete » plus haut) : au-dessus de 860 px, bouton plein corail avec
+   l'icône ET le texte, à toutes les largeurs ; s'il manque de la place, c'est le reste de l'en-tête qui se raccourcit.
+   860 px et moins : barre du bas (inchangée) et icône du téléphone dans l'en-tête, à gauche du sélecteur de langue. */
+.entete .rappel-entete { display: inline-flex; align-items: center; gap: 8px; height: 40px; min-height: 40px; padding: 0 16px; border: 0; border-radius: 999px;
+  background: var(--degrade-corail); color: #fff; font-weight: 700; font-size: 14.5px; white-space: nowrap; box-shadow: 0 6px 16px rgba(244, 112, 92, .28); }
+.entete .rappel-entete span { display: inline; }
+.entete .rappel-entete .ico { margin: 0; width: 18px; height: 18px; --ico-aplat: rgba(255, 255, 255, .35); }
+.entete .rappel-entete:hover { background: var(--degrade-corail); filter: brightness(1.06); }
+@media (max-width: 1280px) { .entete .rappel-entete { display: inline-flex; } }
+@media (min-width: 861px) and (max-width: 960px) { .entete .bascule-mode > span:not(.interrupteur) { display: none; } }
+@media (max-width: 860px) {
+  .entete .rappel-entete { width: 40px; padding: 0; justify-content: center; flex: none; }
+  .entete .rappel-entete span { display: none; }
+}
+@media (max-width: 480px) { .entete .marque-nom { display: none; } }   /* petit téléphone : le nom à côté du logo laisse la place */
+body.sans-rappel .entete .rappel-entete { display: none; }   /* jamais pendant la réservation */
+.fenetre-rappel .rappel-garantie { display: flex; align-items: center; gap: 8px; margin: -4px 0 0; font-weight: 600; font-size: 14px; color: var(--succes); }
+.fenetre-rappel .rappel-garantie .ico { width: 18px; height: 18px; }
+.lien-rappel-heros { display: inline-flex; align-items: center; justify-content: flex-start; text-align: left; gap: 8px; max-width: 100%; margin: 12px 0 0; padding: 8px 14px 8px 10px; border: 1.5px solid color-mix(in srgb, var(--corail) 55%, transparent);
+  border-radius: 999px; background: color-mix(in srgb, var(--corail) 10%, var(--surface)); color: var(--texte); font: inherit; font-size: 15px; cursor: pointer; }
+.lien-rappel-heros b { color: var(--corail-texte); }
+.lien-rappel-heros .ico { width: 18px; height: 18px; color: var(--corail-texte); }
+.lien-rappel-heros:hover { background: color-mix(in srgb, var(--corail) 16%, var(--surface)); }
+.encart-rappel { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 16px 18px; border-radius: var(--rayon); background: var(--surface);
+  box-shadow: var(--ombre); border: 1px solid color-mix(in srgb, var(--corail) 30%, transparent); }
+.encart-rappel p { flex: 1 1 240px; margin: 0; display: flex; flex-direction: column; gap: 2px; }
+.encart-rappel .rappel-encart { background: var(--degrade-corail); color: #fff; min-height: 44px; gap: 8px; }
+.encart-rappel .rappel-encart .ico { --ico-aplat: rgba(255, 255, 255, .35); }
+.entete .rappel-entete, .entete .rappel-entete span, .encart-rappel .rappel-encart, .encart-rappel .rappel-encart span { color: #fff; }
