@@ -6,7 +6,7 @@ import { traduire, traduireCatalogue, selecteurLangue, tr } from "./langue.js";
 import { calculer, entreeEstimation } from "./estimation.js";
 import { euros, duree } from "./regles.js";
 import { brouillonExemple, preremplir } from "./reserver.js";
-import { blocEtapes, ETAPES_COURTES, blocReassurance, installerRappel, esc, bandeauLancement } from "./commun.js";
+import { blocEtapes, ETAPES_COURTES, blocReassurance, logosPaiement, installerRappel, esc, bandeauLancement } from "./commun.js";
 import { ville } from "./villes.js";
 import { icone } from "./icones.js";
 import { compterStatique, evenement } from "./compteur.js";
@@ -130,6 +130,7 @@ import("./donnees.js").then(({ chargerOuverture }) => chargerOuverture()).then((
 document.querySelectorAll("[data-exemples]").forEach(z => { z.innerHTML = blocExemples(); });
 document.querySelectorAll("[data-etapes]").forEach(z => { z.innerHTML = blocEtapes(ETAPES_COURTES); });
 document.querySelectorAll("[data-reassurance]").forEach(z => { z.innerHTML = blocReassurance(); });
+document.querySelectorAll("[data-logos-paiement]").forEach(z => { z.innerHTML = logosPaiement({ classe: "pied-logos" }); });
 document.querySelectorAll("[data-calculateur]").forEach(brancherCalcul);
 document.querySelectorAll("[data-prestations]").forEach(z => { z.textContent = RUBRIQUES.map(r => r.nom).join(", "); });
 document.addEventListener("click", e => {

@@ -35,7 +35,7 @@ import { icone, teinte, ICONES_RUBRIQUES, ICONES_INTERFACE } from "./icones.js";
 import { pageTableau, arreterTableau } from "./tableau.js";
 import { compteRenduPieces } from "./controle-ecran.js";
 import { blocFormulesCleaneur, brancherFormulesCleaneur } from "./formules-cleaneur.js";
-import { blocEtapes, bandeGaranties, installerRappel, encartAideRappel, bandeauLancement, pageChargement, decorTableau, surveillerFormulaire, envoiRobot, CONTIENT_LIEN } from "./commun.js";
+import { blocEtapes, bandeGaranties, logosPaiement, installerRappel, encartAideRappel, bandeauLancement, pageChargement, decorTableau, surveillerFormulaire, envoiRobot, CONTIENT_LIEN } from "./commun.js";
 import "./fond-anime.js";
 import "./oeil.js";
 import "./choix-prestation.js";   // fenêtre animée « Réserver une prestation »   // œil pour afficher le mot de passe
@@ -133,10 +133,10 @@ const COMPARAISON = [
   ["Qui vient chez vous", "On ne sait pas vraiment", "Cleaneur vérifié : identité, SIRET, assurance, selfie du jour"],
   ["Arrivée", "On attend sans nouvelles", "Suivi en direct, arrivée confirmée par géolocalisation"],
   ["Travail réalisé", "Aucune preuve", "Compte rendu photo avant / après, horodaté et signé"],
-  ["Paiement", "À l'avance ou en espèces", "Seulement après votre validation"],
+  ["Paiement", "À l'avance ou en espèces, sans recours", "Sécurisé par Stripe, versé au Cleaneur après votre validation"],
   ["En cas de souci", "Votre parole contre la sienne", "Preuves photo horodatées et dossier prêt pour l'assurance"],
 ];
-const CHIFFRES = [["2 min", "pour réserver"], [String(RUBRIQUES.length), "prestations"], ["100 %", "digitalisé"], ["0 €", "avant validation"]];
+const CHIFFRES = [["2 min", "pour réserver"], [String(RUBRIQUES.length), "prestations"], ["100 %", "digitalisé"], ["100 %", "paiement sécurisé"]];
 
 /* ------------------------------------------------------------------ Scène du héros : étoiles et notifications vivantes */
 /* Prénoms parmi les plus donnés en France ces dernières années : changent à chaque notification. */
@@ -290,7 +290,7 @@ function pageAccueil() {
       <div class="heros-texte">
         ${reservationsFermees() ? `<span class="pastille-lancement"><i></i>Réservations bientôt ouvertes</span>` : ""}
         <h1><span>Le ménage</span><span class="ponct">,</span> <span class="degrade-texte"><span>100 % digitalisé et sécurisé</span><span class="ponct">.</span></span></h1>
-        <p class="heros-sous">Réservez en deux minutes, suivez votre Cleaneur en direct et recevez un compte rendu photo. Vous ne payez qu'une fois le travail validé.</p>
+        <p class="heros-sous">Réservez en deux minutes, suivez votre Cleaneur en direct et recevez un compte rendu photo. Paiement sécurisé à la réservation, versé au Cleaneur après votre validation.</p>
         <form class="recherche-heros" id="express">
           <label><span>Débuter ma prestation</span><select name="rubrique" required><option value="" disabled selected>Choisir une prestation</option>${RUBRIQUES.map(r => `<option value="${r.id}">${r.nom}</option>`).join("")}</select></label>
           <button class="bouton" type="submit">Commencer</button>
@@ -440,7 +440,7 @@ function pageComment() {
       <a class="carte ligne-compte" href="#/suivi-demo" style="grid-column:1/-1">${icone("position", { tuile: true })}
         <div class="corps"><h3 style="margin:0">Suivez votre Cleaneur en direct</h3><p class="muet" style="margin:2px 0 0">Sur une carte, jusqu'à chez vous, comme une livraison. Voir la démonstration.</p></div><span class="aller" aria-hidden="true">›</span></a>
       <div class="carte"><h3>Vos garanties</h3><div class="trait-corail"></div>
-        <p class="muet" style="margin:0">Débit seulement après validation · Dossier assurance prêt en cas de dommage · Crédit d'impôt selon éligibilité · Cleaneurs vérifiés · Annulation gratuite jusqu'à 48 h avant.</p></div>
+        <p class="muet" style="margin:0">Paiement sécurisé à la réservation, versé au Cleaneur après votre validation · Dossier assurance prêt en cas de dommage · Crédit d'impôt selon éligibilité · Cleaneurs vérifiés · Annulation gratuite jusqu'à 48 h avant.</p></div>
     </div>
     <img src="assets/img/affiche.jpg" alt="Affiche « Comment ça marche ? »" loading="lazy" style="width:min(620px,100%);margin:36px auto 0;border-radius:18px;box-shadow:var(--ombre)">
   </div></section>`;
@@ -786,6 +786,7 @@ document.getElementById("lancement").innerHTML = bandeauLancement();
 document.getElementById("choix-langue").innerHTML = selecteurLangue();
 traduire(document.querySelector(".entete"));
 traduire(document.getElementById("lancement"));
+document.querySelectorAll("[data-logos-paiement]").forEach(z => { z.innerHTML = logosPaiement({ classe: "pied-logos" }); });
 traduire(document.querySelector("footer"));
 document.title = tr(document.title);
 installerRappel();

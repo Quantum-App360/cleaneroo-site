@@ -1,6 +1,6 @@
 // Éléments communs au site (index.html) et aux pages statiques (villes, calculateur, comparatifs) :
 // étapes « Comment ça marche », encart de réassurance, bouton et fenêtre « Être rappelé ».
-import { REGLES, reservationsFermees, MESSAGE_LANCEMENT } from "./regles.js";
+import { REGLES, reservationsFermees, MESSAGE_LANCEMENT, PORTEFEUILLES_ACTIFS, LOGOS_PAIEMENT_OFFICIELS } from "./regles.js";
 import { evenement } from "./compteur.js";
 import { eurosRond } from "./catalogue.js";
 import { icone } from "./icones.js";
@@ -93,10 +93,33 @@ export function blocReassurance({ compact = false } = {}) {
   return `<div class="reassurance garanties${compact ? " compacte" : ""}">${GARANTIES.map(([ic, t, d, lien, texteLien]) =>
     `<div class="point">${icone(ic, { tuile: !compact })}<div><b>${t}</b><p>${d}${lien ? ` <a href="${lien}">${texteLien}</a>` : ""}</p></div></div>`).join("")}</div>`;
 }
+/* ------------------------------------------------------------------ Paiement : formulations uniques et moyens acceptés (prompt 2, partie 3) */
+export const PAIEMENT_COURT = "Paiement sécurisé à la réservation, versé au Cleaneur après votre validation";
+export const PAIEMENT_LONG = "Vous réglez en réservant, par paiement sécurisé Stripe. Votre argent est conservé en sécurité et n'est versé au Cleaneur qu'à la fin de l'intervention, une fois que vous l'avez validée.";
+/** Moyens de paiement affichés : cartes toujours, Apple Pay et Google Pay seulement si PORTEFEUILLES_ACTIFS. */
+export const moyensPaiement = () => [["visa", "Visa"], ["mastercard", "Mastercard"], ["cb", "CB"],
+  ...(PORTEFEUILLES_ACTIFS ? [["apple-pay", "Apple Pay"], ["google-pay", "Google Pay"]] : [])];
+/** Rangée des moyens de paiement et mention Stripe (étape 5, pied de page, bande « Vos garanties »). */
+export const logosPaiement = ({ classe = "" } = {}) => {
+  const logo = ([f, nom]) => LOGOS_PAIEMENT_OFFICIELS
+    ? `<img src="/assets/img/paiement/${f}.svg" alt="${nom}" height="24" loading="lazy">` : `<span class="moyen">${nom}</span>`;
+  return `<div class="logos-paiement${classe ? " " + classe : ""}"><span class="moyens">${moyensPaiement().map(logo).join("")}</span>
+    <span class="stripe">${icone("cadenas")}${LOGOS_PAIEMENT_OFFICIELS ? `<img src="/assets/img/paiement/stripe.svg" alt="Paiement sécurisé par Stripe" height="24" loading="lazy">` : "<span>Paiement sécurisé par Stripe</span>"}</span></div>`;
+};
+/** Règle d'annulation, générée depuis REGLES (même texte que les conditions générales). */
+export const texteAnnulation = () => `Annulation gratuite jusqu'à ${REGLES.ANNULATION_GRATUITE_H} h avant l'intervention ; ensuite, ${REGLES.ANNULATION_TARDIVE_PCT} % du prix accepté restent dus.`;
+/** Encart de l'étape 5, juste au-dessus du bouton de paiement. */
+export const encartPaiementSecurise = () => `<div class="encart-paiement">${icone("cadenas", { tuile: true })}<div>
+  <b>Paiement 100 % sécurisé par Stripe</b>
+  <ul><li>Vos coordonnées bancaires sont chiffrées et ne sont jamais conservées par Cleaneroo.</li>
+    <li>Le Cleaneur n'est payé qu'après votre validation.</li><li>${texteAnnulation()}</li></ul>
+  ${logosPaiement()}</div></div>`;
+
 /** Bande « Vos garanties Cleaneroo » (accueil, juste après « Comment ça marche ? »). */
 export const bandeGaranties = () => `<section class="bloc bande-garanties"><div class="conteneur">
   <div class="titre-section revele"><span class="surtitre">En toute confiance</span><h2>Vos garanties Cleaneroo</h2><p class="muet">Sécurisé, vérifié, assuré : ce que Cleaneroo vous garantit à chaque réservation.</p></div>
-  <div class="revele">${blocReassurance()}</div></div></section>`;
+  <div class="revele">${blocReassurance()}</div>
+  <div class="revele" style="margin-top:22px">${logosPaiement({ classe: "centre" })}</div></div></section>`;
 
 /* ------------------------------------------------------------------ Être rappelé */
 const CRENEAUX = [["matin", "Matin", "Merci, nous vous rappelons le matin."], ["midi", "Midi", "Merci, nous vous rappelons à midi."],

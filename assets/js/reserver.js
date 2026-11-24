@@ -14,7 +14,7 @@ import { maPosition, adresseDe, chercherAdresse, afficherCarte } from "./cartes.
 import { traduire, langue, tr } from "./langue.js";
 import { profilMemorise } from "./entete.js";
 import { icone } from "./icones.js";
-import { blocReassurance, encartAideRappel } from "./commun.js";
+import { blocReassurance, encartAideRappel, encartPaiementSecurise } from "./commun.js";
 import { monParrainage } from "./parrainage.js";
 import { lancerPaiement } from "./paiement.js";
 import { session, monProfil, majProfil, supabase } from "./donnees.js";
@@ -979,9 +979,10 @@ function etape5() {
 
 /** Paiement (22/11/2026, règle de l'utilisateur) : payé à l'envoi, bloqué jusqu'à la validation, versé ensuite au Cleaneur. */
 function notePaiement(est) {
-  if (est.devisObligatoire) return `<div class="note" style="margin-top:14px">💳 <span>${tr("Aucun paiement maintenant : le paiement vous sera proposé avec le devis.")}</span></div>`;
-  return `<div class="note" style="margin-top:14px">💳 <span>${tr("Paiement sécurisé à l'envoi (carte, Apple Pay, Google Pay) : le montant est débité maintenant et reste bloqué par Cleaneroo jusqu'à votre validation de la prestation, puis il est versé au Cleaneur. Votre demande est transmise aux Cleaneurs dès le paiement. Demande annulée : vous êtes remboursé. Annulation gratuite jusqu'à 48 h avant ; ensuite 25 % du prix accepté.")}</span></div>`
-    + (passagesPlanifies(b) > 1 ? `<p class="petit" style="margin:6px 0 0">🔁 ${tr("Entretien régulier : le 1er passage est payé maintenant ; les suivants sont prélevés automatiquement sur la même carte, 3 jours avant chaque passage.")}</p>` : "");
+  if (est.devisObligatoire) return `<div class="note" style="margin-top:14px">${icone("paiement")} <span>${tr("Aucun paiement maintenant : le paiement vous sera proposé avec le devis.")}</span></div>`;
+  return `<div style="margin-top:14px">${encartPaiementSecurise()}</div>`
+    + `<p class="petit muet" style="margin:8px 0 0">${tr("Votre demande est transmise aux Cleaneurs dès le paiement. Demande annulée : vous êtes remboursé.")}</p>`
+    + (passagesPlanifies(b) > 1 ? `<p class="petit" style="margin:6px 0 0">${icone("calendrier")} ${tr("Entretien régulier : le 1er passage est payé maintenant ; les suivants sont prélevés automatiquement sur la même carte, 3 jours avant chaque passage.")}</p>` : "");
 }
 
 function actions(ok, message = "", libelle = "Continuer", id = "suivant") {

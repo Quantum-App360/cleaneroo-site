@@ -508,3 +508,11 @@ export function dateVersement(d = new Date()) {
 
 /** Lien WhatsApp vers le support Cleaneroo, avec un message déjà écrit. */
 export const lienWhatsAppSupport = (texte = "Bonjour Cleaneroo, ") => `https://wa.me/${REGLES.WHATSAPP_SUPPORT}?text=${encodeURIComponent(texte)}`;
+
+// Moyens de paiement affichés (prompt 2, partie 3). Apple Pay et Google Pay ne s'affichent que lorsqu'ils sont activés
+// dans le tableau de bord Stripe (Réglages → Moyens de paiement) : passer alors cette constante à true.
+export const PORTEFEUILLES_ACTIFS = false;
+// Logos officiels (fichiers fournis par chaque marque, jamais redessinés) : à déposer dans assets/img/paiement/
+// (visa.svg, mastercard.svg, cb.svg, stripe.svg, apple-pay.svg, google-pay.svg), puis passer cette constante à true.
+// Tant qu'elle vaut false, les noms des moyens de paiement s'affichent en texte.
+export const LOGOS_PAIEMENT_OFFICIELS = false;

@@ -10,7 +10,7 @@ export const VITRINES = {
   particulier: { nom: "Espace Particulier", accroche: "Le ménage de votre logement, réservé en deux minutes et suivi en direct.", ico: "logement", points: [
     ["instantane", "Réservation en deux minutes", "Ménage, vitres, canapés et textiles : le prix s'affiche tout de suite."],
     ["position", "Suivi en direct", "Cleaneur en route, arrivée confirmée, compte rendu photo de chaque pièce."],
-    ["paiement", "Paiement après validation", "Vous n'êtes débité qu'une fois le travail validé."],
+    ["paiement", "Paiement 100 % sécurisé", "Paiement sécurisé à la réservation, versé au Cleaneur après votre validation."],
     ["calendrier", "Agenda et Cleaneur favori", "Programmez vos ménages et retrouvez le Cleaneur de votre choix."],
     ["garantie", "Factures et attestations", "Crédit d'impôt selon éligibilité, attestation fiscale envoyée chaque mois."]] },
   entreprise: { nom: "Espace Entreprise", accroche: "Bureaux, commerces et locaux : le ménage réservé en deux minutes, facturé à votre société.", ico: "bureaux", points: [

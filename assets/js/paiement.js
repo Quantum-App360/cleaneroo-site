@@ -82,7 +82,7 @@ export async function blocPaiement(el, reference, jeton) {
     <b>${tr(echec ? "Prélèvement refusé" : "Paiement à finaliser")}</b>
     <p class="petit" style="margin:4px 0 10px">${tr(echec
       ? "Le prélèvement automatique de ce passage a été refusé. Payez maintenant pour le confirmer ; sinon il sera annulé sans frais 24 h avant."
-      : "Votre demande est transmise aux Cleaneurs dès le paiement. Carte bancaire, Apple Pay ou Google Pay, sur la page sécurisée de Stripe : le montant reste bloqué jusqu'à votre validation de la prestation. Sans paiement, la demande est annulée sans frais.")}</p>
+      : "Votre demande est transmise aux Cleaneurs dès le paiement. Paiement 100 % sécurisé sur la page de Stripe : le montant reste bloqué jusqu'à votre validation de la prestation, puis il est versé au Cleaneur. Sans paiement, la demande est annulée sans frais.")}</p>
     <button type="button" class="bouton plein" id="payer">${tr("Payer ma réservation")}</button>
     <p class="erreur" id="erreur-paiement" style="margin:8px 0 0"></p>${bandeau}</div>`;
   traduire(el);

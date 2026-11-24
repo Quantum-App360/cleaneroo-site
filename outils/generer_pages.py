@@ -63,7 +63,7 @@ A_VERIFIER = "à vérifier"
 CRITERES = [
     ["Prestations proposées", None],  # liste des prestations remplie par le catalogue (page.js)
     ["Public", "Particuliers, professionnels et conciergeries"],
-    ["Paiement", "Après validation de l'intervention (empreinte bancaire à la réservation)"],
+    ["Paiement", "Paiement sécurisé à la réservation, versé au Cleaneur après votre validation"],
     ["Crédit d'impôt", "Selon éligibilité : possible pour les prestations à domicile réalisées par un Cleaneur déclaré « services à la personne »"],
     ["Preuves photo avant / après", "Oui, dans le compte rendu de chaque intervention"],
     ["Suivi en direct", "Oui : en route, arrivée confirmée par géolocalisation"],
@@ -156,6 +156,7 @@ def gabarit(chemin, titre, description, corps, attrs="", indexer=True, og_type="
       <span class="marque marque-pied"><img class="marque-tuile" src="/assets/img/logo-marque.svg?v=3" alt="" width="34" height="34"><span class="marque-nom">Cleaneroo</span></span>
       <div class="trait-corail"></div>
       <p style="margin:0 0 6px">Vos interventions de ménage, 100 % digitalisées.</p>
+      <div data-logos-paiement></div>
       <p class="titre-villes">Cleaneroo dans d'autres villes</p>
       <div class="liens autres-villes">{autres}</div>
       <div class="liens">
@@ -188,7 +189,7 @@ for v in VILLES:
     <div class="conteneur">
       <span class="surtitre-heros"><i></i>{e(v["departement"]) + " · " if v["departement"] else ""}{n} et alentours</span>
       <h1>Ménage et location saisonnière à {n}</h1>
-      <p class="sous">Réservez un Cleaneur vérifié en 2 minutes : le prix s'affiche tout de suite et vous ne payez qu'après validation.</p>
+      <p class="sous">Réservez un Cleaneur vérifié en 2 minutes : le prix s'affiche tout de suite. Paiement sécurisé à la réservation, versé au Cleaneur après votre validation.</p>
       {boutons(v)}
     </div>
   </section>
@@ -214,7 +215,7 @@ for v in VILLES:
     chemin = f"/menage/{v['slug']}/"
     titre = f"Ménage à {v['nom']} · Cleaneur vérifié · Cleaneroo"
     desc = (f"Ménage à domicile et location saisonnière à {v['nom']}{' (' + v['departement'] + ')' if v['departement'] else ''} et alentours : prix affiché tout de suite, "
-            f"Cleaneurs vérifiés, compte rendu photo, payé après validation.")
+            f"Cleaneurs vérifiés, compte rendu photo, paiement sécurisé à la réservation.")
     ecrire(chemin.strip("/") + "/index.html", gabarit(chemin, titre, desc, corps, f' data-ville="{v["slug"]}"'))
     plan.append(chemin)
 
@@ -233,7 +234,7 @@ corps = """  <section class="fond-cleaneroo heros-page">
     <div data-reassurance></div>
   </div></section>"""
 ecrire("calculateur/index.html", gabarit("/calculateur/", "Combien coûte votre ménage ? Calculateur de prix · Cleaneroo",
-    "Calculez le prix de votre ménage, de votre location saisonnière, de vos vitres ou de votre canapé : prix immédiat, crédit d'impôt selon éligibilité, payé après validation.", corps))
+    "Calculez le prix de votre ménage, de votre location saisonnière, de vos vitres ou de votre canapé : prix immédiat, crédit d'impôt selon éligibilité, paiement sécurisé à la réservation.", corps))
 
 # ------------------------------------------------------------------ Comparatifs (faits vérifiables uniquement : cases concurrent à remplir après contrôle)
 for c in CONCURRENTS:

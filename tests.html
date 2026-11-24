@@ -21,7 +21,7 @@ import { RUBRIQUES as RUBRIQUES_CAT, rubrique, pastille, tacheChiffree, tachesPo
   import { niveauRotation } from "./assets/js/conciergerie.js";
 import { menageTientEntreVoyageurs } from "./assets/js/estimation.js";
 import { bornesPeriode } from "./assets/js/periodes.js";
-import { GARANTIES } from "./assets/js/commun.js";
+import { GARANTIES, PAIEMENT_COURT, PAIEMENT_LONG, moyensPaiement, texteAnnulation } from "./assets/js/commun.js";
 import { ICONES } from "./assets/js/icones.js";
 import { releveProprietaire, listeCourses, texteCourses, dossiersDommages } from "./assets/js/conciergerie.js";
 import { planProgrammerTout, instantParis, avecHoraires, erreurHoraires, departDe, arriveeDe } from "./assets/js/conciergerie.js";
@@ -755,6 +755,11 @@ egal("garanties : toutes les icônes existent", GARANTIES.every(g => !!ICONES[g[
 egal("icônes de confiance créées", ["cadenas", "bouclier-coche", "carte-bancaire", "appareil-photo", "equipe"].every(n => !!ICONES[n]), true);
 egal("garanties : aucune promesse « payé après validation »", GARANTIES.some(g => /après validation|avant validation|qu'une fois/.test(g[2])), false);
 egal("garanties : lien vers la confidentialité", GARANTIES[4][3], "/#/confidentialite");
+// Paiement (prompt 2, partie 3) : formulations uniques, cartes seules tant que les portefeuilles ne sont pas activés
+egal("paiement : formulation courte", PAIEMENT_COURT, "Paiement sécurisé à la réservation, versé au Cleaneur après votre validation");
+egal("paiement : la formulation longue dit qu'on règle en réservant", PAIEMENT_LONG.startsWith("Vous réglez en réservant"), true);
+egal("paiement : Visa, Mastercard, CB (Apple Pay et Google Pay masqués)", moyensPaiement().map(m => m[1]).join(","), "Visa,Mastercard,CB");
+egal("paiement : annulation générée depuis REGLES, identique aux CGU", texteAnnulation(), "Annulation gratuite jusqu'à 48 h avant l'intervention ; ensuite, 25 % du prix accepté restent dus.");
 const ok = res.filter(r => r[1]).length;
 document.getElementById("bilan").textContent = `${ok} tests sur ${res.length} réussis`;
 document.getElementById("liste").innerHTML = res.map(([n, b, d]) => `<li class="${b ? "ok" : "ko"}">${b ? "✓" : "✗"} ${n}${b ? "" : " — " + d}</li>`).join("");

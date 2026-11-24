@@ -2734,3 +2734,24 @@ body.sans-rappel .entete .rappel-entete { display: none; }   /* jamais pendant l
 @media (max-width: 640px) { .reassurance.garanties:not(.compacte) .point { flex-basis: 100%; } }
 .reassurance.garanties .point p a { color: var(--primaire); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
 .heros-texte .preuves { gap: 10px 20px; }
+
+/* ================================================================ Paiement sécurisé (prompt 2, partie 3) */
+.encart-paiement { display: flex; gap: 14px; align-items: flex-start; padding: 16px 18px; border-radius: var(--rayon-l);
+  background: var(--surface); border: 1px solid var(--separateur); box-shadow: var(--ombre); }
+.encart-paiement > div { min-width: 0; flex: 1; }
+.encart-paiement b { display: block; font-size: 16px; color: var(--texte); }
+.encart-paiement ul { margin: 6px 0 10px; padding: 0; list-style: none; display: grid; gap: 4px; }
+.encart-paiement li { position: relative; padding-left: 18px; font-size: 14px; color: var(--texte2); line-height: 1.45; }
+.encart-paiement li::before { content: ""; position: absolute; left: 3px; top: .55em; width: 7px; height: 7px; border-radius: 50%; background: var(--primaire); }
+.logos-paiement { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.logos-paiement.centre { justify-content: center; }
+.logos-paiement .moyens { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+.logos-paiement .moyen { display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border-radius: 6px; border: 1px solid var(--separateur);
+  background: var(--surface); color: var(--texte); font-size: 12.5px; font-weight: 700; letter-spacing: .02em; }
+.logos-paiement img { height: 24px; width: auto; display: block; }
+.logos-paiement .stripe { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--texte2); }
+.logos-paiement .stripe .ico { width: 16px; height: 16px; color: var(--primaire); }
+/* Pied de page (fond foncé) */
+.pied .logos-paiement { margin: 10px 0 14px; }
+.pied .logos-paiement .moyen { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.28); color: #fff; }
+.pied .logos-paiement .stripe, .pied .logos-paiement .stripe .ico { color: rgba(255,255,255,.88); }
