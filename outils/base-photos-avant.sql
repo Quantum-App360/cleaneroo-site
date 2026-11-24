@@ -1,3 +1,4 @@
+-- APPLIQUÉ le 24/11/2026 (migration photos_avant_obligatoires), avec l'accord de Michael ; testé dans une transaction annulée.
 -- Photos avant obligatoires (prompt 2, partie 6, 24/11/2026) : dans toutes les rubriques sauf « Prestations spécialisées »,
 -- une pièce (ou zone) n'est complète qu'avec sa photo avant ET sa photo après. Avant : seulement si le client avait coché
 -- « Photos avant exigées » (par défaut en location saisonnière). La base l'impose désormais, quel que soit le canal
