@@ -1,4 +1,5 @@
 -- Audit de sécurité du 24 novembre 2026 (prompt conciergeries, partie 5) : corrections validées par Michael (« Lance tout », 15 h 15).
+-- Appliqué dans Supabase le 24/11/2026 (migration securite_audit_2411), testé : rue et constat cachés au Cleaneur après la fin, visibles pendant ; fonctions internes fermées. agenda-ical v3 déployée et testée (adresse interne refusée, calendrier Google lu).
 -- 1. Adresse exacte et guide d'accès : le Cleaneur ne les voit qu'une fois confirmé, et plus après la fin de l'intervention.
 --    constat_arrivee : le Cleaneur n'y accède que pendant la mission (le client, le lien de suivi et l'administrateur, toujours).
 --    bon_intervention : la rue n'est plus renvoyée au Cleaneur une fois la mission terminée (la ville reste, pour sa comptabilité).

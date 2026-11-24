@@ -1,4 +1,5 @@
 -- « Ma société » · Activité par période (24 novembre 2026, demande de Vincent).
+-- Appliqué dans Supabase le 24/11/2026 (migration activite_societe_2411), testé : refusé aux visiteurs, vide pour un compte qui n'est pas une société.
 -- Lecture seule : ne change ni les prix, ni les commissions, ni aucune autre fonction.
 -- missions_societe() ne garde que 45 jours de missions terminées ; les vues « Mois » et « Année » ont besoin de toute la période.
 -- Date retenue : celle de l'intervention (creneau) en heure de Paris. commission_c : commission réellement facturée (facture

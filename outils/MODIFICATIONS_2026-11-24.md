@@ -8,7 +8,7 @@ Prompt « Conciergeries » de Michael (outils/PROMPTS_EN_COURS.md, prompt 1), d�
 ### Ma société · Activité (demande de Vincent du 23/11)
 - assets/js/activite-societe.js (nouveau) : calculs par période (jour, semaine lundi → dimanche, mois, année), heure de Paris, testés.
 - assets/js/societe.js : résumé en tête de « Activité » (4 chiffres, par salarié, jour par jour), sélecteur et flèches.
-- outils/base-activite-societe.sql : fonction activite_societe (lecture seule) — **pas encore appliquée** (sans elle : 45 derniers jours).
+- outils/base-activite-societe.sql : fonction activite_societe (lecture seule), appliquée et testée.
 
 ### 1. Offre « Conciergerie fondatrice » (remplace « 1er mois offert »)
 - assets/js/regles.js : OFFRE_CONCIERGERIE_* (seule source de vérité), etatOffreConciergerie, « Plusieurs utilisateurs » retiré des grands comptes.
@@ -43,11 +43,16 @@ Prompt « Conciergeries » de Michael (outils/PROMPTS_EN_COURS.md, prompt 1), d�
   interrupteur « Réservations ouvertes » (gestion › Ouverture des réservations), fermé tant que SAS (raison sociale, SIRET, adresse)
   et Stripe réel ne sont pas prêts. Base (appliqué) : outils/base-ouverture-reservations.sql ; fonction « paiement » v8.
 
+### 5. Audit de sécurité (appliqué après accord de Michael, 15 h 19)
+- outils/base-securite-audit-2411.sql : constat d'arrivée et bon d'intervention sans adresse exacte pour le Cleaneur après la fin ;
+  rattache, frais_cleaneroo_c, net_cleaneur_c, limite_meme_site réservées au serveur.
+- supabase/functions/agenda-ical (v3) : chaque redirection revérifiée (https, site accepté), 3 au plus.
+- Conformes sans correction : conciergerie limitée à ses logements, ménages, factures et rapports ; rôles de l'équipe ;
+  propriétaire limité à ses logements, sans codes d'accès ; Cleaneur sans adresse avant confirmation.
+
 ## Reste à faire
 - Mettre en ligne le site (accès en écriture au dépôt, ou correctifs appliqués par Vincent).
-- Audit de sécurité (partie 5) : corrections prêtes (outils/base-securite-audit-2411.sql, supabase/functions/agenda-ical), à appliquer
-  après accord explicite. Protection des mots de passe divulgués : à activer dans Supabase (Authentication › Policies).
-- outils/base-activite-societe.sql à appliquer (vues Mois et Année de « Ma société »).
+- Protection des mots de passe divulgués : à activer dans Supabase (Authentication), réglage du tableau de bord.
 - E-mail des rappels de fin d'offre (aujourd'hui : notification).
 - Android et iPhone : retirer « 1er mois offert » et la date de lancement, ajouter l'offre et les fonctions (Vincent).
 - Pour ouvrir les réservations : SIRET, adresse du siège, Stripe en mode réel, puis « Ouvrir les réservations » dans la gestion.
