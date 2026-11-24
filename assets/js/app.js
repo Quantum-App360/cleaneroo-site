@@ -4,7 +4,7 @@ import { RUBRIQUES, RACCOURCIS_VITRINE, rubrique, TYPES_LIEU, pastille } from ".
 import { traduire, traduireCatalogue, selecteurLangue, tr, langue } from "./langue.js";
 import { barreOnglets } from "./espaces.js";
 import { modeCleaneur, fixerMode, boutonMode, brancherBascule, blocChoixCleaneur } from "./mode.js";
-import { euros, duree, dateLongue, dateHeure, heure, estPrelancement, joursAvantLancement, MESSAGE_LANCEMENT, REGLES } from "./regles.js";
+import { euros, duree, dateLongue, dateHeure, heure, estPrelancement, joursAvantLancement, MESSAGE_LANCEMENT, REGLES, offreConciergerieOuverte } from "./regles.js";
 
 // Langue : catalogue traduit avant tout affichage.
 traduireCatalogue(RUBRIQUES, TYPES_LIEU);
@@ -222,7 +222,7 @@ const INSCRIPTION_ESPACES = () => [
   ["bureaux", "Entreprise", "Vos locaux, toujours impeccables.", ["Bureaux, commerces et cabinets", "Factures au nom de votre société", "Cleaneurs vérifiés et assurés"],
     `${euros(REGLES.PARRAINAGE_FILLEUL_C)} ${tr("offerts avec un code de parrainage")}`, "#/compte/entreprise"],
   ["location", "Conciergerie ou SCI", "Vos locations, toujours prêtes.", ["Agenda relié à Airbnb et Booking", "Ménages entre deux voyageurs", "Compte rendu photo de chaque logement"],
-    `${REGLES.ABONNEMENT_PRO_MOIS_OFFERTS} ${tr("mois d'abonnement offert")}`, "#/compte/pro"],
+    offreConciergerieOuverte() ? tr("3 mois offerts dès votre première intervention, 0 % de frais de service") : tr("0 % de frais de service avec l'abonnement"), "#/compte/pro"],
   ["location", "Hôtel ou camping", "Vos logements, prêts à temps.", ["Calculateur de rotation", "Agenda iCal et planning", "Renforts pour vos pics d'activité"],
     `${euros(REGLES.PARRAINAGE_FILLEUL_C)} ${tr("offerts avec un code de parrainage")}`, "#/compte/hotellerie"],
 ];

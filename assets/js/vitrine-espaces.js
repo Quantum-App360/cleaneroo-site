@@ -3,6 +3,8 @@
 // Même contenu dans l'application (VitrineEspace dans EspacesCompte.kt).
 import { icone } from "./icones.js";
 import { guideVideo } from "./guide-video.js";
+import { offreConciergerieOuverte } from "./regles.js";
+import { texteOffreConciergerie, texteBonusOffreConciergerie } from "./abonnement-pro.js";
 
 export const VITRINES = {
   particulier: { nom: "Espace Particulier", accroche: "Le ménage de votre logement, réservé en deux minutes et suivi en direct.", ico: "logement", points: [
@@ -55,6 +57,8 @@ export function vitrineEspace(id) {
     <h1 class="titre-vitrine">${v.accroche}</h1>
     <div class="vitrine-points">${v.points.map(([ico, t, d]) => `<div class="carte vitrine-point">${icone(ico, { tuile: true })}
       <div><b>${t}</b><p class="petit">${d}</p></div></div>`).join("")}</div>
+    ${id === "pro" && offreConciergerieOuverte() ? `<div class="offre-pro offre-fondatrice"><span class="badge-formule">Offre Conciergerie fondatrice</span>
+      <b>${texteOffreConciergerie()}</b><span class="petit">${texteBonusOffreConciergerie()}</span></div>` : ""}
     ${v.documents ? `<p class="petit vitrine-documents">📄 <b>Documents à prévoir</b> : ${v.documents}</p>` : ""}
     ${v.video ? `<div class="vitrine-video">${guideVideo(v.video, `vitrine-${id}`)}</div>` : ""}
   </div>`;

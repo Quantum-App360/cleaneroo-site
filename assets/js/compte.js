@@ -107,6 +107,9 @@ export async function pageCompte(vue, param) {
   // L'espace ouvert est mémorisé (menu du haut, ouverture suivante)
   if (!admin && onglet !== p.espace) { p.espace = onglet; majProfil({ espace: onglet }).then(() => majLienCompte()).catch(() => null); }
   const docs = cleaneur && onglet === "cleaneur" ? await mesDocuments().catch(() => []) : [];
+  // Offre « Conciergerie fondatrice » : Cleaneurs comptés pour le mois bonus et fin de période (tant que la fonction n'est pas en base : rien).
+  if (onglet === "pro") { const o = await supabase.rpc("mon_offre_conciergerie").then(r => r.data, () => null);
+    if (o) Object.assign(p, { offre_cleaneurs_bonus: o.cleaneurs_bonus || 0, offre_conciergerie_debut: o.debut, offre_conciergerie_fin: o.fin, offre_conciergerie_choix: o.choix || "" }); }
   if (location.hash !== ici) return;
   const demande = !admin && voulu && !statuts.includes(voulu) ? voulu : null;
   const contenu = demande ? vitrineEspace(demande) + `<button type="button" class="bouton plein" data-ajouter-statut="${demande}" style="margin-top:14px">Ajouter cet espace à mon compte</button>`

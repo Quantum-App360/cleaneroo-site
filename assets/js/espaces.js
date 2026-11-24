@@ -6,7 +6,7 @@ import { calculer, entreeEstimation } from "./estimation.js";
 import { REGLES, euros, dateLongue, dateCourte, sirenSiretValide, cleaneursRotation, duree } from "./regles.js";
 import { icone } from "./icones.js";
 import { traduire, tr, LOCALE } from "./langue.js";
-import { DOCUMENTS_CLEANEUR, enregistrerBien, lireCalendrier, URL_CALENDRIER_DEMO } from "./donnees.js";
+import { DOCUMENTS_CLEANEUR, enregistrerBien, lireCalendrier, URL_CALENDRIER_DEMO, secteurCouvert, rejoindreAttente } from "./donnees.js";
 import { couleurBien, voies, morceau, erreurSejour, sejoursGardes, nuits, versIcs, sourceCalendrier } from "./agenda.js";
 import { afficherCarte, coordonnees } from "./cartes.js";
 import { guideVideo } from "./guide-video.js";
@@ -253,6 +253,7 @@ export function ongletPro(p, biens, hotellerie = false) {
           <div class="corps"><b>${esc(nomBien(l))}</b><div class="petit">${esc(l.rue)}, ${esc(l.codePostal)} ${esc(l.ville)}${l.surface ? `<span> · ${l.surface} m²</span>` : ""}${l.chambres ? `<span> · ${l.chambres} ch.</span>` : ""}</div>
           <div class="etat-bien"><span data-prochain="${esc(l.id)}">${tr("Prochain départ")} : …</span>
             <span>📸 ${(l.guide || []).length} ${tr("étapes d'accès")}</span><span>📷 ${etapesPhotoDe(l).length + etapesPersoDe(l).length} ${tr("étapes photo")}</span></div>
+          <p class="petit note alerte" data-secteur-bien="${esc(l.id)}" hidden></p>
           <div class="pastilles">${cals.length ? cals.map(c => { const src = sourceCalendrier(c.url, c.source); return `<span class="pastille ${src}" data-etat-cal="${esc(c.url)}" data-nom="${esc(SOURCES.find(s => s[0] === src)?.[1] || "")}">${SOURCES.find(s => s[0] === src)?.[1] || ""} · ${tr("synchronisation…")}</span>`; }).join("") : `<span class="pastille vide">Aucun calendrier relié</span>`}</div></div></div>
         <details><summary>${cals.length ? tr("Modifier le nom et les calendriers") : tr("Relier un calendrier")}</summary>
           <form data-form-cal="${esc(l.id)}" novalidate style="margin-top:10px">
@@ -308,6 +309,7 @@ export function brancherSociete(vue, majProfil, recharger) {
 
 export function brancherPro(vue, p, biens, demandes, { majProfil, recharger }) {
   brancherSociete(vue, majProfil, recharger);
+  verifierSecteurs(vue, p, biens);
   // Calendrier de démonstration : rempli dans « Autre calendrier », lu sans réseau ; il ne crée jamais de vraie réservation.
   vue.querySelectorAll("[data-cal-demo]").forEach(b => b.onclick = () => { const f = b.closest("form"); f.autre.value = URL_CALENDRIER_DEMO; f.requestSubmit(); });
   // Un calendrier vient d'être relié : le pilote automatique est proposé tout de suite (c'est lui qui crée les ménages tout seul).
@@ -719,4 +721,23 @@ export function planningSemaine(boite, biens, sejours, menageDe, auj, couleur) {
     <tbody>${ordre.map((l, i) => `<tr style="--c:${couleur(i)}"><th><span class="pl-pastille"></span>${esc(nomBien(l))}</th>${jours.map(d => cellule(l, d)).join("")}</tr>`).join("")}</tbody></table></div>
     <p class="petit legende-planning"><span class="pl-menage">✓ ${tr("Ménage")}</span> ${tr("prévu")} · <span class="pl-programmer">${tr("Départ")} ›</span> ${tr("à programmer")} · <span class="pl-arrivee">${tr("Arrivée")}</span> · <span class="pl-occupe-ex"></span> ${tr("occupé")}</p>`;
   boite.querySelectorAll("[data-programmer]").forEach(b => b.onclick = () => { preremplir({ bienId: b.dataset.programmer, jour: b.dataset.jour }); location.hash = `#/reserver/${rubriqueMenage}`; });
+}
+
+/* Zones sans Cleaneur (24/11/2026) : si aucun Cleaneur qualifié ne couvre l'adresse d'un logement, message sur sa fiche et inscription
+   de la conciergerie sur la liste d'attente du secteur (une fois par logement). Jamais de date promise. */
+async function verifierSecteurs(vue, p, biens) {
+  for (const l of biens) {
+    const zone = vue.querySelector(`[data-secteur-bien="${CSS.escape(l.id)}"]`);
+    if (!zone) continue;
+    const pos = Number.isFinite(l.lat) ? { lat: l.lat, lon: l.lon } : await coordonnees(l.rue, l.codePostal, l.ville).catch(() => null);
+    if (!pos || !zone.isConnected) continue;
+    const n = await secteurCouvert(rubriqueMenage, pos.lat, pos.lon);
+    if (n !== 0 || !zone.isConnected) continue;   // null : service indisponible, on n'affiche rien
+    zone.hidden = false;
+    zone.textContent = tr("Pas encore de Cleaneur dans ce secteur : vous êtes en liste prioritaire, nous vous prévenons dès l'ouverture. Vous pouvez aussi inviter vos propres Cleaneurs.");
+    const cle = `cleaneroo-attente-${rubriqueMenage}-${l.id}`;
+    try { if (localStorage.getItem(cle)) continue; } catch { /* rien */ }
+    rejoindreAttente({ rubriqueId: rubriqueMenage, codePostal: l.codePostal, ville: l.ville, lat: pos.lat, lon: pos.lon, prenom: p.prenom || "", telephone: p.telephone || "" })
+      .then(() => { try { localStorage.setItem(cle, "1"); } catch { /* rien */ } }).catch(() => null);
+  }
 }

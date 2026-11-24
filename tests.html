@@ -21,6 +21,7 @@ import { RUBRIQUES as RUBRIQUES_CAT, rubrique, pastille, tacheChiffree, tachesPo
   import { niveauRotation } from "./assets/js/conciergerie.js";
 import { menageTientEntreVoyageurs } from "./assets/js/estimation.js";
 import { bornesPeriode } from "./assets/js/periodes.js";
+import { etatOffreConciergerie, offreConciergerieOuverte, fraisServicePct } from "./assets/js/regles.js";
 import { bornesActivite, decalerActivite, jourParis, resumeActivite, evolutionPct } from "./assets/js/activite-societe.js";
 import { euros, REGLES, indemniteAccesC, dateVersement, qualificationsRequises, calculActivite, niveauCleaneur, verifierProposition, netPortefeuille, scoreMission, fraisDeplacementC } from "./assets/js/regles.js";
 const res = [];
@@ -70,6 +71,15 @@ egal("activité : jour de l'intervention en heure de Paris", jourParis("2027-01-
   egal("activité : heures de chaque intervenant", r.minutes, 240);
   egal("activité : net après commission Pro", r.netC, 10001 - 1200); }
 egal("activité : évolution sur la période précédente", evolutionPct(2625, 2430), 8);
+// Offre « Conciergerie fondatrice » (24/11/2026)
+egal("offre conciergerie : inscrite le 31 janvier à 23 h (Paris)", etatOffreConciergerie({ inscritLe: "2027-01-31T23:00:00+01:00" }).statut, "avant");
+egal("offre conciergerie : inscrite le 1er février, plus d'offre", etatOffreConciergerie({ inscritLe: "2027-02-01T00:30:00+01:00" }).statut, "non_eligible");
+egal("offre conciergerie : nouvelles inscriptions fermées après le 31 janvier", offreConciergerieOuverte(new Date("2027-02-01T00:00:30+01:00")), false);
+egal("offre conciergerie : 3 mois à partir de la 1re intervention", etatOffreConciergerie({ inscritLe: "2026-12-01", debut: "2027-03-15T12:00:00Z", maintenant: new Date("2027-06-14T12:00:00Z") }).statut, "en_cours");
+egal("offre conciergerie : terminée après 3 mois sans bonus", etatOffreConciergerie({ inscritLe: "2026-12-01", debut: "2027-03-15T12:00:00Z", maintenant: new Date("2027-06-16T12:00:00Z") }).statut, "terminee");
+egal("offre conciergerie : +1 mois avec 3 Cleaneurs", etatOffreConciergerie({ inscritLe: "2026-12-01", debut: "2027-03-15T12:00:00Z", cleaneursBonus: 3, maintenant: new Date("2027-07-01T12:00:00Z") }).statut, "en_cours");
+egal("offre conciergerie : sans réponse, sans abonnement", etatOffreConciergerie({ inscritLe: "2026-12-01", debut: "2027-03-15T12:00:00Z", maintenant: new Date("2027-08-01T12:00:00Z") }).apres, "sans_abonnement");
+egal("offre conciergerie : 0 % de frais pendant l'offre", fraisServicePct(false, true), 0);
 egal("niveau : débutant", niveauCleaneur({ missions: 3, note: 5 }), 0);
 egal("niveau : Confirmé", niveauCleaneur({ missions: 12, note: 4.7 }), 1);
 egal("niveau : Élite", niveauCleaneur({ missions: 60, note: 4.9 }), 3);

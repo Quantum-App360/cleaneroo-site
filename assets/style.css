@@ -2649,3 +2649,9 @@ a.statut-choix { color: inherit; text-decoration: none; }
 .qui-vient-tete { display: flex; gap: 14px; align-items: center; }
 .photo-identite { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; flex: none; background: var(--creux); display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 22px; color: var(--primaire); border: 3px solid var(--surface); box-shadow: 0 2px 8px rgba(0,0,0,.12); }
 .boutons-acces .bouton { flex: 1 1 200px; }
+
+/* Offre « Conciergerie fondatrice » (24/11/2026) : boutons lisibles sur le fond dégradé */
+.offre-fondatrice .bouton, .offre-fondatrice .bouton.secondaire { align-self: flex-start; justify-self: start; background: #fff; color: var(--canard-profond); border-color: transparent; box-shadow: none; }
+.offre-fondatrice .choix-fin-offre { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
+.offre-fondatrice .choix-fin-offre .boutons { display: flex; flex-wrap: wrap; gap: 8px; }
+.offre-fondatrice .icone { vertical-align: -3px; }

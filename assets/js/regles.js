@@ -65,7 +65,8 @@ export const REGLES = {
   // Frais de service côté client (modèle économique) : particulier 5 % ; conciergerie ou entreprise sans abonnement 8 % ; abonnée 0 %.
   // Affichés à part dès le devis, hors crédit d'impôt.
   FRAIS_SERVICE_PARTICULIER_PCT: 5, FRAIS_SERVICE_PRO_PCT: 8,
-  // Abonnement des conciergeries par tranche de logements (prix HT par mois) ; au-delà de 100 logements : sur devis ; 1er mois offert.
+  // Abonnement des conciergeries par tranche de logements (prix HT par mois) ; au-delà de 100 logements : sur devis.
+  // Offre « Conciergerie fondatrice » (24/11/2026, remplace « 1er mois offert ») : voir OFFRE_CONCIERGERIE_* et etatOffreConciergerie.
   // Refonte du 20/11/2026 : grille continue (le prix ne baisse jamais quand on ajoute un logement), grands comptes au-delà de 100 logements.
   // Prix = forfait de la tranche + parLogementC × (logements − debut). Plafond : jamais plus que les frais de service (8 %) du mois.
   ABONNEMENTS_PRO: [
@@ -73,10 +74,21 @@ export const REGLES = {
     { id: "t2", max: 15, prixC: 6900, inclus: ["0 % de frais de service", "Vue par logement", "Cleaneur attitré"] },
     { id: "t3", max: 40, prixC: 14900, inclus: ["0 % de frais de service", "Vue par logement", "Cleaneur attitré", "Facturation mensuelle groupée"] },
     { id: "t4", max: 100, prixC: 14900, debut: 40, parLogementC: 250, inclus: ["0 % de frais de service", "Vue par logement", "Cleaneur attitré", "Facturation mensuelle groupée", "Import de tous vos logements"] },
-    { id: "t5", max: 300, prixC: 29900, debut: 100, parLogementC: 150, grandCompte: true, inclus: ["0 % de frais de service", "Vue par logement", "Cleaneur attitré", "Facturation mensuelle groupée", "Import de tous vos logements", "Connexion à votre logiciel de gestion", "Interlocuteur dédié", "Plusieurs utilisateurs", "Garantie rotation"] },
-    { id: "t6", max: 100000, prixC: 59900, debut: 300, parLogementC: 100, grandCompte: true, inclus: ["0 % de frais de service", "Vue par logement", "Cleaneur attitré", "Facturation mensuelle groupée", "Import de tous vos logements", "Connexion à votre logiciel de gestion", "Interlocuteur dédié", "Plusieurs utilisateurs", "Garantie rotation"] },
+    { id: "t5", max: 300, prixC: 29900, debut: 100, parLogementC: 150, grandCompte: true, inclus: ["0 % de frais de service", "Vue par logement", "Cleaneur attitré", "Facturation mensuelle groupée", "Import de tous vos logements", "Connexion à votre logiciel de gestion", "Interlocuteur dédié", "Garantie rotation"] },
+    { id: "t6", max: 100000, prixC: 59900, debut: 300, parLogementC: 100, grandCompte: true, inclus: ["0 % de frais de service", "Vue par logement", "Cleaneur attitré", "Facturation mensuelle groupée", "Import de tous vos logements", "Connexion à votre logiciel de gestion", "Interlocuteur dédié", "Garantie rotation"] },
   ],
-  ABONNEMENT_PRO_SUR_DEVIS_LOGEMENTS: 100000, ABONNEMENT_PRO_MOIS_OFFERTS: 1,
+  ABONNEMENT_PRO_SUR_DEVIS_LOGEMENTS: 100000,
+  // Offre « Conciergerie fondatrice » (24/11/2026), seule source de vérité (copie dans outils/base-offre-conciergerie.sql) :
+  // inscription jusqu'au 31 janvier 2027 23 h 59 (Paris), sans limite de nombre ; 3 mois de la tranche gratuits et 0 % de frais de service
+  // à partir de la PREMIÈRE INTERVENTION TERMINÉE ET VALIDÉE ; +1 mois (une seule fois, ajouté à la fin) si 3 Cleaneurs invités ont leur
+  // dossier validé et au moins une intervention ; prix garanti 12 mois après ; rappels 30 et 7 jours avant la fin ; aucun prélèvement
+  // sans accord explicite : sans réponse, la conciergerie passe sans abonnement (8 % de frais de service).
+  OFFRE_CONCIERGERIE_FIN_INSCRIPTION: "2027-01-31T23:59:59+01:00",
+  OFFRE_CONCIERGERIE_MOIS: 3,
+  OFFRE_CONCIERGERIE_BONUS_MOIS: 1,
+  OFFRE_CONCIERGERIE_BONUS_CLEANEURS: 3,
+  OFFRE_CONCIERGERIE_PRIX_GARANTI_MOIS: 12,
+  OFFRE_CONCIERGERIE_RAPPELS_JOURS: [30, 7],
   ABONNEMENT_ANNUEL_MOIS_OFFERTS: 2,      // engagement annuel : 2 mois offerts
   ESSAI_GRAND_COMPTE_JOURS: 30, ESSAI_GRAND_COMPTE_LOGEMENTS: 20,   // essai gratuit sur 20 logements avant de tout transférer
   OFFRE_LANCEMENT_MOIS: 3,
@@ -339,8 +351,35 @@ export function revenuCleaneurC(caC, formule, offert = false) {
 /** Chiffre d'affaires mensuel à partir duquel Pro rapporte plus que Gratuit (centimes, arrondi à l'euro supérieur) : 250 €. */
 export const seuilRentabiliteProC = () => Math.ceil(REGLES.ABONNEMENT_CLEANEUR_C * 10000 / (REGLES.COMMISSION_GRATUIT_PB - REGLES.COMMISSION_PRO_PB) / 100) * 100;
 
-/** Frais de service (%) : particulier 5 % ; conciergerie ou entreprise : 8 % sans abonnement, 0 % abonnée. */
+/** Frais de service (%) : particulier 5 % ; conciergerie ou entreprise : 8 % sans abonnement, 0 % abonnée ou en période offerte. */
 export const fraisServicePct = (particulier, abonne = false) => (particulier ? REGLES.FRAIS_SERVICE_PARTICULIER_PCT : abonne ? 0 : REGLES.FRAIS_SERVICE_PRO_PCT);
+
+/* ---- Offre « Conciergerie fondatrice » (24/11/2026) */
+/** Date limite d'inscription (31 janvier 2027 23 h 59, heure de Paris). */
+export const finInscriptionOffreConciergerie = () => new Date(REGLES.OFFRE_CONCIERGERIE_FIN_INSCRIPTION);
+/** L'offre est-elle encore proposée aux nouvelles inscriptions ? */
+export const offreConciergerieOuverte = (maintenant = new Date()) => maintenant <= finInscriptionOffreConciergerie();
+const ajouterMois = (d, n) => { const x = new Date(d); const j = x.getDate(); x.setMonth(x.getMonth() + n); if (x.getDate() < j) x.setDate(0); return x; };
+/**
+ * État de l'offre d'une conciergerie. inscritLe : création du compte ; debut : première intervention terminée et validée (null avant) ;
+ * cleaneursBonus : Cleaneurs invités, dossier validé et au moins une intervention ; choix : "continuer", "arreter" ou "" (pas de réponse).
+ * statut : "non_eligible" | "avant" (inscrite, pas encore d'intervention) | "en_cours" | "terminee".
+ */
+export function etatOffreConciergerie({ inscritLe, debut = null, cleaneursBonus = 0, choix = "", maintenant = new Date() } = {}) {
+  const eligible = !!inscritLe && new Date(inscritLe) <= finInscriptionOffreConciergerie();
+  const base = { eligible, bonusCompte: Math.min(cleaneursBonus, REGLES.OFFRE_CONCIERGERIE_BONUS_CLEANEURS), bonusObjectif: REGLES.OFFRE_CONCIERGERIE_BONUS_CLEANEURS };
+  if (!eligible) return { ...base, statut: "non_eligible", gratuit: false };
+  if (!debut) return { ...base, statut: "avant", gratuit: false };
+  const bonus = cleaneursBonus >= REGLES.OFFRE_CONCIERGERIE_BONUS_CLEANEURS;
+  const fin = ajouterMois(debut, REGLES.OFFRE_CONCIERGERIE_MOIS + (bonus ? REGLES.OFFRE_CONCIERGERIE_BONUS_MOIS : 0));
+  const joursRestants = Math.max(0, Math.ceil((fin - maintenant) / 864e5));
+  const enCours = maintenant < fin;
+  return { ...base, statut: enCours ? "en_cours" : "terminee", gratuit: enCours, debut: new Date(debut), fin, bonus, joursRestants,
+    prixGarantiJusqu: ajouterMois(fin, REGLES.OFFRE_CONCIERGERIE_PRIX_GARANTI_MOIS),
+    rappel: enCours && REGLES.OFFRE_CONCIERGERIE_RAPPELS_JOURS.some(j => joursRestants <= j),
+    // Fin de période sans réponse : sans abonnement (8 %), jamais de prélèvement sans accord explicite.
+    apres: enCours ? null : choix === "continuer" ? "abonnement" : "sans_abonnement" };
+}
 /** Tranche d'abonnement conseillée pour un nombre de logements (null au-delà de 100 : sur devis). */
 export const tranchePour = n => REGLES.ABONNEMENTS_PRO.find(t => Math.max(1, n) <= t.max) || null;
 /** Prix mensuel HT d'une tranche pour n logements (centimes) : forfait de la tranche + prix par logement au-delà de son début. */
