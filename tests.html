@@ -21,7 +21,8 @@ import { RUBRIQUES as RUBRIQUES_CAT, rubrique, pastille, tacheChiffree, tachesPo
   import { niveauRotation } from "./assets/js/conciergerie.js";
 import { menageTientEntreVoyageurs } from "./assets/js/estimation.js";
 import { bornesPeriode } from "./assets/js/periodes.js";
-import { formuleStandardVehicule } from "./assets/js/commun.js";
+import { formuleStandardVehicule, PARCOURS, ETAPES_COURTES } from "./assets/js/commun.js";
+import { GUIDES_VIDEO, guideVideo } from "./assets/js/guide-video.js";
 import { pageQuiSommesNous, encadreSociete, QUI_SOMMES_NOUS } from "./assets/js/qui-sommes-nous.js";
 import { GARANTIES, PAIEMENT_COURT, PAIEMENT_LONG, moyensPaiement, texteAnnulation, contenuAvisPublics, AVIS_MINIMUM, mentionCodePostal, ligneZone } from "./assets/js/commun.js";
 import { ICONES } from "./assets/js/icones.js";
@@ -796,6 +797,13 @@ egal("qui sommes-nous : pas de cliché « révolutionner »", /révolution/i.tes
 egal("qui sommes-nous : les 6 parties", ["Notre constat", "Pourquoi Cleaneroo existe", "Une plateforme pensée pour les deux côtés", "La technologie au service de l'humain", "qsn-conclusion"].every(x => qsn.includes(x)) && qsn.includes(QUI_SOMMES_NOUS.titre), true);
 egal("qui sommes-nous : encadré Société masqué si vide", encadreSociete({ nom: "", adresse: "", siret: "" }), "");
 egal("qui sommes-nous : encadré Société affiché si rempli", encadreSociete({ nom: "Cleaneroo SAS", adresse: "1 rue X, 83600 Fréjus", siret: "12345678900011" }).includes("SIRET 12345678900011"), true);
+// Comment ça marche (refonte du 24/11/2026) : un parcours par profil, aucune étape « validez, puis payez »
+egal("parcours : 4 profils", Object.keys(PARCOURS).join(), "particulier,entreprise,conciergerie,cleaneur");
+egal("parcours : jamais « puis payez » ni « débité après validation »", /puis payez|débité seulement|Débit seulement|qu'une fois le travail/.test(JSON.stringify(PARCOURS) + JSON.stringify(ETAPES_COURTES)), false);
+egal("parcours : le client règle en réservant", PARCOURS.particulier[1][2].startsWith("Vous réglez en réservant"), true);
+egal("parcours : validation automatique = REGLES", PARCOURS.particulier[4][2].includes(`${REGLES.VALIDATION_AUTO_H} h après la fin`), true);
+egal("pages ville : 3 étapes", ETAPES_COURTES.length, 3);
+egal("guide vidéo client (faux) retiré", guideVideo("client"), "");
 const ok = res.filter(r => r[1]).length;
 document.getElementById("bilan").textContent = `${ok} tests sur ${res.length} réussis`;
 document.getElementById("liste").innerHTML = res.map(([n, b, d]) => `<li class="${b ? "ok" : "ko"}">${b ? "✓" : "✗"} ${n}${b ? "" : " — " + d}</li>`).join("");

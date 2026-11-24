@@ -67,16 +67,52 @@ export function decorTableau(actif = true) {
   document.body.prepend(d);
 }
 
-/* ------------------------------------------------------------------ Comment ça marche */
-export const ETAPES = [
-  ["calendrier", "Réservez en 2 minutes", "Choisissez la prestation, répondez à quelques questions, ajoutez des photos et choisissez votre créneau. Le prix s'affiche tout de suite."],
-  ["cleaneurs", "Choisissez votre Cleaneur", "Des Cleaneurs vérifiés (identité, SIRET, assurance) se proposent. Comparez prix, note et distance : c'est vous qui choisissez."],
-  ["position", "Suivez l'intervention en direct", "« En route », arrivée confirmée par géolocalisation, selfie du jour : vous savez qui vient, et quand."],
-  ["photo", "Recevez le compte rendu", "Tâches cochées et horodatées, photos avant / après, signature du Cleaneur : tout est dans votre espace."],
-  ["valide", "Validez, le Cleaneur est payé", "Votre paiement reste bloqué jusqu'à votre validation, puis il est versé au Cleaneur. Crédit d'impôt selon éligibilité ; pourboire et avis si vous le souhaitez."],
-];
-/** Les 3 étapes essentielles (pages ville) : réserver, suivre, valider puis payer. */
-export const ETAPES_COURTES = [ETAPES[0], ETAPES[2], ETAPES[4]];
+/* ------------------------------------------------------------------ Comment ça marche (refonte du 24/11/2026, demande de Michael) */
+/* Un parcours par profil. Le paiement a lieu à la réservation (paiement sécurisé, conservé jusqu'à la validation) : aucune étape
+   ne dit « validez, puis payez ». Chaque phrase décrit ce que le site fait aujourd'hui. */
+export const PARCOURS = {
+  particulier: [
+    ["calendrier", "Décrivez votre besoin", "Choisissez la prestation, répondez à quelques questions et ajoutez des photos si besoin. Le prix exact s'affiche tout de suite, sans devis."],
+    ["carte-bancaire", "Réservez en toute sécurité", "Vous réglez en réservant, par paiement sécurisé Stripe. Votre argent est conservé en sécurité et n'est versé au Cleaneur qu'après votre validation."],
+    ["cleaneurs", "Choisissez votre Cleaneur", "Des Cleaneurs vérifiés (identité, SIRET, assurance) se proposent. Comparez leurs avis, leur distance et leur prix : c'est vous qui choisissez. Demande annulée : vous êtes remboursé."],
+    ["position", "Suivez l'intervention en direct", "« En route », arrivée confirmée par géolocalisation, selfie du jour : vous savez qui vient, et quand. Chaque pièce est photographiée avant et après."],
+    ["valide", "Validez le compte rendu", "Tâches cochées, photos horodatées, signature : vous validez et le Cleaneur est payé. Sans réponse de votre part, la validation se fait automatiquement 48 h après la fin. Pourboire et avis si vous le souhaitez."],
+  ],
+  entreprise: [
+    ["bureaux", "Créez votre espace entreprise", "Renseignez votre société : vos factures sont établies à son nom, au format Factur-X."],
+    ["calendrier", "Un passage ou un entretien régulier", "Décrivez vos locaux, voyez le prix tout de suite et planifiez un passage unique ou des passages réguliers."],
+    ["carte-bancaire", "Paiement sécurisé", "Le premier passage est réglé à la réservation ; les suivants sont prélevés automatiquement 3 jours avant. Chaque paiement n'est versé au Cleaneur qu'après validation."],
+    ["appareil-photo", "Contrôle et compte rendu", "Photos avant / après de chaque zone, tâches cochées et signées : vous savez exactement ce qui a été fait."],
+  ],
+  conciergerie: [
+    ["location", "Ajoutez vos logements", "Un par un ou depuis un fichier, puis reliez leurs calendriers (Airbnb, Booking…) : départs et arrivées apparaissent dans votre planning."],
+    ["calendrier", "Programmez les ménages entre voyageurs", "Ménage par ménage, ou tous d'un coup sur les semaines à venir, avec les horaires de chaque séjour."],
+    ["appareil-photo", "Un état des lieux à chaque passage", "Photos avant / après de chaque pièce, consommables suivis, dommages signalés avec photos et délai de déclaration suivi."],
+    ["credit-impot", "Des relevés pour vos propriétaires", "Un relevé PDF par propriétaire : séjours, ménages, incidents et montants à refacturer."],
+  ],
+  cleaneur: [
+    ["bouclier-coche", "Inscrivez-vous gratuitement", "Identité, SIRET, attestation URSSAF et assurance RC Pro vérifiées, puis une mission test."],
+    ["position", "Choisissez vos missions", "Les missions près de chez vous s'affichent avec le prix, la durée et le trajet. Vous vous proposez ; le client choisit."],
+    ["photo", "Laissez-vous guider le jour J", "En route, arrivée géolocalisée, photo avant, tâches cochées, photo après : l'appli vous guide pièce par pièce et l'IA vérifie les photos."],
+    ["paiement", "Soyez payé après validation", "Le client valide le compte rendu, ou la validation se fait automatiquement 48 h après la fin : votre paiement est alors versé."],
+  ],
+};
+export const PROFILS_PARCOURS = [["particulier", "Particulier"], ["entreprise", "Entreprise"], ["conciergerie", "Conciergerie et hôtels"], ["cleaneur", "Cleaneur"]];
+export const ETAPES = PARCOURS.particulier;
+/** Les 3 étapes essentielles (pages ville) : décrire, réserver en sécurité, suivre puis valider. */
+export const ETAPES_COURTES = [PARCOURS.particulier[0], PARCOURS.particulier[1],
+  ["valide", "Suivez, puis validez", "Suivi en direct et compte rendu photo avant / après : vous validez, puis le Cleaneur est payé."]];
+/** Onglets « un parcours par profil » (page Comment ça marche). */
+export const blocParcours = (actif = "particulier") => `<div class="parcours" data-parcours>
+  <div class="aa-onglets parcours-onglets" role="tablist">${PROFILS_PARCOURS.map(([id, nom]) =>
+    `<button type="button" role="tab" aria-selected="${id === actif}" data-profil="${id}">${nom}</button>`).join("")}</div>
+  ${PROFILS_PARCOURS.map(([id]) => `<div role="tabpanel" data-panneau="${id}" ${id === actif ? "" : "hidden"}>${blocEtapes(PARCOURS[id])}</div>`).join("")}</div>`;
+export function brancherParcours(racine = document) {
+  racine.querySelectorAll("[data-parcours]").forEach(z => z.querySelectorAll("[data-profil]").forEach(bt => bt.onclick = () => {
+    z.querySelectorAll("[data-profil]").forEach(x => x.setAttribute("aria-selected", String(x === bt)));
+    z.querySelectorAll("[data-panneau]").forEach(p => { p.hidden = p.dataset.panneau !== bt.dataset.profil; });
+  }));
+}
 export const blocEtapes = (liste = ETAPES) => `<div class="etapes etroit">${liste.map(([e, t, d], i) => `
   <div class="etape"><div class="pastille">${icone(e, { tuile: true })}<b>${i + 1}</b></div>
     <div class="carte"><div class="surtitre">ÉTAPE ${i + 1}</div><h3>${t}</h3><p class="muet" style="margin:6px 0 0">${d}</p></div></div>`).join("")}</div>`;

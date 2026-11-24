@@ -48,7 +48,7 @@ Donne la liste des tables ou fonctions qui ne respectent pas ces règles, SANS L
 6. À LA FIN
 Résume ce qui a été modifié, fichier par fichier, et ce qui reste à faire.
 
-## Prompt 2 — Confiance, paiement sécurisé, rappel, véhicules, « Qui sommes-nous » (EN COURS : parties 1 à 8 faites (textes de Vincent à valider), suite : Comment ça marche puis contrôles de la partie 9)
+## Prompt 2 — Confiance, paiement sécurisé, rappel, véhicules, « Qui sommes-nous » (EN COURS : parties 1 à 8 faites (textes de Vincent à valider), Comment ça marche refait ; suite : contrôles de la partie 9 et emojis)
 
 # PROMPT — Site cleaneroo.fr : confiance, paiement sécurisé, rappel, véhicules, « Qui sommes-nous »
 

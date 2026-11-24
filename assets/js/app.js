@@ -36,7 +36,7 @@ import { icone, teinte, ICONES_RUBRIQUES, ICONES_INTERFACE } from "./icones.js";
 import { pageTableau, arreterTableau } from "./tableau.js";
 import { compteRenduPieces } from "./controle-ecran.js";
 import { blocFormulesCleaneur, brancherFormulesCleaneur } from "./formules-cleaneur.js";
-import { blocEtapes, bandeGaranties, logosPaiement, blocJustePrix, blocAvantApres, brancherAvantApres, sectionAvisPublics, remplirAvisPublics, installerRappel, encartAideRappel, bandeauLancement, pageChargement, decorTableau, surveillerFormulaire, envoiRobot, CONTIENT_LIEN } from "./commun.js";
+import { blocEtapes, blocParcours, brancherParcours, bandeGaranties, logosPaiement, blocJustePrix, blocAvantApres, brancherAvantApres, sectionAvisPublics, remplirAvisPublics, installerRappel, encartAideRappel, bandeauLancement, pageChargement, decorTableau, surveillerFormulaire, envoiRobot, CONTIENT_LIEN } from "./commun.js";
 import "./fond-anime.js";
 import "./oeil.js";
 import "./choix-prestation.js";   // fenêtre animée « Réserver une prestation »   // œil pour afficher le mot de passe
@@ -335,6 +335,7 @@ function pageAccueil() {
   <section class="bloc bloc-doux"><div class="conteneur">
     ${titreSection("Comment ça marche ?", "Du clic à la validation, tout se passe en ligne.", "En 5 étapes")}
     ${blocEtapes()}
+    <p class="centre" style="margin-top:18px"><a class="lien-bouton" href="#/comment-ca-marche">Entreprise, conciergerie ou Cleaneur : voir votre parcours ›</a></p>
     <div class="credit revele">
       <div class="pastille-credit">${icone("credit-impot")}</div>
       <div><h3>Crédit d'impôt selon éligibilité</h3><p>Possible si le Cleaneur est déclaré « services à la personne » : le ménage, les vitres et les textiles à votre domicile peuvent alors ouvrir droit à un crédit d'impôt, selon votre situation et dans la limite des plafonds légaux. L'attestation fiscale des prestations éligibles vous est envoyée chaque mois.</p></div>
@@ -438,18 +439,15 @@ function pagePrestations() {
 
 function pageComment() {
   return `<section class="fond-cleaneroo" style="padding:40px 0 90px">${decor([[90, 20, 90], [4, 60, 60]], [])}
-    <div class="conteneur"><h1>Comment ça marche ?</h1><div class="trait-corail"></div><p>Du clic à la validation, tout se passe en ligne.</p></div></section>
-  <section class="bloc"><div class="conteneur"><div class="grille-2 etroit" style="margin-bottom:24px">${guideVideo("client", "page-comment-client")}${guideVideo("cleaneur", "page-comment-cleaneur")}</div>${blocEtapes()}
-    <div class="grille-2 etroit" style="margin-top:28px">
-      <div class="carte fond-cleaneroo" style="border:0"><h3>Côté Cleaneur</h3><div class="trait-corail"></div>
-        <p style="margin:0">Je pars, puis j'arrive (géolocalisé) · Selfie du jour · Tâches et photos guidées · Signature et compte rendu · Paiement après validation.</p></div>
-      <a class="carte ligne-compte" href="#/suivi-demo" style="grid-column:1/-1">${icone("position", { tuile: true })}
+    <div class="conteneur"><h1>Comment ça marche ?</h1><div class="trait-corail"></div><p>Un parcours simple pour chacun : choisissez le vôtre.</p></div></section>
+  <section class="bloc"><div class="conteneur">${blocParcours()}
+    <div class="etroit" style="margin-top:28px">
+      <a class="carte ligne-compte" href="#/suivi-demo">${icone("position", { tuile: true })}
         <div class="corps"><h3 style="margin:0">Suivez votre Cleaneur en direct</h3><p class="muet" style="margin:2px 0 0">Sur une carte, jusqu'à chez vous, comme une livraison. Voir la démonstration.</p></div><span class="aller" aria-hidden="true">›</span></a>
-      <div class="carte"><h3>Vos garanties</h3><div class="trait-corail"></div>
-        <p class="muet" style="margin:0">Paiement sécurisé à la réservation, versé au Cleaneur après votre validation · Dossier assurance prêt en cas de dommage · Crédit d'impôt selon éligibilité · Cleaneurs vérifiés · Annulation gratuite jusqu'à 48 h avant.</p></div>
+      <div style="margin-top:14px">${guideVideo("cleaneur", "page-comment-cleaneur")}</div>
     </div>
-    <img src="assets/img/affiche.jpg" alt="Affiche « Comment ça marche ? »" loading="lazy" style="width:min(620px,100%);margin:36px auto 0;border-radius:18px;box-shadow:var(--ombre)">
-  </div></section>`;
+  </div></section>
+  ${bandeGaranties()}`;
 }
 
 /** Compteur de l'offre de lancement : lu dans la base (dossiers validés), masqué si elle ne répond pas. */
@@ -754,6 +752,7 @@ async function afficherPage() {
   brancherApercuTournee(vue);
   remplirAvisPublics(vue);
   brancherAvantApres(vue);
+  brancherParcours(vue);
   window.scrollTo(0, 0);
 }
 

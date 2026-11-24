@@ -4,7 +4,9 @@
 import { tr, langue } from "./langue.js";
 
 export const GUIDES_VIDEO = {
-  client: { video: "assets/video/guide-client.mp4", image: "assets/video/guide-client.jpg",
+  // Guide client retiré le 24/11/2026 : la vidéo dit « Validez, puis payez » et « Débité seulement après validation », ce qui est faux
+  // (le paiement a lieu à la réservation). À refaire avant de la remettre : passer « retire » à false.
+  client: { retire: true, video: "assets/video/guide-client.mp4", image: "assets/video/guide-client.jpg",
     titre: "Votre ménage en 2 minutes", texte: "Choisir, décrire, réserver, suivre en direct puis valider : tout le parcours en 40 secondes." },
   cleaneur: { video: "assets/video/guide-cleaneur.mp4", image: "assets/video/guide-cleaneur.jpg",
     titre: "Votre première mission, pas à pas", texte: "Trouver une mission, vous proposer, être guidé le jour J puis être payé : tout en 40 secondes." },
@@ -16,7 +18,7 @@ const estMasque = cle => { try { return localStorage.getItem(cleMasque(cle)) ===
 /** Carte du guide vidéo. type : "client" | "cleaneur" ; cle : l'espace (pour se souvenir de « Masquer » espace par espace). */
 export function guideVideo(type, cle = type) {
   const g = GUIDES_VIDEO[type];
-  if (!g) return "";
+  if (!g || g.retire) return "";
   const enFrancais = langue !== "fr" ? ` <span class="petit muet">(${tr("vidéo en français")})</span>` : "";
   if (estMasque(cle)) return `<p class="guide-video-lien"><button type="button" class="lien-bouton" data-guide-afficher="${cle}" data-guide-type="${type}">▶ ${tr("Guide vidéo")}</button></p>`;
   return `<div class="carte guide-video" data-guide="${cle}">
@@ -32,7 +34,7 @@ export function guideVideo(type, cle = type) {
 
 /** Ouvre la vidéo en grand (fenêtre par-dessus la page). */
 export function ouvrirGuideVideo(type) {
-  const g = GUIDES_VIDEO[type]; if (!g) return;
+  const g = GUIDES_VIDEO[type]; if (!g || g.retire) return;
   const f = document.createElement("div");
   f.className = "guide-video-fenetre";
   f.innerHTML = `<div class="guide-video-cadre" role="dialog" aria-modal="true" aria-label="${tr(g.titre)}">
