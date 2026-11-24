@@ -6,6 +6,7 @@ import { rubrique } from "./catalogue.js";
 import { dateLongue, euros } from "./regles.js";
 import { tr, traduire } from "./langue.js";
 import { esc } from "./commun.js";
+import { icone } from "./icones.js";
 import { libelleStatut } from "./app.js";
 
 export const ROLES_EQUIPE = { GESTIONNAIRE: "Gestionnaire", ASSISTANT: "Assistant", PROPRIETAIRE: "Propriétaire" };
@@ -20,7 +21,7 @@ export async function blocEquipe(boite, pro, biens = []) {
     supabase.rpc("mes_equipes").then(r => r.data || [])]);
   if (!boite.isConnected || (!pro && !miennes.length)) { boite.innerHTML = ""; return; }
   boite.innerHTML = `<details class="carte" style="margin-top:16px" ${miennes.some(m => m.statut === "INVITE") ? "open" : ""}>
-    <summary><b>👥 ${tr("Équipe et propriétaires")}</b></summary>
+    <summary><b>${icone("cleaneurs")} ${tr("Équipe et propriétaires")}</b></summary>
     ${pro ? `<p class="petit">${tr("Invitez vos collaborateurs et les propriétaires des biens que vous gérez. Un propriétaire ne voit que ses biens et leurs ménages, jamais les codes d'accès.")}</p>
       ${equipe.map(m => `<div class="ligne-equipe"><div><b>${esc(m.email)}</b><span class="petit"> · ${tr(ROLES_EQUIPE[m.role])} · ${tr(STATUTS[m.statut])}</span>
         ${m.role === "PROPRIETAIRE" ? `<div class="petit">${esc(m.biens.map(id => nomBien(biens.find(b => b.id === id) || {})).filter(Boolean).join(", "))}</div>` : ""}</div>
@@ -61,7 +62,7 @@ export async function blocEquipe(boite, pro, biens = []) {
     const { data } = await supabase.rpc("vue_proprietaire", { p_id: b.dataset.vueEquipe });
     if (!data) { z.innerHTML = ""; return; }
     z.innerHTML = `<div class="carte teintee" style="margin:8px 0">
-      <b>${tr("Biens")}</b>${data.biens.map(x => `<p class="petit" style="margin:4px 0">🏠 ${esc(nomBien(x))} · ${esc(x.rue)}, ${esc(x.code_postal)} ${esc(x.ville)}</p>`).join("") || `<p class="petit">—</p>`}
+      <b>${tr("Biens")}</b>${data.biens.map(x => `<p class="petit" style="margin:4px 0">${icone("logement")} ${esc(nomBien(x))} · ${esc(x.rue)}, ${esc(x.code_postal)} ${esc(x.ville)}</p>`).join("") || `<p class="petit">—</p>`}
       <b>${tr("Ménages")}</b>${data.missions.map(x => `<p class="petit" style="margin:4px 0">${esc(rubrique(x.rubrique_id)?.nom || "")} · ${x.creneau ? esc(dateLongue(new Date(x.creneau))) : ""}
         · ${esc(x.ville)} · ${euros(x.estimation_c)} · <span class="tampon">${esc(tr(libelleStatut(x.statut)))}</span></p>`).join("") || `<p class="petit">${tr("Aucun ménage pour l'instant.")}</p>`}</div>`;
     traduire(z);

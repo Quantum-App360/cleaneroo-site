@@ -252,21 +252,21 @@ export function ongletPro(p, biens, hotellerie = false) {
         <div class="ligne-compte" style="padding:0;box-shadow:none;border:0;background:none">${icone("logement", { tuile: true })}
           <div class="corps"><b>${esc(nomBien(l))}</b><div class="petit">${esc(l.rue)}, ${esc(l.codePostal)} ${esc(l.ville)}${l.surface ? `<span> · ${l.surface} m²</span>` : ""}${l.chambres ? `<span> · ${l.chambres} ch.</span>` : ""}</div>
           <div class="etat-bien"><span data-prochain="${esc(l.id)}">${tr("Prochain départ")} : …</span>
-            <span>📸 ${(l.guide || []).length} ${tr("étapes d'accès")}</span><span>📷 ${etapesPhotoDe(l).length + etapesPersoDe(l).length} ${tr("étapes photo")}</span></div>
+            <span>${icone("cle")} ${(l.guide || []).length} ${tr("étapes d'accès")}</span><span>${icone("photo")} ${etapesPhotoDe(l).length + etapesPersoDe(l).length} ${tr("étapes photo")}</span></div>
           <p class="petit note alerte" data-secteur-bien="${esc(l.id)}" hidden></p>
           <div class="pastilles">${cals.length ? cals.map(c => { const src = sourceCalendrier(c.url, c.source); return `<span class="pastille ${src}" data-etat-cal="${esc(c.url)}" data-nom="${esc(SOURCES.find(s => s[0] === src)?.[1] || "")}">${SOURCES.find(s => s[0] === src)?.[1] || ""} · ${tr("synchronisation…")}</span>`; }).join("") : `<span class="pastille vide">Aucun calendrier relié</span>`}</div></div></div>
         <details><summary>${cals.length ? tr("Modifier le nom et les calendriers") : tr("Relier un calendrier")}</summary>
           <form data-form-cal="${esc(l.id)}" novalidate style="margin-top:10px">
             <label class="champ">Nom du bien<input name="nom" maxlength="60" value="${esc(l.nom)}" placeholder="${esc(tr("Ex. : Studio Vieux-Port"))}"></label>
             ${SOURCES.map(([id, nom]) => `<label class="champ">Lien du calendrier ${nom}<input name="${id}" type="url" inputmode="url" maxlength="600" placeholder="https://…ics" value="${esc((l.calendriers || []).find(c => c.source === id)?.url)}"></label>`).join("")}
-            <p class="petit"><button type="button" class="lien-bouton" data-cal-demo>🧪 ${tr("Essayer avec un calendrier de démonstration")}</button></p>
+            <p class="petit"><button type="button" class="lien-bouton" data-cal-demo>${icone("instantane")} ${tr("Essayer avec un calendrier de démonstration")}</button></p>
             <p class="erreur" data-erreur-cal></p><button class="bouton plein" type="submit">Enregistrer</button></form></details>
         ${bienCompatible("rental", l) ? blocPrixBien(l) : ""}
         ${cals.length ? blocPilote(l) : ""}
         ${editeurGuide(l)}${editeurEtapesPhoto(l)}${editeurTemoins(l)}${editeurStock(l)}${editeurIncidents(l)}</div>`;
     }).join("") : `<div class="vide-compte"><p class="muet">Aucun bien enregistré pour l'instant.</p><p class="petit">Ajoutez vos biens dans « Mes prestations », lors d'une réservation, ou <a href="#/importer-biens">importez-les tous en une fois</a>.</p></div>`}</div>
     <p class="petit" id="aucun-bien" hidden>Aucun bien ne correspond à votre recherche.</p>
-    <div class="boutons"><a class="bouton secondaire" href="#/mes-demandes">＋ Ajouter un bien</a><a class="bouton secondaire" href="#/importer-biens">⇪ Importer mes logements</a><a class="bouton secondaire" href="#/reserver/${rubriqueMenage}">${hotellerie ? "Réserver une rotation" : "Réserver un ménage de location"}</a></div>
+    <div class="boutons"><a class="bouton secondaire" href="#/mes-demandes">${icone("ajouter")} Ajouter un bien</a><a class="bouton secondaire" href="#/importer-biens">${icone("importer")} Importer mes logements</a><a class="bouton secondaire" href="#/reserver/${rubriqueMenage}">${hotellerie ? "Réserver une rotation" : "Réserver un ménage de location"}</a></div>
     <h2 class="titre-section" id="titre-menages">${icone("termine", { tuile: true })}Tous les ménages</h2>
     <div id="pro-menages">${chargeur("Chargement…", { petit: true })}</div>
     <h2 class="titre-section" id="titre-rapports">${icone("avis", { tuile: true })}Rapports mensuels</h2>
@@ -283,14 +283,14 @@ export function ongletPro(p, biens, hotellerie = false) {
  *  En Automatique, le serveur (fonction pilote-auto) programme le ménage de chaque départ de voyageurs, au prix du dernier ménage réservé. */
 function blocPilote(l) {
   const p = l.pilote || {}, auto = p.mode === "auto";
-  return `<details class="pilote-bien"><summary>🤖 ${tr("Pilote automatique")} : <b>${tr(auto ? "Automatique" : "Manuel")}</b>${auto && p.plafondC ? ` · ${tr("plafond")} ${euros(p.plafondC)} / ${tr("mois")}` : ""}</summary>
+  return `<details class="pilote-bien"><summary>${icone("instantane")} ${tr("Pilote automatique")} : <b>${tr(auto ? "Automatique" : "Manuel")}</b>${auto && p.plafondC ? ` · ${tr("plafond")} ${euros(p.plafondC)} / ${tr("mois")}` : ""}</summary>
     <form data-form-pilote="${esc(l.id)}" novalidate style="margin-top:10px">
       <label class="case"><input type="radio" name="mode" value="manuel" ${auto ? "" : "checked"}><span>${tr("Manuel : je programme moi-même chaque ménage")}</span></label>
       <label class="case"><input type="radio" name="mode" value="auto" ${auto ? "checked" : ""}><span>${tr("Automatique : chaque départ de voyageurs programme son ménage tout seul")}</span></label>
       <label class="champ">${tr("Plafond mensuel (€)")}<input name="plafond" type="number" inputmode="numeric" min="0" step="1" value="${p.plafondC ? Math.round(p.plafondC / 100) : ""}"></label>
       <p class="petit">${tr("Prix : celui fixé pour ce logement (« Prix du ménage »), sinon celui du dernier ménage réservé ; consignes : celles du dernier ménage. Au-delà du plafond, rien n'est programmé sans vous. Vous êtes prévenu à chaque ménage programmé.")}</p>
-      <p class="petit">💳 ${tr("Paiement : chaque ménage programmé est prélevé automatiquement 3 jours avant sur la carte de votre dernier ménage payé, puis bloqué jusqu'à la validation.")}</p>
-      <label class="case"><input type="checkbox" name="validationIa" ${p.validationIa ? "checked" : ""}><span>🤖 ${tr("Validation par l'IA : si toutes les pièces du compte rendu sont jugées conformes, la prestation est validée tout de suite. Sinon, vous validez vous-même, ou elle est validée automatiquement après 48 h.")}</span></label>
+      <p class="petit">${icone("paiement")} ${tr("Paiement : chaque ménage programmé est prélevé automatiquement 3 jours avant sur la carte de votre dernier ménage payé, puis bloqué jusqu'à la validation.")}</p>
+      <label class="case"><input type="checkbox" name="validationIa" ${p.validationIa ? "checked" : ""}><span>${icone("valide")} ${tr("Validation par l'IA : si toutes les pièces du compte rendu sont jugées conformes, la prestation est validée tout de suite. Sinon, vous validez vous-même, ou elle est validée automatiquement après 48 h.")}</span></label>
       <p class="erreur" data-erreur-pilote></p><button class="bouton plein" type="submit">${tr("Enregistrer")}</button></form></details>`;
 }
 
@@ -405,7 +405,7 @@ async function remplirAgenda(vue, biens, demandes, recharger) {
     const u = s.dataset.etatCal, e = erreurs[u], n = lus[u] ?? 0;
     if (e) { s.classList.add("ko"); s.textContent = `${s.dataset.nom} · ${tr(e === "site" ? "site non accepté" : e === "format" ? "lien non valable" : "injoignable")}`;
       s.title = tr(e === "site" ? "Ce site de calendrier n'est pas encore accepté. Utilisez le lien Airbnb, Booking, Abritel ou Google." : e === "format" ? "Ce lien n'est pas un calendrier (.ics). Vérifiez que vous avez copié le lien d'export." : "Calendrier injoignable. Vérifiez le lien et réessayez."); }
-    else { s.classList.add("ok-cal"); s.textContent = `${s.dataset.nom} ✓ · ${n} ${tr(n > 1 ? "séjours à venir" : "séjour à venir")}`; s.title = tr("Calendrier synchronisé"); }
+    else { s.classList.add("ok-cal"); s.textContent = `${s.dataset.nom} · ${n} ${tr(n > 1 ? "séjours à venir" : "séjour à venir")}`; s.title = tr("Calendrier synchronisé"); }
   });
   const auj = new Date(); auj.setHours(0, 0, 0, 0);
   const fin = iso(plusJours(auj, REGLES.AGENDA_HORIZON_JOURS)), debut = iso(auj);
@@ -601,7 +601,7 @@ async function remplirAgenda(vue, biens, demandes, recharger) {
         <div class="agenda-legende petit">${(filtreBien ? ordre.filter(l => l.id === filtreBien) : ordre).slice(0, 8).map(l => `<span><i class="barre-leg" style="--c:${couleur(l.id)}"></i>${esc(nomBien(l))}</span>`).join("")}
           <span><i class="b-menage b-presta">${icone("logement")}</i>Ménage prévu (icône de la prestation)</span><span><i class="b-depart">!</i>Départ sans ménage</span></div>
         ${sj ? `<div class="agenda-detail"><div class="agenda-detail-haut"><b>${dateLongue(jourDe(sj))}</b>
-            ${biens.length ? `<button type="button" class="lien-bouton" data-ajout="${sj}">＋ Ajouter un séjour</button>` : ""}</div>
+            ${biens.length ? `<button type="button" class="lien-bouton" data-ajout="${sj}">${icone("ajouter")} Ajouter un séjour</button>` : ""}</div>
           ${detail.length ? detail.join("") : `<p class="muet petit" style="margin:4px 0 0">Rien de prévu ce jour.</p>`}</div>`
         : `<p class="petit muet" style="margin:10px 0 0">Touchez un jour pour voir le détail.</p>`}`;
     } else {
@@ -618,13 +618,13 @@ async function remplirAgenda(vue, biens, demandes, recharger) {
           <button type="button" class="puce-agenda" data-auj>Aujourd'hui</button>` : `<b class="agenda-titre-liste">${tr(`Les ${REGLES.AGENDA_LISTE_JOURS} prochains jours`)}</b>`}</div>
         <div class="agenda-vues" role="tablist" aria-label="Affichage"><button type="button" role="tab" data-vue="mois" aria-selected="${vueAgenda === "mois"}">Mois</button><button type="button" role="tab" data-vue="liste" aria-selected="${vueAgenda === "liste"}">Liste</button></div></div>
       <div class="agenda-outils">${biens.length > 1 ? `<select id="filtre-bien" aria-label="Bien affiché"><option value="">Tous les biens</option>${ordre.map(l => `<option value="${esc(l.id)}" ${l.id === filtreBien ? "selected" : ""}>${esc(nomBien(l))}</option>`).join("")}</select>` : ""}
-        ${biens.length ? `<button type="button" class="bouton petit" data-ajout="">＋ Ajouter un séjour</button>` : ""}
+        ${biens.length ? `<button type="button" class="bouton petit" data-ajout="">${icone("ajouter")} Ajouter un séjour</button>` : ""}
         ${sel.length ? `<button type="button" class="bouton secondaire petit" data-export>${icone("calendrier")}Exporter vers mon agenda</button>` : ""}</div>
       ${edition ? formulaire() : ""}
       ${corps}
       ${Object.keys(erreurs).length ? `<p class="erreur petit" style="margin:8px 0 0">${tr("Un calendrier est injoignable : vérifiez son lien dans « Mon parc de biens ».")}</p>` : ""}
       ${!biens.length ? `<p class="petit" style="margin:8px 0 0">${tr("Ajoutez d'abord un bien pour remplir votre agenda.")}</p>`
-        : !aDesSejours ? `<p class="petit" style="margin:8px 0 0">${tr("Pas de calendrier Airbnb ou Booking ? Ajoutez vos séjours à la main avec « ＋ Ajouter un séjour » : ils comptent comme les autres.")}</p>` : ""}
+        : !aDesSejours ? `<p class="petit" style="margin:8px 0 0">${tr("Pas de calendrier Airbnb ou Booking ? Ajoutez vos séjours à la main avec « Ajouter un séjour » : ils comptent comme les autres.")}</p>` : ""}
       ${sel.length ? `<p class="petit muet" style="margin:8px 0 0">${tr("« Exporter vers mon agenda » crée un fichier .ics à ouvrir avec Google Agenda, le calendrier de l'iPhone ou Outlook.")}</p>` : ""}`;
     traduire(boite);
     boite.querySelectorAll("[data-mois]").forEach(b => b.onclick = () => { moisAffiche = new Date(moisAffiche.getFullYear(), moisAffiche.getMonth() + Number(b.dataset.mois), 1); dessiner(); });
@@ -719,7 +719,7 @@ export function planningSemaine(boite, biens, sejours, menageDe, auj, couleur) {
   };
   boite.innerHTML = `<div class="planning-defile"><table class="planning"><thead><tr><th>${tr("Bien")}</th>${jours.map((d, i) => `<th class="${i === 0 ? "pl-auj" : ""}">${libJour(d)}</th>`).join("")}</tr></thead>
     <tbody>${ordre.map((l, i) => `<tr style="--c:${couleur(i)}"><th><span class="pl-pastille"></span>${esc(nomBien(l))}</th>${jours.map(d => cellule(l, d)).join("")}</tr>`).join("")}</tbody></table></div>
-    <p class="petit legende-planning"><span class="pl-menage">✓ ${tr("Ménage")}</span> ${tr("prévu")} · <span class="pl-programmer">${tr("Départ")} ›</span> ${tr("à programmer")} · <span class="pl-arrivee">${tr("Arrivée")}</span> · <span class="pl-occupe-ex"></span> ${tr("occupé")}</p>`;
+    <p class="petit legende-planning"><span class="pl-menage">${icone("valide")} ${tr("Ménage")}</span> ${tr("prévu")} · <span class="pl-programmer">${tr("Départ")} ›</span> ${tr("à programmer")} · <span class="pl-arrivee">${tr("Arrivée")}</span> · <span class="pl-occupe-ex"></span> ${tr("occupé")}</p>`;
   boite.querySelectorAll("[data-programmer]").forEach(b => b.onclick = () => { preremplir({ bienId: b.dataset.programmer, jour: b.dataset.jour }); location.hash = `#/reserver/${rubriqueMenage}`; });
 }
 

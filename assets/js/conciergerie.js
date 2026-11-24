@@ -56,7 +56,7 @@ const fichesOuvertes = new Set();
 export function editeurStock(l) {
   const st = stockDe(l), bas = stockBas(l);
   return `<details class="outil-bien" data-outil="stock-${esc(l.id)}" ${fichesOuvertes.has("stock-" + l.id) ? "open" : ""}>
-    <summary>📦 ${tr("Stock et linge")} ${bas.length ? `<span class="tampon spam">${bas.length} ${tr(bas.length > 1 ? "articles à racheter" : "article à racheter")}</span>` : st.length ? `<span class="tampon vert">${tr("OK")}</span>` : ""}</summary>
+    <summary>${icone("stock")} ${tr("Stock et linge")} ${bas.length ? `<span class="tampon spam">${bas.length} ${tr(bas.length > 1 ? "articles à racheter" : "article à racheter")}</span>` : st.length ? `<span class="tampon vert">${tr("OK")}</span>` : ""}</summary>
     <p class="petit">${tr("Ce qui doit être sur place pour les voyageurs. Le stock baisse tout seul à chaque ménage terminé (quantité « par ménage ») ; une alerte apparaît dans « Aujourd'hui » quand un article passe sous son seuil.")}</p>
     ${st.length ? `<div class="table-stock">${st.map((a, i) => `<div class="ligne-stock ${bas.includes(a) ? "bas" : ""}"><span>${esc(tr(a.nom))}</span>
       <span class="qte"><button type="button" class="pas" data-stock="${esc(l.id)}:${i}:-1" aria-label="${esc(tr("Moins"))}">−</button><b>${Number(a.qte)}</b>
@@ -73,10 +73,10 @@ export function editeurStock(l) {
 export function editeurIncidents(l) {
   const liste = incidentsDe(l), ouv = ouverts(l);
   return `<details class="outil-bien" data-outil="incidents-${esc(l.id)}" ${fichesOuvertes.has("incidents-" + l.id) ? "open" : ""}>
-    <summary>🛠️ ${tr("Incidents et réparations")} ${ouv.length ? `<span class="tampon spam">${ouv.length} ${tr(ouv.length > 1 ? "ouverts" : "ouvert")}</span>` : ""}</summary>
+    <summary>${icone("outil")} ${tr("Incidents et réparations")} ${ouv.length ? `<span class="tampon spam">${ouv.length} ${tr(ouv.length > 1 ? "ouverts" : "ouvert")}</span>` : ""}</summary>
     <p class="petit">${tr("Casse, panne, objet manquant : notez-le, transmettez-le à votre artisan, marquez-le résolu.")}</p>
     ${liste.slice().reverse().map(x => { const i = liste.indexOf(x); return `<div class="ligne-incident ${x.statut === "RESOLU" ? "resolu" : ""}">
-      <div><b>${esc(x.texte)}</b><span class="petit"> · ${dateCourte(new Date(x.date))}${x.statut === "RESOLU" ? ` · ✓ ${tr("Résolu")}` : ""}</span></div>
+      <div><b>${esc(x.texte)}</b><span class="petit"> · ${dateCourte(new Date(x.date))}${x.statut === "RESOLU" ? ` · ${icone("valide")} ${tr("Résolu")}` : ""}</span></div>
       <div class="actions">${x.statut === "RESOLU" ? "" : `<a class="lien-bouton" href="sms:?&body=${encodeURIComponent(`${l.nom || l.rue} (${l.rue}, ${l.ville}) : ${x.texte}`)}">${tr("Envoyer à l'artisan")}</a>
         <button type="button" class="lien-bouton" data-incident-resolu="${esc(l.id)}:${i}">${tr("Marquer résolu")}</button>`}</div></div>`; }).join("")}
     <form class="ajout-ligne" data-incident-ajout="${esc(l.id)}" novalidate><input class="texte" name="texte" maxlength="160" placeholder="${esc(tr("Ex. : ampoule de la salle de bain grillée"))}">
@@ -184,12 +184,12 @@ export function blocAujourdhui(boite, { biens, sejours, demandes, menageDe, erre
     const risque = dep ? niveauRotation({ jour: j, menage: m, bien: l, arriveeSuivanteH: arr ? REGLES.ARRIVEE_SUIVANTE_DEFAUT_H : null, maintenant: aujourdhui }) : null;
     return `<div class="rotation" data-rang="${risque ? risque.rang : 3}" style="--c:${couleur(l.id)}">
       <div class="rot-bien"><span class="pl-pastille"></span><b>${esc(nomBien(l))}</b><span class="petit">${esc(l.ville || "")}</span>
-        ${risque ? `<span class="risque risque-${risque.niveau}">${{ urgent: "🔴", surveiller: "🟠", serein: "🟢" }[risque.niveau]} ${tr({ urgent: "Urgent", surveiller: "À surveiller", serein: "Serein" }[risque.niveau])} · ${tr(risque.raison)}</span>` : ""}</div>
+        ${risque ? `<span class="risque risque-${risque.niveau}"><span class="pastille-risque" aria-hidden="true"></span> ${tr({ urgent: "Urgent", surveiller: "À surveiller", serein: "Serein" }[risque.niveau])} · ${tr(risque.raison)}</span>` : ""}</div>
       <div class="rot-flux">
-        ${dep ? `<span class="rot-etape">🧳 ${tr("Départ")} <b>${REGLES.DEPART_VOYAGEURS_DEFAUT_H} h</b></span>` : ""}
+        ${dep ? `<span class="rot-etape">${icone("valise")} ${tr("Départ")} <b>${REGLES.DEPART_VOYAGEURS_DEFAUT_H} h</b></span>` : ""}
         ${dep ? (m ? `<span class="rot-etape menage etat-${esc(m.statut)}">${icone(rubrique(m.rubrique_id)?.icone || "termine")} ${tr(ETATS[m.statut] || "")}</span>`
           : `<button type="button" class="bouton petit" data-programmer="${esc(l.id)}" data-jour="${j}">${tr("Programmer le ménage")}</button>`) : ""}
-        ${arr || (dep && prochaine && prochaine.debut === j) ? `<span class="rot-etape">🔑 ${tr("Arrivée")} <b>${REGLES.ARRIVEE_SUIVANTE_DEFAUT_H} h</b></span>` : prochaine ? `<span class="rot-etape petit">${tr("Prochaine arrivée")} ${dateCourte(jourDe(prochaine.debut))}</span>` : ""}
+        ${arr || (dep && prochaine && prochaine.debut === j) ? `<span class="rot-etape">${icone("cle")} ${tr("Arrivée")} <b>${REGLES.ARRIVEE_SUIVANTE_DEFAUT_H} h</b></span>` : prochaine ? `<span class="rot-etape petit">${tr("Prochaine arrivée")} ${dateCourte(jourDe(prochaine.debut))}</span>` : ""}
         ${dep && arr ? `<span class="tampon">${tr("Rotation le jour même")}</span>` : ""}
       </div></div>`;
   };
@@ -209,11 +209,11 @@ export function blocAujourdhui(boite, { biens, sejours, demandes, menageDe, erre
       ${r.length ? r.join("") : m.length ? "" : `<p class="muet petit">${tr("Aucun ménage, départ ni arrivée.")}</p>`}</div>`; };
   // Ajouter ses ménages à venir à son agenda (Google, Outlook, iPhone) : fichier .ics.
   const aVenir = demandes.filter(d => !["ANNULEE", "TERMINEE"].includes(d.statut) && d.creneau && biens.some(b => memeAdresse(d, b)));
-  boite.innerHTML = `<div class="alertes-concierge">${al.length ? al.map(a => `<div class="alerte-concierge ${a.niveau}">${{ depart: "⏰", stock: "📦", incident: "🛠️", calendrier: "📅" }[a.type]}
+  boite.innerHTML = `<div class="alertes-concierge">${al.length ? al.map(a => `<div class="alerte-concierge ${a.niveau}">${icone({ depart: "horloge", stock: "stock", incident: "outil", calendrier: "calendrier" }[a.type])}
       <span>${texteAlerte(a)}</span>${a.type === "depart" ? `<button type="button" class="bouton petit" data-programmer="${esc(a.bienId)}" data-jour="${a.jour}">${tr("Programmer")}</button>` : ""}</div>`).join("")
-    : `<div class="alerte-concierge ok">✅ <span>${tr("Tout est en ordre : chaque départ des prochaines 48 h a son ménage, aucun stock bas, aucun incident ouvert.")}</span></div>`}</div>
+    : `<div class="alerte-concierge ok">${icone("valide")} <span>${tr("Tout est en ordre : chaque départ des prochaines 48 h a son ménage, aucun stock bas, aucun incident ouvert.")}</span></div>`}</div>
     <div class="grille-rotations">${jour(auj, tr("Aujourd'hui"))}${jour(demain, tr("Demain"))}</div>
-    ${aVenir.length ? `<p style="margin:12px 0 0"><button type="button" class="bouton secondaire petit" data-agenda-ics>📅 ${tr("Ajouter mes ménages à mon agenda")} (${aVenir.length})</button>
+    ${aVenir.length ? `<p style="margin:12px 0 0"><button type="button" class="bouton secondaire petit" data-agenda-ics>${icone("calendrier")} ${tr("Ajouter mes ménages à mon agenda")} (${aVenir.length})</button>
       <span class="petit muet"> ${tr("Google Agenda, Outlook ou iPhone")}</span></p>` : ""}`;
   boite.querySelector("[data-agenda-ics]")?.addEventListener("click", () => {
     const evts = aVenir.map(d => { const b = biens.find(x => memeAdresse(d, x)), jj = iso(new Date(d.creneau));

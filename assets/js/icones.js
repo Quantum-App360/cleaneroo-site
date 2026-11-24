@@ -99,6 +99,22 @@ const INTERFACE = {
   menu: `<path d="M4 7h16M4 12h16M4 17h16"/>`,
   // Clé : anneau et panneton (accès au logement, boîte à clés)
   cle: `<circle class="a" cx="7.5" cy="12" r="4"/><circle cx="7.5" cy="12" r="4"/><path d="M11.5 12h9.5M17.5 12v3.2M20.5 12v2.2"/><circle cx="7.5" cy="12" r="1.2"/>`,
+  // Ajouts du 24/11/2026 (retrait des emojis), même grille et même trait :
+  // Carton de stock (consommables, linge)
+  stock: aplat("M3.5 8 12 4l8.5 4v9.5L12 21.5l-8.5-4Z") + `<path d="M3.5 8 12 4l8.5 4v9.5L12 21.5l-8.5-4ZM3.5 8 12 12l8.5-4M12 12v9.5M7.8 6l8.5 4"/>`,
+  // Clé à molette (incidents, réparations)
+  outil: aplat("M14.5 3.2a5 5 0 0 0-4.6 6.9l-6.4 6.4a2 2 0 0 0 2.9 2.9l6.4-6.4a5 5 0 0 0 6.9-4.6l-3 3-2.8-.8-.8-2.8Z")
+    + `<path d="M14.5 3.2a5 5 0 0 0-4.6 6.9l-6.4 6.4a2 2 0 0 0 2.9 2.9l6.4-6.4a5 5 0 0 0 6.9-4.6l-3 3-2.8-.8-.8-2.8Z"/>`,
+  // Triangle d'alerte
+  alerte: aplat("M12 3.5 21.5 20h-19Z") + `<path d="M12 3.5 21.5 20h-19ZM12 10v4.5M12 17.2h.01"/>`,
+  // Horloge (départ proche)
+  horloge: `<circle class="a" cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/>`,
+  // Valise (départ des voyageurs)
+  valise: aplat("M4 8.5h16v11H4Z") + `<rect x="4" y="8.5" width="16" height="11" rx="2"/><path d="M9 8.5V6a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 6v2.5M9 8.5v11M15 8.5v11M7 21.5v-2M17 21.5v-2"/>`,
+  // Ajouter
+  ajouter: `<circle class="a" cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/>`,
+  // Importer (flèche vers un plateau)
+  importer: aplat("M4 15h16v5H4Z") + `<path d="M4 15v3.5A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5V15M12 4v11M7.5 10.5 12 15l4.5-4.5"/>`,
   telephone: aplat("M6.5 3.5h3l1.5 4-2 1.5a11 11 0 0 0 6 6l1.5-2 4 1.5v3a2 2 0 0 1-2 2A16 16 0 0 1 4.5 5.5a2 2 0 0 1 2-2Z")
     + `<path d="M6.5 3.5h3l1.5 4-2 1.5a11 11 0 0 0 6 6l1.5-2 4 1.5v3a2 2 0 0 1-2 2A16 16 0 0 1 4.5 5.5a2 2 0 0 1 2-2Z"/>`,
 };

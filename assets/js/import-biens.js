@@ -292,7 +292,7 @@ function ecranApercu() {
       ${ap.slice(0, 300).map(x => `<tr class="${x.etat}"><td>${x.n}</td><td><span class="tampon ${LIB[x.etat][1]}">${tr(LIB[x.etat][0])}</span>${x.manque.length ? `<div class="petit">${tr("Manque :")} ${x.manque.map(m => tr(m)).join(", ")}</div>` : ""}</td>
         <td>${esc(x.bien.nom || "—")}${x.bien.chambres != null && etat.categorie === "logement" ? `<div class="petit">${x.bien.chambres} ch. · ${x.bien.surface || "?"} m²</div>` : ""}</td>
         <td>${esc(x.bien.rue)}<div class="petit">${esc(x.bien.codePostal)} ${esc(x.bien.ville)}</div></td>
-        <td>${(x.bien.calendriers || []).length ? `✓ ${(x.bien.calendriers || []).length}` : "—"}${x.liensFaux ? `<div class="petit erreur">${tr("lien non reconnu")}</div>` : ""}</td></tr>`).join("")}
+        <td>${(x.bien.calendriers || []).length ? `${icone("valide")} ${(x.bien.calendriers || []).length}` : "—"}${x.liensFaux ? `<div class="petit erreur">${tr("lien non reconnu")}</div>` : ""}</td></tr>`).join("")}
     </tbody></table>${ap.length > 300 ? `<p class="petit">${tr("Aperçu limité aux 300 premières lignes ; toutes seront importées.")}</p>` : ""}</div>
     ${trop ? `<p class="note alerte">${tr("Un compte peut gérer au plus")} ${REGLES.BIENS_MAX} ${tr("biens : contactez-nous pour aller au-delà.")}</p>` : ""}
     <div class="boutons" style="margin-top:16px"><button type="button" class="bouton plein" id="importer" ${!aImporter.length || manquants.length || trop ? "disabled" : ""}>${tr("Importer")} ${aImporter.length} ${tr(aImporter.length > 1 ? "logements" : "logement")}</button>

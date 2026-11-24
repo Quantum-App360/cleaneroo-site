@@ -2655,3 +2655,8 @@ a.statut-choix { color: inherit; text-decoration: none; }
 .offre-fondatrice .choix-fin-offre { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
 .offre-fondatrice .choix-fin-offre .boutons { display: flex; flex-wrap: wrap; gap: 8px; }
 .offre-fondatrice .icone { vertical-align: -3px; }
+/* Niveau de risque d'une rotation : pastille de couleur (plus d'emoji), 24/11/2026 */
+.pastille-risque { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 2px; background: var(--succes); vertical-align: 1px; }
+.risque-urgent .pastille-risque { background: var(--erreur); }
+.risque-surveiller .pastille-risque { background: var(--alerte); }
+.rot-etape .ico, .alerte-concierge > .ico, .outil-bien summary .ico, .etat-bien .ico { width: 18px; height: 18px; vertical-align: -4px; }
