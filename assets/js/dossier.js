@@ -1,6 +1,7 @@
 // Dossier Cleaneur complet (12 novembre 2026, repris de l'appli iPhone de Vincent) : contrat de prestataire signé, mission test
 // rémunérée, activités couvertes par la RC Pro, fin de validité des documents, « Ce que je peux recevoir, et ce qui me manque ».
 // Même écran dans l'appli (Dossier.kt). Base : outils/base-dossier-complet.sql.
+import { icone } from "./icones.js";
 import { supabase } from "./donnees.js";
 import { REGLES, euros } from "./regles.js";
 import { tr, traduire } from "./langue.js";
@@ -44,11 +45,11 @@ export const texteContrat = x => tr(x).replace(/\{(\w+)\}/g, (m, k) => String(va
 export function blocContrat(boite, profil, apres = () => {}) {
   if (!boite) return;
   if (profil?.contrat_signe_le && profil.contrat_version === CONTRAT_VERSION) {
-    boite.innerHTML = `<p class="petit" style="color:var(--succes)">✅ ${tr("Contrat de prestataire signé le")} ${new Date(profil.contrat_signe_le).toLocaleDateString("fr-FR")} (${tr("version")} ${esc(profil.contrat_version || "")})</p>`;
+    boite.innerHTML = `<p class="petit" style="color:var(--succes)">${icone("valide")} ${tr("Contrat de prestataire signé le")} ${new Date(profil.contrat_signe_le).toLocaleDateString("fr-FR")} (${tr("version")} ${esc(profil.contrat_version || "")})</p>`;
     traduire(boite); return;
   }
   const ancienne = profil?.contrat_signe_le && profil.contrat_version !== CONTRAT_VERSION;
-  boite.innerHTML = `<details class="carte" style="margin:10px 0" ${ancienne ? "open" : ""}><summary><b>📝 ${tr("Contrat de prestataire à signer")}</b></summary>
+  boite.innerHTML = `<details class="carte" style="margin:10px 0" ${ancienne ? "open" : ""}><summary><b>${icone("document")} ${tr("Contrat de prestataire à signer")}</b></summary>
     ${ancienne ? `<p class="erreur">${tr("Nouvelle version du contrat : lisez-la et signez-la pour continuer à recevoir des missions.")}</p>` : ""}
     <p class="petit"><b>${tr("Contrat de prestataire Cleaneroo")}</b> · ${tr("Version")} ${CONTRAT_VERSION}</p>
     ${CONTRAT.map(([t, x], i) => `<p class="petit" style="margin:8px 0 0"><b>${i + 1}. ${tr(t)}.</b> ${esc(texteContrat(x))}</p>`).join("")}
@@ -56,7 +57,7 @@ export function blocContrat(boite, profil, apres = () => {}) {
   traduire(boite);
   zoneSignature(boite.querySelector("[data-zone-contrat]"), null, { titre: "Signer le contrat",
     envoyer: async png => (await supabase.rpc("signer_contrat", { p_version: CONTRAT_VERSION, p_signature: png })).data,
-    apres: () => { boite.innerHTML = `<p class="petit" style="color:var(--succes)">✅ ${tr("Contrat signé.")}</p>`; apres(); } });
+    apres: () => { boite.innerHTML = `<p class="petit" style="color:var(--succes)">${icone("valide")} ${tr("Contrat signé.")}</p>`; apres(); } });
 }
 
 /** « Ce que je peux recevoir, et ce qui me manque » (tableau de bord du Cleaneur). */
@@ -72,8 +73,8 @@ export async function blocCeQuiMeManque(boite) {
     [!m.documents_expirent?.length, m.documents_expirent?.length ? `${m.documents_expirent.length} ${tr("document(s) qui expirent bientôt")}` : "Documents à jour"],
   ];
   const ok = lignes.every(l => l[0]);
-  boite.innerHTML = `<details class="carte"${ok ? "" : " open"}><summary><b>${ok ? "✅" : "📋"} ${tr("Ce que je peux recevoir, et ce qui me manque")}</b></summary>
-    <ul class="manque">${lignes.map(([fait, texte]) => `<li class="${fait ? "fait" : ""}">${fait ? "✅" : "⬜"} ${tr(texte)}</li>`).join("")}</ul>
+  boite.innerHTML = `<details class="carte"${ok ? "" : " open"}><summary><b>${ok ? icone("valide") : icone("document")} ${tr("Ce que je peux recevoir, et ce qui me manque")}</b></summary>
+    <ul class="manque">${lignes.map(([fait, texte]) => `<li class="${fait ? "fait" : ""}">${fait ? icone("valide") : ""} ${tr(texte)}</li>`).join("")}</ul>
     ${m.rc_pro_activites ? `<p class="petit">${tr("Activités couvertes par votre RC Pro :")} ${m.rc_pro_activites.map(a => tr(ACTIVITES_RC_PRO.find(x => x[0] === a)?.[1] || a)).join(", ")}</p>` : ""}
     ${ok ? `<p class="petit">${tr("Vous recevez toutes les missions de vos prestations, dans votre zone et vos disponibilités.")}</p>` : ""}</details>`;
   traduire(boite);

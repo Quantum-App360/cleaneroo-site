@@ -685,7 +685,7 @@ function choixOccasions(r) {
   const niveau = b.occasion ? niveauOccasion(r, b.occasion) : "";
   return `<div class="choix">${r.occasions.map(o => `<button type="button" data-champ="occasion" data-valeur="${esc(o.id)}" class="${b.occasion === o.id ? "choisi" : ""}">
       <span>${esc(tr(o.nom))}</span>${o.packId ? `<span class="tag-niveau">${tr(NOMS_NIVEAUX[o.packId])}</span>` : ""}</button>`).join("")}</div>`
-    + (niveau && niveau !== "standard" ? `<p class="petit note-occasion">✨ <span>${tr("Niveau présélectionné pour cette occasion :")}</span> <b>${tr(NOMS_NIVEAUX[niveau])}</b>. <span>${tr("Ajustez-le plus bas si besoin.")}</span></p>` : "");
+    + (niveau && niveau !== "standard" ? `<p class="petit note-occasion">${icone("termine")} <span>${tr("Niveau présélectionné pour cette occasion :")}</span> <b>${tr(NOMS_NIVEAUX[niveau])}</b>. <span>${tr("Ajustez-le plus bas si besoin.")}</span></p>` : "");
 }
 /** « Quel ménage ? » (ménage ponctuel du logement, 22/11/2026) : l'occasion et le niveau en un seul choix. Chaque carte parle d'elle-même :
  *  emoji, badge, prix total, écart avec le ménage classique, ce qu'elle ajoute. Les options restent ajustables juste en dessous. */
@@ -711,7 +711,7 @@ function quelMenage(r, chiffrees, actif) {
         <span class="detail-menage">${tr(o.description)}</span>
         ${ajouts.length ? `<ul>${ajouts.slice(0, 3).map(n => `<li>${esc(n)}</li>`).join("")}${ajouts.length > 3 ? `<li class="tout">+ ${ajouts.length - 3} ${tr(ajouts.length - 3 > 1 ? "autres tâches" : "autre tâche")}</li>` : ""}</ul>` : ""}
       </button>`; }).join("")}</div>
-    ${ajuste ? `<p class="petit ajuste-menage">✎ ${tr("Ajusté selon vos options : le prix tient compte de ce que vous avez coché ou décoché.")}</p>` : ""}`;
+    ${ajuste ? `<p class="petit ajuste-menage">${tr("Ajusté selon vos options : le prix tient compte de ce que vous avez coché ou décoché.")}</p>` : ""}`;
 }
 function formuleActive(b, packs, chiffrees) {
   const complet = id => { const p = packs.find(x => x.id === id); const ids = p ? p.tacheIds.filter(t => chiffrees.some(c => c.id === t)) : [];
@@ -755,9 +755,9 @@ function etapesLocation() {
     + compteur("Arrivée suivante", "arriveeSuivanteH", b.arriveeSuivanteH ?? REGLES.ARRIVEE_SUIVANTE_DEFAUT_H, { min: REGLES.ARRIVEE_SUIVANTE_MIN_H, max: REGLES.ARRIVEE_SUIVANTE_MAX_H, unite: " h" })
     + `<p class="petit">Le ménage commence au départ des voyageurs et doit finir avant l'arrivée suivante.</p>`
     + caseCocher("Je souhaite cette prestation à chaque départ de voyageurs", "aChaqueDepart", !!b.aChaqueDepart) + `</div>`
-    + titre("Linge") + `<div class="carte"><div class="badges-linge">${badgeCase("🛏️", "Linge propre sur place", "drapsFournis", b.drapsFournis !== false, "Le Cleaneur fait les lits et installe serviettes et tapis avec votre linge.")}
-      ${badgeCase("🧺", "Laver les draps", "lavageDraps", !!b.lavageDraps, "Draps et housses lavés, séchés et pliés.")}
-      ${badgeCase("🧻", "Laver serviettes et torchons", "lavageLinge", !!b.lavageLinge, "Serviettes de bain, tapis de bain et de WC, torchons de cuisine.")}</div>
+    + titre("Linge") + `<div class="carte"><div class="badges-linge">${badgeCase(icone("logement"), "Linge propre sur place", "drapsFournis", b.drapsFournis !== false, "Le Cleaneur fait les lits et installe serviettes et tapis avec votre linge.")}
+      ${badgeCase(icone("stock"), "Laver les draps", "lavageDraps", !!b.lavageDraps, "Draps et housses lavés, séchés et pliés.")}
+      ${badgeCase(icone("stock"), "Laver serviettes et torchons", "lavageLinge", !!b.lavageLinge, "Serviettes de bain, tapis de bain et de WC, torchons de cuisine.")}</div>
       <p class="petit muet" style="margin:8px 0 0">${tr(b.drapsFournis !== false ? "Lits faits et serviettes installées avec votre linge." : "Pas de linge à installer.")}${b.lavageDraps ? " " + tr("Draps lavés, séchés, pliés.") : ""}${b.lavageLinge ? " " + tr("Serviettes, tapis et torchons lavés.") : ""}</p>
       ${b.lavageDraps || b.lavageLinge ? (() => { const t = litsTailles(b), p = REGLES.DRAPS_LAVERIE_C, laverie = b.drapsLieu === "laverie";
         const prixSurPlace = (b.lavageDraps ? REGLES.DRAPS_SUR_PLACE_FORFAIT_C : 0) + (b.lavageLinge ? REGLES.LINGE_SUR_PLACE_FORFAIT_C : 0);
@@ -852,7 +852,7 @@ function etape3() {
       <div class="boutons-photo"><label class="bouton secondaire" style="cursor:pointer">${icone("photo")} Prendre une photo<input type="file" id="photos-appareil" accept="image/*" capture="environment" hidden></label>
       <label class="bouton secondaire" style="cursor:pointer">+ Choisir dans la galerie<input type="file" id="photos" accept="image/*" multiple hidden></label></div>
       <p class="petit">12 photos maximum. Elles sont réduites avant l'envoi.</p></div>
-    ${obl ? (plusTard ? `<div class="carte" style="margin-top:10px">${caseCocher("📷 Photos plus tard : le Cleaneur les prendra à son arrivée", "sansPhotos", !!b.sansPhotos, "Pour un logement ou un chantier pas encore accessible. Le prix reste une estimation : le Cleaneur peut proposer un supplément sur place, avec photo.")}</div>` : "")
+    ${obl ? (plusTard ? `<div class="carte" style="margin-top:10px">${caseCocher("Photos plus tard : le Cleaneur les prendra à son arrivée", "sansPhotos", !!b.sansPhotos, "Pour un logement ou un chantier pas encore accessible. Le prix reste une estimation : le Cleaneur peut proposer un supplément sur place, avec photo.")}</div>` : "")
       : `<div class="carte" style="margin-top:10px">${caseCocher("Je ne peux pas encore photographier l'état actuel", "sansPhotos", !!b.sansPhotos)}</div>`}
     ${actions(pret, pret ? "" : obl ? (plusTard ? "Ajoutez une photo pour chaque vue, ou choisissez « Photos plus tard »." : "Ajoutez une photo pour chaque vue.") : "Ajoutez une photo ou cochez la case.")}`;
 }

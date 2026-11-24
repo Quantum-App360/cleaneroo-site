@@ -13,7 +13,7 @@ const piecesDuBien = l => piecesDe("home", { chambres: l.chambres, sdb: l.sdb })
 /** Bloc repliable « Photos témoins » d'un logement. */
 export function editeurTemoins(l) {
   const temoins = l.temoins || {}, pieces = piecesDuBien(l), n = pieces.filter(p => temoins[p.id]).length;
-  return `<details class="temoins-bien" data-temoins="${esc(l.id)}"><summary>📷 ${tr("Photos témoins de l'état attendu")} · ${n}/${pieces.length}</summary>
+  return `<details class="temoins-bien" data-temoins="${esc(l.id)}"><summary>${icone("appareil-photo")} ${tr("Photos témoins de l'état attendu")} · ${n}/${pieces.length}</summary>
     <p class="petit" style="margin:8px 0">${tr("Photographiez chaque pièce telle que vous voulez la retrouver (serviettes, tapis de bain, coussins à leur place). L'IA compare chaque ménage à ces photos.")}</p>
     <div class="grille-temoins">${pieces.map(p => `<label class="temoin${temoins[p.id] ? " pris" : ""}">
       <span class="vignette" data-vignette="${esc(temoins[p.id] || "")}">${icone("photo")}</span>

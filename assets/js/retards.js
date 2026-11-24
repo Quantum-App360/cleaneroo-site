@@ -1,6 +1,7 @@
 // Retards déclarés (12 novembre 2026, repris de l'appli iPhone de Vincent) : le Cleaneur annonce son retard, le client est
 // prévenu sur son suivi ; au-delà de 30 min (REGLES.RETARD_TOLERE_MIN), il peut annuler sans frais.
 // Même écran dans l'appli (Retards.kt). Base : outils/base-retards.sql.
+import { icone } from "./icones.js";
 import { supabase } from "./donnees.js";
 import { REGLES } from "./regles.js";
 import { tr, traduire } from "./langue.js";
@@ -11,7 +12,7 @@ const heure = iso => new Date(iso).toLocaleTimeString("fr-FR", { hour: "2-digit"
 /** Bouton et formulaire « J'aurai du retard » d'une mission (Cleaneur). */
 export function blocRetardCleaneur(m) {
   if (!["CONFIRMEE", "EN_ROUTE"].includes(m.statut)) return "";
-  return `<details class="retard-cleaneur" style="margin-top:10px"><summary style="cursor:pointer;font-weight:600">⏱ ${tr("J'aurai du retard")}</summary>
+  return `<details class="retard-cleaneur" style="margin-top:10px"><summary style="cursor:pointer;font-weight:600">${icone("horloge")} ${tr("J'aurai du retard")}</summary>
     <div class="grille-retard" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-top:8px">
       <label class="champ">${tr("Retard prévu")}<select data-retard-minutes>${[10, 15, 20, 30, 45, 60, 90].map(n => `<option value="${n}">${n} min</option>`).join("")}</select></label>
       <label class="champ">${tr("Motif")}<select data-retard-motif>${MOTIFS_RETARD.map(([v, t]) => `<option value="${v}">${tr(t)}</option>`).join("")}</select></label>
@@ -38,7 +39,7 @@ export async function blocRetardClient(boite, reference, jeton) {
   if (!r || !boite.isConnected) return;
   const motif = MOTIFS_RETARD.find(x => x[0] === r.motif)?.[1] || "";
   const trop = r.minutes > REGLES.RETARD_TOLERE_MIN;
-  boite.innerHTML = `<div class="carte" style="margin-bottom:14px;border:1px solid var(--corail,#FA8C66)"><b>⏱ ${tr("Votre Cleaneur a annoncé un retard")}</b>
+  boite.innerHTML = `<div class="carte" style="margin-bottom:14px;border:1px solid var(--corail,#FA8C66)"><b>${icone("horloge")} ${tr("Votre Cleaneur a annoncé un retard")}</b>
     <p class="petit" style="margin:4px 0 0">${r.minutes} min · ${tr(motif)} · ${tr("arrivée prévue vers")} ${heure(r.arrivee)}</p>
     ${trop ? `<p class="petit">${tr("Plus de 30 minutes de retard : vous pouvez annuler sans frais.")}</p>
       <button type="button" class="bouton danger" data-annuler-retard>${tr("Annuler sans frais")}</button><p class="erreur" data-erreur-retard></p>` : ""}</div>`;
@@ -58,7 +59,7 @@ export async function blocRemplacementClient(boite, reference, jeton) {
   if (!boite) return;
   const { data: r } = await supabase.rpc("remplacement_en_cours", { p_reference: reference, p_jeton: jeton || null });
   if (!r || !boite.isConnected) return;
-  boite.innerHTML = `<div class="carte" style="margin-bottom:14px;border:1px solid var(--corail,#FA8C66)"><b>🔄 ${tr("Nous cherchons un autre Cleaneur")}</b>
+  boite.innerHTML = `<div class="carte" style="margin-bottom:14px;border:1px solid var(--corail,#FA8C66)"><b>${icone("repeter")} ${tr("Nous cherchons un autre Cleaneur")}</b>
     <p class="petit" style="margin:4px 0 0">${tr("Votre Cleaneur ne peut plus venir. Un remplaçant est accepté d'office s'il arrive au plus tard à")} ${heure(r.limite)}.
       ${tr("Sinon, la prestation est annulée sans frais et vous recevez un avoir de 15 €.")}</p>
     ${r.refusable ? `<button type="button" class="bouton secondaire" style="margin-top:8px" data-refuser-remplacement>${tr("Je préfère annuler (sans frais, avoir de 15 €)")}</button>` : ""}</div>`;

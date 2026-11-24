@@ -1,6 +1,7 @@
 // Le Cleaneur note aussi le client (11 novembre 2026, repris de l'appli iPhone de Vincent).
 // Après la mission (14 jours) : étoiles et étiquettes. Notes visibles des seuls Cleaneurs (moyenne du client sur les missions
 // disponibles) et de l'administration, jamais du client. Même écran dans l'appli (AvisClients.kt). Base : outils/base-avis-clients.sql.
+import { icone } from "./icones.js";
 import { supabase } from "./donnees.js";
 import { rubrique } from "./catalogue.js";
 import { dateLongue } from "./regles.js";
@@ -14,13 +15,13 @@ export async function blocAvisRecus(boite) {
   const { data: liste } = await supabase.rpc("avis_recus");
   if (!boite.isConnected || !liste?.length) { boite.innerHTML = ""; return; }
   const etoiles = n => `<span class="etoiles-avis" aria-label="${n} / 5">${"★".repeat(n)}${"☆".repeat(5 - n)}</span>`;
-  boite.innerHTML = `<h2 class="titre-section">💬 ${tr("Les avis de vos clients")}</h2>
+  boite.innerHTML = `<h2 class="titre-section">${icone("message")} ${tr("Les avis de vos clients")}</h2>
     <p class="petit" style="margin-top:0">${tr("Avis en double aveugle : celui du client s'affiche dès que vous l'avez noté à votre tour, ou 14 jours après son avis.")}</p>
     ${liste.map(a => `<div class="carte avis-recu"><b>${esc(rubrique(a.rubrique_id)?.nom || "")}</b> · ${esc(a.ville)} · ${esc(dateLongue(new Date(a.recu_le)))}
       ${a.revele ? `${a.categories ? CRITERES.map(([id, nom]) => `<div class="critere-recu"><span>${tr(nom)}</span>${etoiles(a.categories[id] || 0)}</div>`).join("")
           : `<div class="critere-recu"><span>${tr("Note")}</span>${etoiles(a.note || 0)}</div>`}
         ${a.commentaire ? `<p class="petit" style="margin:6px 0 0"><i>« ${esc(a.commentaire)} »</i></p>` : ""}`
-      : `<p class="petit" style="margin:6px 0 0">🔒 ${tr("Le client a donné son avis. Il s'affichera dès que vous l'aurez noté, ou le")} ${esc(dateLongue(new Date(a.visible_le)))}.</p>`}</div>`).join("")}`;
+      : `<p class="petit" style="margin:6px 0 0">${icone("cadenas")} ${tr("Le client a donné son avis. Il s'affichera dès que vous l'aurez noté, ou le")} ${esc(dateLongue(new Date(a.visible_le)))}.</p>`}</div>`).join("")}`;
   traduire(boite);
   styles();
 }
@@ -36,7 +37,7 @@ export async function blocNoterClients(boite) {
   if (!boite) return;
   const { data: liste } = await supabase.rpc("missions_a_noter");
   if (!boite.isConnected || !liste?.length) { if (boite) boite.innerHTML = ""; return; }
-  boite.innerHTML = `<h2 class="titre-section">⭐ ${tr("Notez vos derniers clients")}</h2>
+  boite.innerHTML = `<h2 class="titre-section">${icone("avis")} ${tr("Notez vos derniers clients")}</h2>
     <p class="petit" style="margin-top:0">${tr("Votre note n'est visible que des Cleaneurs et de Cleaneroo, jamais du client.")}</p>
     ${liste.map(m => `<div class="carte noter-client" data-noter="${esc(m.reference)}">
       <b>${esc(rubrique(m.rubrique_id)?.nom || "")}</b> · ${esc(m.prenom)} · ${esc(m.ville)}${m.creneau ? ` · ${esc(dateLongue(new Date(m.creneau)))}` : ""}
@@ -76,7 +77,7 @@ export async function remplirNotesClients(boite) {
   const { data } = await supabase.rpc("notes_clients", { p_references: places.map(p => p.dataset.noteClient) });
   for (const l of data || []) {
     const p = places.find(x => x.dataset.noteClient === l.reference);
-    if (p) { p.textContent = `⭐ ${tr("Client noté")} ${String(l.note_moyenne).replace(".", ",")} / 5 (${l.nb})`; }
+    if (p) { p.textContent = `${tr("Client noté")} ${String(l.note_moyenne).replace(".", ",")} / 5 (${l.nb})`; }
   }
 }
 

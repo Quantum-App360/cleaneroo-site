@@ -130,6 +130,19 @@ const INTERFACE = {
   // Équipe (trois personnes)
   equipe: aplat("M7.5 21v-1.2a4.5 4.5 0 0 1 9 0V21Z")
     + `<circle cx="12" cy="9.5" r="2.8"/><path d="M7.5 21v-1.2a4.5 4.5 0 0 1 9 0V21"/><circle cx="5.5" cy="10.8" r="2"/><path d="M2.5 19v-.8A3.2 3.2 0 0 1 5.7 15"/><circle cx="18.5" cy="10.8" r="2"/><path d="M21.5 19v-.8a3.2 3.2 0 0 0-3.2-3.2"/>`,
+  // Ajouts du 24/11/2026 (retrait des derniers emojis) :
+  // Cloche (notifications)
+  cloche: aplat("M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15Z") + `<path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15ZM10 21h4M12 3v2"/>`,
+  // Bulle de message
+  message: aplat("M4 5.5h16v10.5H9.5L5 20v-4H4Z") + `<path d="M4 5.5h16v10.5H9.5L5 20v-4H4ZM8 9.5h8M8 12.5h5"/>`,
+  // Document (PDF, compte rendu, attestation)
+  document: aplat("M6 3h8l4 4v14H6Z") + `<path d="M6 3h8l4 4v14H6ZM14 3v4h4M9 12h6M9 15.5h6M9 8.5h2"/>`,
+  // Toque de diplômé (formations)
+  formation: aplat("M2.5 9 12 4.5 21.5 9 12 13.5Z") + `<path d="M2.5 9 12 4.5 21.5 9 12 13.5ZM6.5 11v4.5c0 1.4 2.5 3 5.5 3s5.5-1.6 5.5-3V11M21.5 9v5"/>`,
+  // Cœur (favoris)
+  coeur: aplat("M12 20s-7.5-4.6-7.5-10a4.3 4.3 0 0 1 7.5-2.8A4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10Z") + `<path d="M12 20s-7.5-4.6-7.5-10a4.3 4.3 0 0 1 7.5-2.8A4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10Z"/>`,
+  // Flèches en boucle (réserver à nouveau, remplacement)
+  repeter: `<circle class="a" cx="12" cy="12" r="7"/><path d="M5 11a7 7 0 0 1 12.2-4.2L19 8.5M19 4.5v4h-4M19 13a7 7 0 0 1-12.2 4.2L5 15.5M5 19.5v-4h4"/>`,
   telephone: aplat("M6.5 3.5h3l1.5 4-2 1.5a11 11 0 0 0 6 6l1.5-2 4 1.5v3a2 2 0 0 1-2 2A16 16 0 0 1 4.5 5.5a2 2 0 0 1 2-2Z")
     + `<path d="M6.5 3.5h3l1.5 4-2 1.5a11 11 0 0 0 6 6l1.5-2 4 1.5v3a2 2 0 0 1-2 2A16 16 0 0 1 4.5 5.5a2 2 0 0 1 2-2Z"/>`,
 };
@@ -146,7 +159,7 @@ export const TEINTES = {
   logement: "turquoise", location: "corail", demenagement: "soleil", vehicule: "ciel", bateau: "ciel", canape: "lilas", chantier: "soleil",
   cuisine: "corail", bureaux: "ciel", commerce: "lilas", "parties-communes": "menthe", vitres: "ciel", exterieurs: "menthe",
   evenement: "rose", specialise: "rose", cleaneurs: "lilas", position: "turquoise", photo: "lilas", calendrier: "ciel",
-  paiement: "soleil", garantie: "menthe", cadenas: "turquoise", "bouclier-coche": "menthe", "carte-bancaire": "soleil", "appareil-photo": "lilas", equipe: "corail", "credit-impot": "soleil", avis: "rose", valide: "menthe",
+  paiement: "soleil", garantie: "menthe", cadenas: "turquoise", cloche: "soleil", message: "ciel", document: "lilas", formation: "lilas", coeur: "rose", repeter: "turquoise", "bouclier-coche": "menthe", "carte-bancaire": "soleil", "appareil-photo": "lilas", equipe: "corail", "credit-impot": "soleil", avis: "rose", valide: "menthe",
 };
 export const teinte = nom => TEINTES[nom] || "turquoise";
 

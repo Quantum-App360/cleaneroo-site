@@ -94,7 +94,7 @@ export const PARCOURS = {
     ["bouclier-coche", "Inscrivez-vous gratuitement", "Identité, SIRET, attestation URSSAF et assurance RC Pro vérifiées, puis une mission test."],
     ["position", "Choisissez vos missions", "Les missions près de chez vous s'affichent avec le prix, la durée et le trajet. Vous vous proposez ; le client choisit."],
     ["photo", "Laissez-vous guider le jour J", "En route, arrivée géolocalisée, photo avant, tâches cochées, photo après : l'appli vous guide pièce par pièce et l'IA vérifie les photos."],
-    ["paiement", "Soyez payé après validation", "Le client valide le compte rendu, ou la validation se fait automatiquement 48 h après la fin : votre paiement est alors versé."],
+    ["paiement", "Recevez votre paiement après validation", "Le client valide le compte rendu, ou la validation se fait automatiquement 48 h après la fin : votre paiement est alors versé."],
   ],
 };
 export const PROFILS_PARCOURS = [["particulier", "Particulier"], ["entreprise", "Entreprise"], ["conciergerie", "Conciergerie et hôtels"], ["cleaneur", "Cleaneur"]];

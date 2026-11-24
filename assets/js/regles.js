@@ -1,3 +1,4 @@
+import { icone } from "./icones.js";
 import { langue, LOCALE } from "./langue.js";
 
 // Valeurs métier : copie EXACTE de app/.../Regles.kt (application Android). Toute modification se fait des deux côtés.
@@ -203,10 +204,10 @@ export const REGLES = {
   // Programme Cleaneur (12 novembre 2026, repris de Vincent ; calcul en base : niveau_de dans base-niveaux.sql, copie dans Regles.kt).
   // avance : minutes d'avance sur les missions des particuliers. Un niveau de moins si annulations > 5 % ou avertissement en cours.
   NIVEAUX: [
-    { id: "base", nom: "Cleaneur", icone: "✨", missions: 0, note: 0, avance: 0, avantages: ["Toutes les missions de vos formations"] },
-    { id: "confirme", nom: "Confirmé", icone: "⭐", missions: 10, note: 4.6, avance: 5, avantages: ["Badge « Confirmé » visible des clients", "Missions des particuliers 5 min avant les autres"] },
-    { id: "expert", nom: "Expert", icone: "🌟", missions: 30, note: 4.8, avance: 10, avantages: ["Badge « Expert » visible des clients", "Missions des particuliers 10 min avant les autres", "Missions des entreprises et conciergeries"] },
-    { id: "elite", nom: "Élite", icone: "👑", missions: 60, note: 4.9, avance: 15, avantages: ["Badge « Élite » visible des clients", "Missions des particuliers 15 min avant les autres", "Missions des entreprises et conciergeries", "Assistance prioritaire"] },
+    { id: "base", nom: "Cleaneur", icone: icone("termine"), missions: 0, note: 0, avance: 0, avantages: ["Toutes les missions de vos formations"] },
+    { id: "confirme", nom: "Confirmé", icone: icone("avis"), missions: 10, note: 4.6, avance: 5, avantages: ["Badge « Confirmé » visible des clients", "Missions des particuliers 5 min avant les autres"] },
+    { id: "expert", nom: "Expert", icone: icone("avis"), missions: 30, note: 4.8, avance: 10, avantages: ["Badge « Expert » visible des clients", "Missions des particuliers 10 min avant les autres", "Missions des entreprises et conciergeries"] },
+    { id: "elite", nom: "Élite", icone: icone("avis"), missions: 60, note: 4.9, avance: 15, avantages: ["Badge « Élite » visible des clients", "Missions des particuliers 15 min avant les autres", "Missions des entreprises et conciergeries", "Assistance prioritaire"] },
   ],
   ANNULATION_MAX_NIVEAU_PCT: 5,
   // Versements des Cleaneurs (repris de l'appli iPhone) : chaque vendredi, pour les missions validées jusqu'au mercredi minuit.

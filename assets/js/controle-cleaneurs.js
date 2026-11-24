@@ -1,5 +1,6 @@
 // Contrôle des Cleaneurs (back-office, 13 novembre 2026) : selfies du jour à comparer à la pièce d'identité, avertissements et bannissement.
 // Module à part, sans dépendance vers l'application, pour être chargé par gestion.html.
+import { icone } from "./icones.js";
 import { REGLES, dateLongue } from "./regles.js";
 import { tr, traduire } from "./langue.js";
 import { avertissementsCleaneurs, avertirCleaneur, leverBannissement, selfiesAVerifier, lienSelfie, lienDocument, deciderSelfie } from "./donnees.js";
@@ -10,7 +11,7 @@ const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": 
 export async function blocAvertissementsAdmin(boite) {
   const liste = await avertissementsCleaneurs().catch(() => []);
   if (!boite.isConnected) return;
-  boite.innerHTML = `<h2 class="titre-section">⚠️ ${tr("Avertissements des Cleaneurs")}</h2>
+  boite.innerHTML = `<h2 class="titre-section">${icone("alerte")} ${tr("Avertissements des Cleaneurs")}</h2>
     <p class="petit" style="margin-top:0">${tr("2 avertissements autorisés : au 3e, le Cleaneur est banni et ne peut plus prendre de missions.")}</p>
     ${liste.length ? liste.map(c => `<div class="carte ligne-compte" data-avert-admin="${esc(c.id)}"><div class="corps">
       <b>${esc(`${c.prenom || ""} ${c.nom || ""}`.trim() || "—")}</b> <span class="tampon${c.banni ? "" : c.nombre ? "" : " vert"}">${c.banni ? tr("Banni") : `${c.nombre} / ${REGLES.AVERTISSEMENTS_MAX}`}</span>
@@ -35,7 +36,7 @@ export async function blocAvertissementsAdmin(boite) {
 export async function blocSelfiesAdmin(boite) {
   const liste = await selfiesAVerifier().catch(() => []);
   if (!boite.isConnected) return;
-  boite.innerHTML = `<h2 class="titre-section">🤳 ${tr("Selfies des Cleaneurs (7 derniers jours)")}</h2>
+  boite.innerHTML = `<h2 class="titre-section">${icone("appareil-photo")} ${tr("Selfies des Cleaneurs (7 derniers jours)")}</h2>
     ${liste.length ? liste.map(s => `<div class="carte" data-selfie-admin="${esc(s.id)}"><div class="paire">
       <img alt="${esc(tr("Selfie du jour"))}" data-lien-selfie="${esc(s.chemin)}"><img alt="${esc(tr("Pièce d'identité"))}" ${s.identite ? `data-lien-identite="${esc(s.identite)}"` : ""}>
       <div style="flex:1 1 180px"><b>${esc(`${s.prenom || ""} ${s.nom || ""}`.trim())}</b><p class="petit" style="margin:2px 0 6px">${esc(dateLongue(new Date(s.jour)))} · ${tr({ A_VERIFIER: "À vérifier", VALIDE: "Validé", REFUSE: "Refusé" }[s.statut])}</p>
@@ -60,7 +61,7 @@ export async function blocSalariesAdmin(boite) {
   const { supabase } = await import("./donnees.js");
   const liste = await supabase.rpc("salaries_a_verifier").then(r => r.data || [], () => []);
   if (!boite.isConnected) return;
-  boite.innerHTML = `<h2 class="titre-section">🪪 ${tr("Salariés des sociétés (identité)")}</h2>
+  boite.innerHTML = `<h2 class="titre-section">${icone("document")} ${tr("Salariés des sociétés (identité)")}</h2>
     ${liste.length ? liste.map(s => `<div class="carte" data-salarie-admin="${esc(s.id)}"><div class="paire">
       <img alt="${esc(tr("Pièce d'identité"))}" ${s.identite ? `data-lien-identite="${esc(s.identite)}"` : ""}>
       <div style="flex:1 1 180px"><b>${esc(`${s.prenom || ""} ${s.nom || ""}`.trim())}</b><p class="petit" style="margin:2px 0 6px">${esc(s.societe || "")} · ${tr({ A_VERIFIER: "À vérifier", ACTIF: "Actif", REFUSE: "Refusé" }[s.statut] || s.statut)}${s.identite ? "" : ` · ${tr("pièce d'identité pas encore envoyée")}`}</p>

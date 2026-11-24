@@ -2,6 +2,7 @@
 // La conciergerie choisit, bien par bien, les étapes que le Cleaneur doit prouver par une photo ; elles sont enregistrées
 // avec le bien (champ etapesPhoto) et reprises à chaque réservation de ménage de location de ce bien.
 // Même écran dans l'appli (EtapesBien.kt).
+import { icone } from "./icones.js";
 import { ETAPES_LOCATION, PIECES_LOCATION, ETAPES_DEPART } from "./catalogue.js";
 import { enregistrerBien } from "./donnees.js";
 import { tr } from "./langue.js";
@@ -16,7 +17,7 @@ const ouverts = new Set();
 /** Éditeur des étapes (fiche du bien, espace Pro). */
 export function editeurEtapesPhoto(l) {
   const choisies = etapesPhotoDe(l), perso = etapesPersoDe(l);
-  return `<details class="etapes-photo" ${ouverts.has(l.id) ? "open" : ""}><summary>📷 ${tr("Étapes de ménage à valider en photo")} (${choisies.length + perso.length})</summary>
+  return `<details class="etapes-photo" ${ouverts.has(l.id) ? "open" : ""}><summary>${icone("appareil-photo")} ${tr("Étapes de ménage à valider en photo")} (${choisies.length + perso.length})</summary>
     <p class="petit">${tr("Choisissez ce que le Cleaneur doit prouver par une photo dans ce logement. Ces étapes sont reprises à chaque ménage de location de ce bien ; les étapes payantes s'ajoutent au prix affiché à la réservation.")}</p>
     <form data-form-etapes="${esc(l.id)}" novalidate>
       ${PIECES_LOCATION.map(([piece, nom]) => {

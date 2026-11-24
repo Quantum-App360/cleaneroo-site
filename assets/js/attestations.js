@@ -3,6 +3,7 @@
 // (conciergerie, entreprise) reçoit chaque mois un relevé comptable (PDF et tableau CSV). Le 1er du mois, une notification prévient
 // que le document du mois précédent est prêt (prevenir_documents_du_mois). Base : outils/base-attestations.sql. Même chose dans
 // l'appli (Attestations.kt).
+import { icone } from "./icones.js";
 import { supabase } from "./donnees.js";
 import { euros, REGLES } from "./regles.js";
 import { rubrique } from "./catalogue.js";
@@ -24,12 +25,12 @@ export function blocAttestations(liste, espace) {
   if (espace === "cleaneur" || !liste.length) return "";
   const mois = moisDes(liste.filter(f => f.type === "prestation" || (espace === "pro" && f.type === "frais")));
   if (!mois.length) return "";
-  if (espace === "pro") return `<div class="carte attestations" style="margin-top:12px"><b>📊 ${tr("Relevés comptables")}</b>
+  if (espace === "pro") return `<div class="carte attestations" style="margin-top:12px"><b>${icone("document")} ${tr("Relevés comptables")}</b>
     <p class="petit" style="margin:4px 0 8px">${tr("Chaque mois, toutes vos factures en un document pour votre comptabilité (PDF et tableau).")}</p>
     ${mois.map(([a, m]) => `<div class="ligne-attestation"><span>${esc(nomMois(a, m))}</span>
       <button type="button" class="bouton secondaire" data-releve="${a}-${m}">PDF</button><button type="button" class="lien-bouton" data-releve-csv="${a}-${m}">${tr("Tableur")}</button></div>`).join("")}</div>`;
   const annees = [...new Set(mois.map(([a]) => a))];
-  return `<div class="carte attestations" style="margin-top:12px"><b>🧾 ${tr("Attestations fiscales (crédit d'impôt)")}</b>
+  return `<div class="carte attestations" style="margin-top:12px"><b>${icone("document")} ${tr("Attestations fiscales (crédit d'impôt)")}</b>
     <p class="petit" style="margin:4px 0 8px">${tr("Cleaneroo n'avance pas le crédit d'impôt : déclarez vos dépenses de services à la personne, les impôts vous remboursent 50 %. Une attestation par mois, et une pour l'année : le total se reporte en case 7DB de votre déclaration.")}</p>
     ${annees.map(a => `<div class="ligne-attestation"><b>${tr("Année")} ${a}</b><button type="button" class="bouton" data-attestation="${a}">${tr("Attestation annuelle")}</button></div>`).join("")}
     ${mois.map(([a, m]) => `<div class="ligne-attestation"><span>${esc(nomMois(a, m))}</span><button type="button" class="bouton secondaire" data-attestation="${a}-${m}">PDF</button></div>`).join("")}</div>`;

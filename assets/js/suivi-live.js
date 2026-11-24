@@ -1,5 +1,6 @@
 // Suivi en direct du Cleaneur sur une carte, comme une livraison : itinéraire, position qui avance, heure d'arrivée.
 // Même écran que l'application (SuiviCarte.kt). Carte OpenStreetMap (Leaflet), itinéraire OSRM, adresse : Base Adresse Nationale.
+import { icone } from "./icones.js";
 import { REGLES, heure } from "./regles.js";
 import { traduire, tr } from "./langue.js";
 import { suivrePosition } from "./donnees.js";
@@ -72,15 +73,15 @@ export async function blocSuivi(boite, { arrivee, prenom }) {
       <div class="etapes-live"><span class="fait">Confirmé</span><span data-etape="EN_ROUTE">En route</span><span data-etape="SUR_PLACE">Sur place</span><span>Ménage</span></div>
     </div></div>
     <div class="actions-live">
-      ${"documentPictureInPicture" in window ? `<button type="button" class="bouton secondaire" data-mini>📌 Garder le suivi à l'écran</button>` : ""}
-      ${"Notification" in window ? `<button type="button" class="bouton secondaire" data-alerte>🔔 Me prévenir à son arrivée</button>` : ""}
+      ${"documentPictureInPicture" in window ? `<button type="button" class="bouton secondaire" data-mini>${icone("position")} Garder le suivi à l'écran</button>` : ""}
+      ${"Notification" in window ? `<button type="button" class="bouton secondaire" data-alerte>${icone("cloche")} Me prévenir à son arrivée</button>` : ""}
     </div>
     <p class="petit" data-info-fond style="margin:6px 0 0"></p>`;
   traduire(boite);
   const L = await chargerLeaflet();
   const carte = L.map(boite.querySelector(".carte-live"), { zoomControl: false, scrollWheelZoom: false, tap: false, dragging: !L.Browser.mobile, zoomSnap: 0.25 });
   L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "© OpenStreetMap" }).addTo(carte);
-  const maison = L.marker([arrivee.lat, arrivee.lon], { icon: L.divIcon({ className: "pin-maison", html: "<span>🏠</span>", iconSize: [40, 40], iconAnchor: [20, 48] }) }).addTo(carte);
+  const maison = L.marker([arrivee.lat, arrivee.lon], { icon: L.divIcon({ className: "pin-maison", html: "<span>" + icone("logement") + "</span>", iconSize: [40, 40], iconAnchor: [20, 48] }) }).addTo(carte);
   const initiale = (prenom || "C").trim().charAt(0).toUpperCase();
   const cleaneur = L.marker([arrivee.lat, arrivee.lon], { icon: L.divIcon({ className: "pin-cleaneur", html: `<span class="onde"></span><b>${initiale}</b>`, iconSize: [46, 46], iconAnchor: [23, 23] }), zIndexOffset: 500 });
   const trace = L.polyline([], { color: "#1F8A80", weight: 5, opacity: .9, lineCap: "round" }).addTo(carte);
@@ -110,7 +111,7 @@ export async function blocSuivi(boite, { arrivee, prenom }) {
   });
   boite.querySelector("[data-alerte]")?.addEventListener("click", async e => {
     const r = await Notification.requestPermission().catch(() => "denied");
-    e.target.textContent = tr(r === "granted" ? "🔔 Alerte activée" : "Alertes bloquées par le navigateur");
+    e.target.textContent = tr(r === "granted" ? "Alerte activée" : "Alertes bloquées par le navigateur");
     e.target.disabled = r === "granted";
   });
 

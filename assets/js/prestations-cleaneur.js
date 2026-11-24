@@ -4,6 +4,7 @@
 //  • les formations Cleaneroo (Socle, quiz) sont CONSEILLÉES, jamais imposées (16 novembre 2026) : un indépendant ne reçoit pas
 //    de formation imposée par la plateforme (risque de requalification en salariat). Elles donnent le badge « Formé ».
 // Chaque ligne renvoie vers la fiche de formation et ses vidéos. Même écran dans l'appli (PrestationsCleaneur.kt).
+import { icone } from "./icones.js";
 import { supabase } from "./donnees.js";
 import { chargerFormations, textes, ouvrirFormation, RESSOURCES } from "./formations.js";
 import { qualificationsRequises, MODULES_EXIGES_PAR_LA_LOI } from "./regles.js";
@@ -41,22 +42,22 @@ export async function verrouillerPrestations(form, profil) {
   form.querySelector(".encart-socle")?.remove();
   const socle = cat.find(m => m.id === "socle");
   const sansSocle = socle && statut.socle !== "VALIDEE";
-  if (sansSocle) cases[0].closest("label").insertAdjacentHTML("beforebegin", `<div class="encart-socle conseil">🎓 <b>${tr("Formation conseillée : Socle Cleaneroo")}</b>
+  if (sansSocle) cases[0].closest("label").insertAdjacentHTML("beforebegin", `<div class="encart-socle conseil">${icone("formation")} <b>${tr("Formation conseillée : Socle Cleaneroo")}</b>
     <span>${tr("Gratuite et facultative : une fiche à lire et un petit quiz. Elle vous donne le badge « Formé », visible des clients.")}</span>
-    <span class="liens"><button type="button" class="bouton petit" data-module="socle">🎓 ${tr("Suivre la formation")}</button>
+    <span class="liens"><button type="button" class="bouton petit" data-module="socle">${icone("formation")} ${tr("Suivre la formation")}</button>
     ${(RESSOURCES.socle || []).filter(x => x[2] === "video").map(([t, url]) => `<a class="lien-bouton" href="${url}" target="_blank" rel="noopener">▶ ${esc(tr(t))}</a>`).join("")}</span></div>`);
   cases.forEach(c => {
     const label = c.closest("label");
     label.nextElementSibling?.classList.contains("etat-prestation") && label.nextElementSibling.remove();
     label.classList.remove("prestation-bloquee");
     const e = etatPrestation(c.value, cat, statut, rc);
-    const boutons = e.modules.map(m => `<a class="lien-bouton" href="#/formation/${m.id}">🎓 ${esc(textes(m).titre)}</a>`).join("")
+    const boutons = e.modules.map(m => `<a class="lien-bouton" href="#/formation/${m.id}">${icone("formation")} ${esc(textes(m).titre)}</a>`).join("")
       + [...new Map(e.modules.flatMap(m => RESSOURCES[m.id] || []).filter(x => x[2] === "video").map(x => [x[1], x])).values()]
         .map(([t, url]) => `<a class="lien-bouton" href="${url}" target="_blank" rel="noopener">▶ ${esc(tr(t))}</a>`).join("");
     let texte = "";
-    if (e.bloquee === "rc") texte = `🔒 ${tr("Non couverte par votre RC Pro")} (${tr(ACTIVITES_RC_PRO.find(a => a[0] === e.activite)?.[1] || e.activite)}). ${tr("Envoyez une attestation d'assurance qui couvre cette activité.")}`;
-    else if (e.bloquee === "attestation") texte = `🔒 ${tr("Exigée par la loi : attestation de l'organisme de formation officiel. Voir comment l'obtenir :")}`;
-    else if (e.modules.length) texte = `🎓 ${tr("Formation conseillée (gratuite, facultative) :")}`;
+    if (e.bloquee === "rc") texte = `${icone("cadenas")} ${tr("Non couverte par votre RC Pro")} (${tr(ACTIVITES_RC_PRO.find(a => a[0] === e.activite)?.[1] || e.activite)}). ${tr("Envoyez une attestation d'assurance qui couvre cette activité.")}`;
+    else if (e.bloquee === "attestation") texte = `${icone("cadenas")} ${tr("Exigée par la loi : attestation de l'organisme de formation officiel. Voir comment l'obtenir :")}`;
+    else if (e.modules.length) texte = `${icone("formation")} ${tr("Formation conseillée (gratuite, facultative) :")}`;
     if (e.bloquee) { c.disabled = true; label.classList.add("prestation-bloquee"); }
     if (texte) label.insertAdjacentHTML("afterend", `<div class="etat-prestation ${e.bloquee ? "bloquee" : ""}">${texte} ${boutons}</div>`);
   });

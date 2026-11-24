@@ -110,7 +110,7 @@ export async function brancherEspaceSociete(vue, p) {
     const aVerifier = salaries.filter(s => s.statut === "A_VERIFIER");
     if (aVerifier.length) l.push(`${aVerifier.length} ${tr(aVerifier.length > 1 ? "salariés en attente de vérification d'identité" : "salarié en attente de vérification d'identité")}`);
     salaries.filter(s => s.statut === "A_VERIFIER" && !s.identite).forEach(s => l.push(`${esc(s.prenom)} : ${tr("pièce d'identité à envoyer depuis son accès")}`));
-    return l.length ? `<div class="carte alerte-societe">${l.map(x => `<p>⚠️ ${x}</p>`).join("")}</div>` : "";
+    return l.length ? `<div class="carte alerte-societe">${l.map(x => `<p>${icone("alerte")} ${x}</p>`).join("")}</div>` : "";
   };
   const planning = () => {
     const jours = [...Array(7)].map((_, i) => plusJours(auj, i));
@@ -145,7 +145,7 @@ export async function brancherEspaceSociete(vue, p) {
         <div class="corps"><div class="haut"><h3>${esc(s.prenom)} ${esc(s.nom)}</h3><span class="tampon ${teinte}">${tr(lib)}</span></div>
           <p class="petit">${s.statut === "INVITE" ? tr("N'a pas encore ouvert son lien.") : `${s.identite ? "✓" : "✗"} ${tr("Pièce d'identité")} · ${["A_VERIFIER", "VALIDE"].includes(s.selfie_du_jour) ? "✓" : "—"} ${tr("Selfie du jour")}`}
             · ${s.missions_a_venir} ${tr(s.missions_a_venir > 1 ? "missions à venir" : "mission à venir")} · ${s.missions_terminees} ${tr(s.missions_terminees > 1 ? "terminées" : "terminée")}${s.note ? ` · ★ ${String(s.note).replace(".", ",")} (${s.nb_avis})` : ""}</p>
-          ${s.statut !== "INVITE" ? `<p class="petit formations-salarie">🎓 ${(s.formations || []).includes("socle") ? `✓ ${tr("Socle Cleaneroo")}` : `<span class="muet">${tr("Socle Cleaneroo à suivre")}</span>`}
+          ${s.statut !== "INVITE" ? `<p class="petit formations-salarie">${icone("formation")} ${(s.formations || []).includes("socle") ? `✓ ${tr("Socle Cleaneroo")}` : `<span class="muet">${tr("Socle Cleaneroo à suivre")}</span>`}
             ${formationsDe(s).map(id => `<span class="tampon ${MODULES_EXIGES_PAR_LA_LOI.includes(id) ? "" : "vert"}">${esc(titreModule(id))}</span>`).join(" ")}</p>` : ""}
           ${s.statut === "REFUSE" && s.motif ? `<p class="petit erreur">${esc(s.motif)}</p>` : ""}
           <div class="actions-bien">${s.statut === "INVITE" ? `<button type="button" class="lien-bouton" data-renvoyer="${esc(s.code)}" data-prenom="${esc(s.prenom)}">${tr("Renvoyer le lien")}</button>` : ""}
@@ -259,7 +259,7 @@ async function afficherActivitePeriode(zone, { p, missions, salaries, tableau })
       <div class="carte tuile-activite"><span>${tr("Missions terminées")}</span><b>${r.missions}</b><small class="muet">${duree(r.minutes)} ${tr("travaillées")}</small></div>
       <div class="carte tuile-activite"><span>${tr("Par heure travaillée")}</span><b>${r.minutes ? euros(r.parHeureC) : "—"}</b><small class="muet">${tr("Moyenne de l'équipe")}</small></div>
     </div>
-    ${r.aValider ? `<p class="petit">⏳ ${tr("En attente de validation")} : ${missionsMot(r.aValider)} · ${euros(r.aValiderC)} (${tr("comptées dans le chiffre d'affaires une fois validées")})</p>` : ""}
+    ${r.aValider ? `<p class="petit">${icone("horloge")} ${tr("En attente de validation")} : ${missionsMot(r.aValider)} · ${euros(r.aValiderC)} (${tr("comptées dans le chiffre d'affaires une fois validées")})</p>` : ""}
     <h3 class="sous-titre-societe">${tr("Par salarié")}</h3>
     <div class="carte liste-activite">${r.salaries.map(s => ligneBarre(esc(s.nom), `${missionsMot(s.missions)} · ${duree(s.minutes)} · ${euros(s.parHeureC)} ${tr("par heure")}`, s.ca_c, maxSal)).join("") || vide}</div>
     <h3 class="sous-titre-societe">${tr(type === "jour" ? "Missions du jour" : type === "annee" ? "Mois par mois" : "Jour par jour")}</h3>
@@ -364,7 +364,7 @@ export async function brancherSalarie(vue, p, recharger) {
       ${e.statut === "REFUSE" && e.motif ? `<p class="petit erreur">${esc(e.motif)}</p>` : ""}
       ${e.identite && e.statut !== "REFUSE" ? `<p class="petit">✓ ${tr("Pièce d'identité envoyée")}</p>` : `<label class="bouton">${icone("photo")} ${tr("Envoyer ma pièce d'identité")}<input type="file" accept="image/*,application/pdf" hidden data-identite-salarie></label>
         <p class="erreur" id="erreur-identite"></p>`}
-      <p class="petit"><a href="#/formation/socle">🎓 ${tr("Mes formations")}</a> · ${tr("conseillées par Cleaneroo ; votre employeur peut vous en demander d'autres.")}</p>
+      <p class="petit"><a href="#/formation/socle">${icone("formation")} ${tr("Mes formations")}</a> · ${tr("conseillées par Cleaneroo ; votre employeur peut vous en demander d'autres.")}</p>
       ${e.telephone ? `<p class="petit">${tr("Une question ?")} <a href="tel:${esc(e.telephone)}">${tr("Appeler")} ${esc(e.prenom || "")}</a></p>` : ""}</div>`;
   traduire(boite);
   boite.querySelector("[data-identite-salarie]")?.addEventListener("change", async ev => {

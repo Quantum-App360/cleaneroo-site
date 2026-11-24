@@ -304,7 +304,7 @@ function ecranConnexion(vue, mode, message = "", ok = false, roleDefaut = "clien
     if (champSiret.value.replace(/\D/g, "") !== n) return;
     if (!e) { fiche.textContent = tr("Entreprise introuvable dans le registre officiel : vérifiez le numéro."); return; }
     if (f.societe && !f.societe.value.trim()) f.societe.value = e.nom;
-    fiche.innerHTML = e.active ? `✓ ${esc(e.nom)}${e.adresse ? ` · ${esc(e.adresse)}` : ""}` : `⚠️ ${tr("Cette entreprise est fermée dans le registre officiel.")}`;
+    fiche.innerHTML = e.active ? `✓ ${esc(e.nom)}${e.adresse ? ` · ${esc(e.adresse)}` : ""}` : `${tr("Cette entreprise est fermée dans le registre officiel.")}`;
   });
   // Erreur affichée sous le formulaire : ce qui a été saisi est conservé.
   const erreur = t => { f.querySelector("#erreur-compte").textContent = tr(t); f.querySelector("[type=submit]").disabled = false; };
@@ -725,7 +725,7 @@ export async function pageMesPrestations(vue, mode = "demandes", sous = null) {
     f.rue.value = l.rue || ""; f.codePostal.value = l.codePostal || ""; f.ville.value = l.ville || "";
     f.surface.value = l.surface || ""; f.chambres.value = l.chambres ?? ""; f.sdb.value = l.sdb ?? "";
     f.immatriculation.value = l.immatriculation || ""; f.longueur.value = categorieBien(l) === "logement" ? "" : l.surface || ""; f.port.value = l.port || ""; f.place.value = l.place || ""; f.accesPonton.value = l.accesPonton || "";
-    vue.querySelector("#titre-form-bien").textContent = `✏️ ${tr("Modifier")} · ${nomDuBien(l)}`;
+    vue.querySelector("#titre-form-bien").textContent = `${tr("Modifier")} · ${nomDuBien(l)}`;
     f.querySelector("[type=submit]").textContent = tr("Enregistrer les modifications");
     const d = vue.querySelector("#ajout-bien"); d.open = true; d.scrollIntoView({ behavior: "smooth", block: "start" });
   });

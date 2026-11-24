@@ -1,4 +1,5 @@
 // Catalogue des prestations : copie EXACTE de Catalogue.kt et de Reservation.kt (application Android).
+import { icone } from "./icones.js";
 import { REGLES, euros } from "./regles.js";
 /** Tâche : groupe = intertitre ; parSurface = chiffrée pour la surface de référence, au prorata au-delà ; types = types de lieu (vide = tous). */
 const T = (id, nom, prixC, minutes, o = {}) => ({ id, nom, prixC, minutes, groupe: "", parSurface: false, types: [], parConvives: false, ...o });
@@ -153,11 +154,11 @@ export const RUBRIQUES = [
     taches: tachesLogement, packs: packsLogement, surfaceReferenceM2: 60,
     // 22/11/2026 : « Quel ménage ? » réunit l'occasion et le niveau (Standard · Confort · Premium) en un seul choix, en cartes.
     occasions: [
-      { id: "classique", nom: "Ménage classique", packId: "", emoji: "🧽", badge: "L'essentiel", description: "Le ménage complet du quotidien." },
-      { id: "recevoir", nom: "Avant de recevoir", packId: "confort", emoji: "🥂", badge: "Conseillé", conseille: true, description: "Draps, vitres et réfrigérateur en plus : tout est prêt pour vos invités." },
-      { id: "vacances", nom: "Retour de vacances", packId: "", tachesEnPlus: ["frigo"], emoji: "🧳", badge: "Frigo inclus", description: "Le ménage complet, avec le réfrigérateur vidé et nettoyé." },
-      { id: "printemps", nom: "Grand ménage de printemps", packId: "prestige", emoji: "🌸", badge: "Du sol au plafond", description: "Four, hotte, placards et armoires compris : le grand ménage complet." },
-      { id: "vente", nom: "Avant une vente ou une location", packId: "prestige", emoji: "🔑", badge: "Prêt pour les visites", description: "Le logement impeccable, du sol au plafond, avant les visites." }],
+      { id: "classique", nom: "Ménage classique", packId: "", emoji: icone("termine"), badge: "L'essentiel", description: "Le ménage complet du quotidien." },
+      { id: "recevoir", nom: "Avant de recevoir", packId: "confort", emoji: icone("evenement"), badge: "Conseillé", conseille: true, description: "Draps, vitres et réfrigérateur en plus : tout est prêt pour vos invités." },
+      { id: "vacances", nom: "Retour de vacances", packId: "", tachesEnPlus: ["frigo"], emoji: icone("valise"), badge: "Frigo inclus", description: "Le ménage complet, avec le réfrigérateur vidé et nettoyé." },
+      { id: "printemps", nom: "Grand ménage de printemps", packId: "prestige", emoji: icone("termine"), badge: "Du sol au plafond", description: "Four, hotte, placards et armoires compris : le grand ménage complet." },
+      { id: "vente", nom: "Avant une vente ou une location", packId: "prestige", emoji: icone("cle"), badge: "Prêt pour les visites", description: "Le logement impeccable, du sol au plafond, avant les visites." }],
     frequences: [["semaine", "Chaque semaine"], ["deux_semaines", "Toutes les 2 semaines"], ["mois", "Chaque mois"]],
     moments: [["matin", "Le matin"], ["apres_midi", "L'après-midi"], ["peu_importe", "Peu importe"]] },
   { id: "rental", nom: "Location saisonnière", sousTitre: "Prêt pour vos prochains voyageurs", icone: "location", tauxHoraireC: 3000, salissureSurTemps: true, affichagePrix: "PAR_MENAGE",

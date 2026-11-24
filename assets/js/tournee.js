@@ -4,6 +4,7 @@
 // - Missions → Disponibles : bascule Liste / Carte ; une épingle touchée affiche la fiche de la mission (et son bouton) sous la carte ;
 // - page « Devenir Cleaneur » : la même tournée sur une journée d'exemple autour de Fréjus.
 // Règle anti-contournement : une mission pas encore prise n'a jamais d'adresse, seulement une zone d'environ 1,5 km.
+import { icone } from "./icones.js";
 import { tr, traduire } from "./langue.js";
 import { esc } from "./commun.js";
 import { afficherCarte, coordonnees } from "./cartes.js";
@@ -66,9 +67,9 @@ export function blocTournee(etapes) {
   if (!etapes.length) return "";
   styles();
   return `<div class="tournee">
-    <h2 class="titre-section">🗺️ ${tr("Ma tournée")}</h2>
+    <h2 class="titre-section">${icone("position")} ${tr("Ma tournée")}</h2>
     <div class="carte-tournee" role="img" aria-label="${esc(tr("Ma tournée"))}"></div>
-    <div class="tournee-depart" hidden>🚗<div><b data-depart></b><p class="petit" style="margin:2px 0 0" data-depart-detail></p></div></div>
+    <div class="tournee-depart" hidden><div><b data-depart></b><p class="petit" style="margin:2px 0 0" data-depart-detail></p></div></div>
     ${etapes.map((e, i) => `<div class="tournee-etape"><span class="num">${i + 1}</span><div class="corps">
       <b>${e.debut ? esc(heure(e.debut)) + " · " : ""}${esc(tr(e.titre))}</b><span class="petit muet">${esc(e.adresse)}</span>
       <span class="petit muet" data-trajet="${i}"></span></div></div>`).join("")}
@@ -101,7 +102,7 @@ export async function brancherTournee(boite, etapes, depart) {
         .replace("{0}", decimal(d)).replace("{1}", String(min));
     } else if (i > 0) {
       const t = boite.querySelector(`[data-trajet="${i}"]`);
-      if (t) t.textContent = `🚗 ${tr("{0} min depuis l'étape précédente").replace("{0}", String(min))} · ${decimal(d)} km`;
+      if (t) t.textContent = `${tr("{0} min depuis l'étape précédente").replace("{0}", String(min))} · ${decimal(d)} km`;
     }
   });
 }
@@ -115,7 +116,7 @@ export function blocListeCarte(nb) {
   if (!nb) return "";
   styles();
   return `<div class="bascule-dispo segments" role="tablist">
-      <button type="button" data-vue-dispo="liste">☰ ${tr("Liste")}</button><button type="button" data-vue-dispo="carte">🗺️ ${tr("Carte")}</button></div>
+      <button type="button" data-vue-dispo="liste">${icone("menu")} ${tr("Liste")}</button><button type="button" data-vue-dispo="carte">${icone("position")} ${tr("Carte")}</button></div>
     <div data-zone-carte-dispo hidden><div class="carte-dispo-boite" role="img" aria-label="Carte des missions"></div>
       <p class="petit legende-carte"><span><i style="--c:${VERT}"></i>${tr("Mes missions")}</span><span><i style="--c:${CORAIL}"></i>${tr("Missions disponibles (zone approximative)")}</span></p>
       <p class="petit muet" style="margin:0 0 8px">${tr("L'adresse exacte s'affiche une fois la mission prise. Touchez une épingle pour voir la mission.")}</p></div>`;

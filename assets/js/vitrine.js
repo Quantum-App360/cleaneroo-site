@@ -4,6 +4,7 @@
 // • Côté client, « Qui vient » : prénom et photo d'identité du Cleaneur (pièce de son dossier), vitrine de sa société.
 // • Côté Cleaneur, « Chez qui » : vitrine du client professionnel, sur la mission.
 // Mêmes écrans dans l'application (Vitrines.kt).
+import { icone } from "./icones.js";
 import { supabase, reduirePhoto } from "./donnees.js";
 import { tr, traduire } from "./langue.js";
 
@@ -25,7 +26,7 @@ export function carteVitrine(v, surtitre = "") {
 /** Éditeur de la vitrine (espace Conciergerie, Hôtels, Entreprise, et Société de nettoyage). */
 export function blocVitrine(p) {
   const v = p.vitrine || {};
-  return `<div id="vitrine-pro"><h2 class="titre-section">🏷️ ${tr("Ma vitrine")}</h2>
+  return `<div id="vitrine-pro"><h2 class="titre-section">${icone("commerce")} ${tr("Ma vitrine")}</h2>
     <p class="petit" style="margin-top:0">${tr("Ce que voient les Cleaneurs (ou vos clients) avant de travailler avec vous : logo, nom, ville et quelques mots. Pas de numéro, d'e-mail ni de site : ils sont masqués automatiquement, tout passe par Cleaneroo.")}</p>
     <form class="carte" id="form-vitrine" novalidate>
       <div class="vitrine-edition"><label class="vitrine-logo-choix">${v.logo ? `<img class="vitrine-logo" src="${esc(urlLogo(v.logo))}" alt="">` : `<span class="vitrine-logo vide">＋</span>`}
@@ -84,7 +85,7 @@ export async function blocQuiVient(avant, reference) {
       <div><span class="surtitre">${tr("Votre Cleaneur")}</span><b>${esc(q.prenom || "")}</b>
         <p class="petit" style="margin:2px 0 0">${tr(photo ? "Photo vérifiée par Cleaneroo : c'est bien cette personne qui vient." : "Cleaneur vérifié par Cleaneroo.")}</p></div></div>
     ${q.societe && q.societe.nom ? carteVitrine(q.societe, tr("Sa société")) : ""}
-    <p class="petit muet" style="margin:8px 0 0">💬 ${tr("Pour échanger, utilisez la messagerie de la prestation : vos coordonnées restent privées.")}</p>`;
+    <p class="petit muet" style="margin:8px 0 0">${icone("message")} ${tr("Pour échanger, utilisez la messagerie de la prestation : vos coordonnées restent privées.")}</p>`;
   avant.parentNode.insertBefore(boite, avant);
   traduire(boite);
 }

@@ -149,7 +149,7 @@ async function listeInscriptions() {
     <p class="note">Offre de lancement : <b>${data.filter(i => i.type === "cleaneur" && i.valide_le).length}</b> dossier(s) Cleaneur validé(s) · 3 mois de formule Pro offerts aux Cleaneurs inscrits jusqu'au 31 janvier 2027 (sans limite de places).</p>
     <button class="bouton secondaire" id="export">Télécharger la liste (Excel)</button>
     <div style="margin-top:14px">${data.map(i => `<div class="carte" style="margin-bottom:10px">
-      <b>${esc(i.prenom)} ${esc(i.nom)}</b> <span class="tampon">${TYPES_INSCRIPTION[i.type]}</span>${suspect(i) ? ` <span class="tampon spam">⚠ ${suspect(i)}</span>` : ""}
+      <b>${esc(i.prenom)} ${esc(i.nom)}</b> <span class="tampon">${TYPES_INSCRIPTION[i.type]}</span>${suspect(i) ? ` <span class="tampon spam">${icone("alerte")} ${suspect(i)}</span>` : ""}
       <button type="button" class="lien-bouton" style="float:right;color:var(--erreur)" data-spam="${i.id}">Supprimer (spam)</button>
       <div class="petit">${i.type === "rappel" ? `${esc(i.profil)} · à rappeler ${CRENEAUX_RAPPEL[i.creneau] || ""}` : `<a href="mailto:${esc(i.email)}">${esc(i.email)}</a>`}${i.telephone ? ` · <a href="tel:${esc(i.telephone)}">${esc(i.telephone)}</a>` : ""} · ${esc(i.code_postal)} ${esc(i.ville)} · ${dateLongue(new Date(i.cree_le))}</div>
       ${i.message ? `<p class="muet" style="margin:6px 0 0">${esc(i.message)}</p>` : ""}
@@ -240,8 +240,8 @@ async function detailDossier(d) {
     </div>`;
   if (d.siret) verifierSiret(d.siret, d.prenom, d.nom).then(v => {
     const c = vue.querySelector("#controle-siret"); if (!c) return;
-    const icones = { verifie: "✅", non_diffusible: "🟠", indisponible: "⏳" };
-    c.innerHTML = `${icones[v.etat] || "❌"} ${esc(MESSAGES_SIRET[v.etat] || v.etat)}${v.nomOfficiel ? ` · <b>${esc(v.nomOfficiel)}</b>` : ""}`;
+    const icones = { verifie: "${icone("valide")}", non_diffusible: "${icone("alerte")}", indisponible: "${icone("horloge")}" };
+    c.innerHTML = `${icones[v.etat] || icone("alerte")} ${esc(MESSAGES_SIRET[v.etat] || v.etat)}${v.nomOfficiel ? ` · <b>${esc(v.nomOfficiel)}</b>` : ""}`;
   });
   const recharger = async () => { const liste = await dossiersCleaneurs().catch(() => []); const n = liste.find(x => x.id === d.id); n ? detailDossier(n) : listeDossiers(); };
   document.getElementById("retour").onclick = listeDossiers;

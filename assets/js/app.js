@@ -462,7 +462,7 @@ function blocOffreCleaneurs() {
 function exempleRevenu() {
   const prixC = calculer(entreeEstimation({ ...brouillonExemple("rental", {}) }, false, null)).totalC;
   const gratuit = Math.round(prixC * (10000 - REGLES.COMMISSION_GRATUIT_PB) / 10000), pro = Math.round(prixC * (10000 - REGLES.COMMISSION_PRO_PB) / 10000);
-  return `<div class="carte teintee" style="margin-bottom:16px"><b>💶 ${tr("Exemple : un ménage de location saisonnière")}</b>
+  return `<div class="carte teintee" style="margin-bottom:16px"><b>${icone("paiement")} ${tr("Exemple : un ménage de location saisonnière")}</b>
     <p style="margin:6px 0 0">${tr("Prix de la prestation")} : <b>${euros(prixC)}</b> · ${tr("vous touchez")} <b>${euros(gratuit)}</b> ${tr("en formule Gratuite")}, <b>${euros(pro)}</b> ${tr("en formule Pro")}.</p>
     <p class="petit" style="margin:4px 0 0">${tr("Pourboires en plus, à 100 % pour vous. Vous déclarez vous-même votre chiffre d'affaires (micro-entreprise).")}</p></div>`;
 }
@@ -713,7 +713,7 @@ async function afficherPage() {
     const presence = document.getElementById("presence-client");
     if (presence) supabase.rpc("presence_a_confirmer", { p_reference: decodeURIComponent(ref || ""), p_jeton: decodeURIComponent(jeton || "") }).then(({ data }) => {
       if (!data || !presence.isConnected) return;
-      presence.innerHTML = `<div class="carte teintee" style="margin-bottom:14px"><b>📍 ${tr("Votre Cleaneur est-il arrivé ?")}</b>
+      presence.innerHTML = `<div class="carte teintee" style="margin-bottom:14px"><b>${icone("position")} ${tr("Votre Cleaneur est-il arrivé ?")}</b>
         <p class="petit" style="margin:4px 0 10px">${tr("Sa géolocalisation n'a pas pu le confirmer. Confirmez-vous sa présence chez vous ?")}</p>
         <div class="boutons"><button type="button" class="bouton" data-present="1">${tr("Oui, il est là")}</button>
         <button type="button" class="bouton secondaire" data-present="0">${tr("Non, pas encore")}</button></div></div>`;

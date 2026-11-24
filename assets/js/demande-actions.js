@@ -3,6 +3,7 @@
 //   vérification Cleaneroo, les propositions en attente sont retirées et leurs Cleaneurs prévenus (modifier_demande).
 // - Bon d'intervention : document imprimable / PDF (client et Cleaneur), sans codes d'accès (bon_intervention).
 // Même chose dans l'appli (DemandeActions.kt). Base : outils/base-modifier-bon.sql.
+import { icone } from "./icones.js";
 import { supabase } from "./donnees.js";
 import { rubrique } from "./catalogue.js";
 import { euros, dateLongue, heure, duree } from "./regles.js";
@@ -16,7 +17,7 @@ const local = d => { const x = new Date(d); x.setMinutes(x.getMinutes() - x.getT
 /** Formulaire « Modifier ma demande » (page de suivi). */
 export function blocModifier(boite, d, ref, jeton, apres) {
   if (!boite || !["VERIFICATION", "PUBLIEE"].includes(d.statut)) return;
-  boite.innerHTML = `<details class="carte" style="margin:12px 0"><summary><b>✏️ ${tr("Modifier ma demande")}</b></summary>
+  boite.innerHTML = `<details class="carte" style="margin:12px 0"><summary><b>${tr("Modifier ma demande")}</b></summary>
     <p class="petit">${tr("La demande sera vérifiée à nouveau par Cleaneroo ; les propositions en attente sont retirées et les Cleaneurs concernés prévenus.")}</p>
     <form novalidate><label class="champ">${tr("Date et heure")}<input name="creneau" type="datetime-local" value="${d.creneau ? local(d.creneau) : ""}"></label>
     <label class="champ">${tr("Remarque pour le Cleaneur (facultatif)")}<textarea name="remarque" maxlength="1000" rows="3"></textarea></label>
@@ -64,7 +65,7 @@ export async function ouvrirBon(ref, jeton = null) {
 }
 
 /** Bouton « Bon d'intervention (PDF) ». */
-export const boutonBon = (ref, jeton = "") => `<button type="button" class="bouton secondaire" data-bon="${esc(ref)}" data-bon-jeton="${esc(jeton)}">🧾 ${tr("Bon d'intervention (PDF)")}</button>`;
+export const boutonBon = (ref, jeton = "") => `<button type="button" class="bouton secondaire" data-bon="${esc(ref)}" data-bon-jeton="${esc(jeton)}">${icone("document")} ${tr("Bon d'intervention (PDF)")}</button>`;
 export function brancherBons(boite) {
   boite?.querySelectorAll("[data-bon]").forEach(b => b.onclick = () => ouvrirBon(b.dataset.bon, b.dataset.bonJeton || null));
 }
@@ -77,9 +78,9 @@ export async function blocConstat(boite, ref, jeton) {
   if (!boite) return;
   const { data: c } = await supabase.rpc("constat_arrivee", { p_reference: ref, p_jeton: jeton || null });
   if (!c?.signalements?.length || !boite.isConnected) return;
-  boite.innerHTML = `<div class="carte" style="margin:12px 0;border:1.5px solid var(--alerte)"><b>⚠️ ${tr("Problème signalé à l'arrivée")}</b>
+  boite.innerHTML = `<div class="carte" style="margin:12px 0;border:1.5px solid var(--alerte)"><b>${icone("alerte")} ${tr("Problème signalé à l'arrivée")}</b>
     <p class="petit" style="margin:4px 0 10px">${tr("Constat horodaté avec photos, à joindre à une déclaration d'assurance ou à une réclamation auprès de la plateforme de location.")}</p>
-    <button type="button" class="bouton secondaire" data-constat>📄 ${tr("Constat d'arrivée (PDF)")}</button></div>`;
+    <button type="button" class="bouton secondaire" data-constat>${icone("document")} ${tr("Constat d'arrivée (PDF)")}</button></div>`;
   traduire(boite);
   boite.querySelector("[data-constat]").onclick = () => ouvrirConstat(c);
 }

@@ -2,6 +2,7 @@
 // (REGLES.SUPPLEMENT_PAS_MIN à SUPPLEMENT_MAX_MIN) ; le prix suit le tarif de la prestation (prix / durée prévue), plafonné à
 // SUPPLEMENT_MAX_PCT % du prix ; un seul par prestation. Le client accepte ou refuse ; sans réponse en SUPPLEMENT_REPONSE_MIN min,
 // c'est un refus. Le calcul fait foi en base (proposer_supplement). Même écran dans l'appli (Supplement.kt).
+import { icone } from "./icones.js";
 import { supabase } from "./donnees.js";
 import { REGLES, euros } from "./regles.js";
 import { tr, traduire } from "./langue.js";
@@ -18,10 +19,10 @@ export async function blocSupplementCleaneur(boite, m, aSignale) {
   if (!boite) return;
   const { data: s } = await supabase.rpc("supplement_de", { p_reference: m.reference, p_jeton: null });
   if (!boite.isConnected) return;
-  if (s) { boite.innerHTML = `<div class="carte supplement"><b>⏱️ ${tr("Supplément")} : +${s.minutes} min · ${euros(s.montant_c)}</b><p class="petit" style="margin:4px 0 0">${tr(STATUTS[s.statut])}</p></div>`; traduire(boite); return; }
+  if (s) { boite.innerHTML = `<div class="carte supplement"><b>${icone("horloge")} ${tr("Supplément")} : +${s.minutes} min · ${euros(s.montant_c)}</b><p class="petit" style="margin:4px 0 0">${tr(STATUTS[s.statut])}</p></div>`; traduire(boite); return; }
   if (!aSignale) { boite.innerHTML = ""; return; }
   const pas = REGLES.SUPPLEMENT_PAS_MIN, max = REGLES.SUPPLEMENT_MAX_MIN;
-  boite.innerHTML = `<details class="carte supplement"><summary><b>⏱️ ${tr("Proposer un supplément pour imprévu")}</b></summary>
+  boite.innerHTML = `<details class="carte supplement"><summary><b>${icone("horloge")} ${tr("Proposer un supplément pour imprévu")}</b></summary>
     <p class="petit">${tr("Pour un travail en plus dû au problème signalé. Le client reçoit la proposition et l'accepte ou la refuse ; sans réponse, vous faites la prestation prévue.")}</p>
     <label class="champ">${tr("Temps en plus")} : <b data-sup-minutes>${pas} min</b> · <b data-sup-prix>${euros(prixSupplementC(m.estimation_c, m.duree_min, pas))}</b>
       <input type="range" min="${pas}" max="${max}" step="${pas}" value="${pas}" data-sup-curseur></label>
@@ -51,7 +52,7 @@ export async function blocSupplementClient(boite, ref, jeton) {
   const enAttente = s.statut === "EN_ATTENTE";
   const reste = Math.max(0, Math.ceil((new Date(s.limite) - Date.now()) / 60000));
   boite.innerHTML = `<div class="carte supplement" style="margin:12px 0;${enAttente ? "border:2px solid var(--alerte)" : ""}">
-    <b>⏱️ ${tr("Supplément proposé par votre Cleaneur")}</b>
+    <b>${icone("horloge")} ${tr("Supplément proposé par votre Cleaneur")}</b>
     <p style="margin:6px 0">+${s.minutes} min · <b>${euros(s.montant_c)}</b> — ${esc(s.motif)}</p>
     ${enAttente ? `<p class="petit">${tr("Le problème a été signalé à l'arrivée (voir le constat). Sans réponse dans")} ${reste} min, ${tr("le Cleaneur réalise la prestation prévue.")}</p>
       <div class="boutons"><button type="button" class="bouton" data-sup-oui>${tr("Accepter")}</button><button type="button" class="bouton secondaire" data-sup-non>${tr("Refuser")}</button></div>`

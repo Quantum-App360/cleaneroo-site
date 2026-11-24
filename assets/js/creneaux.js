@@ -2,6 +2,7 @@
 // Grille jour × heure (« X h ouvertes par semaine ») ; chaque mission disponible reçoit une compatibilité sur 100 :
 // distance, enchaînement avec une autre mission, créneau ouvert, délai, gain horaire (scoreMission dans regles.js).
 // Même écran dans l'appli (Creneaux.kt). Base : profils.disponibilites (base-disponibilites.sql).
+import { icone } from "./icones.js";
 import { majProfil } from "./donnees.js";
 import { REGLES, scoreMission } from "./regles.js";
 import { tr, traduire } from "./langue.js";
@@ -17,7 +18,7 @@ export function blocCreneaux(boite, profil) {
   if (!boite) return;
   const dispo = JSON.parse(JSON.stringify(profil?.disponibilites || {}));
   const dessiner = () => {
-    boite.innerHTML = `<details class="carte"><summary><b>🗓️ ${tr("Mes créneaux disponibles")}</b> · <span class="petit">${heuresOuvertes(dispo)} ${tr("h ouvertes par semaine")}</span></summary>
+    boite.innerHTML = `<details class="carte"><summary><b>${icone("calendrier")} ${tr("Mes créneaux disponibles")}</b> · <span class="petit">${heuresOuvertes(dispo)} ${tr("h ouvertes par semaine")}</span></summary>
       <p class="petit">${tr("Touchez les heures où vous êtes disponible : les missions qui y tombent passent en tête de vos recommandations.")}</p>
       <div class="grille-creneaux"><span></span>${HEURES.map(h => `<span class="h">${h}</span>`).join("")}
         ${JOURS.map((j, i) => `<span class="j">${tr(j)}</span>${HEURES.map(h => `<button type="button" class="${(dispo[i + 1] || []).includes(h) ? "ouvert" : ""}" data-jour="${i + 1}" data-heure="${h}" aria-label="${tr(j)} ${h} h"></button>`).join("")}`).join("")}</div>

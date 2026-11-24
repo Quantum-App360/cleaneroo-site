@@ -4,6 +4,7 @@
 // au support (fonction serveur « support », si l'envoi d'e-mails est configuré) et traitée sous 48 h ; la réponse arrive dans
 // les notifications. Route #/aide. Même écran prévu dans l'appli (Assistant.kt).
 // Les chiffres (délais, pourcentages) viennent de regles.js : l'assistant dit toujours la même chose que le site.
+import { icone } from "./icones.js";
 import { supabase, session, monProfil, demandesDuCompte } from "./donnees.js";
 import { REGLES, euros, lienWhatsAppSupport } from "./regles.js";
 import { rubrique } from "./catalogue.js";
@@ -79,7 +80,7 @@ export async function pageAssistant(vue, sujetDepart) {
   const [profil, demandes] = s ? await Promise.all([monProfil().catch(() => null), demandesDuCompte().catch(() => [])]) : [null, []];
   const historique = [];   // conversation, jointe à la demande s'il faut un humain
   vue.innerHTML = `<section class="bloc"><div class="etroit assistant">
-    <h1>🛟 ${tr("Assistant Cleaneroo")}</h1><div class="trait-corail"></div>
+    <h1>${icone("message")} ${tr("Assistant Cleaneroo")}</h1><div class="trait-corail"></div>
     <p class="petit muet">${tr("Réponse immédiate aux questions les plus fréquentes. Si besoin, votre demande est transmise à l'équipe : réponse sous 48 h.")}</p>
     <div class="fil-assistant" aria-live="polite"></div>
     <form class="saisie-assistant" autocomplete="off"><input type="text" maxlength="300" placeholder="${esc(tr("Écrivez votre question (ex. : « mon Cleaneur est en retard »)"))}" aria-label="${esc(tr("Votre question"))}">
@@ -95,14 +96,14 @@ export async function pageAssistant(vue, sujetDepart) {
       ${x.liens?.length ? `<div class="liens-a">${x.liens.map(([l, h]) => `<a class="bouton secondaire petit-bouton" href="${h}">${tr(l)} ›</a>`).join("")}</div>` : ""}
       ${x.suite?.length ? `<div class="choix-a">${x.suite.map(k => `<button type="button" data-sujet="${k}">${tr(SUJETS[k].titre)}</button>`).join("")}</div>` : ""}
       ${id !== "racine" ? `<div class="resolu-a"><span class="petit">${tr("Cela répond à votre question ?")}</span>
-        <button type="button" data-resolu="oui">👍 ${tr("Oui")}</button><button type="button" data-resolu="non">👎 ${tr("Non, j'ai besoin d'aide")}</button>
+        <button type="button" data-resolu="oui">${tr("Oui")}</button><button type="button" data-resolu="non">${tr("Non, j'ai besoin d'aide")}</button>
         ${id !== "racine" ? `<button type="button" data-sujet="racine">${tr("Autre question")}</button>` : ""}</div>` : ""}`;
     bulle(html);
   };
   fil.addEventListener("click", e => {
     const b = e.target.closest("button"); if (!b) return;
     if (b.dataset.sujet) { bulle(esc(tr(SUJETS[b.dataset.sujet].titre)), true); historique.push({ de: "client", texte: SUJETS[b.dataset.sujet].titre }); montrer(b.dataset.sujet); }
-    if (b.dataset.resolu === "oui") { b.closest(".resolu-a").innerHTML = `<span class="petit">✅ ${tr("Parfait ! Bonne journée avec Cleaneroo.")}</span>`; }
+    if (b.dataset.resolu === "oui") { b.closest(".resolu-a").innerHTML = `<span class="petit">${icone("valide")} ${tr("Parfait ! Bonne journée avec Cleaneroo.")}</span>`; }
     if (b.dataset.resolu === "non") { b.closest(".resolu-a").remove(); formulaire(); }
   });
   vue.querySelector(".saisie-assistant").onsubmit = e => {
@@ -126,7 +127,7 @@ export async function pageAssistant(vue, sujetDepart) {
           ${recentes.map(x => `<option value="${esc(x.reference)}">${esc(x.reference)} · ${esc(rubrique(x.rubrique_id)?.nom || "")}${x.creneau ? ` · ${new Date(x.creneau).toLocaleDateString("fr-FR")}` : ""}</option>`).join("")}</select></label>` : ""}
         <label class="champ">${tr("Votre demande")}<textarea name="resume" rows="4" maxlength="4000" required>${esc(texte)}</textarea></label>
         <p class="erreur" data-erreur-a></p><button class="bouton plein" type="submit">${tr("Envoyer à l'équipe")}</button>
-        <a class="bouton secondaire plein bouton-whatsapp" href="${lienWhatsAppSupport()}" target="_blank" rel="noopener" style="margin-top:8px">💬 ${tr("Ou écrivez-nous sur WhatsApp")}</a></form>`);
+        <a class="bouton secondaire plein bouton-whatsapp" href="${lienWhatsAppSupport()}" target="_blank" rel="noopener" style="margin-top:8px">${icone("message")} ${tr("Ou écrivez-nous sur WhatsApp")}</a></form>`);
     const f = d.querySelector("form");
     f.onsubmit = async ev => {
       ev.preventDefault();
@@ -140,7 +141,7 @@ export async function pageAssistant(vue, sujetDepart) {
       const { error } = await supabase.from("demandes_support").insert(ligne);
       if (error) { btn.disabled = false; err.textContent = tr("Le service est momentanément indisponible. Réessayez dans quelques minutes."); return; }
       supabase.functions.invoke("support", { body: { numero: n } }).catch(() => null);   // e-mail au support et accusé de réception
-      d.innerHTML = `<p>✅ ${tr("Demande envoyée")} · <b>${n}</b></p><p class="petit">${tr("L'équipe vous répond sous 48 h, par e-mail et dans vos notifications. Gardez ce numéro si vous nous recontactez.")}</p>`;
+      d.innerHTML = `<p>${icone("valide")} ${tr("Demande envoyée")} · <b>${n}</b></p><p class="petit">${tr("L'équipe vous répond sous 48 h, par e-mail et dans vos notifications. Gardez ce numéro si vous nous recontactez.")}</p>`;
     };
   };
 

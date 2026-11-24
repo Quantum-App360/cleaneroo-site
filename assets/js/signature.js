@@ -1,13 +1,14 @@
 // Signature au doigt du compte rendu (12 novembre 2026, reprise de l'appli iPhone de Vincent) : tracé, effacer, valider.
 // Image PNG enregistrée par la base (signer, signatures_de). Cleaneur : obligatoire avant « J'ai terminé ».
 // Client présent : il signe en validant la prestation. Même écran dans l'appli (Signature.kt).
+import { icone } from "./icones.js";
 import { supabase } from "./donnees.js";
 import { tr, traduire } from "./langue.js";
 
 /** Zone de signature ; apres(ok) est appelé une fois la signature enregistrée. */
 export function zoneSignature(boite, reference, { jeton = null, titre = "Signez le compte rendu", apres = () => {}, envoyer = null } = {}) {
   if (!boite) return;
-  boite.innerHTML = `<div class="carte signature" style="margin-top:10px"><b>✍️ ${tr(titre)}</b>
+  boite.innerHTML = `<div class="carte signature" style="margin-top:10px"><b>${icone("document")} ${tr(titre)}</b>
     <canvas width="600" height="200" class="toile-signature" aria-label="${tr("Zone de signature")}"></canvas>
     <div class="boutons"><button type="button" class="bouton secondaire" data-effacer>${tr("Effacer")}</button>
       <button type="button" class="bouton" data-signer disabled>${tr("Valider ma signature")}</button></div>

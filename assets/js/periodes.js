@@ -1,6 +1,7 @@
 // Périodes fermées du Cleaneur (12 novembre 2026, reprises de l'appli iPhone de Vincent) : vacances, obligation familiale,
 // rendez-vous médical, formation, autre. Aucune mission n'est proposée ni ne peut être prise pendant ces périodes.
 // Même écran dans l'appli (Periodes.kt). Base : outils/base-periodes-fermees.sql.
+import { icone } from "./icones.js";
 import { supabase } from "./donnees.js";
 import { dateLongue } from "./regles.js";
 import { tr, traduire } from "./langue.js";
@@ -23,7 +24,7 @@ export async function blocPeriodes(boite) {
   const liste = data || [];
   const aujourdhui = new Date().toISOString().slice(0, 10);
   const nom = id => MOTIFS_PERIODE.find(m => m[0] === id)?.[1] || id;
-  boite.innerHTML = `<h2 class="titre-section">🏖️ ${tr("Mes périodes fermées")}</h2>
+  boite.innerHTML = `<h2 class="titre-section">${icone("calendrier")} ${tr("Mes périodes fermées")}</h2>
     <p class="petit" style="margin-top:0">${tr("Vacances, obligation familiale, rendez-vous… Pendant ces périodes, aucune mission ne vous est proposée ni notifiée.")}</p>
     ${liste.map(p => { const f = new Date(p.fin); f.setDate(f.getDate() - 1);
       return `<div class="carte ligne-periode"><div><b>${tr(nom(p.motif))}</b><span class="petit">${tr("du")} ${esc(dateLongue(new Date(p.debut)))} ${tr("au")} ${esc(dateLongue(f))}</span></div>

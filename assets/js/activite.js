@@ -2,6 +2,7 @@
 // l'année (factures de prestation + pourboires), commission Cleaneroo, cotisations URSSAF estimées (ACRE, versement libératoire),
 // plafond de la micro-entreprise, rappel de déclaration, export tableur et créateur de devis (page imprimable en PDF).
 // Calculs dans regles.js (calculActivite, copie dans ReglesMetier.kt). Même écran dans l'appli (Activite.kt).
+import { icone } from "./icones.js";
 import { supabase } from "./donnees.js";
 import { mesFactures } from "./factures.js";
 import { euros, REGLES, calculActivite, netPortefeuille, dateVersement, dateLongue } from "./regles.js";
@@ -26,7 +27,7 @@ export async function blocActivite(boite, profil) {
   const portefeuille = (await supabase.rpc("mon_portefeuille")).data || {};
   const afficher = () => {
     const a = calculActivite({ factures, pourboires: avis, ...reglages });
-    boite.innerHTML = `<h2 class="titre-section">📊 ${tr("Mon activité")}</h2>
+    boite.innerHTML = `<h2 class="titre-section">${icone("document")} ${tr("Mon activité")}</h2>
       <div class="choix-periode" role="tablist">${[["mois", "Ce mois-ci"], ["annee", "Cette année"]].map(([v, t]) =>
         `<button type="button" role="tab" aria-selected="${reglages.periode === v}" data-periode="${v}">${tr(t)}</button>`).join("")}</div>
       <div class="carte">
@@ -51,7 +52,7 @@ export async function blocActivite(boite, profil) {
         <a class="bouton secondaire" href="https://autoentrepreneur.urssaf.fr" target="_blank" rel="noopener">autoentrepreneur.urssaf.fr ↗</a>
       </div>
       <div class="carte">
-        <b>👛 ${tr("Portefeuille de l'année")}</b>
+        <b>${icone("paiement")} ${tr("Portefeuille de l'année")}</b>
         <div class="ligne-activite"><span>${tr("Prestations")}</span><span>${euros(portefeuille.prestations_c || 0)}</span></div>
         <div class="ligne-activite"><span>${tr("Commission Cleaneroo")}</span><span>−${euros(portefeuille.commissions_c || 0)}</span></div>
         <div class="ligne-activite"><span>${tr("Pourboires")}</span><span>+${euros(portefeuille.pourboires_c || 0)}</span></div>
@@ -60,7 +61,7 @@ export async function blocActivite(boite, profil) {
         <div class="ligne-activite total"><span>${tr("Net de l'année")}</span><b>${euros(netPortefeuille(portefeuille))}</b></div>
         <p class="petit">${tr("Prochain versement :")} ${dateLongue(dateVersement(new Date()))}.</p>
       </div>
-      <div class="carte" id="versements"><b>💳 ${tr("Mes versements")}</b><p class="petit">…</p></div>
+      <div class="carte" id="versements"><b>${icone("carte-bancaire")} ${tr("Mes versements")}</b><p class="petit">…</p></div>
       <div class="carte">
         <b>${tr("Documents")}</b>
         <div class="actions-activite">
@@ -93,7 +94,7 @@ async function blocVersements(el) {
   const [texte, bouton] = e.actif ? ["✓ Versements activés : chaque prestation vous est versée 48 h après la fin (délai de réclamation du client), puis virée sur votre compte bancaire le vendredi.", "Modifier mes informations bancaires"]
     : e.compte ? ["Votre compte de versement est à compléter (identité, IBAN) pour recevoir vos paiements.", "Compléter mon compte de versement"]
     : ["Renseignez votre identité et votre IBAN sur la page sécurisée de Stripe pour recevoir vos paiements : Cleaneroo ne conserve pas votre IBAN.", "Activer mes versements"];
-  el.innerHTML = `<b>💳 ${tr("Mes versements")}</b><p class="petit" style="margin:4px 0 10px">${tr(texte)}</p>
+  el.innerHTML = `<b>${icone("carte-bancaire")} ${tr("Mes versements")}</b><p class="petit" style="margin:4px 0 10px">${tr(texte)}</p>
     <p class="petit" style="margin:0 0 10px">${tr("Moins-values (pénalité, remboursement après un litige) : retenues sur vos versements suivants, jamais plus de la moitié d'un versement.")}</p>
     <button type="button" class="bouton ${e.actif ? "secondaire" : "plein"}" data-versements>${tr(bouton)}</button><p class="erreur" data-erreur-versements style="margin:8px 0 0"></p>`;
   traduire(el);

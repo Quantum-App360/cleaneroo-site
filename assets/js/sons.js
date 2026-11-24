@@ -1,6 +1,7 @@
 // Sons et alertes : « nouvelle mission » (Cleaneur) et « prise en charge » (client).
 // Sons fabriqués par Cleanova/design/sons/fabriquer_sons.py (assets/sons/*.mp3).
 // Les navigateurs n'acceptent un son qu'après un premier geste sur la page (clic, touche) : on « débloque » l'audio à ce moment-là.
+import { icone } from "./icones.js";
 import { rubrique } from "./catalogue.js";
 import { tr } from "./langue.js";
 import { REGLES } from "./regles.js";
@@ -54,7 +55,7 @@ export function alerteMission(m, nombre = 1) {
   const d = document.createElement("dialog");
   d.className = "alerte-mission";
   const quand = m.creneau ? new Date(m.creneau).toLocaleString("fr-FR", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }) : tr("Date flexible");
-  d.innerHTML = `<div class="haut-alerte">🔔 ${tr("Nouvelle mission près de chez vous")}</div>
+  d.innerHTML = `<div class="haut-alerte">${icone("cloche")} ${tr("Nouvelle mission près de chez vous")}</div>
     <h2>${r?.nom || ""}</h2><p>${quand}</p><p><b>${(m.code_postal || "")} ${m.ville || ""}</b> · ${m.sur_devis ? tr("Sur devis") : (m.estimation_c / 100).toFixed(2).replace(".", ",") + " €"}</p>
     ${nombre > 1 ? `<p class="petit">+${nombre - 1} ${tr("autre(s) mission(s)")}</p>` : ""}
     <div class="boutons"><a class="bouton" href="#/compte/cleaneur" data-voir>${tr("Voir la mission")}</a>

@@ -4,6 +4,7 @@
 // un dommage relève de l'assurance des parties (RC Pro du Cleaneur, assurance habitation) et le client télécharge un dossier PDF prêt pour l'assureur.
 // Tant que le signalement est ouvert, la prestation n'est pas validée automatiquement. Décision dans gestion.html (onglet Litiges).
 // Même écran dans l'appli (Litiges.kt). Base : outils/base-litiges.sql.
+import { icone } from "./icones.js";
 import { supabase, reduirePhoto } from "./donnees.js";
 import { REGLES, euros, dateLongue } from "./regles.js";
 import { traduire, tr } from "./langue.js";
@@ -32,7 +33,7 @@ export async function blocLitige(boite, reference, jeton, statut) {
     <p class="petit" style="margin:4px 0 0">${tr("Indemnité due au Cleaneur :")} <b>${euros(acces.indemnite_c)}</b>. ${tr("Vous pouvez la contester ci-dessous dans les 48 h.")}</p></div>` : "";
   const ouverts = (liste || []).filter(l => l.statut === "OUVERT");
   const suivi = (liste || []).map(l => `<div class="petit" style="margin-top:6px">${dateLongue(new Date(l.cree_le))} · ${l.genre === "DOMMAGE" ? tr("Dommage") : tr(MOTIFS_LITIGE.find(m => m[0] === l.motif)?.[1] || "Autre")}
-    · <b>${tr(STATUTS_LITIGE[l.statut])}</b>${l.montant_decide_c ? ` · ${euros(l.montant_decide_c)}` : ""}${l.decision ? `<br>${l.decision.replace(/[<>&]/g, "")}` : ""}${l.genre === "DOMMAGE" ? `<br><button type="button" class="bouton secondaire petit-bouton" data-dossier-assurance="1" style="margin-top:6px">📄 ${tr("Dossier pour l'assurance (PDF)")}</button>` : ""}</div>`).join("");
+    · <b>${tr(STATUTS_LITIGE[l.statut])}</b>${l.montant_decide_c ? ` · ${euros(l.montant_decide_c)}` : ""}${l.decision ? `<br>${l.decision.replace(/[<>&]/g, "")}` : ""}${l.genre === "DOMMAGE" ? `<br><button type="button" class="bouton secondaire petit-bouton" data-dossier-assurance="1" style="margin-top:6px">${icone("document")} ${tr("Dossier pour l'assurance (PDF)")}</button>` : ""}</div>`).join("");
   boite.innerHTML = infoAcces + `<details class="carte" style="margin:12px 0" ${ouverts.length || acces ? "open" : ""}><summary>${acces ? "Contester" : "Un problème avec ce ménage ?"}</summary>
     ${suivi ? `<div style="margin:8px 0">${suivi}</div>` : ""}
     ${ouverts.length ? `<p class="petit">Votre signalement est en cours d'examen : la prestation n'est pas validée automatiquement en attendant. Réponse sous 72 h.</p>` : `

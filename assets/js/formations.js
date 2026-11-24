@@ -4,6 +4,7 @@
 // Une mission n'est proposée qu'aux Cleaneurs qualifiés pour sa prestation, son type de lieu et ses tâches (qualificationsRequises).
 // Textes en 4 langues : assets/data/formations.json, fabriqué par outils/formations/generer.py (même fichier dans l'appli).
 // Même écran dans l'appli (Formations.kt). Base : outils/base-formations.sql.
+import { icone } from "./icones.js";
 import { supabase, deposerDocument } from "./donnees.js";
 import { rubrique } from "./catalogue.js";
 import { qualificationsRequises } from "./regles.js";
@@ -11,9 +12,9 @@ import { tr, traduire, langue } from "./langue.js";
 import { esc } from "./commun.js";
 
 const CATEGORIES = [["obligatoire", "Obligatoire pour tous"], ["prestations", "Prestations"], ["techniques", "Techniques et équipements"], ["attestation", "Sur attestation"]];
-const ICONES = { socle: "🛡️", domicile: "🏠", location: "🔑", vitres: "🪟", hauteur: "🪜", "remise-etat": "🔨", "cuisine-pro": "🍳", haccp: "📋",
-  auto: "🚗", polissage: "✨", textiles: "🛋️", "locaux-pro": "🏢", machines: "⚙️", bionettoyage: "⚕️", exterieurs: "💧", evenementiel: "🎉",
-  biocides: "🧪", nuisibles: "🐞", electrique: "⚡", specialise: "🦺" };
+const ICONES = { socle: icone("garantie"), domicile: icone("logement"), location: icone("cle"), vitres: icone("vitres"), hauteur: icone("chantier"), "remise-etat": icone("outil"), "cuisine-pro": icone("cuisine"), haccp: icone("document"),
+  auto: icone("vehicule"), polissage: icone("termine"), textiles: icone("canape"), "locaux-pro": icone("bureaux"), machines: icone("outil"), bionettoyage: icone("specialise"), exterieurs: icone("exterieurs"), evenementiel: icone("termine"),
+  biocides: icone("specialise"), nuisibles: icone("specialise"), electrique: icone("instantane"), specialise: icone("specialise") };
 const RUBRIQUES_TOUTES = ["home", "rental", "moving", "car", "textiles", "construction", "kitchen", "office", "commerce", "communal", "windows", "outdoor", "event", "special"];
 
 /** Renvois vers des vidéos et fiches officielles gratuites (INRS, organisme public de prévention), par module (13 novembre 2026).
@@ -28,8 +29,8 @@ export const RESSOURCES = {
   bionettoyage: [INRS_CHIMIQUE], biocides: [INRS_CHIMIQUE], "remise-etat": [INRS_FICHE_NETTOYAGE, INRS_CHIMIQUE], "cuisine-pro": [INRS_CHIMIQUE],
 };
 /** Liens « Pour aller plus loin » d'un module. */
-export const blocRessources = id => (RESSOURCES[id] || []).length ? `<div class="bloc-formation ressources"><b>🎬 ${tr("Vidéos et fiches de formation")}</b>
-  <ul>${RESSOURCES[id].map(([t, url, type]) => `<li><a href="${url}" target="_blank" rel="noopener">${type === "video" ? "▶" : "📄"} ${esc(tr(t))}</a></li>`).join("")}</ul></div>` : "";
+export const blocRessources = id => (RESSOURCES[id] || []).length ? `<div class="bloc-formation ressources"><b>${icone("appareil-photo")} ${tr("Vidéos et fiches de formation")}</b>
+  <ul>${RESSOURCES[id].map(([t, url, type]) => `<li><a href="${url}" target="_blank" rel="noopener">${type === "video" ? "▶" : icone("document")} ${esc(tr(t))}</a></li>`).join("")}</ul></div>` : "";
 
 let catalogue = null;
 /** Catalogue des formations (une seule lecture par page). */
@@ -62,7 +63,7 @@ export async function blocFormations(boite) {
   const statut = Object.fromEntries(etats.map(e => [e.module, e.statut]));
   const validees = cat.filter(m => statut[m.id] === "VALIDEE").length;
   const aFaire = cat.filter(m => manquantes.includes(m.id));
-  boite.innerHTML = `<h2 class="titre-section">🎓 ${tr("Mes formations")}</h2>
+  boite.innerHTML = `<h2 class="titre-section">${icone("formation")} ${tr("Mes formations")}</h2>
     <div class="carte teintee">
       <b>${validees} ${tr(validees > 1 ? "formations validées sur" : "formation validée sur")} ${cat.length}</b>
       <div class="jauge-formation"><i style="width:${Math.round(100 * validees / cat.length)}%"></i></div>
@@ -72,7 +73,7 @@ export async function blocFormations(boite) {
     </div>
     ${CATEGORIES.map(([c, nom]) => `<h3 class="sous-titre-formation">${tr(nom)}</h3>
       <div class="grille-formations">${cat.filter(m => m.categorie === c).map(m => `<button type="button" class="carte carte-formation" data-formation="${m.id}">
-        <span class="icone-formation" aria-hidden="true">${ICONES[m.id] || "🎓"}</span>
+        <span class="icone-formation" aria-hidden="true">${ICONES[m.id] || icone("formation")}</span>
         <span class="nom-formation"><b>${esc(textes(m).titre)}</b><small>${tr("Débloque :")} ${esc(debloque(m.id).join(" · ") || tr("missions avec cet équipement"))}</small></span>
         ${pastille(statut[m.id])}</button>`).join("")}</div>`).join("")}
     <dialog class="fenetre-formation" aria-labelledby="titre-formation"></dialog>`;
@@ -91,10 +92,10 @@ function ouvrir(fenetre, m, statut, apres) {
       <button class="fermer" aria-label="${tr("Fermer")}">✕</button></form>
     <div class="corps-formation">
       <p>${esc(t.resume)}</p>
-      <p class="petit">🔓 ${tr("Débloque :")} ${esc(debloque(m.id).join(" · ") || tr("missions avec cet équipement"))} ${pastille(statut)}</p>
-      ${liste("Les bons gestes", "✋", t.gestes, "gestes")}
-      ${liste("Les bons produits", "🧴", t.produits, "produits")}
-      ${liste("Sécurité", "⚠️", t.securite, "securite")}
+      <p class="petit">${icone("cadenas")} ${tr("Débloque :")} ${esc(debloque(m.id).join(" · ") || tr("missions avec cet équipement"))} ${pastille(statut)}</p>
+      ${liste("Les bons gestes", icone("valide"), t.gestes, "gestes")}
+      ${liste("Les bons produits", icone("stock"), t.produits, "produits")}
+      ${liste("Sécurité", icone("alerte"), t.securite, "securite")}
       ${blocRessources(m.id)}
       <div class="validation-formation"></div>
     </div>`;
@@ -115,9 +116,9 @@ export function ouvrirFormation(m, statut, apres = () => {}) {
 }
 
 function quiz(zone, m, t, statut, apres) {
-  if (statut === "VALIDEE") { zone.innerHTML = `<p class="note succes-formation">✅ ${tr("Formation validée : les missions concernées vous sont proposées.")}</p>`; traduire(zone); return; }
+  if (statut === "VALIDEE") { zone.innerHTML = `<p class="note succes-formation">${icone("valide")} ${tr("Formation validée : les missions concernées vous sont proposées.")}</p>`; traduire(zone); return; }
   const choix = new Array(t.quiz.length).fill(null);
-  zone.innerHTML = `<h3>❓ ${tr("Quiz de validation")} · ${t.quiz.length} ${tr("questions")}</h3>
+  zone.innerHTML = `<h3>${icone("document")} ${tr("Quiz de validation")} · ${t.quiz.length} ${tr("questions")}</h3>
     <p class="petit">${tr("Toutes les réponses doivent être justes. Vous pouvez recommencer autant de fois que nécessaire.")}</p>
     ${t.quiz.map((q, i) => `<fieldset class="question-formation" data-q="${i}"><legend>${i + 1}. ${esc(q.q)}</legend>
       ${q.options.map((o, k) => `<label><input type="radio" name="q${m.id}-${i}" value="${k}"> ${esc(o)}</label>`).join("")}
@@ -139,7 +140,7 @@ function quiz(zone, m, t, statut, apres) {
     zone.querySelectorAll(".explication-formation").forEach((p, i) => { p.hidden = !data.fausses.includes(i); });
     zone.querySelectorAll("[data-q]").forEach((f, i) => f.classList.toggle("fausse", data.fausses.includes(i)));
     if (data.valide) {
-      zone.innerHTML = `<p class="note succes-formation">🎉 <b>${tr("Bravo, formation validée !")}</b> ${tr("Les missions concernées vous sont maintenant proposées.")}</p>`;
+      zone.innerHTML = `<p class="note succes-formation">${icone("termine")} <b>${tr("Bravo, formation validée !")}</b> ${tr("Les missions concernées vous sont maintenant proposées.")}</p>`;
       traduire(zone);
       apres();
     } else {
@@ -150,10 +151,10 @@ function quiz(zone, m, t, statut, apres) {
 }
 
 function attestation(zone, m, t, statut, apres) {
-  const etat = { VALIDEE: `<p class="note succes-formation">✅ ${tr("Attestation vérifiée par Cleaneroo.")}</p>`,
-    A_VERIFIER: `<p class="note">⏳ ${tr("Attestation envoyée : vérification par l'équipe Cleaneroo sous 48 h ouvrées.")}</p>`,
+  const etat = { VALIDEE: `<p class="note succes-formation">${icone("valide")} ${tr("Attestation vérifiée par Cleaneroo.")}</p>`,
+    A_VERIFIER: `<p class="note">${icone("horloge")} ${tr("Attestation envoyée : vérification par l'équipe Cleaneroo sous 48 h ouvrées.")}</p>`,
     REFUSEE: `<p class="erreur">${tr("Attestation refusée : document illisible ou non conforme. Envoyez une nouvelle version.")}</p>` }[statut] || "";
-  zone.innerHTML = `<h3>📄 ${tr("Justificatifs officiels à fournir")}</h3>
+  zone.innerHTML = `<h3>${icone("document")} ${tr("Justificatifs officiels à fournir")}</h3>
     <p class="petit">${tr("Cette qualification ne s'obtient pas par un quiz : la réglementation exige une formation reconnue.")}</p>
     <p class="petit"><b>${tr("Document exigé : l'attestation ou le certificat délivré par l'organisme de formation officiel (nom de l'organisme, date, intitulé de la formation, votre nom). Cleaneroo le vérifie avant d'activer la prestation.")}</b></p>
     <ul>${t.documents.map(d => `<li>${esc(d)}</li>`).join("")}</ul>
@@ -250,7 +251,7 @@ export async function pageFormation(vue, id) {
   const loi = !!g?.loi;
   vue.innerHTML = `<section class="bloc" style="padding-top:28px"><div class="etroit">
     <a class="lien-bouton" href="#/compte/cleaneur">‹ ${tr("Mon espace Cleaneur")}</a>
-    <h1>${ICONES[id] || "🎓"} ${esc(t.titre)}</h1>
+    <h1>${ICONES[id] || icone("formation")} ${esc(t.titre)}</h1>
     <p><span class="tampon ${loi ? "" : "vert"}">${tr(loi ? "Exigée par la loi" : "Conseillée, jamais obligatoire")}</span>
       ${statut === "VALIDEE" ? `<span class="tampon vert">✓ ${tr("Validée")}</span>` : ""}</p>
     ${g ? `<div class="carte"><p style="margin-top:0"><b>${tr("De quoi s'agit-il ?")}</b><br>${tr(g.quoi)}</p>

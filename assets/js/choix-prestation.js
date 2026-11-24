@@ -12,7 +12,7 @@ function contenu() {
   const p = partie(partieId);
   return `<div class="fenetre-prestations" role="document">
     <button type="button" class="fp-fermer" data-fp-fermer aria-label="Fermer">×</button>
-    <span class="fp-surtitre"><i aria-hidden="true">✨</i> <span>Réserver une prestation</span></span>
+    <span class="fp-surtitre"><i aria-hidden="true"></i> <span>Réserver une prestation</span></span>
     <h2 id="fp-titre">Que souhaitez-vous nettoyer ?</h2>
     <div class="segments trois fp-pour">${PARTIES.map(x => `<button type="button" data-fp-partie="${x.id}" class="${x.id === p.id ? "choisi" : ""}">${x.nom}</button>`).join("")}</div>
     <div class="fp-tuiles">${RUBRIQUES.filter(r => p.rubriques.includes(r.id)).map((r, i) => `

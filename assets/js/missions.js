@@ -31,11 +31,11 @@ import { brancherControle } from "./controle-ecran.js";
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const ETAPE = {
-  CONFIRMEE: ["🚗 Je pars", "EN_ROUTE", "Confirmée"],
-  EN_ROUTE: ["📍 Je suis arrivé", "SUR_PLACE", "En route"],
-  SUR_PLACE: ["🧽 Je commence", "EN_COURS", "Sur place"],
-  EN_COURS: ["✅ J'ai terminé", "A_VALIDER", "En cours"],
-  A_VALIDER: ["🚪 Je quitte le logement", "DEPART", "À valider par le client"],
+  CONFIRMEE: ["Je pars", "EN_ROUTE", "Confirmée"],
+  EN_ROUTE: ["Je suis arrivé", "SUR_PLACE", "En route"],
+  SUR_PLACE: ["Je commence", "EN_COURS", "Sur place"],
+  EN_COURS: ["J'ai terminé", "A_VALIDER", "En cours"],
+  A_VALIDER: ["Je quitte le logement", "DEPART", "À valider par le client"],
 };
 
 /* ------------------------------------------------------------------ Frise de la mission (curseur qui suit le Cleaneur)
@@ -161,23 +161,23 @@ export function tableauDeBord(p, docs, miennes, dispo, t, vue = "aujourdhui", re
   const auj = vue === "aujourdhui", gains = vue === "gains";
   return `<div class="tableau-cleaneur">
     ${auj ? `<p class="petit muet" style="margin:0 0 8px">${esc(dateLongue(new Date()))}</p>` : ""}
-    ${gains ? `<p class="petit" style="margin:0 0 8px">💶 ${tr("Prochain versement :")} <b>${esc(dateLongue(dateVersement()))}</b> · ${tr("chaque vendredi, pour les missions validées jusqu'au mercredi minuit.")}</p>
+    ${gains ? `<p class="petit" style="margin:0 0 8px">${icone("paiement")} ${tr("Prochain versement :")} <b>${esc(dateLongue(dateVersement()))}</b> · ${tr("chaque vendredi, pour les missions validées jusqu'au mercredi minuit.")}</p>
     <span class="badge-niveau">★ ${tr("Niveau")} ${tr(niveauDe(t?.missions_terminees || 0))} · ${tr("commission")} ${commission} %</span>
-    <p class="petit" style="margin:4px 0 8px">🤝 ${tr("Client fidèle : dès le 3e ménage avec un même client, votre commission passe à")} <b>${t?.formule === "pro" ? 9 : 15} %</b>.</p>
-    ${t?.nb_avis ? `<p class="petit" style="margin:0">⭐ ${String(t.note_moyenne).replace(".", ",")} / 5 · ${t.nb_avis} ${tr(t.nb_avis > 1 ? "avis" : "avis")}${t.pourboires_c ? ` · ${tr("pourboires :")} ${euros(t.pourboires_c)}` : ""}</p>` : ""}
+    <p class="petit" style="margin:4px 0 8px">${icone("equipe")} ${tr("Client fidèle : dès le 3e ménage avec un même client, votre commission passe à")} <b>${t?.formule === "pro" ? 9 : 15} %</b>.</p>
+    ${t?.nb_avis ? `<p class="petit" style="margin:0">${icone("avis")} ${String(t.note_moyenne).replace(".", ",")} / 5 · ${t.nb_avis} ${tr(t.nb_avis > 1 ? "avis" : "avis")}${t.pourboires_c ? ` · ${tr("pourboires :")} ${euros(t.pourboires_c)}` : ""}</p>` : ""}
     ` : ""}
-    ${p.role === "admin" || vue !== "profil" ? "" : `<details class="carte profil-a-completer"${faites < etapes.length ? "" : ""}><summary><span>👤 <b>${faites === etapes.length ? tr("Profil complet") : tr("Complétez votre profil")}</b></span><b class="compte">${faites}/${etapes.length}</b></summary>
+    ${p.role === "admin" || vue !== "profil" ? "" : `<details class="carte profil-a-completer"${faites < etapes.length ? "" : ""}><summary><span>${icone("cleaneurs")} <b>${faites === etapes.length ? tr("Profil complet") : tr("Complétez votre profil")}</b></span><b class="compte">${faites}/${etapes.length}</b></summary>
       <div class="jauge"><span style="width:${Math.round(faites / etapes.length * 100)}%"></span></div>
       ${prochaine ? `<p class="petit" style="margin:4px 0 0">${tr("Prochaine étape :")} ${tr(prochaine[0])}</p>` : ""}
       <ul class="liste-preparation" style="margin-top:10px">${etapes.map(([e, ok]) => `<li class="${ok ? "fait" : ""}"><span class="coche" aria-hidden="true">${ok ? "✓" : ""}</span><span>${e}</span></li>`).join("")}</ul></details>`}
-    ${offre && gains ? `<a class="carte ligne-compte offre-tdb" href="#formules-cleaneur" data-aller="formules-cleaneur">🎁
+    ${offre && gains ? `<a class="carte ligne-compte offre-tdb" href="#formules-cleaneur" data-aller="formules-cleaneur">${icone("cadeau")}
       <div class="corps"><b>${REGLES.OFFRE_LANCEMENT_MOIS} ${tr("mois Cleaneur Pro offerts")}</b><p class="petit" style="margin:2px 0 0">${tr("Pour tous les Cleaneurs inscrits jusqu'au")} ${esc(dateLongue(finOffreLancement()))} · ${tr("commission de")} ${REGLES.COMMISSION_PRO_PB / 100} % ${tr("au lieu de")} ${REGLES.COMMISSION_GRATUIT_PB / 100} %</p></div><span class="aller" aria-hidden="true">›</span></a>` : ""}
     ${auj ? `<label class="carte ligne-compte dispo-urgence"><span class="point-dispo${dispoJusqu ? " actif" : ""}"></span>
       <div class="corps"><b>Disponible pour une urgence ?</b><p class="petit" style="margin:2px 0 0">${dispoJusqu
         ? `${tr("Vous recevez en priorité les missions urgentes jusqu'à")} ${heure(dispoJusqu.getHours(), dispoJusqu.getMinutes())}`
         : `${tr("Recevez en priorité les missions du jour pendant")} ${REGLES.URGENCE_DISPO_H} h`}</p></div>
       <input type="checkbox" class="interrupteur" data-dispo-urgence ${dispoJusqu ? "checked" : ""}></label>
-    ${recherche ? `<a class="recherche-mission" href="#missions-disponibles" data-aller="missions-disponibles">🔎
+    ${recherche ? `<a class="recherche-mission" href="#missions-disponibles" data-aller="missions-disponibles">${icone("position")}
       <div><b>Rechercher une mission</b><span>${tr("Les plus proches, celles qui comblent vos trous de planning")}</span></div><span aria-hidden="true">›</span></a>` : ""}
     <div class="tuiles-tdb">
       <a class="tuile-tdb" href="#missions-disponibles" data-aller="missions-disponibles"><b>${dispo.length}</b><span>${tr(dispo.length > 1 ? "missions disponibles" : "mission disponible")}</span></a>
@@ -212,11 +212,11 @@ function brancherTableau(boite, miennes, recharger) {
 export function blocAvertissements(a) {
   if (!a) return "";
   const max = a.maximum ?? REGLES.AVERTISSEMENTS_MAX, n = a.nombre || 0;
-  if (a.banni) return `<div class="carte avertissements banni"><b>⛔ Compte suspendu</b>
+  if (a.banni) return `<div class="carte avertissements banni"><b>${icone("alerte")} Compte suspendu</b>
     <p class="petit" style="margin:4px 0 0">Vous avez dépassé les ${max} avertissements autorisés : vous ne pouvez plus prendre de missions. Écrivez à contact@cleaneroo.fr pour en parler.</p></div>`;
   const pastilles = Array.from({ length: max + 1 }, (_, i) => `<i class="${i < n ? "pris" : ""}${i === max ? " dernier" : ""}"></i>`).join("");
   return `<div class="carte avertissements${n ? " alerte" : ""}"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
-      <b>${n ? "⚠️" : "🛡️"} Avertissements : ${n} / ${max}</b><span class="jauge-avert" aria-hidden="true">${pastilles}</span></div>
+      <b>${n ? icone("alerte") : icone("garantie")} Avertissements : ${n} / ${max}</b><span class="jauge-avert" aria-hidden="true">${pastilles}</span></div>
     <p class="petit" style="margin:4px 0 0">${n === 0 ? `Aucun avertissement. Vous avez droit à ${max} avertissements : au suivant, votre compte est banni.`
       : n < max ? `Encore ${max - n} avertissement possible : au-delà de ${max}, votre compte est banni.`
       : `Dernier avertissement : au prochain manquement, votre compte sera banni.`}</p>
@@ -227,7 +227,7 @@ export function blocAvertissements(a) {
 export function blocPenalites(p) {
   if (!p || !(p.liste || []).length) return "";
   const reste = p.liste.reduce((s, x) => s + (x.reste_c || 0), 0);
-  return `<div class="carte avertissements alerte"><b>💶 Pénalités</b>
+  return `<div class="carte avertissements alerte"><b>${icone("paiement")} Pénalités</b>
     ${p.liste.map(x => `<p class="petit" style="margin:4px 0 0">• ${esc(dateLongue(new Date(x.le)))} : ${tr(x.raison === "absence" ? "Absence sans prévenir" : x.raison === "litige" ? "Remboursement client après litige" : "Annulation à moins de 24 h")} · ${euros(x.montant_c)}</p>`).join("")}
     ${reste ? `<p class="petit" style="margin:6px 0 0">${tr("Reste à retenir sur vos prochains versements :")} <b>${euros(reste)}</b></p>` : ""}
     <p class="petit" style="margin:4px 0 0">${tr("Réserve de garantie :")} ${euros(p.garantie_c || 0)}</p></div>`;
@@ -236,12 +236,12 @@ export function blocPenalites(p) {
 /* ------------------------------------------------------------------ Selfie du jour (identité avant la première mission) */
 export function blocSelfie(statut) {
   if (statut === "VALIDE" || statut === "A_VERIFIER")
-    return `<div class="carte selfie-jour" id="selfie-jour"><span style="font-size:28px">✅</span><div><b>Selfie du jour envoyé</b>
+    return `<div class="carte selfie-jour" id="selfie-jour"><span style="font-size:28px">${icone("valide")}</span><div><b>Selfie du jour envoyé</b>
       <p class="petit" style="margin:2px 0 0">${statut === "VALIDE" ? "Identité vérifiée par Cleaneroo." : "Votre identité est confirmée pour la journée."}</p></div></div>`;
-  return `<div class="carte teintee selfie-jour" id="selfie-jour"><span style="font-size:28px">🤳</span>
+  return `<div class="carte teintee selfie-jour" id="selfie-jour"><span style="font-size:28px">${icone("appareil-photo")}</span>
     <div style="flex:1 1 220px"><b>Selfie du jour</b>
       <p class="petit" style="margin:2px 0 8px">${statut === "REFUSE" ? "Votre selfie n'a pas été accepté : reprenez-en un, visage bien visible." : "Avant votre première mission de la journée, prenez-vous en photo : le client sait que c'est bien vous qui venez."}</p>
-      <label class="bouton">📷 Prendre mon selfie<input type="file" accept="image/*" capture="user" hidden data-selfie></label>
+      <label class="bouton">${icone("appareil-photo")} Prendre mon selfie<input type="file" accept="image/*" capture="user" hidden data-selfie></label>
       <p class="erreur" data-erreur-selfie style="margin:6px 0 0"></p></div></div>`;
 }
 async function envoyerSelfie(input, err) {
@@ -295,18 +295,18 @@ function carteMission(m) {
     <p class="petit" style="margin:2px 0 0">${tr("Client :")} ${esc(m.prenom)} · ${m.sur_devis ? tr("Sur devis") : euros(m.estimation_c)}</p>
     <div data-chez-qui="${esc(m.reference)}"></div>
     ${["CONFIRMEE", "EN_ROUTE", "SUR_PLACE", "EN_COURS"].includes(m.statut) ? `<div class="boutons boutons-acces" style="margin-top:8px">
-      <button type="button" class="bouton secondaire petit-bouton" data-signaler="devant" data-ref="${esc(m.reference)}">📍 ${tr("Je suis devant le logement")}</button>
-      <button type="button" class="bouton secondaire petit-bouton" data-signaler="acces" data-ref="${esc(m.reference)}">🔑 ${tr("Je ne trouve pas l'accès")}</button></div>
-      <p class="petit muet" style="margin:4px 0 0">💬 ${tr("Le client est prévenu tout de suite ; échangez avec lui dans la messagerie de la prestation.")}</p>` : ""}
+      <button type="button" class="bouton secondaire petit-bouton" data-signaler="devant" data-ref="${esc(m.reference)}">${icone("position")} ${tr("Je suis devant le logement")}</button>
+      <button type="button" class="bouton secondaire petit-bouton" data-signaler="acces" data-ref="${esc(m.reference)}">${icone("cle")} ${tr("Je ne trouve pas l'accès")}</button></div>
+      <p class="petit muet" style="margin:4px 0 0">${icone("message")} ${tr("Le client est prévenu tout de suite ; échangez avec lui dans la messagerie de la prestation.")}</p>` : ""}
     ${m.remarque ? `<p class="petit" style="margin:4px 0 0">« ${esc(m.remarque)} »</p>` : ""}
-    ${m.urgence && m.prime_urgence_c ? `<p class="petit" style="margin:6px 0 0;color:var(--succes);font-weight:700">🚨 Mission d'urgence : prime de ${euros(m.prime_urgence_c)} comprise</p>` : ""}
+    ${m.urgence && m.prime_urgence_c ? `<p class="petit" style="margin:6px 0 0;color:var(--succes);font-weight:700">${icone("alerte")} Mission d'urgence : prime de ${euros(m.prime_urgence_c)} comprise</p>` : ""}
     ${m.statut === "CONFIRMEE" ? `<div class="confirmation-mission">${(m.etapes || {}).confirme ? `<span class="tampon vert">✓ Mission confirmée</span>`
-      : `<button type="button" class="bouton secondaire" data-confirmer="${esc(m.reference)}">✅ Je confirme ma venue</button>`}
+      : `<button type="button" class="bouton secondaire" data-confirmer="${esc(m.reference)}">${icone("valide")} Je confirme ma venue</button>`}
       <button type="button" class="lien-bouton" style="color:var(--erreur)" data-annuler-mission="${esc(m.reference)}">Annuler la mission</button></div>` : ""}
     ${m.statut !== "CONFIRMEE" ? friseMission(m) : ""}
     ${blocAcces(m)}
     ${blocGuideMission(m)}
-    ${m.statut === "EN_ROUTE" ? `<p class="petit partage-actif" style="margin:8px 0 0">📍 Position partagée avec le client pendant le trajet</p>` : ""}
+    ${m.statut === "EN_ROUTE" ? `<p class="petit partage-actif" style="margin:8px 0 0">${icone("position")} Position partagée avec le client pendant le trajet</p>` : ""}
     ${["SUR_PLACE", "EN_COURS"].includes(m.statut) ? `<div class="controle-mission" data-controle="${esc(m.reference)}"></div>` : ""}
     ${m.statut === "SUR_PLACE" ? blocAccesImpossible(m) : ""}
     ${m.rubrique_id === "rental" && ["SUR_PLACE", "EN_COURS"].includes(m.statut) ? `<div data-consommables="${esc(m.reference)}"></div>` : ""}
@@ -346,7 +346,7 @@ function blocAcces(m) {
 function carteDisponible(m) {
   const r = rubrique(m.rubrique_id);
   return `<div class="carte ligne-compte" data-dispo="${esc(m.reference)}">${icone(r.icone, { tuile: true })}
-    <div class="corps"><div class="haut"><h3>${m.urgence ? `<span class="tampon urgence">🚨 Urgence</span> ` : ""}${r.nom}</h3><b>${m.sur_devis ? tr("Sur devis") : euros(m.estimation_c)}</b></div>
+    <div class="corps"><div class="haut"><h3>${m.urgence ? `<span class="tampon urgence">${icone("alerte")} Urgence</span> ` : ""}${r.nom}</h3><b>${m.sur_devis ? tr("Sur devis") : euros(m.estimation_c)}</b></div>
       ${m.urgence && m.prime_urgence_c ? `<p class="petit" style="margin:2px 0 0;color:var(--succes);font-weight:700">+ ${euros(m.prime_urgence_c)} de prime d'urgence</p>` : ""}
       <p class="muet" style="margin:2px 0 0">${quand(m)} · ${duree(m.duree_min)}${m.nombre_cleaneurs === 2 ? " · 2 Cleaneurs" : ""}</p>
       <div data-chez-qui="${esc(m.reference)}"></div>
@@ -402,10 +402,10 @@ async function blocInviterClient(z) {
   if (!d?.code || !z.isConnected) return;
   const lien = lienInviterClient(d.code), clients = r.error ? [] : (r.data || []);
   const message = tr("Bonjour, je passe par Cleaneroo pour mes ménages : réservation en 2 minutes, paiement protégé jusqu'à votre validation, facture et attestation automatiques. Créez votre compte avec mon lien :") + " " + lien;
-  z.innerHTML = `<div class="carte inviter-client"><b>🤝 ${tr("Inviter mon client")}</b>
+  z.innerHTML = `<div class="carte inviter-client"><b>${icone("equipe")} ${tr("Inviter mon client")}</b>
     <p class="petit" style="margin:4px 0 8px">${tr("Vous avez déjà vos clients ? Faites-les venir sur Cleaneroo : 0 % de commission pendant 12 mois sur leurs prestations avec vous, puis la moitié. Paiement garanti, factures et attestations faites pour vous, remplaçant si vous êtes absent.")}</p>
     <p class="petit" style="margin:0 0 8px">${tr("Votre code :")} <b class="code">${esc(d.code)}</b></p>
-    <div class="boutons-ligne"><a class="bouton" href="https://wa.me/?text=${encodeURIComponent(message)}" target="_blank" rel="noopener">💬 ${tr("Envoyer par WhatsApp")}</a>
+    <div class="boutons-ligne"><a class="bouton" href="https://wa.me/?text=${encodeURIComponent(message)}" target="_blank" rel="noopener">${icone("message")} ${tr("Envoyer par WhatsApp")}</a>
       <a class="bouton secondaire" href="sms:?&body=${encodeURIComponent(message)}">${tr("Par SMS")}</a>
       <button type="button" class="bouton secondaire" data-copier-lien>${tr("Copier le lien")}</button></div>
     ${clients.length ? `<p class="petit" style="margin:12px 0 4px"><b>${tr("Mes clients apportés")} (${clients.length})</b></p>
@@ -422,18 +422,18 @@ const VERSEMENTS = { VERSE: "Versé · virement le vendredi", COMPTE_A_ACTIVER: 
 const ETAPES_CR = [["en_route", "En route"], ["sur_place", "Arrivé sur place"], ["debut", "Début du ménage"], ["fin", "Fin du ménage"], ["depart", "Départ du logement"]];
 async function blocComptesRendus(z, salarie) {
   if (!z) return;
-  z.innerHTML = `<h2 class="titre-section">🧾 ${tr("Mes comptes rendus")}</h2><p class="petit muet">${tr("Chargement…")}</p>`;
+  z.innerHTML = `<h2 class="titre-section">${icone("document")} ${tr("Mes comptes rendus")}</h2><p class="petit muet">${tr("Chargement…")}</p>`;
   const { data, error } = await supabase.rpc("mes_comptes_rendus");
   const l = error ? [] : (data || []);
   const hm = iso => { const d = iso ? new Date(iso) : null; return d && !isNaN(d) ? heure(d.getHours(), d.getMinutes()) : ""; };
-  z.innerHTML = `<h2 class="titre-section">🧾 ${tr("Mes comptes rendus")}</h2>` + (l.length ? l.map(c => {
+  z.innerHTML = `<h2 class="titre-section">${icone("document")} ${tr("Mes comptes rendus")}</h2>` + (l.length ? l.map(c => {
     const e = c.etapes || {}, debut = e.debut ? new Date(e.debut) : null, fin = e.fin ? new Date(e.fin) : null;
     const reelle = debut && fin && fin > debut ? Math.round((fin - debut) / 60000) : null;
     const [etat, cl] = c.litige === "OUVERT" ? ["Réclamation en cours", " rouge"] : c.statut === "A_VALIDER" ? ["À valider par le client", ""] : ["Validée", " vert"];
     return `<details class="carte compte-rendu" data-cr="${esc(c.reference)}"><summary>
       <div class="haut-cr"><b>${esc(rubrique(c.rubrique_id)?.nom || c.rubrique_id)}</b><span class="tampon${cl}">${tr(etat)}</span></div>
       <p class="petit" style="margin:2px 0">${c.creneau ? esc(dateLongue(new Date(c.creneau))) : ""} · ${esc(c.ville || "")} · ${tr("Client")} : ${esc(c.prenom || "")}</p>
-      <p class="petit chiffres-cr">⏱ ${duree(reelle || c.duree_min || 0)}${c.pieces ? ` · 🏠 ${c.pieces} ${tr(c.pieces > 1 ? "pièces" : "pièce")}` : ""}${c.photos ? ` · 📷 ${c.photos}` : ""}${c.signe ? ` · ✍️ ${tr("Signé")}` : ""}</p>
+      <p class="petit chiffres-cr">${icone("horloge")} ${duree(reelle || c.duree_min || 0)}${c.pieces ? ` · ${icone("logement")} ${c.pieces} ${tr(c.pieces > 1 ? "pièces" : "pièce")}` : ""}${c.photos ? ` · ${icone("appareil-photo")} ${c.photos}` : ""}${c.signe ? ` · ${icone("document")} ${tr("Signé")}` : ""}</p>
       ${c.note ? `<p class="petit note-cr">${"★".repeat(c.note)}${"☆".repeat(5 - c.note)}${c.commentaire ? ` « ${esc(c.commentaire)} »` : ""}</p>` : ""}
       ${salarie ? "" : `<p class="petit montant-cr"><b>${euros(c.versement_c || c.montant_c || 0)}</b>${c.pourboire_c ? ` + ${euros(c.pourboire_c)} ${tr("de pourboire")}` : ""}
         <span class="muet"> · ${tr(VERSEMENTS[c.versement_statut] || (c.statut === "TERMINEE" ? "Versé 48 h après la fin" : "Après la validation"))}</span></p>`}
@@ -481,15 +481,15 @@ export async function brancherMissions(vue, p) {
   // Refonte du 22/11/2026 : quatre parties rangées dans les onglets Aujourd'hui · Missions (Disponibles, À venir, Terminées) · Gains · Profil.
   boite.innerHTML = `
   <div id="cleaneur-aujourdhui" class="cleaneur-partie">
-    ${geo !== "granted" ? `<div class="carte teintee geoloc"><b>📍 Géolocalisation</b>
+    ${geo !== "granted" ? `<div class="carte teintee geoloc"><b>${icone("position")} Géolocalisation</b>
       <p class="petit" style="margin:4px 0 10px">${geo === "denied" ? "La géolocalisation est bloquée dans votre navigateur : autorisez-la dans les réglages du site (cadenas à gauche de l'adresse)."
         : "Elle sert à prévenir le client pendant votre trajet et à confirmer votre arrivée. Votre position n'est partagée que pendant le trajet."}</p>
       ${geo === "prompt" ? `<button type="button" class="bouton" id="autoriser-geoloc">Autoriser la géolocalisation</button>` : ""}</div>` : ""}
     ${blocAvertissements(avert)}
     ${avert?.banni || !miennes.length ? "" : blocSelfie(selfie)}
     ${p.employeur_id ? "" : tableauDeBord(p, docs, miennes, dispo, tableau, "aujourdhui", !duJour.length)}
-    ${duJour.map((m, i) => (i === 0 ? `<h2 class="titre-section">▶ ${tr("Prochaine action")}</h2>` : i === 1 ? `<h2 class="titre-section">🕒 ${tr("Plus tard aujourd'hui")}</h2>` : "") + carteMission(m) + (i === 0 ? `<div id="tournee-jour">${blocTournee(etapesJour)}</div>` : "")).join("")}
-    ${!duJour.length && plusTard.length ? `<a class="carte ligne-compte prochaine-mission" href="#mes-missions-a-venir" data-segment-aller="a_venir">📅
+    ${duJour.map((m, i) => (i === 0 ? `<h2 class="titre-section">▶ ${tr("Prochaine action")}</h2>` : i === 1 ? `<h2 class="titre-section">${icone("horloge")} ${tr("Plus tard aujourd'hui")}</h2>` : "") + carteMission(m) + (i === 0 ? `<div id="tournee-jour">${blocTournee(etapesJour)}</div>` : "")).join("")}
+    ${!duJour.length && plusTard.length ? `<a class="carte ligne-compte prochaine-mission" href="#mes-missions-a-venir" data-segment-aller="a_venir">${icone("calendrier")}
       <div class="corps"><b>${tr("Prochaine mission")}</b><p class="petit" style="margin:2px 0 0">${esc(rubrique(plusTard[0].rubrique_id)?.nom || "")} · ${plusTard[0].creneau ? esc(dateLongue(new Date(plusTard[0].creneau))) : ""} · ${esc(plusTard[0].ville)}</p></div><span aria-hidden="true">›</span></a>` : ""}
     ${!duJour.length && !plusTard.length ? `<div class="carte vide-jour"><b>${tr("Aucune mission aujourd'hui")}</b><p class="petit" style="margin:4px 0 0">${tr("Les missions commencent dès l'ouverture des réservations. Elles s'afficheront ici, dans l'ordre de la journée.")}</p></div>` : ""}
   </div>
@@ -527,10 +527,10 @@ ${p.employeur_id ? "" : `    <h2 class="titre-section" id="missions-disponibles"
     ${p.employeur_id ? "" : tableauDeBord(p, docs, miennes, dispo, tableau, "profil")}
     <div id="ce-qui-manque"></div>
     <div id="formations-cleaneur"></div>
-    <details class="carte" id="mes-disponibilites"><summary><b>🗓️ ${tr("Mes disponibilités")}</b></summary>
+    <details class="carte" id="mes-disponibilites"><summary><b>${icone("calendrier")} ${tr("Mes disponibilités")}</b></summary>
       <div id="periodes-fermees"></div>
       <div id="creneaux-cleaneur"></div></details>
-    <a class="carte ligne-compte aide-whatsapp" href="${lienWhatsAppSupport("Bonjour Cleaneroo, je suis Cleaneur et j'ai une question : ")}" target="_blank" rel="noopener">💬
+    <a class="carte ligne-compte aide-whatsapp" href="${lienWhatsAppSupport("Bonjour Cleaneroo, je suis Cleaneur et j'ai une question : ")}" target="_blank" rel="noopener">${icone("message")}
       <div class="corps"><b>${tr("Une question ? Écrivez-nous sur WhatsApp")}</b><p class="petit" style="margin:2px 0 0">${tr("Le support Cleaneroo vous répond directement.")}</p></div><span aria-hidden="true">›</span></a>
   </div>
 `;
@@ -568,8 +568,8 @@ ${p.employeur_id ? "" : `    <h2 class="titre-section" id="missions-disponibles"
   // Signature du compte rendu, obligatoire avant « J'ai terminé ».
   boite.querySelectorAll("[data-signature-cleaneur]").forEach(async z => {
     const deja = (await signaturesDe(z.dataset.signatureCleaneur)).some(s => s.role === "cleaneur");
-    if (deja) { z.innerHTML = `<p class="petit" style="color:var(--succes);margin-top:8px">✅ ${tr("Compte rendu signé.")}</p>`; return; }
-    zoneSignature(z, z.dataset.signatureCleaneur, { apres: () => { z.innerHTML = `<p class="petit" style="color:var(--succes);margin-top:8px">✅ ${tr("Compte rendu signé.")}</p>`; } });
+    if (deja) { z.innerHTML = `<p class="petit" style="color:var(--succes);margin-top:8px">${icone("valide")} ${tr("Compte rendu signé.")}</p>`; return; }
+    zoneSignature(z, z.dataset.signatureCleaneur, { apres: () => { z.innerHTML = `<p class="petit" style="color:var(--succes);margin-top:8px">${icone("valide")} ${tr("Compte rendu signé.")}</p>`; } });
   });
   brancherPropositions(boite, () => brancherMissions(vue, p));
   majTemps(boite);

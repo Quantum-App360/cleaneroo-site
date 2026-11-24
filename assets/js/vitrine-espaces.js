@@ -59,7 +59,7 @@ export function vitrineEspace(id) {
       <div><b>${t}</b><p class="petit">${d}</p></div></div>`).join("")}</div>
     ${id === "pro" && offreConciergerieOuverte() ? `<div class="offre-pro offre-fondatrice"><span class="badge-formule">Offre Conciergerie fondatrice</span>
       <b>${texteOffreConciergerie()}</b><span class="petit">${texteBonusOffreConciergerie()}</span></div>` : ""}
-    ${v.documents ? `<p class="petit vitrine-documents">📄 <b>Documents à prévoir</b> : ${v.documents}</p>` : ""}
+    ${v.documents ? `<p class="petit vitrine-documents">${icone("document")} <b>Documents à prévoir</b> : ${v.documents}</p>` : ""}
     ${v.video ? `<div class="vitrine-video">${guideVideo(v.video, `vitrine-${id}`)}</div>` : ""}
   </div>`;
 }

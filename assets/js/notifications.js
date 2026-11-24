@@ -1,11 +1,12 @@
 // Centre de notifications (12 novembre 2026, repris de l'appli iPhone de Vincent) : une liste par espace (client, Cleaneur),
 // non lues en gras, « Tout marquer comme lu », toucher = ouvrir la prestation. Cloche avec pastille dans l'en-tête.
 // Notifications créées par la base à chaque étape (base-notifications.sql). Même écran dans l'appli (Notifications.kt).
+import { icone } from "./icones.js";
 import { supabase, monProfil, demandesDuCompte } from "./donnees.js";
 import { tr, traduire } from "./langue.js";
 import { esc } from "./commun.js";
 
-const ICONES = { mission: "🧽", confirmee: "✅", progression: "🚗", compte_rendu: "📋", paiement: "💶", alerte: "⚠️", info: "ℹ️", avis: "⭐" };
+const ICONES = { mission: icone("termine"), confirmee: icone("valide"), progression: icone("vehicule"), compte_rendu: icone("document"), paiement: icone("paiement"), alerte: icone("alerte"), info: icone("document"), avis: icone("avis") };
 const quand = iso => { const d = new Date(iso), m = Math.round((Date.now() - d) / 60000);
   return m < 1 ? tr("à l'instant") : m < 60 ? `${m} min` : m < 1440 ? `${Math.round(m / 60)} h` : d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" }); };
 
@@ -38,19 +39,19 @@ export async function pageNotifications(vue, espaceVoulu) {
   const lien = n => n.titre === "Nouveau message" && n.reference ? `#/messages/${encodeURIComponent(n.reference)}` : !n.reference ? "" : espace === "client" ? (jetons[n.reference] ? `#/demande/${encodeURIComponent(n.reference)}/${encodeURIComponent(jetons[n.reference])}` : "#/mes-demandes") : "#/compte/cleaneur";
   const base = `#/notifications/${espace}`;
   vue.innerHTML = `<section class="bloc"><div class="etroit">
-    <h1>🔔 ${tr(archives ? "Notifications archivées" : "Notifications")}</h1><div class="trait-corail"></div>
+    <h1>${icone("cloche")} ${tr(archives ? "Notifications archivées" : "Notifications")}</h1><div class="trait-corail"></div>
     ${cleaneur && client ? `<div class="choix-periode" role="tablist">${[["client", "Espace client"], ["cleaneur", "Espace Cleaneur"]].map(([v, t]) =>
       `<a role="tab" class="${v === espace ? "actif" : ""}" aria-selected="${v === espace}" href="#/notifications/${v}${archives ? "/archives" : ""}">${tr(t)}</a>`).join("")}</div>` : ""}
     <p class="actions-notifs">${archives ? `<a class="lien-bouton" href="${base}">‹ ${tr("Retour aux notifications")}</a>`
-      : `${liste?.length ? `<button type="button" class="lien-bouton" id="tout-archiver">${tr("Tout archiver")}</button>` : ""}<a class="lien-bouton" href="${base}/archives">🗂 ${tr("Archives")}</a>`}</p>
+      : `${liste?.length ? `<button type="button" class="lien-bouton" id="tout-archiver">${tr("Tout archiver")}</button>` : ""}<a class="lien-bouton" href="${base}/archives">${icone("stock")} ${tr("Archives")}</a>`}</p>
     ${!archives && liste?.length ? `<p class="petit muet aide-glisser">${tr("Glissez une notification vers la gauche ou la droite pour l'archiver. Vous la retrouvez dans « Archives ».")}</p>` : ""}
     ${liste?.length ? `<div class="liste-notifications">${liste.map(n => `<div class="notif-glisse" data-id="${esc(n.id)}">
-        <div class="notif-fond" aria-hidden="true"><span>🗂 ${tr(archives ? "Remettre" : "Archiver")}</span><span>🗂 ${tr(archives ? "Remettre" : "Archiver")}</span></div>
+        <div class="notif-fond" aria-hidden="true"><span>${icone("stock")} ${tr(archives ? "Remettre" : "Archiver")}</span><span>${icone("stock")} ${tr(archives ? "Remettre" : "Archiver")}</span></div>
         <a class="carte notification${n.lu ? "" : " non-lue"} ${esc(n.niveau)}" href="${lien(n) || base}">
-        <span class="icone-notif" aria-hidden="true">${ICONES[n.type] || "🔔"}</span>
+        <span class="icone-notif" aria-hidden="true">${ICONES[n.type] || icone("cloche")}</span>
         <span class="corps-notif"><b>${esc(tr(n.titre))}</b>${n.texte ? `<span class="petit">${esc(tr(n.texte))}</span>` : ""}</span>
         <span class="petit quand-notif">${quand(n.cree_le)}</span>
-        <button type="button" class="archiver-notif" data-archiver="${esc(n.id)}" title="${tr(archives ? "Remettre dans les notifications" : "Archiver")}" aria-label="${tr(archives ? "Remettre dans les notifications" : "Archiver")}">${archives ? "↩" : "🗂"}</button></a></div>`).join("")}</div>`
+        <button type="button" class="archiver-notif" data-archiver="${esc(n.id)}" title="${tr(archives ? "Remettre dans les notifications" : "Archiver")}" aria-label="${tr(archives ? "Remettre dans les notifications" : "Archiver")}">${archives ? "↩" : ""}</button></a></div>`).join("")}</div>`
       : `<div class="vide-compte"><p class="muet">${tr(archives ? "Aucune notification archivée." : "Aucune notification pour l'instant.")}</p>${archives ? "" : `<p class="petit">${tr("Vous serez prévenu ici à chaque étape de vos prestations.")}</p>`}</div>`}
   </div></section>`;
   traduire(vue);

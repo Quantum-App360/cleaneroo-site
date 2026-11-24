@@ -1,6 +1,7 @@
 // Messagerie (12 novembre 2026, reprise de l'appli iPhone de Vincent) : une conversation par prestation entre le client et
 // son Cleaneur (dès que la mission est confirmée) + « Cleaneroo · Support ». Photos jointes. #/messages et #/messages/<fil>.
 // Même écran dans l'appli (Messages.kt). Base : outils/base-messagerie.sql.
+import { icone } from "./icones.js";
 import { supabase, reduirePhoto } from "./donnees.js";
 import { rubrique } from "./catalogue.js";
 import { tr, traduire } from "./langue.js";
@@ -19,12 +20,12 @@ export async function pageMessages(vue, fil) {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) { location.hash = "#/compte"; return; }
   const { data: liste } = await supabase.rpc("mes_conversations");
-  vue.innerHTML = `<section class="bloc"><div class="etroit"><h1>💬 ${tr("Messages")}</h1><div class="trait-corail"></div>
+  vue.innerHTML = `<section class="bloc"><div class="etroit"><h1>${icone("message")} ${tr("Messages")}</h1><div class="trait-corail"></div>
     <p class="petit">${tr("Une conversation s'ouvre avec votre Cleaneur (ou votre client) dès que la prestation est confirmée.")}</p>
-    <div class="liste-conversations"><a class="carte conversation" href="#/aide"><span class="avatar-conv">🛟</span>
+    <div class="liste-conversations"><a class="carte conversation" href="#/aide"><span class="avatar-conv">${icone("message")}</span>
       <span class="corps-conv"><b>${tr("Assistant Cleaneroo")}</b><span class="petit">${tr("Réponse immédiate · une demande à l'équipe si besoin (48 h)")}</span></span><span class="droite-conv">›</span></a>
     ${(liste || []).map(c => `<a class="carte conversation${c.non_lus ? " non-lue" : ""}" href="#/messages/${encodeURIComponent(c.fil)}">
-      <span class="avatar-conv">${c.fil.startsWith("support:") ? "🛟" : esc((c.avec || "?").charAt(0).toUpperCase())}</span>
+      <span class="avatar-conv">${c.fil.startsWith("support:") ? icone("message") : esc((c.avec || "?").charAt(0).toUpperCase())}</span>
       <span class="corps-conv"><b>${esc(nomFil(c))}</b><span class="petit">${c.dernier ? esc(c.dernier) : tr("Aucun message pour l'instant.")}</span></span>
       <span class="droite-conv"><span class="petit">${c.dernier_le ? heure(c.dernier_le) : ""}</span>${c.non_lus ? `<span class="pastille-cloche">${c.non_lus}</span>` : ""}</span></a>`).join("")}</div>
   </div></section>`;
@@ -39,10 +40,10 @@ async function pageFil(vue, fil) {
     <p><a class="lien-bouton" href="#/messages">‹ ${tr("Toutes les conversations")}</a></p>
     <div class="bulles" aria-live="polite"></div>
     <form class="saisie-message" autocomplete="off">
-      <label class="joindre" title="${tr("Joindre une photo")}">📷<input type="file" accept="image/*" hidden data-photo-message></label>
+      <label class="joindre" title="${tr("Joindre une photo")}"><input type="file" accept="image/*" hidden data-photo-message></label>
       <textarea rows="1" maxlength="2000" placeholder="${tr("Votre message…")}" data-texte-message></textarea>
       <button class="bouton" type="submit">${tr("Envoyer")}</button></form>
-    <p class="petit muet" style="margin:6px 0 0">🔒 ${tr("Numéros, e-mails, liens et réseaux sont masqués automatiquement : tout passe par Cleaneroo (paiement protégé, assurance, remplaçant).")}</p>
+    <p class="petit muet" style="margin:6px 0 0">${icone("cadenas")} ${tr("Numéros, e-mails, liens et réseaux sont masqués automatiquement : tout passe par Cleaneroo (paiement protégé, assurance, remplaçant).")}</p>
     <p class="erreur" data-erreur-message></p></div></section>`;
   traduire(vue);
   const bulles = vue.querySelector(".bulles");

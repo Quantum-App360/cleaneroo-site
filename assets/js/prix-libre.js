@@ -4,6 +4,7 @@
 // • Sur le suivi d'une demande à prix libre : le détail (rémunération du Cleaneur, frais Cleaneroo TTC, frais de service, total)
 //   et, tant que personne n'a accepté, « Augmenter le prix » (jamais à la baisse, au plus le double ; complément prélevé à la validation).
 // Mêmes écrans que l'application (PrixLibre.kt).
+import { icone } from "./icones.js";
 import { supabase, enregistrerBien } from "./donnees.js";
 import { euros } from "./regles.js";
 import { tr, traduire } from "./langue.js";
@@ -16,7 +17,7 @@ const enEuros = c => c ? (c / 100).toFixed(2).replace(".00", "").replace(".", ",
 /** Bloc « Prix du ménage » d'un logement (espace Conciergerie, Hôtels et campings). */
 export function blocPrixBien(l) {
   const conseil = prixConseilleBien(l), prix = Math.round(Number(l.prixMenageC) || 0);
-  return `<details class="prix-bien" data-prix-bien="${esc(l.id)}"><summary>💶 ${tr("Prix du ménage")} : <b>${prix ? euros(prix) : tr("prix conseillé")}</b>${prix ? "" : ` (${euros(conseil)})`}</summary>
+  return `<details class="prix-bien" data-prix-bien="${esc(l.id)}"><summary>${icone("paiement")} ${tr("Prix du ménage")} : <b>${prix ? euros(prix) : tr("prix conseillé")}</b>${prix ? "" : ` (${euros(conseil)})`}</summary>
     <form data-form-prix="${esc(l.id)}" novalidate style="margin-top:10px">
       <div class="barometre" data-barometre="${esc(l.id)}"><span class="petit">${tr("Prix conseillé Cleaneroo")} : <b>${euros(conseil)}</b></span>
         <span class="petit" data-barometre-zone>${tr("Baromètre de la zone : lecture…")}</span></div>
@@ -35,7 +36,7 @@ function apercu(f, conseil) {
   if (!prix) { boite.textContent = ""; return; }
   const invite = prix - Math.min(prix, Math.max(150, Math.round(prix * 0.05)));
   boite.innerHTML = `${tr("Le Cleaneur reçoit")} <b>${euros(invite)}</b> ${tr("s'il est invité par vous")}, <b>${euros(Math.round(prix * 0.88))}</b> ${tr("(Cleaneur Pro) ou")} <b>${euros(Math.round(prix * 0.80))}</b> ${tr("(Cleaneur Gratuit)")}.`
-    + (messagePlancher(prix, conseil) ? `<br><span class="attention">⚠️ ${messagePlancher(prix, conseil)}</span>` : "");
+    + (messagePlancher(prix, conseil) ? `<br><span class="attention">${icone("alerte")} ${messagePlancher(prix, conseil)}</span>` : "");
 }
 
 export function brancherPrixBiens(vue, biens, recharger) {
@@ -76,7 +77,7 @@ export async function blocPrixDemande(avant, reference) {
   boite.className = "carte detail-prix-libre";
   boite.style.marginBottom = "14px";
   const ligne = (libelle, c, classe = "") => `<div class="ligne-montant ${classe}"><span>${libelle}</span><span>${euros(c)}</span></div>`;
-  boite.innerHTML = `<h3 style="margin-top:0">💶 ${tr("Détail du prix")}</h3>`
+  boite.innerHTML = `<h3 style="margin-top:0">${icone("paiement")} ${tr("Détail du prix")}</h3>`
     + (d.net_cleaneur_c != null
       ? ligne(tr("Rémunération du Cleaneur"), d.net_cleaneur_c)
         + ligne(`${tr("Frais Cleaneroo")} (${tr("dont TVA")} ${euros(d.tva_frais_c)})${d.rattache ? ` · ${tr("Cleaneur invité par vous")}` : ""}`, d.frais_cleaneroo_c)
@@ -87,7 +88,7 @@ export async function blocPrixDemande(avant, reference) {
     + (d.conseil_c ? `<p class="petit">${tr("Prix conseillé Cleaneroo")} : ${euros(d.conseil_c)}</p>` : "")
     + (d.sous_plancher ? `<div class="note"><span>${messagePlancher(d.prix_c, d.conseil_c)}</span></div>` : "")
     + (d.peut_augmenter ? `<form data-augmenter novalidate style="margin-top:10px">
-        ${d.relance_le ? `<p class="attention" style="margin:0 0 8px">⏳ ${tr("Personne n'a encore accepté ce ménage. Augmentez le prix pour le confier plus vite.")}</p>` : ""}
+        ${d.relance_le ? `<p class="attention" style="margin:0 0 8px">${icone("horloge")} ${tr("Personne n'a encore accepté ce ménage. Augmentez le prix pour le confier plus vite.")}</p>` : ""}
         <label class="champ">${tr("Nouveau prix (€)")}<input name="prix" type="text" inputmode="decimal" maxlength="8" value="${esc(enEuros(d.prix_relance_c || Math.max(d.prix_c + 200, d.conseil_c || 0)))}"></label>
         <p class="petit">${tr("Le complément est prélevé à la validation du ménage, sur la carte utilisée pour la réservation.")}</p>
         <p class="erreur" data-erreur-augmenter></p><button class="bouton plein" type="submit">${tr("Augmenter le prix")}</button></form>` : "");

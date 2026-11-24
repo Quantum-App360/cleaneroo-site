@@ -1,6 +1,7 @@
 // Guide d'accès en photos (12 novembre 2026, repris de l'appli iPhone de Vincent) : étapes (titre, note, photo) enregistrées avec
 // le logement, copiées dans chaque réservation de ce logement ; le Cleaneur ne les voit qu'une fois la mission confirmée.
 // Photos : stockage privé « guides » (dossier = compte du client). Même écran dans l'appli (Guides.kt).
+import { icone } from "./icones.js";
 import { supabase, enregistrerBien, reduirePhoto } from "./donnees.js";
 import { tr, traduire } from "./langue.js";
 import { esc } from "./commun.js";
@@ -14,7 +15,7 @@ async function lien(chemin) {
 /** Éditeur du guide d'un logement (fiche du bien). */
 export function editeurGuide(l) {
   const g = l.guide || [];
-  return `<details class="guide-acces"><summary>📸 ${tr("Guide d'accès en photos")} (${g.length})</summary>
+  return `<details class="guide-acces"><summary>${icone("appareil-photo")} ${tr("Guide d'accès en photos")} (${g.length})</summary>
     <p class="petit">${tr("Étape par étape : portail, digicode, boîte à clés, compteur… Transmis au Cleaneur seulement une fois la mission confirmée.")}</p>
     ${g.map((e, i) => `<div class="etape-guide"><b>${i + 1}. ${esc(e.titre)}</b>${e.note ? `<span class="petit">${esc(e.note)}</span>` : ""}
       ${e.photo ? `<img alt="" data-photo-guide="${esc(e.photo)}">` : ""}<button type="button" class="lien-bouton" data-retirer-etape="${esc(l.id)}:${i}">${tr("Retirer")}</button></div>`).join("")}
@@ -56,7 +57,7 @@ export function brancherGuides(vue, biens, recharger) {
 export function blocGuideMission(m) {
   const g = m.details?.guide || [];
   if (!g.length) return "";
-  return `<details class="guide-acces" style="margin-top:10px"><summary><b>📸 ${tr("Guide d'accès")}</b> (${g.length})</summary>
+  return `<details class="guide-acces" style="margin-top:10px"><summary><b>${icone("appareil-photo")} ${tr("Guide d'accès")}</b> (${g.length})</summary>
     ${g.map((e, i) => `<div class="etape-guide"><b>${i + 1}. ${esc(e.titre)}</b>${e.note ? `<span class="petit">${esc(e.note)}</span>` : ""}
       ${e.photo ? `<img alt="" data-photo-guide="${esc(e.photo)}">` : ""}</div>`).join("")}</details>`;
 }

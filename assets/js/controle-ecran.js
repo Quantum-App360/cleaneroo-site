@@ -25,7 +25,7 @@ async function listeSignalements(reference) {
   const liens = {};
   await Promise.all(liste.filter(s => s.photo).map(async s => { liens[s.photo] = await lienPhotoControle(s.photo).catch(() => ""); }));
   return liste.length ? `<div class="signalements">${liste.map(s => `<div class="signalement">${s.photo && liens[s.photo] ? `<a href="${esc(liens[s.photo])}" target="_blank" rel="noopener"><img src="${esc(liens[s.photo])}" alt=""></a>` : ""}
-    <div><b>⚠️ ${tr((TYPES_SIGNAL.find(t => t[0] === s.type) || [, "Autre"])[1])}</b><p class="petit" style="margin:2px 0 0">${esc(s.texte)}</p>
+    <div><b>${icone("alerte")} ${tr((TYPES_SIGNAL.find(t => t[0] === s.type) || [, "Autre"])[1])}</b><p class="petit" style="margin:2px 0 0">${esc(s.texte)}</p>
       <span class="petit">${new Date(s.cree_le).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}</span></div></div>`).join("")}</div>` : "";
 }
 
@@ -60,16 +60,16 @@ export async function brancherControle(boite, m, surFin) {
   const ouverte = liste.find(c => !complete(c))?.piece_id;
   const signalements = await listeSignalements(m.reference);
   boite.innerHTML = `<div class="controle">
-    <details class="signaler-arrivee"><summary>⚠️ ${tr("Signaler un problème à l'arrivée")}</summary>
+    <details class="signaler-arrivee"><summary>${icone("alerte")} ${tr("Signaler un problème à l'arrivée")}</summary>
       <p class="petit" style="margin:6px 0">${tr("Dégât, saleté exceptionnelle, objet cassé : signalez-le avant de commencer. Le client le voit dans le compte rendu.")}</p>
       <div class="choix-signal">${TYPES_SIGNAL.map(([id, nom], i) => `<label class="case"><input type="radio" name="type-signal" value="${id}" ${i === 0 ? "checked" : ""}><span>${tr(nom)}</span></label>`).join("")}</div>
       <label class="champ">${tr("Ce que vous constatez")}<textarea maxlength="600" rows="2" data-texte-signal></textarea></label>
-      <label class="bouton secondaire">📷 ${tr("Ajouter une photo")}<input type="file" accept="image/*" capture="environment" hidden data-photo-signal></label>
+      <label class="bouton secondaire">${icone("appareil-photo")} ${tr("Ajouter une photo")}<input type="file" accept="image/*" capture="environment" hidden data-photo-signal></label>
       <span class="petit" data-nom-photo-signal></span>
       <button type="button" class="bouton" data-envoyer-signal style="margin-top:8px">${tr("Envoyer le signalement")}</button>
       <p class="erreur" data-erreur-signal></p></details>
     ${signalements}
-    ${criteresDe(m.rubrique_id, (m.details || {}).formuleId).length ? `<details class="carte teintee criteres-validation"><summary><b>✅ ${tr("Critères de validation avant de terminer")}</b></summary>
+    ${criteresDe(m.rubrique_id, (m.details || {}).formuleId).length ? `<details class="carte teintee criteres-validation"><summary><b>${icone("valide")} ${tr("Critères de validation avant de terminer")}</b></summary>
       <ul class="petit">${criteresDe(m.rubrique_id, (m.details || {}).formuleId).map(c => `<li>${esc(tr(c))}</li>`).join("")}</ul></details>` : ""}
     <div data-supplement></div>
     <div class="controle-tete"><b>${tr("Contrôle pièce par pièce")}</b><span>${faites} / ${liste.length}</span></div>

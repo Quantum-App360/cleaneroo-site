@@ -2,6 +2,7 @@
 // Cleaneur propose un prix (remise ≤ 10 %, hausse ≤ 50 % toujours justifiée), un autre horaire s'il le faut, ses exclusions ;
 // le client compare et choisit. Règles : REGLES.PROPOSITION_* et verifierProposition (regles.js, copie dans Regles.kt).
 // Même écran dans l'appli (Propositions.kt). Base : outils/base-propositions.sql.
+import { icone } from "./icones.js";
 import { supabase } from "./donnees.js";
 import { REGLES, euros, verifierProposition, fraisDeplacementC } from "./regles.js";
 import { tr, traduire } from "./langue.js";
@@ -73,23 +74,23 @@ export async function blocPropositionsClient(boite, reference, jeton) {
   if (!boite) return;
   const { data: liste } = await supabase.rpc("propositions_de", { p_reference: reference, p_jeton: jeton || null });
   if (!boite.isConnected) return;
-  if (!liste?.length) { boite.innerHTML = `<div class="carte" style="margin-bottom:14px"><b>⏳ ${tr("En attente des propositions des Cleaneurs")}</b>
+  if (!liste?.length) { boite.innerHTML = `<div class="carte" style="margin-bottom:14px"><b>${icone("horloge")} ${tr("En attente des propositions des Cleaneurs")}</b>
     <p class="petit" style="margin:4px 0 0">${tr("Vous êtes prévenu à chaque proposition. Rien ne sera ajouté sans votre accord.")}</p></div>`; traduire(boite); return; }
   const heure = iso => new Date(iso).toLocaleString("fr-FR", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
-  boite.innerHTML = `<h2 class="titre-section">🙋 ${tr("Propositions des Cleaneurs")} (${liste.length})</h2>
+  boite.innerHTML = `<h2 class="titre-section">${icone("cleaneurs")} ${tr("Propositions des Cleaneurs")} (${liste.length})</h2>
     <p class="petit" style="margin-top:0">${tr("Comparez et choisissez. Aucun Cleaneur n'est accepté sans votre choix ; rien ne sera ajouté sans votre accord.")}</p>
     <div class="grille-propositions">${liste.map(p => {
       const ecart = p.prix_c - p.estimation_c;
       const minutes = Math.max(0, Math.round((new Date(p.expire_le) - Date.now()) / 60000));
       return `<div class="carte proposition-client" data-id="${esc(p.id)}">
         <div class="tete-prop"><b>${esc(p.prenom || "")}</b>${badgeNiveau(p.niveau)}</div>
-        <p class="petit" style="margin:2px 0">${p.nb_avis ? `⭐ ${String(p.note).replace(".", ",")} · ${p.nb_avis} ${tr("avis")}` : tr("Nouveau sur Cleaneroo · aucun avis")}</p>
+        <p class="petit" style="margin:2px 0">${p.nb_avis ? `${icone("avis")} ${String(p.note).replace(".", ",")} · ${p.nb_avis} ${tr("avis")}` : tr("Nouveau sur Cleaneroo · aucun avis")}</p>
         <p class="prix-prop">${euros(p.prix_c + (p.frais_c || 0))}</p>
         ${p.frais_c ? `<p class="petit" style="margin:0">${tr("dont")} ${euros(p.frais_c)} ${tr("de déplacement")}</p>` : `<p class="petit" style="margin:0">${tr("Sans frais de déplacement")}</p>`}
         ${ecart ? `<p class="petit" style="margin:0;color:${ecart < 0 ? "var(--succes)" : "var(--corail-texte,#C2552F)"}">${ecart < 0 ? "−" : "+"}${euros(Math.abs(ecart))} ${tr("par rapport à l'estimation")} · ${tr(nomRaison(p.raison))}</p>` : `<p class="petit" style="margin:0">${tr("Au prix estimé")}</p>`}
         ${p.note_cleaneur ? `<p class="petit"><i>« ${esc(p.note_cleaneur)} »</i></p>` : ""}
-        ${p.temps_sup_min ? `<p class="petit">⏱ +${p.temps_sup_min} min ${tr("prévues")}</p>` : ""}
-        ${p.autre_horaire ? `<p class="petit">🕘 ${tr("Propose un autre horaire :")} <b>${heure(p.autre_horaire)}</b></p>` : ""}
+        ${p.temps_sup_min ? `<p class="petit">${icone("horloge")} +${p.temps_sup_min} min ${tr("prévues")}</p>` : ""}
+        ${p.autre_horaire ? `<p class="petit">${icone("horloge")} ${tr("Propose un autre horaire :")} <b>${heure(p.autre_horaire)}</b></p>` : ""}
         ${p.enchainement ? `<label class="petit case-prop"><input type="checkbox" data-risque> ${tr("Cleaneur en mission juste avant : j'accepte le risque d'un léger retard")}</label>` : ""}
         ${p.exclusions ? `<label class="petit case-prop"><input type="checkbox" data-exclusion> ${tr("J'accepte l'exclusion :")} ${esc(p.exclusions)}</label>` : ""}
         <label class="petit case-prop"><input type="checkbox" data-cgv> ${tr("J'accepte les conditions générales de vente et la politique d'annulation")}</label>

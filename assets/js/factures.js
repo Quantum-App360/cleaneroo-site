@@ -42,7 +42,7 @@ export function blocFactures(liste, espace) {
         <div class="boutons-factures"><button type="button" class="bouton" data-zip-factures>⬇ ${tr("Tout télécharger (ZIP)")}</button>
           <button type="button" class="bouton secondaire" data-releve-factures>${tr("Relevé PDF")}</button>
           <button type="button" class="bouton secondaire" data-csv-factures>${tr("Export comptable (CSV)")}</button>
-          <button type="button" class="bouton secondaire" data-comptable-factures>✉ ${tr("Envoyer à mon comptable")}</button></div>
+          <button type="button" class="bouton secondaire" data-comptable-factures>${icone("message")} ${tr("Envoyer à mon comptable")}</button></div>
         <label class="champ" style="margin:8px 0 0">${tr("E-mail de mon comptable (facultatif, gardé sur cet appareil)")}<input type="email" data-email-comptable value="${esc(comptable)}" maxlength="200" placeholder="comptable@cabinet.fr"></label>
         <p class="petit muet" data-etat-factures style="margin:6px 0 0"></p></div>
       <div class="carte factures-liste">${liste.map(f => `<div class="ligne-facture" data-mois="${moisDe(f)}">

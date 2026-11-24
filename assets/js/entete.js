@@ -57,8 +57,8 @@ export function rendreEntete(p) {
   const html = type === "visiteur"
     ? `${boutonMode()}<a class="lien-connexion" href="${b}#/compte">Se connecter</a><a class="bouton bouton-entete" href="${b}${cleaneur ? "#/compte/cleaneur" : "#/compte/creer"}">Créer mon espace</a>`
     : `${["particulier", "entreprise", "pro", "hotellerie"].includes(type) ? `<a class="bouton bouton-entete" href="${b}#/reserver${type === "pro" ? "/rental" : type === "entreprise" ? "/office" : type === "hotellerie" ? "/hospitality" : ""}">Réserver</a>` : ""}
-       ${type !== "admin" ? boutonMode() : ""}<a class="cloche" href="${b}#/messages" title="${tr("Messages")}" aria-label="${tr("Messages")}">💬</a>
-       <a class="cloche" href="${b}#/notifications" title="${tr("Notifications")}" aria-label="${tr("Notifications")}">🔔<span class="pastille-cloche" hidden></span></a>
+       ${type !== "admin" ? boutonMode() : ""}<a class="cloche" href="${b}#/messages" title="${tr("Messages")}" aria-label="${tr("Messages")}"></a>
+       <a class="cloche" href="${b}#/notifications" title="${tr("Notifications")}" aria-label="${tr("Notifications")}"><span class="pastille-cloche" hidden></span></a>
        <a class="puce-compte" href="${b}#/compte" title="${tr("Mon espace")}"><span class="avatar">${initiale}</span><span class="qui"><b>${p.prenom || tr("Mon espace")}</b><small>${NOM_ESPACE[type]}</small></span></a>`;
   actions.innerHTML = html;
   // Téléphone : le panneau du menu reprend les liens puis le compte.
