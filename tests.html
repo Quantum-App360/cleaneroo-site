@@ -21,6 +21,7 @@ import { RUBRIQUES as RUBRIQUES_CAT, rubrique, pastille, tacheChiffree, tachesPo
   import { niveauRotation } from "./assets/js/conciergerie.js";
 import { menageTientEntreVoyageurs } from "./assets/js/estimation.js";
 import { bornesPeriode } from "./assets/js/periodes.js";
+import { formuleStandardVehicule } from "./assets/js/commun.js";
 import { GARANTIES, PAIEMENT_COURT, PAIEMENT_LONG, moyensPaiement, texteAnnulation, contenuAvisPublics, AVIS_MINIMUM, mentionCodePostal, ligneZone } from "./assets/js/commun.js";
 import { ICONES } from "./assets/js/icones.js";
 import { releveProprietaire, listeCourses, texteCourses, dossiersDommages } from "./assets/js/conciergerie.js";
@@ -232,7 +233,7 @@ egal("1. logement 62 m² : 150 min", e.dureeMin, 150); egal("1. logement 62 m² 
 egal("pastille logement", espaces(pastille(rubrique("home"))), "dès 26,90 € / h");
 egal("pastille location", espaces(pastille(rubrique("rental"))), "dès 37,50 € le ménage");
 egal("pastille hôtels et campings : élément le moins cher", espaces(pastille(rubrique("hospitality"))), "dès 9 € l'élément");
-egal("pastille véhicules", espaces(pastille(rubrique("car"))), "dès 40 €");
+egal("pastille véhicules : formule Standard calculée", espaces(pastille(rubrique("car"))), "Formule Standard dès 94 €");
 egal("pastille textiles", espaces(pastille(rubrique("textiles"))), "dès 43 € l'élément");
 e = parcours({ rubriqueId: "rental", formuleId: "court" });
 egal("2. location T3 62 m² (ancienne formule court → Standard) : 135 min", e.dureeMin, 135); egal("2. location T3 62 m² : 67,50 €", e.totalC, 6750);
@@ -779,6 +780,13 @@ egal("juste prix : déplacement inclus jusqu'à 15 km", REGLES.FRAIS_DEPLACEMENT
 egal("photos avant : logement", photosAvantObligatoires("home"), true);
 egal("photos avant : véhicule", photosAvantObligatoires("car"), true);
 egal("photos avant : toutes les rubriques sauf spécialisées", RUBRIQUES_CAT.filter(r => !photosAvantObligatoires(r.id)).map(r => r.id).join(","), "special");
+// Véhicules (prompt 2, partie 7) : Standard = ancien pack Confort, prix inchangé, 4 côtés photographiés
+egal("véhicule : citadine Standard 83600 = 94,00 €", formuleStandardVehicule().prixC, 9400);
+egal("véhicule : le pack confort s'appelle Standard", rubrique("car").packs.find(p => p.id === "confort").nom, "Standard");
+egal("véhicule : remises inchangées (10 % et 15 %)", rubrique("car").packs.map(p => p.remisePct).join(), "10,15");
+egal("véhicule : intérieur + 4 côtés contrôlés", piecesDe("car", { taches: ["aspiration", "lavage_main"] }).map(z => z.id).join(), "interieur,avant,conducteur,arriere,passager");
+egal("véhicule : lavage coché sur chaque côté", piecesDe("car", { taches: ["lavage_main"] }).slice(1).every(z => z.taches.some(t => t.id === "lavage_main")), true);
+egal("véhicule : pas de tâche en double", piecesDe("car", { taches: ["aspiration", "tableau"] })[0].taches.map(t => t.id).join(), "aspiration,tableau");
 const ok = res.filter(r => r[1]).length;
 document.getElementById("bilan").textContent = `${ok} tests sur ${res.length} réussis`;
 document.getElementById("liste").innerHTML = res.map(([n, b, d]) => `<li class="${b ? "ok" : "ko"}">${b ? "✓" : "✗"} ${n}${b ? "" : " — " + d}</li>`).join("");

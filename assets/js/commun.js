@@ -2,7 +2,8 @@
 // étapes « Comment ça marche », encart de réassurance, bouton et fenêtre « Être rappelé ».
 import { REGLES, reservationsFermees, MESSAGE_LANCEMENT, PORTEFEUILLES_ACTIFS, LOGOS_PAIEMENT_OFFICIELS } from "./regles.js";
 import { evenement } from "./compteur.js";
-import { eurosRond, rubrique } from "./catalogue.js";
+import { eurosRond, rubrique, PRIX_FORMULES } from "./catalogue.js";
+import { calculer, entreeEstimation } from "./estimation.js";
 import { icone } from "./icones.js";
 import { inscrire, supabase } from "./donnees.js";
 import { traduire, tr, LOCALE, langue } from "./langue.js";
@@ -261,3 +262,14 @@ export function installerRappel(villeParDefaut = "") {
     finally { bouton.disabled = false; }
   });
 }
+
+/* ------------------------------------------------------------------ Formule Standard des véhicules (prompt 2, partie 7) */
+/** Prix et durée de la formule Standard pour une citadine (tâches du pack « confort »), calculés par l'estimation, jamais écrits en dur. */
+export function formuleStandardVehicule() {
+  const p = rubrique("car")?.packs.find(x => x.id === "confort");
+  if (!p) return null;
+  const br = { rubriqueId: "car", typeLieuId: "citadine", surface: 0, chambres: 0, sdb: 0, niveaux: 1, fenetres: 0, salissure: "NORMAL",
+    taches: p.tacheIds, tachesPerso: [], consommablesChoisis: [], engagementMois: 0, flexible: false, panier: [], nombreVehicules: 1 };
+  try { const e = calculer(entreeEstimation(br, true, null)); return { prixC: e.totalC, dureeMin: e.dureeMin }; } catch { return null; }
+}
+{ const f = formuleStandardVehicule(); if (f) PRIX_FORMULES.car = f; }

@@ -3,7 +3,7 @@
 import { PARTIES, partie, partiePour, PARTIE_DE_L_ESPACE, rubriquesProposees, lieuxDuSecteur, inclusLocation, SEJOURS_LOCATION, categorieBien, categorieDeRubrique, categoriesDeRubrique, bienCompatible, typesDeCategorie, CATEGORIES_BIEN, TARIFS_SPECIAUX, RUBRIQUES, rubrique, formulesPour, TYPES_LIEU, TYPES_LOGEMENT, BESOINS_SPECIAUX, ACCUEIL, accueilAutonomeInterdit, photosObligatoires,
   ELEMENTS_TEXTILES, TAILLES_CANAPE, prixLigne, minutesLigne, libelleLigne, pastille,
   FREQUENCES, JOURS_SEMAINE, DERNIERS_NETTOYAGES, packsPour, remisePack,
-  TACHES_A_TRAITER, TYPES_CHANTIER, photosPlusTardPossibles, equipementsPour, DELAIS_URGENCE, TYPES_IMMEUBLE, surfaceEffective, SELECTION_CONSEILLEE_VEHICULE, LIEUX_VEHICULE, FREQUENCES_VEHICULE, RUBRIQUES_LOGEMENT, vuesPhotos, vuesCompletes, PIECES_LOCATION, ETAPES_LOCATION, PACK_ETAPES_CONSEILLE, ETAPES_DEPART, prixEtapeLocationC, repetitionsEtape, CONSOMMABLES_LOCATION, PACK_CONSOMMABLES_CONSEILLE } from "./catalogue.js";
+  TACHES_A_TRAITER, TYPES_CHANTIER, photosPlusTardPossibles, equipementsPour, DELAIS_URGENCE, TYPES_IMMEUBLE, surfaceEffective, SELECTION_CONSEILLEE_VEHICULE, LIEUX_VEHICULE, FREQUENCES_VEHICULE, RUBRIQUES_LOGEMENT, vuesPhotos, vuesCompletes, PIECES_LOCATION, ETAPES_LOCATION, PACK_ETAPES_CONSEILLE, ETAPES_DEPART, prixEtapeLocationC, repetitionsEtape, CONSOMMABLES_LOCATION, PACK_CONSOMMABLES_CONSEILLE, PRIX_FORMULES, FORMULE_STANDARD_VEHICULE } from "./catalogue.js";
 import { calculer, entreeEstimation, SALISSURE, disponibilite, meilleurPack, tachesChiffrees, formuleDe, niveauLocation, passagesPlanifies, datesPassages,
   etapesDe, consommablesDe, menageTientEntreVoyageurs, frequenceDe, minutesEquipements, prixIndicatifEquipement, heuresEvenement, litsDe, litsTailles,
   tachesPourOccasion, niveauOccasion } from "./estimation.js";
@@ -153,7 +153,8 @@ function vierge(rubriqueId, espace, r, lieux) {
     photosAvantExigees: photosAvantObligatoires(rubriqueId),
     rubriqueId, espace, etape: 2, typeLogementId: "appartement", surface: SURFACE_DEPART[rubriqueId] ?? 62, chambres: 2, sdb: 1, niveaux: 1, fenetres: 8,
     formuleId: formulesPour(r)[0]?.id || "", typeLieuId: lieux ? lieux[0].id : "", salissure: "NORMAL",
-    taches: [], tachesPerso: [], animaux: false, etapesLocation: 8, consommables: true, remarque: "",
+    // Véhicules : formule Standard présélectionnée (prompt 2, partie 7).
+    taches: rubriqueId === "car" ? [...(r?.packs?.find(p => p.id === "confort")?.tacheIds || [])] : [], tachesPerso: [], animaux: false, etapesLocation: 8, consommables: true, remarque: "",
     accueil: "", tiersNom: "", tiersTel: "", boiteEmplacement: "", code: "",
     rue: "", codePostal: "", ville: "", jour: "", heure: -1, flexible: false, engagementMois: 0,
     choixCleaneur: "candidatures", prenom: "", nom: "", email: "", telephone: "", cgv: false, logementId: "",
@@ -514,16 +515,21 @@ function questionnaire(enTete = true) {
   if (chiffrees.length) {
     // Trois formules (Standard · Confort · Premium) : prix total de chaque formule, ce qu'elle ajoute, puis les options en plus.
     const confort = packs.find(p => p.id === "confort"), premium = packs.find(p => p.id === "prestige");
-    const formules = confort && premium ? [{ id: "standard", nom: "Standard", tacheIds: [] }, { ...confort, nom: "Confort" }, { ...premium, nom: "Premium" }] : [];
+    const vehicule = b.rubriqueId === "car";
+    // Véhicules (prompt 2, partie 7) : Standard (pack « confort », −10 %) · Premium (−15 %) · Sur mesure (tâches à cocher).
+    const formules = !(confort && premium) ? [] : vehicule
+      ? [{ ...confort, nom: "Standard" }, { ...premium, nom: "Premium" }, { id: "sur-mesure", nom: "Sur mesure", tacheIds: [] }]
+      : [{ id: "standard", nom: "Standard", tacheIds: [] }, { ...confort, nom: "Confort" }, { ...premium, nom: "Premium" }];
     const dansPacks = new Set(packs.flatMap(p => p.tacheIds));
-    const actif = formuleActive(b, packs, chiffrees);
+    const actifBrut = formuleActive(b, packs, chiffrees), actif = vehicule && actifBrut === "standard" ? "sur-mesure" : actifBrut;
     const incluses = new Set((formules.find(f => f.id === actif)?.tacheIds) || []);
     const menuMenage = b.rubriqueId === "home" && formuleDe(b).genre === "PONCTUEL" && r.occasions.length > 0;
     if (menuMenage) h += quelMenage(r, chiffrees, actif);
     else if (formules.length) {
       const prixFormule = f => calculer(entreeEstimation({ ...b, taches: f.tacheIds.filter(id => chiffrees.some(t => t.id === id)) }, b.espace === "personnel", debutChoisi())).totalC;
       const prixStandard = prixFormule(formules[0]);
-      h += titre("Votre niveau de ménage") + `<div class="formules">${formules.map((f, i) => {
+      if (vehicule) h += titre("Votre formule") + cartesFormulesVehicule(formules, actif, prixFormule);
+      else h += titre("Votre niveau de ménage") + `<div class="formules">${formules.map((f, i) => {
         const avant = i ? formules[i - 1].tacheIds : [];
         const ajouts = chiffrees.filter(t => f.tacheIds.includes(t.id) && !avant.includes(t.id));
         const p = prixFormule(f);
@@ -552,7 +558,7 @@ function questionnaire(enTete = true) {
     if (r.noteTaches) options += `<div class="note alerte" style="margin-top:10px">${esc(r.noteTaches)}</div>`;
     if (r.surfaceReferenceM2 > 0 && chiffrees.some(t => t.parSurface)) options += `<p class="petit">Tâches marquées à la surface : prix pour ${r.surfaceReferenceM2} ${["leisure", "boat"].includes(b.rubriqueId) ? "m de longueur" : "m²"}, au prorata au-delà.</p>`;
     const enPlus = b.taches.filter(id => !incluses.has(id)).length;
-    h += repli("options", formules.length ? "Ajouter des options (facultatif)" : "Tâches complémentaires (facultatif)",
+    h += repli("options", vehicule ? (actif === "sur-mesure" ? "Choisir mes tâches" : "Ajouter une option") : formules.length ? "Ajouter des options (facultatif)" : "Tâches complémentaires (facultatif)",
       enPlus ? `${enPlus} ${tr(enPlus > 1 ? "options ajoutées" : "option ajoutée")}` : tr(formules.length ? "La formule suffit dans la plupart des cas" : "Aucune pour l'instant"), options);
   }
   if (!r.toujoursSurDevis && b.rubriqueId !== "special") {
@@ -633,6 +639,27 @@ function questionsChantier() {
 }
 
 /** Véhicules : nombre, lieu, eau et électricité, fréquence, animaux, sélection conseillée (QuestionsVehicule dans l'appli). */
+/** Véhicules (prompt 2, partie 7) : trois cartes Standard (présélectionnée) · Premium · Sur mesure. */
+function cartesFormulesVehicule(formules, actif, prixFormule) {
+  const std = formules[0], prixStd = prixFormule(std), f = PRIX_FORMULES.car;
+  const chiffrees = tachesChiffrees(b);
+  return `<div class="formules formules-vehicule">${formules.map((x, i) => {
+    const surMesure = x.id === "sur-mesure", p = surMesure ? null : prixFormule(x);
+    const ajouts = i === 1 ? chiffrees.filter(t => x.tacheIds.includes(t.id) && !std.tacheIds.includes(t.id)) : [];
+    return `<button type="button" class="formule${x.id === actif ? " choisie" : ""}${i === 0 ? " conseillee" : ""}" data-formule="${x.id}">
+      ${i === 0 ? `<span class="badge-formule">${tr("Conseillée")}</span>` : ""}
+      <b class="nom-formule">${tr(x.nom)}</b>
+      <span class="prix-formule">${surMesure ? `dès ${euros(REGLES.MINIMUM_COMMANDE_VEHICULE_C)}` : euros(p)}</span>${i === 1 && p > prixStd ? `<span class="ecart-formule">+${euros(p - prixStd)}</span>` : ""}
+      ${x.remisePct ? `<span class="remise-formule">−${x.remisePct} % ${tr("sur les tâches incluses")}</span>` : `<span class="remise-formule">${tr("100 % à la carte")}</span>`}
+      ${i === 0 ? `<p class="compris-titre">${tr("Compris")}</p><ul>${FORMULE_STANDARD_VEHICULE.compris.map(t => `<li>${tr(t)}</li>`).join("")}</ul>
+        <p class="non-compris"><b>${tr("Non compris")}</b> ${tr(FORMULE_STANDARD_VEHICULE.nonCompris)}</p>
+        ${f ? `<p class="petit">${tr("Durée indicative : environ")} ${duree(f.dureeMin)} ${tr("pour une citadine.")}</p>` : ""}
+        <p class="petit">${tr("Lavage sans eau, à domicile ou sur votre lieu de travail. Photos des 4 côtés avant l'intervention.")}</p>`
+      : i === 1 ? `<ul><li class="tout">${tr("Tout Standard, plus :")}</li>${ajouts.map(t => `<li>${esc(t.nom)}</li>`).join("")}</ul>`
+      : `<ul><li>${tr("Choisissez vos tâches une à une dans la liste.")}</li></ul>`}
+    </button>`; }).join("")}</div>`;
+}
+
 function questionsVehicule() {
   const freq = b.frequenceVehicule || "unique";
   return `<div class="carte" style="margin-top:14px">${compteur("Nombre de véhicules", "nombreVehicules", b.nombreVehicules || 1, { min: REGLES.VEHICULES_MIN, max: REGLES.VEHICULES_MAX })}
@@ -644,7 +671,7 @@ function questionsVehicule() {
       <div class="carte" style="margin-top:10px">${compteur("Passages à planifier", "passages", b.passages || REGLES.PASSAGES_DEFAUT, { min: REGLES.PASSAGES_MIN, max: REGLES.PASSAGES_MAX })}</div>` : "")
     + `<div class="carte" style="margin-top:10px">${caseCocher("Des animaux voyagent dans le véhicule", "animaux", !!b.animaux)}
       ${b.animaux && !b.taches.includes("poils") ? `<button type="button" class="lien-bouton" id="ajouter-poils">Ajouter « Poils d'animaux »</button>` : ""}</div>`
-    + `<p style="margin:12px 0 0"><button type="button" class="lien-bouton" id="selection-conseillee">Sélection conseillée ›</button></p>`;
+    ;
 }
 
 /** Location saisonnière : étapes par pièce, étapes personnalisées, consommables, horaires, mémoire (EtapesLocation dans l'appli). */
@@ -1147,6 +1174,7 @@ document.addEventListener("click", async e => {
   }
   if (ds.moins) return maj({ [ds.moins]: Math.max(+ds.min, (b[ds.moins] ?? 1) - +ds.pas) });
   if (ds.plus) return maj({ [ds.plus]: Math.min(+ds.max, (b[ds.plus] ?? 1) + +ds.pas) });
+  if (ds.formule === "sur-mesure") REPLIS_OUVERTS.add("options");
   if (ds.formule) {
     const r = rubrique(b.rubriqueId), packs = packsPour(r, b.typeLieuId), chiffrees = tachesChiffrees(b);
     const dansPacks = new Set(packs.flatMap(p => p.tacheIds));

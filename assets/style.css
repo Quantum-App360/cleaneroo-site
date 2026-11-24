@@ -2801,3 +2801,10 @@ body.sans-rappel .entete .rappel-entete { display: none; }   /* jamais pendant l
 .aa-texte { text-align: center; margin: 16px auto 0; max-width: 640px; }
 .photos-obligatoires { display: flex; gap: 10px; align-items: flex-start; margin: 0; font-size: 14.5px; color: var(--texte2); }
 .photos-obligatoires .ico { flex: none; width: 20px; height: 20px; color: var(--primaire); margin-top: 2px; }
+
+/* ================================================================ Formules véhicule (prompt 2, partie 7) */
+.formules-vehicule .formule .compris-titre { margin: 12px 0 4px; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--texte); }
+.formules-vehicule .formule ul { margin-top: 0; }
+.formules-vehicule .formule .non-compris { margin: 10px 0 0; font-size: 13.5px; line-height: 1.45; color: var(--texte2); }
+.formules-vehicule .formule .non-compris b { display: block; font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: var(--texte); margin-bottom: 2px; }
+.formules-vehicule .formule p.petit { margin: 8px 0 0; font-size: 13px; line-height: 1.45; color: var(--texte2); }

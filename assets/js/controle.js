@@ -13,8 +13,13 @@ const BASE = {
 };
 /** Zones des prestations hors logement : [id, nom, tâches de base]. */
 const ZONES = {
-  car: [["interieur", "Intérieur du véhicule", [["aspiration", "Aspiration des sièges et tapis"], ["tableau", "Tableau de bord et plastiques"], ["vitres_int", "Vitres intérieures"]]],
-        ["exterieur", "Extérieur du véhicule", [["carrosserie", "Carrosserie lavée"], ["jantes", "Jantes"], ["vitres_ext", "Vitres extérieures"]]]],
+  // Véhicules (prompt 2, partie 7, 24/11/2026) : l'intérieur, puis les 4 côtés, chacun photographié avant et après
+  // (état constaté : rayures, chocs). Les tâches extérieures commandées sont cochées sur chaque côté. Même liste dans ControlePieces.kt.
+  car: [["interieur", "Intérieur du véhicule", []],
+        ["avant", "Côté avant", [["etat", "État du côté photographié (rayures, chocs)"]]],
+        ["conducteur", "Côté conducteur", [["etat", "État du côté photographié (rayures, chocs)"]]],
+        ["arriere", "Côté arrière", [["etat", "État du côté photographié (rayures, chocs)"]]],
+        ["passager", "Côté passager", [["etat", "État du côté photographié (rayures, chocs)"]]]],
   textiles: [["textiles", "Textiles traités", [["traitement", "Traitement réalisé sur chaque élément"], ["sechage", "Éléments laissés à sécher, protégés"]]]],
   windows: [["vitres", "Vitres", [["vitres", "Vitres sans traces"], ["encadrements", "Encadrements et rebords"]]]],
   office: [["bureaux", "Espaces de travail", [["poussiere", "Bureaux et surfaces dépoussiérés"], ["poubelles", "Poubelles vidées"], ["sol", "Sols aspirés et lavés"]]],
@@ -57,6 +62,13 @@ export function piecesDe(rubriqueId, details = {}) {
   }
   if (ZONES[rubriqueId]) {
     const zones = ZONES[rubriqueId].map(([id, nom, base]) => ({ id, nom, taches: base.map(([tid, tnom]) => ({ id: tid, nom: tnom })) }));
+    if (rubriqueId === "car") {
+      const ajouterA = (z, t) => { if (!z.taches.some(x => x.id === t.id)) z.taches.push({ id: t.id, nom: t.nom }); };
+      choisies.forEach(t => (t.groupe === "Intérieur" ? [zones[0]] : zones.slice(1)).forEach(z => ajouterA(z, t)));
+      if (!zones[0].taches.length) zones[0].taches.push({ id: "etat", nom: "État de l'intérieur photographié" });
+      zones[0].taches.push(...perso);
+      return zones;
+    }
     const sanitaires = zones.find(z => z.id === "sanitaires");
     choisies.forEach(t => (sanitaires && /sanitaire|wc|toilette/i.test(t.nom + t.groupe) ? sanitaires : zones[0]).taches.push({ id: t.id, nom: t.nom }));
     zones[0].taches.push(...perso);

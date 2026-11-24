@@ -195,7 +195,7 @@ export const RUBRIQUES = [
     surfaceReferenceM2: 60,
     naturesSalissure: ["Poussière de travaux", "Calcaire", "Graisse", "Traces et marques", "Moisissures", "Odeurs"] },
   { id: "car", nom: "Véhicules", sousTitre: "Nettoyage intérieur et extérieur", icone: "vehicule", tauxHoraireC: 4000, salissureSurTemps: false, affichagePrix: "MINIMUM_COMMANDE",
-    inclus: "100 % à la carte : choisissez les tâches. À domicile ou sur la voie publique, lavage sans eau uniquement (produits sans rinçage).",
+    inclus: "Formule Standard, Premium ou sur mesure. À domicile ou sur la voie publique, lavage sans eau uniquement (produits sans rinçage).",
     // Prix « citadine » ; le gabarit (100 / 115 / 130 / 145 %) s'applique au prix ET à la durée de chaque tâche.
     taches: [
       T("aspiration", "Aspiration complète (sièges, tapis, coffre)", 2500, 30, { groupe: "Intérieur" }),
@@ -220,7 +220,8 @@ export const RUBRIQUES = [
       T("moteur", "Compartiment moteur (nettoyage à sec)", 3000, 30, { groupe: "Rénovation et protection" }),
     ],
     packs: [
-      { id: "confort", nom: "Confort", remisePct: 10, tacheIds: ["aspiration", "tableau", "vitres_int", "coffre", "lavage_main", "vitres_ext", "jantes"] },
+      // Prompt 2, partie 7 : le pack « confort » s'appelle « Standard » pour les véhicules (mêmes tâches, même remise de 10 %).
+      { id: "confort", nom: "Standard", remisePct: 10, tacheIds: ["aspiration", "tableau", "vitres_int", "coffre", "lavage_main", "vitres_ext", "jantes"] },
       { id: "prestige", nom: "Premium", remisePct: 15, tacheIds: ["aspiration", "tableau", "vitres_int", "coffre", "lavage_main", "vitres_ext", "jantes", "plastiques_protection", "moquettes", "anti_odeurs", "bas_caisse", "cire"] },
     ] },
   { id: "textiles", nom: "Canapés et textiles", sousTitre: "Canapés, matelas et tapis", icone: "canape", tauxHoraireC: 3000, salissureSurTemps: false, affichagePrix: "PAR_ELEMENT",
@@ -612,12 +613,20 @@ export function libelleLigne(l) {
 /** Montant rond sans centimes : 3500 → « 35 € ». */
 export const eurosRond = c => (c % 100 === 0 ? euros(c).replace(",00", "") : euros(c));
 /** Pastille du catalogue : « dès 26,90 € / h », « dès 29 € le ménage », « dès 40 € », « dès 45 € l'élément ». */
+/** Prix et durée de la formule Standard (citadine), calculés par l'estimation au démarrage (commun.js) : { prixC, dureeMin }. */
+export const PRIX_FORMULES = {};
+/** Formule Standard des véhicules (prompt 2, partie 7) : ce qui est compris et ce qui ne l'est pas. */
+export const FORMULE_STANDARD_VEHICULE = {
+  compris: ["Aspiration complète (sièges, tapis, coffre)", "Dépoussiérage des plastiques et du tableau de bord", "Vitres intérieures et extérieures",
+    "Coffre", "Lavage extérieur sans eau, à la main", "Jantes et pneus, avec brillant des pneus"],
+  nonCompris: "Shampoing des sièges, cuir, polissage, compartiment moteur (en option).",
+};
 export function pastille(r) {
   if (r.affichagePrix === "FORFAIT") return `dès ${eurosRond(prixAppelSpecialC())}`;
   if (r.toujoursSurDevis || r.tauxHoraireC == null) return "Sur devis";
   switch (r.affichagePrix) {
     case "PAR_MENAGE": return `dès ${eurosRond(REGLES.MINIMUM_MENAGE_LOCATION_C)} le ménage`;
-    case "MINIMUM_COMMANDE": return `dès ${eurosRond(REGLES.MINIMUM_COMMANDE_VEHICULE_C)}`;
+    case "MINIMUM_COMMANDE": return PRIX_FORMULES[r.id] ? `Formule Standard dès ${eurosRond(PRIX_FORMULES[r.id].prixC)}` : `dès ${eurosRond(REGLES.MINIMUM_COMMANDE_VEHICULE_C)}`;
     // 20/11/2026 : prix de l'élément le moins cher de CETTE prestation (les hôtels et campings commencent à 9 €, pas à 45 €).
     case "PAR_ELEMENT": { const ids = (r.formules || []).map(f => f.id); const m = Math.min(...ELEMENTS_TEXTILES.filter(e => ids.includes(e.formuleId) && !e.parM2).map(e => e.prixC));
       return `dès ${eurosRond(Number.isFinite(m) ? m : REGLES.PRIX_APPEL_TEXTILES_C)} l'élément`; }
