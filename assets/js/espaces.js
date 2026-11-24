@@ -18,7 +18,7 @@ import { editeurGuide, brancherGuides } from "./guides.js";
 import { editeurEtapesPhoto, brancherEtapesPhoto, etapesPhotoDe, etapesPersoDe } from "./etapes-bien.js";
 import { editeurTemoins, brancherTemoins } from "./temoins.js";
 import { editeurStock, editeurIncidents, brancherOutilsBiens, blocAujourdhui, blocMenages, blocRapports, stockBas, incidentsDe, consommerStock,
-  planProgrammerTout, boutonProgrammerTout, fenetreProgrammerTout, blocCourses, avecHoraires, departDe, arriveeDe, cleSejour, erreurHoraires } from "./conciergerie.js";
+  planProgrammerTout, boutonProgrammerTout, fenetreProgrammerTout, blocCourses, blocDommages, avecHoraires, departDe, arriveeDe, cleSejour, erreurHoraires } from "./conciergerie.js";
 export { brancherMissions, demanderGeoloc } from "./missions.js";
 import { blocSociete, blocActiverSociete, blocSalarie } from "./societe.js";
 
@@ -236,6 +236,9 @@ export function ongletPro(p, biens, hotellerie = false) {
     <div id="pro-aujourdhui">${chargeur("Lecture de vos calendriers…", { petit: true, variante: "vitre" })}</div>
     <h2 class="titre-section">${icone("stock", { tuile: true })}Liste de courses</h2>
     <div id="pro-courses"></div>
+    <h2 class="titre-section" id="titre-dommages">${icone("alerte", { tuile: true })}Dommages voyageurs</h2>
+    <p class="petit" style="margin-top:0">Constats du Cleaneur à son arrivée, un dossier par séjour, avec la date limite de la demande (14 jours après le départ sur Airbnb).</p>
+    <div id="pro-dommages">${chargeur("Chargement…", { petit: true })}</div>
     <h2 class="titre-section">${icone("calendrier", { tuile: true })}Planning de la semaine</h2>
     <p class="petit" style="margin-top:0">Chaque bien, jour par jour : départs, arrivées et ménages. Touchez un départ orange pour programmer son ménage.</p>
     <div class="carte planning-semaine" id="semaine-pro">${chargeur("Lecture de vos calendriers…", { petit: true, variante: "vitre" })}</div>
@@ -446,11 +449,14 @@ async function remplirAgenda(vue, biens, demandes, recharger) {
   const programmerMenage = (bienId, jour) => { preremplir({ bienId, jour, ...horairesDuJour(bienId, jour) }); location.hash = `#/reserver/${rubriqueMenage}`; };
   blocAujourdhui(vue.querySelector("#pro-aujourdhui"), { biens, sejours: uniques, demandes, menageDe, erreurs, nomBien, couleur: couleurDe, programmer: programmerMenage });
   blocMenages(vue.querySelector("#pro-menages"), { biens, demandes, nomBien });
+  // Dommages voyageurs (24/11/2026) : dossiers par séjour et alertes dans « Aujourd'hui » (5 jours, puis 2 jours).
+  blocDommages(vue.querySelector("#pro-dommages"), { biens, demandes, sejours: uniques, nomBien, recharger, zoneAlertes: vue.querySelector("#pro-aujourdhui .alertes-concierge") });
   // « Programmer tout » (24/11/2026) : sur « Aujourd'hui » et la liste des ménages, total affiché avant confirmation.
   const planTout = planProgrammerTout({ biens, departs: uniques, demandes, menagePrevu, abonne: !!profilMemorise()?.abonnePro });
   vue.querySelectorAll(".programmer-tout").forEach(x => x.remove());
-  ["#pro-aujourdhui", "#pro-menages"].forEach(sel => { const z = vue.querySelector(sel); if (!z || !planTout.lignes.length) return;
-    z.insertAdjacentHTML("beforebegin", boutonProgrammerTout(planTout)); const b = z.previousElementSibling; traduire(b);
+  const htmlTout = boutonProgrammerTout(planTout);   // vide s'il n'y a rien à programmer ou si les réservations sont fermées
+  if (htmlTout) ["#pro-aujourdhui", "#pro-menages"].forEach(sel => { const z = vue.querySelector(sel); if (!z) return;
+    z.insertAdjacentHTML("beforebegin", htmlTout); const b = z.previousElementSibling; traduire(b);
     b.querySelector("[data-programmer-tout]").onclick = () => fenetreProgrammerTout(planTout, { nomBien, recharger }); });
   blocRapports(vue.querySelector("#pro-rapports"), { biens, sejours: uniques, demandes, nomBien, societe: vue.querySelector(".entete-pro h2")?.textContent || "" });
   const programmer = b => b.onclick = () => { preremplir({ bienId: b.dataset.programmer, jour: b.dataset.jour, ...horairesDuJour(b.dataset.programmer, b.dataset.jour) }); location.hash = `#/reserver/${rubriqueMenage}`; };

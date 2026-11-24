@@ -7,6 +7,8 @@ export const REGLES = {
   WHATSAPP_SUPPORT: "33626876518",
   // Conciergerie : seuil d'alerte par défaut d'un article du stock d'un bien (13 novembre 2026).
   STOCK_SEUIL_DEFAUT: 2,
+  // Dommages voyageurs (24/11/2026) : demande à déposer au plus tard 14 jours après le départ (règle Airbnb), alerte à 5 jours, urgente à 2 jours.
+  DOMMAGES_DELAI_JOURS: 14, DOMMAGES_ALERTE_JOURS: 5, DOMMAGES_URGENT_JOURS: 2,
   COMMISSION_BASE_PB: 1500,
   DELAI_MIN_RESERVATION_H: 24,
   PLANNING_HEURE_DEBUT: 5,

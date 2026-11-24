@@ -21,7 +21,7 @@ import { RUBRIQUES as RUBRIQUES_CAT, rubrique, pastille, tacheChiffree, tachesPo
   import { niveauRotation } from "./assets/js/conciergerie.js";
 import { menageTientEntreVoyageurs } from "./assets/js/estimation.js";
 import { bornesPeriode } from "./assets/js/periodes.js";
-import { releveProprietaire, listeCourses, texteCourses } from "./assets/js/conciergerie.js";
+import { releveProprietaire, listeCourses, texteCourses, dossiersDommages } from "./assets/js/conciergerie.js";
 import { planProgrammerTout, instantParis, avecHoraires, erreurHoraires, departDe, arriveeDe } from "./assets/js/conciergerie.js";
 import { etatOffreConciergerie, offreConciergerieOuverte, fraisServicePct, reservationsOuvertes, fixerOuverture } from "./assets/js/regles.js";
 import { bornesActivite, decalerActivite, jourParis, resumeActivite, evolutionPct } from "./assets/js/activite-societe.js";
@@ -128,6 +128,21 @@ egal("offre conciergerie : 0 % de frais pendant l'offre", fraisServicePct(false,
   egal("courses : quantité pour remonter au double du seuil", l[0].articles[0].quantite, 5);
   egal("courses : au moins 1 à racheter", l[0].articles[1].quantite, 2);
   egal("courses : texte à partager", texteCourses(l, b => b.nom).includes("- Papier toilette x5"), true); }
+// Dommages voyageurs (24/11/2026)
+{ const biens = [{ id: "a", rue: "1 rue A", codePostal: "83000", dommagesDeposes: { "R3": "2027-02-02T10:00:00Z" } }];
+  const dem = (ref, j) => ({ reference: ref, rue: "1 rue A", code_postal: "83000", creneau: `${j}T09:00:00Z`, details: {} });
+  const demandes = [dem("R1", "2027-01-20"), dem("R2", "2027-01-31"), dem("R3", "2027-01-25"), dem("R4", "2027-01-10")];
+  const sig = ["R1", "R2", "R3", "R4"].map(r => ({ reference: r, type: "casse", cree_le: "2027-01-01T10:00:00Z" }));
+  const d = dossiersDommages({ biens, demandes, signalements: sig, sejours: [{ bienId: "a", debut: "2027-01-15", fin: "2027-01-20", source: "airbnb" }], aujourdhui: new Date(2027, 1, 1) });
+  const de = r => d.find(x => x.reference === r);
+  egal("dommages : délai de 14 jours après le départ", de("R1").limite, "2027-02-03");
+  egal("dommages : urgente à 2 jours", de("R1").niveau, "urgent");
+  egal("dommages : plus de 5 jours, simple rappel", de("R2").niveau, "ok");
+  egal("dommages : demande déposée, plus d'alerte", de("R3").niveau, "depose");
+  egal("dommages : délai dépassé", de("R4").niveau, "expire");
+  egal("dommages : séjour et plateforme retrouvés", de("R1").source, "airbnb");
+  egal("dommages : les plus pressés d'abord", d[0].reference, "R1");
+  egal("dommages : alerte à 5 jours", dossiersDommages({ biens, demandes: [dem("R5", "2027-01-23")], signalements: [{ reference: "R5", type: "degat", cree_le: "2027-01-23T09:00:00Z" }], aujourdhui: new Date(2027, 1, 1) })[0].niveau, "alerte"); }
 egal("niveau : débutant", niveauCleaneur({ missions: 3, note: 5 }), 0);
 egal("niveau : Confirmé", niveauCleaneur({ missions: 12, note: 4.7 }), 1);
 egal("niveau : Élite", niveauCleaneur({ missions: 60, note: 4.9 }), 3);

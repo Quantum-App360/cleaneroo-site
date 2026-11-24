@@ -171,6 +171,85 @@ export function blocCourses(boite, { biens, nomBien, recharger }) {
   });
 }
 
+/* ------------------------------------------------------------------ Dommages voyageurs (24/11/2026, repris de l'appli iPhone)
+   Les dommages constatés par le Cleaneur à son arrivée (photos horodatées, constat_arrivee) forment un dossier par séjour ;
+   rappel « demande à déposer avant le … » (14 jours après le départ, règle Airbnb), alerte à 5 jours, urgente à 2 jours ; export PDF. */
+export const TYPES_DOMMAGE = { degat: "Dégât", salete: "Saleté exceptionnelle", casse: "Objet cassé", autre: "Autre" };
+/**
+ * Dossiers de dommages. Fonction pure, testée. signalements : lignes de signalements_arrivee { reference, type, texte, photo, cree_le }.
+ * Renvoie [{ bien, reference, jour, sejour, source, signalements, limite, joursRestants, niveau: "urgent" | "alerte" | "ok" | "expire" | "depose" }],
+ * les plus pressés d'abord.
+ */
+export function dossiersDommages({ biens, demandes, signalements, sejours = [], aujourdhui = new Date() }) {
+  const auj = iso(aujourdhui);
+  const parRef = new Map();
+  signalements.forEach(x => { if (!parRef.has(x.reference)) parRef.set(x.reference, []); parRef.get(x.reference).push(x); });
+  const dossiers = [];
+  for (const [reference, sig] of parRef) {
+    const d = demandes.find(x => x.reference === reference);
+    if (!d || !d.creneau) continue;
+    const bien = biens.find(b => d.details?.logementId === b.id) || biens.find(b => memeAdresse(d, b));
+    if (!bien) continue;
+    const jour = iso(new Date(d.creneau));
+    const sejour = sejours.find(s => s.bienId === bien.id && s.fin === jour) || null;
+    const limite = iso(plusJours(jourDe(jour), REGLES.DOMMAGES_DELAI_JOURS));
+    const joursRestants = Math.round((jourDe(limite) - jourDe(auj)) / 864e5);
+    const depose = (bien.dommagesDeposes || {})[reference];
+    const niveau = depose ? "depose" : joursRestants < 0 ? "expire" : joursRestants <= REGLES.DOMMAGES_URGENT_JOURS ? "urgent" : joursRestants <= REGLES.DOMMAGES_ALERTE_JOURS ? "alerte" : "ok";
+    dossiers.push({ bien, reference, jour, sejour, source: sejour?.source || "", signalements: sig.slice().sort((a, b) => String(a.cree_le).localeCompare(String(b.cree_le))),
+      limite, joursRestants, niveau, depose: depose || null });
+  }
+  const rang = { urgent: 0, alerte: 1, ok: 2, expire: 3, depose: 4 };
+  return dossiers.sort((a, b) => rang[a.niveau] - rang[b.niveau] || a.limite.localeCompare(b.limite));
+}
+const PLATEFORMES = { airbnb: "Airbnb", booking: "Booking", vrbo: "Abritel / Vrbo", manuel: "saisi à la main" };
+const texteDelai = x => x.niveau === "depose" ? `${tr("Demande déposée le")} ${dateCourte(new Date(x.depose))}`
+  : x.niveau === "expire" ? `${tr("Délai dépassé depuis le")} ${dateCourte(jourDe(x.limite))}`
+  : `${tr("Demande à déposer avant le")} ${dateLongue(jourDe(x.limite))} · ${x.joursRestants === 0 ? tr("dernier jour") : `${x.joursRestants} ${tr(x.joursRestants > 1 ? "jours restants" : "jour restant")}`}`;
+
+export async function blocDommages(boite, { biens, demandes, sejours, nomBien, recharger, zoneAlertes = null }) {
+  if (!boite) return;
+  const refs = demandes.filter(d => d.reference && biens.some(b => memeAdresse(d, b) || d.details?.logementId === b.id)).map(d => d.reference);
+  if (!refs.length) { boite.innerHTML = `<p class="petit muet">${tr("Aucun dommage constaté à l'arrivée d'un Cleaneur.")}</p>`; traduire(boite); return; }
+  const { data, error } = await supabase.from("signalements_arrivee").select("reference, type, texte, photo, cree_le").in("reference", refs.slice(-300));
+  if (!boite.isConnected) return;
+  if (error) { boite.innerHTML = `<p class="petit erreur">${tr("Le service est momentanément indisponible. Réessayez dans quelques minutes.")}</p>`; traduire(boite); return; }
+  const dossiers = dossiersDommages({ biens, demandes, signalements: data || [], sejours });
+  if (!dossiers.length) { boite.innerHTML = `<p class="petit muet">${tr("Aucun dommage constaté à l'arrivée d'un Cleaneur.")}</p>`; traduire(boite); return; }
+  boite.innerHTML = dossiers.map((x, k) => `<div class="carte dossier-dommage niveau-${x.niveau}">
+    <div class="haut-dommage"><div><b>${esc(nomBien(x.bien))}</b>
+      <span class="petit muet">${x.sejour ? `${tr("Séjour du")} ${esc(dateCourte(jourDe(x.sejour.debut)))} ${tr("au")} ${esc(dateCourte(jourDe(x.sejour.fin)))}` : `${tr("Départ du")} ${esc(dateCourte(jourDe(x.jour)))}`}${x.source ? ` · ${esc(tr(PLATEFORMES[x.source] || x.source))}` : ""}</span></div>
+      <span class="delai-dommage">${icone(x.niveau === "urgent" || x.niveau === "expire" ? "alerte" : x.niveau === "depose" ? "valide" : "horloge")} ${texteDelai(x)}</span></div>
+    <ul class="constats-dommage">${x.signalements.map(s => `<li><b>${esc(tr(TYPES_DOMMAGE[s.type] || s.type))}</b> · <span class="petit muet">${esc(new Date(s.cree_le).toLocaleString(LOCALE, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }))}</span>
+      ${s.texte ? ` · ${esc(s.texte)}` : ""}${s.photo ? ` · <span class="petit">${icone("photo")} ${tr("photo horodatée")}</span>` : ""}</li>`).join("")}</ul>
+    <div class="boutons"><button type="button" class="bouton secondaire petit" data-dommage-pdf="${k}">${tr("Dossier PDF")}</button>
+      ${x.niveau === "depose" ? "" : `<button type="button" class="bouton petit" data-dommage-depose="${k}">${tr("Demande déposée")}</button>`}</div></div>`).join("");
+  traduire(boite);
+  // Alerte dans « Aujourd'hui » : à 5 jours, puis urgente à 2 jours.
+  const pressants = dossiers.filter(x => ["urgent", "alerte"].includes(x.niveau));
+  if (zoneAlertes && pressants.length) {
+    zoneAlertes.querySelectorAll(".alerte-dommage").forEach(e => e.remove());
+    zoneAlertes.insertAdjacentHTML("afterbegin", pressants.map(x => `<div class="alerte-concierge alerte-dommage ${x.niveau === "urgent" ? "urgent" : ""}">${icone("alerte")}
+      <span>${tr("Dommage voyageur")} · <b>${esc(nomBien(x.bien))}</b> · ${texteDelai(x)}</span><a class="bouton petit" href="#titre-dommages">${tr("Voir")}</a></div>`).join(""));
+    traduire(zoneAlertes);
+  }
+  boite.querySelectorAll("[data-dommage-pdf]").forEach(b => b.onclick = async () => {
+    const x = dossiers[Number(b.dataset.dommagePdf)]; b.disabled = true;
+    try {
+      const { lienPhotoControle } = await import("./donnees.js");
+      const photos = await Promise.all(x.signalements.map(s => s.photo ? lienPhotoControle(s.photo).catch(() => "") : ""));
+      const { dommagesPdf, remettre } = await import("./pdf.js");
+      await remettre(await dommagesPdf({ ...x, delaiJours: REGLES.DOMMAGES_DELAI_JOURS, nomBien: nomBien(x.bien), adresse: `${x.bien.rue || ""}, ${x.bien.codePostal || ""} ${x.bien.ville || ""}`, plateforme: PLATEFORMES[x.source] || "",
+        signalements: x.signalements.map((s, i) => ({ ...s, type: TYPES_DOMMAGE[s.type] || s.type, url: photos[i] })) }), `cleaneroo-dommages-${x.reference}.pdf`, "application/pdf", { partager: true });
+    } finally { b.disabled = false; }
+  });
+  boite.querySelectorAll("[data-dommage-depose]").forEach(b => b.onclick = async () => {
+    const x = dossiers[Number(b.dataset.dommageDepose)]; b.disabled = true;
+    try { await enregistrerBien({ ...x.bien, dommagesDeposes: { ...(x.bien.dommagesDeposes || {}), [x.reference]: new Date().toISOString() } }); recharger(); }
+    catch { b.disabled = false; }
+  });
+}
+
 /* ------------------------------------------------------------------ Aujourd'hui : poste de pilotage */
 
 /**

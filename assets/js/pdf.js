@@ -287,6 +287,78 @@ export async function releveProprietairePdf(r, { nomMois, conciergerie = "", pro
   return doc.save();
 }
 
+/* ------------------------------------------------------------------ Dossier de dommages voyageurs (24/11/2026) */
+/** Dossier d'un séjour : constats du Cleaneur à son arrivée (type, texte, heure du serveur, photo), à joindre à la demande
+ *  auprès de la plateforme (Airbnb : 14 jours après le départ) ou de l'assurance. x : dossier de dossiersDommages, photos en url signées. */
+export async function dommagesPdf(x) {
+  const { PDFDocument, StandardFonts, rgb } = await charger();
+  const doc = await PDFDocument.create();
+  const titre = `Dossier de dommages · ${x.nomBien}`;
+  doc.setTitle(propre(titre)); doc.setProducer("Cleaneroo"); doc.setCreator("cleaneroo.fr"); doc.setLanguage("fr-FR");
+  const F = { n: await doc.embedFont(StandardFonts.Helvetica), g: await doc.embedFont(StandardFonts.HelveticaBold) };
+  let logo = null;
+  try { logo = await doc.embedPng(await (await fetch(new URL("../img/logo-complet.png", import.meta.url))).arrayBuffer()); } catch { /* sans logo */ }
+  const C = { texte: rgb(0.086, 0.204, 0.227), gris: rgb(0.337, 0.424, 0.435), trait: rgb(0.85, 0.9, 0.9), vert: rgb(0.118, 0.478, 0.369),
+    doux: rgb(0.953, 0.969, 0.969), alerte: rgb(0.706, 0.247, 0.29), alerteDoux: rgb(1, 0.957, 0.941) };
+  const L = 595.28, H = 841.89, M = 44, D = L - M;
+  let pg, y;
+  const t = (txt, x0, yy, { taille = 9.5, gras = false, couleur = C.texte } = {}) => pg.drawText(propre(txt), { x: x0, y: yy, size: taille, font: gras ? F.g : F.n, color: couleur });
+  const para = (txt, { taille = 9.5, couleur = C.texte, largeur = D - M } = {}) => { const mots = propre(txt).split(" "); let l = "";
+    const ecrire = z => { place(taille * 1.5); t(z, M, y, { taille, couleur }); y -= taille * 1.45; };
+    for (const m of mots) { const e = l ? `${l} ${m}` : m; if (F.n.widthOfTextAtSize(e, taille) > largeur && l) { ecrire(l); l = m; } else l = e; } if (l) ecrire(l); };
+  const page = () => { pg = doc.addPage([L, H]); y = H - M; };
+  const place = h => { if (y - h < M + 30) { page(); t(titre, M, y - 4, { taille: 9, gras: true, couleur: C.gris }); y -= 24; } };
+  const quand = d => propre(new Date(d).toLocaleString("fr-FR", { timeZone: "Europe/Paris", day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }));
+  const jour = j => new Date(j + "T12:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+
+  page();
+  if (logo) { const h = 70, w = logo.width * h / logo.height; pg.drawImage(logo, { x: M, y: y - h, width: w, height: h }); }
+  const td = (txt, yy, o = {}) => { const f = o.gras ? F.g : F.n, s2 = propre(txt); pg.drawText(s2, { x: D - f.widthOfTextAtSize(s2, o.taille || 9), y: yy, size: o.taille || 9, font: f, color: o.couleur || C.texte }); };
+  td("DOSSIER DE DOMMAGES", y - 14, { taille: 9, gras: true, couleur: C.alerte });
+  td(x.nomBien, y - 36, { taille: 18, gras: true });
+  td(`Édité le ${dateFr(new Date())}`, y - 52, { taille: 8.5, couleur: C.gris });
+  y -= 88;
+  // Délai mis en avant.
+  pg.drawRectangle({ x: M, y: y - 34, width: D - M, height: 40, color: C.alerteDoux, borderColor: C.alerte, borderWidth: 0.8 });
+  t(x.niveau === "depose" ? "Demande déposée" : `Demande à déposer avant le ${jour(x.limite)}`, M + 12, y - 12, { taille: 11.5, gras: true, couleur: C.alerte });
+  t(`Délai de ${x.delaiJours || 14} jours après le départ des voyageurs (règle Airbnb)${x.plateforme && x.plateforme !== "Airbnb" ? ` · séjour ${x.plateforme} : vérifiez le délai de la plateforme` : ""}.`, M + 12, y - 27, { taille: 8.5, couleur: C.gris });
+  y -= 56;
+  // Fiche du séjour.
+  const champ = (lib, val) => { place(16); t(lib, M, y, { taille: 8.5, gras: true, couleur: C.gris }); t(val || "-", M + 150, y, { taille: 9.5 }); y -= 16; };
+  champ("Logement", x.nomBien); champ("Adresse", x.adresse);
+  champ("Séjour", x.sejour ? `du ${jour(x.sejour.debut)} au ${jour(x.sejour.fin)}` : `départ du ${jour(x.jour)}`);
+  champ("Plateforme", x.plateforme || "non précisée"); champ("Référence du ménage", x.reference);
+  champ("Constats", `${x.signalements.length} ${x.signalements.length > 1 ? "constats" : "constat"} du Cleaneur à son arrivée, avant le début du ménage`);
+  y -= 8;
+  // Constats, avec leur photo.
+  for (const [i, sg] of x.signalements.entries()) {
+    place(60);
+    pg.drawRectangle({ x: M, y: y - 6, width: D - M, height: 20, color: C.doux });
+    t(`${i + 1}. ${sg.type}`, M + 8, y, { taille: 10.5, gras: true });
+    const h2 = `Constaté le ${quand(sg.cree_le)} (heure du serveur)`; t(h2, D - 8 - F.n.widthOfTextAtSize(propre(h2), 8.5), y, { taille: 8.5, couleur: C.gris });
+    y -= 22;
+    if (sg.texte) para(sg.texte);
+    if (sg.url) {
+      try {
+        const o = new Uint8Array(await (await fetch(sg.url)).arrayBuffer());
+        const img = o[0] === 0x89 ? await doc.embedPng(o) : await doc.embedJpg(o);
+        const lmax = D - M, hmax = 300, k = Math.min(lmax / img.width, hmax / img.height, 1), w = img.width * k, h = img.height * k;
+        place(h + 10); pg.drawImage(img, { x: M, y: y - h, width: w, height: h }); y -= h + 8;
+        t("Photo prise sur place par le Cleaneur, horodatée par le serveur Cleaneroo.", M, y, { taille: 7.5, couleur: C.gris }); y -= 14;
+      } catch { para("Photo enregistrée (non jointe : connexion interrompue). Elle reste disponible dans votre espace.", { taille: 8, couleur: C.gris }); }
+    }
+    y -= 10;
+  }
+  place(40);
+  para("Document établi par Cleaneroo à partir des informations enregistrées dans l'application au moment du constat (heure du serveur, photos prises sur place). Il ne préjuge pas de la responsabilité de quiconque.", { taille: 7.5, couleur: C.gris });
+  const pages = doc.getPages();
+  pages.forEach((p, k) => { const n = `Page ${k + 1} / ${pages.length}`;
+    p.drawLine({ start: { x: M, y: 34 }, end: { x: D, y: 34 }, thickness: 0.5, color: C.trait });
+    p.drawText(propre(`Cleaneroo · cleaneroo.fr · Dossier ${x.reference}`), { x: M, y: 22, size: 7.5, font: F.n, color: C.gris });
+    p.drawText(n, { x: D - F.n.widthOfTextAtSize(n, 7.5), y: 22, size: 7.5, font: F.n, color: C.gris }); });
+  return doc.save();
+}
+
 /* ------------------------------------------------------------------ Attestation fiscale (services à la personne) */
 /** Attestation fiscale en PDF (art. D7233-4 du Code du travail), 22/11/2026 : une partie par prestataire (nom, adresse, SIRET,
  *  numéro et date de déclaration SAP), chaque intervention (date, durée, intervenant et son identifiant, somme payée), le total

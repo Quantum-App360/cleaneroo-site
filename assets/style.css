@@ -2679,3 +2679,17 @@ a.statut-choix { color: inherit; text-decoration: none; }
 .ligne-course:last-child { border-bottom: 0; }
 .ligne-course .racheter { margin: 0; white-space: nowrap; font-weight: 600; }
 .vide-courses { display: flex; align-items: center; gap: 8px; }
+/* Dommages voyageurs (24/11/2026) */
+.dossier-dommage { margin: 0 0 10px; border-left: 4px solid var(--separateur); }
+.dossier-dommage.niveau-alerte { border-left-color: var(--alerte); }
+.dossier-dommage.niveau-urgent, .dossier-dommage.niveau-expire { border-left-color: var(--erreur); background: #FFF4F0; }
+.dossier-dommage.niveau-depose { border-left-color: var(--succes); }
+.haut-dommage { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; }
+.haut-dommage > div { display: flex; flex-direction: column; gap: 2px; }
+.delai-dommage { font-weight: 700; font-size: 14px; display: inline-flex; align-items: center; gap: 6px; }
+.niveau-urgent .delai-dommage, .niveau-expire .delai-dommage { color: var(--erreur); }
+.niveau-alerte .delai-dommage { color: var(--corail-texte); }
+.niveau-depose .delai-dommage { color: var(--succes); }
+.constats-dommage { margin: 8px 0; padding-left: 18px; }
+.constats-dommage li { margin: 4px 0; }
+.dossier-dommage .boutons { display: flex; gap: 6px; flex-wrap: wrap; }
