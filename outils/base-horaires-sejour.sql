@@ -1,4 +1,5 @@
 -- Horaires par séjour (24 novembre 2026, repris de l'appli iPhone) : départ tardif (6 à 14 h) et arrivée anticipée (12 à 22 h)
+-- Appliqué dans Supabase le 24/11/2026 (migration horaires_sejour_decaler_menage_2411), testé : décalage à 12 h Paris, départ à 15 h refusé.
 -- réglés séjour par séjour par la conciergerie. Le ménage déjà programmé ce jour-là est décalé à la nouvelle heure de départ,
 -- le Cleaneur (et ses équipiers) prévenus ; l'heure d'arrivée suivante est gardée avec le ménage (à terminer avant).
 -- Le prix ne change pas (déjà payé) ; le jour ne change pas ; mission non commencée seulement.
