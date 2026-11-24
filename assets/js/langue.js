@@ -2217,6 +2217,7 @@ const T = [
   ["Les réservations ne sont pas encore ouvertes : le paiement sera proposé dès l'ouverture.", "Bookings are not open yet: payment will be offered at opening.", "Le prenotazioni non sono ancora aperte: il pagamento sarà proposto all'apertura.", "Las reservas aún no están abiertas: el pago se propondrá en la apertura."],
   // Relevé mensuel par propriétaire (24/11/2026)
   ["Relevés par propriétaire", "Statements per owner", "Rendiconti per proprietario", "Extractos por propietario"],
+  ["Relevé PDF", "PDF statement", "Rendiconto PDF", "Extracto PDF"],
   ["Relevés mensuels", "Monthly statements", "Rendiconti mensili", "Extractos mensuales"],
   ["total à refacturer", "total to recharge", "totale da riaddebitare", "total a refacturar"],
   ["Partager avec le propriétaire", "Share with the owner", "Condividi con il proprietario", "Compartir con el propietario"],

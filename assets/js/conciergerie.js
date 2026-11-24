@@ -367,8 +367,9 @@ async function blocRelevesProprietaires(zone, { biens, sejours, demandes, nomBie
   zone.innerHTML = `<h3 class="sous-titre-releves">${tr("Relevés par propriétaire")} · ${esc(nomMois)}</h3>
     ${proprios.map(m => { const r = releve(m); return `<div class="ligne-releve"><div><b>${esc(m.email)}</b>
       <span class="petit muet">${r.biens.length} ${tr(r.biens.length > 1 ? "logements" : "logement")} · ${r.nuits} ${tr("nuits")} · ${tr("total à refacturer")} <b>${euros(r.totalC)}</b></span></div>
-      <div class="boutons"><button type="button" class="bouton secondaire petit" data-releve-pdf="${esc(m.id)}">${icone("credit-impot")} PDF</button>
-        <button type="button" class="bouton petit" data-releve-partager="${esc(m.id)}" ${m.statut === "ACTIF" ? "" : "disabled"} title="${esc(m.statut === "ACTIF" ? "" : tr("Invitation pas encore acceptée"))}">${tr("Partager avec le propriétaire")}</button></div>
+      <div class="boutons"><button type="button" class="bouton secondaire petit" data-releve-pdf="${esc(m.id)}">${tr("Relevé PDF")}</button>
+        ${m.statut === "ACTIF" ? `<button type="button" class="bouton petit" data-releve-partager="${esc(m.id)}">${tr("Partager avec le propriétaire")}</button>`
+          : `<span class="petit muet">${tr("Invitation pas encore acceptée")}</span>`}</div>
       <p class="petit" data-releve-etat="${esc(m.id)}"></p></div>`; }).join("")}`;
   traduire(zone);
   const membre = id => proprios.find(m => m.id === id);

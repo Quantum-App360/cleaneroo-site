@@ -183,25 +183,107 @@ export async function relevePdf(liste, { titre, qui }) {
 
 /* ------------------------------------------------------------------ Relevé mensuel du propriétaire (24/11/2026) */
 /** Relevé d'un propriétaire (conciergerie) : par logement, nuits occupées, ménages et leur coût, incidents à sa charge, total à refacturer.
- *  r : résultat de releveProprietaire (conciergerie.js), ou l'instantané partagé. Jamais de code d'accès. */
+ *  r : résultat de releveProprietaire (conciergerie.js), ou l'instantané partagé. Jamais de code d'accès.
+ *  Mise en page aux couleurs de Cleaneroo : logo officiel (assets/img/logo-complet.png, non modifié, seulement mis à l'échelle),
+ *  synthèse en tête, tableau par logement, pied de page numéroté sur chaque page. */
+const ETATS_RELEVE = { VERIFICATION: "En vérification", PUBLIEE: "Recherche d'un Cleaneur", CONFIRMEE: "Confirmé", EN_ROUTE: "En cours", SUR_PLACE: "En cours",
+  EN_COURS: "En cours", A_VALIDER: "À valider", TERMINEE: "Réalisé" };
 export async function releveProprietairePdf(r, { nomMois, conciergerie = "", proprietaire = "" }) {
+  const { PDFDocument, StandardFonts, rgb } = await charger();
+  const doc = await PDFDocument.create();
   const titre = `Relevé mensuel · ${nomMois}`;
-  const { doc, page: pg } = await nouveauDoc(titre);
-  enTete(pg, titre, [conciergerie && `Conciergerie : ${conciergerie}`, proprietaire && `Propriétaire : ${proprietaire}`, `édité le ${dateFr(new Date())}`].filter(Boolean).join(" · "));
-  const ligne = (g, d, { gras = false, taille = 9 } = {}) => { pg.place(taille * 1.6); const y = pg.y;
-    pg.p.drawText(propre(g).slice(0, 80), { x: 50, y, size: taille, font: gras ? pg.f.gras : pg.f.normal }); if (d) pg.droite(d, 545, y, { taille, gras }); pg.y -= taille * 1.5; };
+  doc.setTitle(propre(titre)); doc.setProducer("Cleaneroo"); doc.setCreator("cleaneroo.fr"); doc.setLanguage("fr-FR");
+  const F = { n: await doc.embedFont(StandardFonts.Helvetica), g: await doc.embedFont(StandardFonts.HelveticaBold) };
+  let logo = null;
+  try { logo = await doc.embedPng(await (await fetch(new URL("../img/logo-complet.png", import.meta.url))).arrayBuffer()); } catch { /* sans logo : le nom suffit */ }
+  // Couleurs de la charte (style.css) : texte, gris, séparateurs, vert principal, fond doux, dégradé de la marque (bleu → vert).
+  const C = { texte: rgb(0.086, 0.204, 0.227), gris: rgb(0.337, 0.424, 0.435), trait: rgb(0.85, 0.9, 0.9), vert: rgb(0.118, 0.478, 0.369),
+    doux: rgb(0.953, 0.969, 0.969), creux: rgb(0.89, 0.929, 0.929), bleu: rgb(0.016, 0.745, 0.898), vif: rgb(0.051, 0.784, 0.553), blanc: rgb(1, 1, 1) };
+  const L = 595.28, H = 841.89, M = 44, D = L - M;
+  let pg, y;
+  const t = (txt, x, yy, { taille = 9, gras = false, couleur = C.texte, max = 0 } = {}) => {
+    let s = propre(txt); const f = gras ? F.g : F.n;
+    if (max) while (s.length > 1 && f.widthOfTextAtSize(s, taille) > max) s = s.slice(0, -2) + "…";
+    pg.drawText(propre(s), { x, y: yy, size: taille, font: f, color: couleur }); return f.widthOfTextAtSize(propre(s), taille); };
+  const td = (txt, xd, yy, o = {}) => { const f = o.gras ? F.g : F.n, s = propre(txt); pg.drawText(s, { x: xd - f.widthOfTextAtSize(s, o.taille || 9), y: yy, size: o.taille || 9, font: f, color: o.couleur || C.texte }); };
+  const filet = (yy, x1 = M, x2 = D, c = C.trait, e = 0.6) => pg.drawLine({ start: { x: x1, y: yy }, end: { x: x2, y: yy }, thickness: e, color: c });
+  const bandeMarque = (yy, h = 3) => { const n = 60, l = (D - M) / n;   // dégradé bleu → vert de la marque
+    for (let k = 0; k < n; k++) { const a = k / (n - 1); pg.drawRectangle({ x: M + k * l, y: yy, width: l + 0.5, height: h,
+      color: rgb(0.016 + (0.051 - 0.016) * a, 0.745 + (0.784 - 0.745) * a, 0.898 + (0.553 - 0.898) * a) }); } };
+  const nouvellePage = (suite = false) => {
+    pg = doc.addPage([L, H]); y = H - M;
+    if (suite) { t(`Relevé mensuel · ${nomMois}${proprietaire ? ` · ${proprietaire}` : ""}`, M, y - 4, { taille: 9, gras: true, couleur: C.gris }); y -= 22; filet(y + 8); }
+  };
+  const place = h => { if (y - h < M + 30) nouvellePage(true); };
+
+  // En-tête : logo officiel à gauche, titre et période à droite.
+  nouvellePage();
+  if (logo) { const hL = 84, wL = logo.width * hL / logo.height; pg.drawImage(logo, { x: M, y: y - hL, width: wL, height: hL }); }
+  else t("Cleaneroo", M, y - 30, { taille: 22, gras: true, couleur: C.vert });
+  td("RELEVÉ MENSUEL", D, y - 16, { taille: 9, gras: true, couleur: C.vert });
+  td(propre(nomMois.charAt(0).toUpperCase() + nomMois.slice(1)), D, y - 40, { taille: 22, gras: true });
+  td(`Édité le ${dateFr(new Date())}`, D, y - 56, { taille: 8.5, couleur: C.gris });
+  y -= 100; bandeMarque(y); y -= 22;
+
+  // Parties : conciergerie et propriétaire.
+  const bloc = (x, lib, val) => { t(lib, x, y, { taille: 7.5, gras: true, couleur: C.gris }); t(val || "-", x, y - 14, { taille: 10.5, gras: true, max: 240 }); };
+  bloc(M, "CONCIERGERIE", conciergerie); bloc(M + 262, "PROPRIÉTAIRE", proprietaire);
+  y -= 40;
+
+  // Synthèse : quatre chiffres, le total à refacturer mis en avant.
+  const nbMenages = r.biens.reduce((n, b) => n + b.menages.length, 0);
+  const pl = (n, un, plusieurs) => `${n} ${n > 1 ? plusieurs : un}`;
+  const tuiles = [["Logements", String(r.biens.length)], ["Nuits occupées", String(r.nuits)], [pl(nbMenages, "Ménage", "Ménages"), eur(r.menagesC)],
+    ["Incidents", eur(r.incidentsC)], ["Total à refacturer", eur(r.totalC)]];
+  const lt = (D - M - 4 * 7) / 5;
+  tuiles.forEach(([lib, val], k) => { const x = M + k * (lt + 7), fort = k === 4;
+    pg.drawRectangle({ x, y: y - 50, width: lt, height: 54, color: fort ? C.vert : C.doux, borderColor: fort ? C.vert : C.creux, borderWidth: 0.6 });
+    t(lib.toUpperCase(), x + 9, y - 12, { taille: 6.5, gras: true, couleur: fort ? C.blanc : C.gris, max: lt - 16 });
+    t(val, x + 9, y - 36, { taille: fort ? 13.5 : 12, gras: true, couleur: fort ? C.blanc : C.texte, max: lt - 16 }); });
+  y -= 76;
+
+  // Un tableau par logement.
+  const cols = { date: M + 10, presta: M + 90, etat: M + 300, montant: D - 10 };
   for (const b of r.biens) {
-    pg.espace(4); pg.texte(`${b.nom}${b.ville ? ` · ${b.ville}` : ""}`, { taille: 12, gras: true });
-    pg.texte(`${b.sejours} séjour(s) · ${b.nuits} nuit(s) occupée(s) · occupation ${b.occupation} %`, { taille: 9, couleur: [0.26, 0.37, 0.38] });
-    pg.trait(); pg.espace(4);
-    if (b.menages.length) { ligne("Ménages", "", { gras: true }); b.menages.forEach(m => ligne(`${new Date(m.date + "T12:00:00").toLocaleDateString("fr-FR")} · ${m.prestation}`, eur(m.coutC))); }
-    else ligne("Aucun ménage ce mois-ci.");
-    if (b.incidents.length) { ligne("Incidents à la charge du propriétaire", "", { gras: true }); b.incidents.forEach(i => ligne(`${new Date(i.date + "T12:00:00").toLocaleDateString("fr-FR")} · ${i.texte}`, eur(i.montantC))); }
-    ligne("Total du logement", eur(b.totalC), { gras: true });
+    place(110);
+    pg.drawRectangle({ x: M, y: y - 34, width: D - M, height: 38, color: C.doux });
+    pg.drawRectangle({ x: M, y: y - 34, width: 3, height: 38, color: C.vif });
+    t(b.nom, M + 12, y - 12, { taille: 12, gras: true, max: 300 });
+    t(`${b.ville ? `${b.ville} · ` : ""}${pl(b.sejours, "séjour", "séjours")} · ${pl(b.nuits, "nuit occupée", "nuits occupées")}`, M + 12, y - 27, { taille: 8.5, couleur: C.gris, max: 300 });
+    // Jauge d'occupation.
+    const jx = D - 150, jl = 110;
+    td(`${b.occupation} %`, D - 8, y - 20, { taille: 10, gras: true });
+    t("Occupation", jx, y - 12, { taille: 7, gras: true, couleur: C.gris });
+    pg.drawRectangle({ x: jx, y: y - 24, width: jl, height: 6, color: C.creux });
+    if (b.occupation > 0) pg.drawRectangle({ x: jx, y: y - 24, width: Math.max(2, jl * Math.min(100, b.occupation) / 100), height: 6, color: C.vif });
+    y -= 52;
+    const entete = (lib, colEtat = "Statut") => { place(40); t(lib.toUpperCase(), cols.date, y, { taille: 7, gras: true, couleur: C.gris });
+      if (colEtat) t(colEtat.toUpperCase(), cols.etat, y, { taille: 7, gras: true, couleur: C.gris }); td("MONTANT", cols.montant, y, { taille: 7, gras: true, couleur: C.gris });
+      y -= 6; filet(y); y -= 13; };
+    const rangee = (date, libelle, etat, montant, k) => { place(18);
+      if (k % 2) pg.drawRectangle({ x: M, y: y - 5, width: D - M, height: 17, color: C.doux });
+      t(date, cols.date, y, { taille: 9 }); t(libelle, cols.presta, y, { taille: 9, max: cols.etat - cols.presta - 12 });
+      if (etat) t(etat, cols.etat, y, { taille: 8.5, couleur: C.gris, max: 120 }); td(montant, cols.montant, y, { taille: 9 }); y -= 17; };
+    const jour = d => new Date(d + "T12:00:00").toLocaleDateString("fr-FR");
+    entete("Ménages");
+    if (b.menages.length) b.menages.forEach((m, k) => rangee(jour(m.date), m.prestation, ETATS_RELEVE[m.statut] || "", eur(m.coutC), k));
+    else { t("Aucun ménage ce mois-ci.", cols.date, y, { taille: 9, couleur: C.gris }); y -= 17; }
+    if (b.incidents.length) { y -= 6; entete("Incidents à la charge du propriétaire", ""); b.incidents.forEach((i, k) => rangee(jour(i.date), i.texte, "", eur(i.montantC), k)); }
+    place(26); filet(y + 8, M, D, C.trait, 0.8);
+    t("Total du logement", cols.date, y - 6, { taille: 9.5, gras: true }); td(eur(b.totalC), cols.montant, y - 6, { taille: 10, gras: true });
+    y -= 34;
   }
-  pg.espace(6); pg.trait(); pg.espace(4);
-  ligne("Ménages", eur(r.menagesC)); ligne("Incidents à votre charge", eur(r.incidentsC)); ligne("Total à refacturer", eur(r.totalC), { gras: true, taille: 11 });
-  pg.espace(8); pg.texte("Coût des ménages au prix de chaque réservation (frais de service exclus). Nuits lues dans les calendriers du logement et les séjours saisis par la conciergerie.", { taille: 8, couleur: [0.4, 0.5, 0.5] });
+
+  if (y - 24 < 42) nouvellePage(true);   // la note tient au-dessus du pied de page
+  pg.drawText(propre("Coût des ménages au prix de chaque réservation, hors frais de service. Nuits lues dans les calendriers du logement et les séjours saisis par la conciergerie. Document établi par la conciergerie avec Cleaneroo ; il ne vaut pas facture."),
+    { x: M, y, size: 7.5, font: F.n, color: C.gris, maxWidth: D - M, lineHeight: 10 });
+
+  // Pied de page numéroté sur chaque page.
+  const pages = doc.getPages();
+  pages.forEach((p, k) => { const s = propre(`Cleaneroo · cleaneroo.fr · Relevé de ${nomMois}`), n = `Page ${k + 1} / ${pages.length}`;
+    p.drawLine({ start: { x: M, y: 34 }, end: { x: D, y: 34 }, thickness: 0.5, color: C.trait });
+    p.drawText(s, { x: M, y: 22, size: 7.5, font: F.n, color: C.gris });
+    p.drawText(n, { x: D - F.n.widthOfTextAtSize(n, 7.5), y: 22, size: 7.5, font: F.n, color: C.gris }); });
   return doc.save();
 }
 
