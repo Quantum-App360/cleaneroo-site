@@ -1,3 +1,4 @@
+-- APPLIQUÉ le 24/11/2026 (migration avis_publics), avec l'accord de Michael ; testé en visiteur anonyme dans une transaction annulée.
 -- Avis publics (prompt 2, partie 4, 24/11/2026) : section « Ils nous font confiance » de l'accueil et de la page Prestations.
 -- Lecture publique (visiteurs non connectés compris) des seuls avis PUBLIÉS, c'est-à-dire révélés après la période en double aveugle
 -- (fonction avis_revele : le Cleaneur a noté le client, ou 14 jours sont passés).
