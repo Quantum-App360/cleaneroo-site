@@ -18,7 +18,7 @@ import { editeurGuide, brancherGuides } from "./guides.js";
 import { editeurEtapesPhoto, brancherEtapesPhoto, etapesPhotoDe, etapesPersoDe } from "./etapes-bien.js";
 import { editeurTemoins, brancherTemoins } from "./temoins.js";
 import { editeurStock, editeurIncidents, brancherOutilsBiens, blocAujourdhui, blocMenages, blocRapports, stockBas, incidentsDe, consommerStock,
-  planProgrammerTout, boutonProgrammerTout, fenetreProgrammerTout, avecHoraires, departDe, arriveeDe, cleSejour, erreurHoraires } from "./conciergerie.js";
+  planProgrammerTout, boutonProgrammerTout, fenetreProgrammerTout, blocCourses, avecHoraires, departDe, arriveeDe, cleSejour, erreurHoraires } from "./conciergerie.js";
 export { brancherMissions, demanderGeoloc } from "./missions.js";
 import { blocSociete, blocActiverSociete, blocSalarie } from "./societe.js";
 
@@ -234,6 +234,8 @@ export function ongletPro(p, biens, hotellerie = false) {
     <h2 class="titre-section">${icone("sur-place", { tuile: true })}Aujourd'hui et demain</h2>
     <p class="petit" style="margin-top:0">Alertes et rotations : départs, ménages, arrivées. Tout ce qui demande votre attention, au même endroit.</p>
     <div id="pro-aujourdhui">${chargeur("Lecture de vos calendriers…", { petit: true, variante: "vitre" })}</div>
+    <h2 class="titre-section">${icone("stock", { tuile: true })}Liste de courses</h2>
+    <div id="pro-courses"></div>
     <h2 class="titre-section">${icone("calendrier", { tuile: true })}Planning de la semaine</h2>
     <p class="petit" style="margin-top:0">Chaque bien, jour par jour : départs, arrivées et ménages. Touchez un départ orange pour programmer son ménage.</p>
     <div class="carte planning-semaine" id="semaine-pro">${chargeur("Lecture de vos calendriers…", { petit: true, variante: "vitre" })}</div>
@@ -312,6 +314,7 @@ export function brancherSociete(vue, majProfil, recharger) {
 export function brancherPro(vue, p, biens, demandes, { majProfil, recharger }) {
   brancherSociete(vue, majProfil, recharger);
   verifierSecteurs(vue, p, biens);
+  blocCourses(vue.querySelector("#pro-courses"), { biens, nomBien, recharger });   // liste de courses (24/11/2026)
   // Calendrier de démonstration : rempli dans « Autre calendrier », lu sans réseau ; il ne crée jamais de vraie réservation.
   vue.querySelectorAll("[data-cal-demo]").forEach(b => b.onclick = () => { const f = b.closest("form"); f.autre.value = URL_CALENDRIER_DEMO; f.requestSubmit(); });
   // Un calendrier vient d'être relié : le pilote automatique est proposé tout de suite (c'est lui qui crée les ménages tout seul).

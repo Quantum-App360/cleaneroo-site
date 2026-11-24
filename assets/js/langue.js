@@ -2215,6 +2215,16 @@ const T = [
   ["La colonne Cleaneroo décrit le service à l'ouverture des réservations.", "The Cleaneroo column describes the service when bookings open.", "La colonna Cleaneroo descrive il servizio all'apertura delle prenotazioni.", "La columna Cleaneroo describe el servicio con la apertura de las reservas."],
   ["Pré-réservation gratuite : le paiement sera proposé dès l'ouverture des réservations.", "Free pre-booking: payment will be offered as soon as bookings open.", "Pre-prenotazione gratuita: il pagamento sarà proposto all'apertura delle prenotazioni.", "Prerreserva gratuita: el pago se propondrá con la apertura de las reservas."],
   ["Les réservations ne sont pas encore ouvertes : le paiement sera proposé dès l'ouverture.", "Bookings are not open yet: payment will be offered at opening.", "Le prenotazioni non sono ancora aperte: il pagamento sarà proposto all'apertura.", "Las reservas aún no están abiertas: el pago se propondrá en la apertura."],
+  // Liste de courses (24/11/2026)
+  ["Racheté", "Bought", "Ricomprato", "Comprado"],
+  ["Liste de courses", "Shopping list", "Lista della spesa", "Lista de la compra"],
+  ["Copier la liste", "Copy the list", "Copia la lista", "Copiar la lista"],
+  ["Liste copiée", "List copied", "Lista copiata", "Lista copiada"],
+  ["Partager", "Share", "Condividi", "Compartir"],
+  ["en stock", "in stock", "in magazzino", "en stock"],
+  ["seuil", "threshold", "soglia", "umbral"],
+  ["Rien à racheter : tous les stocks sont au-dessus de leur seuil.", "Nothing to buy: all stocks are above their threshold.", "Niente da ricomprare: tutte le scorte sono sopra la soglia.", "Nada que reponer: todas las existencias están por encima del umbral."],
+  ["Cochez « Racheté » : la quantité achetée est ajoutée au stock du logement.", "Tick “Bought”: the quantity bought is added to the home's stock.", "Spuntate «Ricomprato»: la quantità acquistata viene aggiunta alle scorte dell'alloggio.", "Marque «Comprado»: la cantidad comprada se añade al stock del alojamiento."],
   // Relevé mensuel par propriétaire (24/11/2026)
   ["Relevés par propriétaire", "Statements per owner", "Rendiconti per proprietario", "Extractos por propietario"],
   ["Relevé PDF", "PDF statement", "Rendiconto PDF", "Extracto PDF"],

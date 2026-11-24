@@ -127,6 +127,50 @@ export function brancherOutilsBiens(vue, biens, recharger) {
   vue.querySelectorAll("details.outil-bien").forEach(d => d.ontoggle = () => { d.open ? fichesOuvertes.add(d.dataset.outil) : fichesOuvertes.delete(d.dataset.outil); });
 }
 
+/* ------------------------------------------------------------------ Liste de courses (24/11/2026, repris de l'appli iPhone)
+   Articles sous le seuil, par logement ; « Racheté » remet le stock à jour ; partage par copie, WhatsApp, SMS ou partage du téléphone. */
+/** Quantité conseillée : de quoi remonter au double du seuil (au moins 1). */
+export const aRacheter = a => Math.max(1, 2 * Number(a.seuil ?? REGLES.STOCK_SEUIL_DEFAUT) - Number(a.qte || 0));
+/** Liste de courses : [{ bien, articles: [{ nom, qte, seuil, index, quantite }] }], logements sans article bas exclus. Fonction pure, testée. */
+export function listeCourses(biens) {
+  return biens.map(bien => ({ bien, articles: stockDe(bien).map((a, index) => ({ ...a, index }))
+      .filter(a => Number(a.qte) <= Number(a.seuil ?? REGLES.STOCK_SEUIL_DEFAUT)).map(a => ({ ...a, quantite: aRacheter(a) })) }))
+    .filter(x => x.articles.length);
+}
+/** Texte à partager (copie, WhatsApp, SMS). */
+export const texteCourses = (liste, nomBien) => [`Liste de courses Cleaneroo · ${new Date().toLocaleDateString("fr-FR")}`,
+  ...liste.map(x => `\n${nomBien(x.bien)}${x.bien.ville ? ` (${x.bien.ville})` : ""}\n${x.articles.map(a => `- ${a.nom} x${a.quantite}`).join("\n")}`)].join("\n");
+
+export function blocCourses(boite, { biens, nomBien, recharger }) {
+  if (!boite) return;
+  const liste = listeCourses(biens);
+  if (!liste.length) { boite.innerHTML = `<div class="carte vide-courses">${icone("valide")} <span>${tr("Rien à racheter : tous les stocks sont au-dessus de leur seuil.")}</span></div>`; traduire(boite); return; }
+  const total = liste.reduce((n, x) => n + x.articles.length, 0), texte = texteCourses(liste, nomBien);
+  boite.innerHTML = `<div class="carte liste-courses">
+    <div class="haut-courses"><b>${total} ${tr(total > 1 ? "articles à racheter" : "article à racheter")}</b>
+      <div class="boutons"><button type="button" class="bouton secondaire petit" data-courses-copier>${tr("Copier la liste")}</button>
+        <a class="bouton secondaire petit" href="https://wa.me/?text=${encodeURIComponent(texte)}" target="_blank" rel="noopener">WhatsApp</a>
+        <a class="bouton secondaire petit" href="sms:?&body=${encodeURIComponent(texte)}">SMS</a>
+        ${navigator.share ? `<button type="button" class="bouton secondaire petit" data-courses-partager>${tr("Partager")}</button>` : ""}</div></div>
+    ${liste.map(x => `<div class="courses-bien"><b>${esc(nomBien(x.bien))}</b>${x.bien.ville ? ` <span class="petit muet">${esc(x.bien.ville)}</span>` : ""}
+      ${x.articles.map(a => `<div class="ligne-course"><span>${esc(tr(a.nom))} <b>× ${a.quantite}</b>
+          <span class="petit muet">${tr("en stock")} : ${Number(a.qte)} · ${tr("seuil")} : ${Number(a.seuil ?? REGLES.STOCK_SEUIL_DEFAUT)}</span></span>
+        <label class="case racheter"><input type="checkbox" data-rachete="${esc(x.bien.id)}:${a.index}:${a.quantite}"> ${tr("Racheté")}</label></div>`).join("")}</div>`).join("")}
+    <p class="petit muet" style="margin:8px 0 0">${tr("Cochez « Racheté » : la quantité achetée est ajoutée au stock du logement.")}</p></div>`;
+  traduire(boite);
+  const etat = t => { const p = boite.querySelector(".haut-courses b"); if (p) p.textContent = t; };
+  boite.querySelector("[data-courses-copier]").onclick = async e => { try { await navigator.clipboard.writeText(texte); e.target.textContent = tr("Liste copiée"); } catch { /* rien */ } };
+  boite.querySelector("[data-courses-partager]")?.addEventListener("click", () => navigator.share({ title: tr("Liste de courses"), text: texte }).catch(() => null));
+  boite.querySelectorAll("[data-rachete]").forEach(c => c.onchange = async () => {
+    if (!c.checked) return;
+    const [id, i, q] = c.dataset.rachete.split(":"), l = biens.find(b => b.id === id), st = stockDe(l).slice();
+    st[i] = { ...st[i], qte: Number(st[i].qte || 0) + Number(q) };
+    c.disabled = true;
+    try { await enregistrerBien({ ...l, stock: st }); recharger(); }
+    catch { c.checked = false; c.disabled = false; etat(tr("Le service est momentanément indisponible. Réessayez dans quelques minutes.")); }
+  });
+}
+
 /* ------------------------------------------------------------------ Aujourd'hui : poste de pilotage */
 
 /**

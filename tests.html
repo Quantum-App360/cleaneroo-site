@@ -21,7 +21,7 @@ import { RUBRIQUES as RUBRIQUES_CAT, rubrique, pastille, tacheChiffree, tachesPo
   import { niveauRotation } from "./assets/js/conciergerie.js";
 import { menageTientEntreVoyageurs } from "./assets/js/estimation.js";
 import { bornesPeriode } from "./assets/js/periodes.js";
-import { releveProprietaire } from "./assets/js/conciergerie.js";
+import { releveProprietaire, listeCourses, texteCourses } from "./assets/js/conciergerie.js";
 import { planProgrammerTout, instantParis, avecHoraires, erreurHoraires, departDe, arriveeDe } from "./assets/js/conciergerie.js";
 import { etatOffreConciergerie, offreConciergerieOuverte, fraisServicePct, reservationsOuvertes, fixerOuverture } from "./assets/js/regles.js";
 import { bornesActivite, decalerActivite, jourParis, resumeActivite, evolutionPct } from "./assets/js/activite-societe.js";
@@ -120,6 +120,14 @@ egal("offre conciergerie : 0 % de frais pendant l'offre", fraisServicePct(false,
   egal("relevé propriétaire : total à refacturer", r.totalC, 18000);
   egal("relevé propriétaire : nuits occupées", r.nuits, 4);
   egal("relevé propriétaire : jamais de code d'accès", JSON.stringify(r).includes("1234"), false); }
+// Liste de courses (24/11/2026)
+{ const biens = [{ id: "a", nom: "Studio", stock: [{ nom: "Papier toilette", qte: 1, seuil: 3 }, { nom: "Café", qte: 5, seuil: 2 }, { nom: "Éponges", qte: 2, seuil: 2 }] }, { id: "b", nom: "T2", stock: [{ nom: "Savon", qte: 4, seuil: 1 }] }];
+  const l = listeCourses(biens);
+  egal("courses : seuls les logements avec un article bas", l.length, 1);
+  egal("courses : articles au seuil ou en dessous", l[0].articles.map(a => a.nom).join(","), "Papier toilette,Éponges");
+  egal("courses : quantité pour remonter au double du seuil", l[0].articles[0].quantite, 5);
+  egal("courses : au moins 1 à racheter", l[0].articles[1].quantite, 2);
+  egal("courses : texte à partager", texteCourses(l, b => b.nom).includes("- Papier toilette x5"), true); }
 egal("niveau : débutant", niveauCleaneur({ missions: 3, note: 5 }), 0);
 egal("niveau : Confirmé", niveauCleaneur({ missions: 12, note: 4.7 }), 1);
 egal("niveau : Élite", niveauCleaneur({ missions: 60, note: 4.9 }), 3);
