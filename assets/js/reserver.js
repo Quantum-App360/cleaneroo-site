@@ -307,7 +307,9 @@ export function ouvrirReservation(conteneur, rubriqueId, option = "") {
   // Espace Pro : « Programmer le ménage » après un départ (bien et jour repris).
   if (pr?.bienId && rubrique(rubriqueId)) {
     const l = logements().find(x => x.id === pr.bienId);
-    b = { ...avecLogement(nouveauBrouillon(rubriqueId, "conciergerie"), l), jour: pr.jour || "", heure: -1, etape: 2 };
+    b = { ...avecLogement(nouveauBrouillon(rubriqueId, "conciergerie"), l), jour: pr.jour || "", heure: -1, etape: 2,
+      // Horaires du séjour (24/11/2026) : départ tardif et arrivée anticipée réglés séjour par séjour.
+      ...(Number.isFinite(pr.departH) ? { departVoyageursH: pr.departH } : {}), ...(Number.isFinite(pr.arriveeH) ? { arriveeSuivanteH: pr.arriveeH } : {}) };
   }
   if (pr?.champs && pr.rubriqueId === rubriqueId && rubrique(rubriqueId)) b = { ...nouveauBrouillon(rubriqueId, ancien?.espace || "personnel"), ...pr.champs, etape: 2 };
   photos = [];

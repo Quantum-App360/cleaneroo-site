@@ -6,7 +6,7 @@ import { calculer, entreeEstimation } from "./estimation.js";
 import { REGLES, euros, dateLongue, dateCourte, sirenSiretValide, cleaneursRotation, duree } from "./regles.js";
 import { icone } from "./icones.js";
 import { traduire, tr, LOCALE } from "./langue.js";
-import { DOCUMENTS_CLEANEUR, enregistrerBien, lireCalendrier, URL_CALENDRIER_DEMO, secteurCouvert, rejoindreAttente } from "./donnees.js";
+import { supabase, DOCUMENTS_CLEANEUR, enregistrerBien, lireCalendrier, URL_CALENDRIER_DEMO, secteurCouvert, rejoindreAttente } from "./donnees.js";
 import { couleurBien, voies, morceau, erreurSejour, sejoursGardes, nuits, versIcs, sourceCalendrier } from "./agenda.js";
 import { afficherCarte, coordonnees } from "./cartes.js";
 import { guideVideo } from "./guide-video.js";
@@ -18,7 +18,7 @@ import { editeurGuide, brancherGuides } from "./guides.js";
 import { editeurEtapesPhoto, brancherEtapesPhoto, etapesPhotoDe, etapesPersoDe } from "./etapes-bien.js";
 import { editeurTemoins, brancherTemoins } from "./temoins.js";
 import { editeurStock, editeurIncidents, brancherOutilsBiens, blocAujourdhui, blocMenages, blocRapports, stockBas, incidentsDe, consommerStock,
-  planProgrammerTout, boutonProgrammerTout, fenetreProgrammerTout } from "./conciergerie.js";
+  planProgrammerTout, boutonProgrammerTout, fenetreProgrammerTout, avecHoraires, departDe, arriveeDe, cleSejour, erreurHoraires } from "./conciergerie.js";
 export { brancherMissions, demanderGeoloc } from "./missions.js";
 import { blocSociete, blocActiverSociete, blocSalarie } from "./societe.js";
 
@@ -417,7 +417,11 @@ async function remplirAgenda(vue, biens, demandes, recharger) {
     return demandes.some(d => d.statut !== "ANNULEE" && l && memeAdresse(d, l) && d.creneau && iso(new Date(d.creneau)) === jour);
   };
   // Même séjour lu sur deux calendriers (ou saisi aussi à la main) : gardé une seule fois.
-  const uniques = sejours.filter((s, i, t) => t.findIndex(x => x.bienId === s.bienId && x.debut === s.debut && x.fin === s.fin) === i);
+  const uniques = sejours.filter((s, i, t) => t.findIndex(x => x.bienId === s.bienId && x.debut === s.debut && x.fin === s.fin) === i)
+    .map(s => avecHoraires(s, biens.find(x => x.id === s.bienId)));   // horaires par séjour (24/11/2026)
+  // Heures d'un jour de rotation : départ du séjour qui se termine, arrivée de celui qui commence (24/11/2026).
+  const horairesDuJour = (bienId, jour) => { const dep = uniques.find(s => s.bienId === bienId && s.fin === jour), arr = uniques.find(s => s.bienId === bienId && s.debut === jour);
+    return { ...(dep ? { departH: departDe(dep) } : {}), ...(arr ? { arriveeH: arriveeDe(arr) } : {}) }; };
   const departs = uniques.filter(s => s.fin >= debut && s.fin <= fin).sort((a, b) => a.fin.localeCompare(b.fin));
   // Prochain départ de chaque bien (tri « Prochain départ »).
   const prochains = {};
@@ -436,7 +440,7 @@ async function remplirAgenda(vue, biens, demandes, recharger) {
   planningSemaine(vue.querySelector("#semaine-pro"), biens, uniques, menageDe, auj, couleurBien);
   const ordreBiens = biens.slice().sort((a, b) => nomBien(a).localeCompare(nomBien(b), "fr", { sensitivity: "base", numeric: true }));
   const couleurDe = id => couleurBien(ordreBiens.findIndex(l => l.id === id));
-  const programmerMenage = (bienId, jour) => { preremplir({ bienId, jour }); location.hash = `#/reserver/${rubriqueMenage}`; };
+  const programmerMenage = (bienId, jour) => { preremplir({ bienId, jour, ...horairesDuJour(bienId, jour) }); location.hash = `#/reserver/${rubriqueMenage}`; };
   blocAujourdhui(vue.querySelector("#pro-aujourdhui"), { biens, sejours: uniques, demandes, menageDe, erreurs, nomBien, couleur: couleurDe, programmer: programmerMenage });
   blocMenages(vue.querySelector("#pro-menages"), { biens, demandes, nomBien });
   // « Programmer tout » (24/11/2026) : sur « Aujourd'hui » et la liste des ménages, total affiché avant confirmation.
@@ -446,7 +450,7 @@ async function remplirAgenda(vue, biens, demandes, recharger) {
     z.insertAdjacentHTML("beforebegin", boutonProgrammerTout(planTout)); const b = z.previousElementSibling; traduire(b);
     b.querySelector("[data-programmer-tout]").onclick = () => fenetreProgrammerTout(planTout, { nomBien, recharger }); });
   blocRapports(vue.querySelector("#pro-rapports"), { biens, sejours: uniques, demandes, nomBien, societe: vue.querySelector(".entete-pro h2")?.textContent || "" });
-  const programmer = b => b.onclick = () => { preremplir({ bienId: b.dataset.programmer, jour: b.dataset.jour }); location.hash = `#/reserver/${rubriqueMenage}`; };
+  const programmer = b => b.onclick = () => { preremplir({ bienId: b.dataset.programmer, jour: b.dataset.jour, ...horairesDuJour(b.dataset.programmer, b.dataset.jour) }); location.hash = `#/reserver/${rubriqueMenage}`; };
 
   const liste = vue.querySelector("#a-programmer");
   const aDesSejours = uniques.length > 0 || biens.some(l => (l.calendriers || []).some(c => c.url));
@@ -488,12 +492,15 @@ async function remplirAgenda(vue, biens, demandes, recharger) {
   const ligne = (type, s, l) => {
     const libelle = { arrivee: "Arrivée", depart: "Départ", encours: "Séjour en cours", menage: "Ménage prévu" }[type];
     const sansMenage = type === "depart" && !menagePrevu(s.bienId, s.fin);
+    const heureEvt = type === "depart" ? `${tr("Départ")} ${departDe(s)} h${departDe(s) !== REGLES.DEPART_VOYAGEURS_DEFAUT_H ? ` (${tr("tardif")})` : ""}`
+      : type === "arrivee" ? `${tr("Arrivée")} ${arriveeDe(s)} h${arriveeDe(s) !== REGLES.ARRIVEE_SUIVANTE_DEFAUT_H ? ` (${tr("anticipée")})` : ""}` : "";
     return `<div class="evt evt-${type}" style="--c:${couleur(l.id)}">
       <span class="evt-pastille" aria-hidden="true"></span>
       <div class="evt-corps"><div class="evt-haut"><b>${libelle}</b><span class="evt-bien">${esc(nomBien(l))}</span></div>
-        ${s ? `<div class="petit muet">${qui(s) ? `<span>${esc(qui(s))}</span> · ` : ""}<span>${duree(s)}</span> · <span>${nomSource(s)}</span>${s.note ? ` · <span>${esc(s.note)}</span>` : ""}</div>` : ""}
+        ${s ? `<div class="petit muet">${heureEvt ? `<span>${heureEvt}</span> · ` : ""}${qui(s) ? `<span>${esc(qui(s))}</span> · ` : ""}<span>${duree(s)}</span> · <span>${nomSource(s)}</span>${s.note ? ` · <span>${esc(s.note)}</span>` : ""}</div>` : ""}
         ${type === "depart" && rotation(s) ? `<span class="tampon">Rotation le jour même</span>` : ""}</div>
-      <div class="evt-actions">${s && s.source === "manuel" ? `<button type="button" class="lien-bouton" data-modifier="${esc(s.id)}">Modifier</button>` : ""}
+      <div class="evt-actions">${s && s.source === "manuel" ? `<button type="button" class="lien-bouton" data-modifier="${esc(s.id)}">Modifier</button>`
+          : s && ["depart", "arrivee"].includes(type) ? `<button type="button" class="lien-bouton" data-horaires="${esc(s.bienId)}|${esc(cleSejour(s))}">${tr("Horaires")}</button>` : ""}
         ${sansMenage ? `<button type="button" class="bouton petit" data-programmer="${esc(s.bienId)}" data-jour="${s.fin}">Programmer le ménage</button>` : ""}</div></div>`;
   };
   const evenementsDu = (j, sel, avecEnCours) => {
@@ -505,16 +512,46 @@ async function remplirAgenda(vue, biens, demandes, recharger) {
     return r;
   };
 
+  const heures = (min, max, choisie) => Array.from({ length: max - min + 1 }, (_, i) => min + i)
+    .map(h => `<option value="${h}" ${h === choisie ? "selected" : ""}>${h} h</option>`).join("");
+
+  /* Horaires par séjour (24/11/2026) : le ménage déjà programmé le jour du départ (et celui du jour d'une arrivée anticipée) est décalé
+     à la nouvelle heure de départ, le Cleaneur prévenu (fonction decaler_menage) ; le niveau de risque est recalculé au rechargement. */
+  const ACTIFS = ["VERIFICATION", "PUBLIEE", "CONFIRMEE"];
+  const menageActif = (bienId, jour) => { const l = bienDe(bienId);
+    return demandes.find(d => ACTIFS.includes(d.statut) && l && memeAdresse(d, l) && d.creneau && iso(new Date(d.creneau)) === jour); };
+  const decalerMenages = async (bienId, s, sejoursApres) => {
+    const echecs = [];
+    const autour = jour => ({ dep: sejoursApres.find(x => x.fin === jour), arr: sejoursApres.find(x => x.debut === jour) });
+    for (const jour of [s.fin, s.debut]) {
+      const m = menageActif(bienId, jour);
+      if (!m) continue;
+      const { dep, arr } = autour(jour);
+      const dH = departDe(dep || {}), aH = arr ? arriveeDe(arr) : null;
+      const avantD = Number(m.details?.departVoyageursH ?? REGLES.DEPART_VOYAGEURS_DEFAUT_H), avantA = m.details?.arriveeSuivanteH ?? null;
+      if (dH === avantD && (aH == null || aH === avantA)) continue;
+      const { data, error } = await supabase.rpc("decaler_menage", { p_reference: m.reference, p_depart_h: dH, p_arrivee_h: aH });
+      if (error || data !== "ok") echecs.push({ jour, raison: error ? "service" : data });
+    }
+    return echecs;
+  };
+  const messageDecalage = echecs => echecs.map(e => `${dateCourte(jourDe(e.jour))} : ${tr(e.raison === "creneau" ? "trop proche pour être décalé, prévenez le Cleaneur par la messagerie"
+    : e.raison === "statut" ? "la mission a déjà commencé" : "le ménage n'a pas pu être décalé, réessayez")}`).join(" · ");
+
   const formulaire = () => {
     const s = edition;
     return `<form id="form-sejour" class="form-sejour" novalidate>
-      <h3 style="margin:0 0 8px">${s.id ? tr("Modifier le séjour") : tr("Ajouter un séjour")}</h3>
-      ${biens.length > 1 ? `<label class="champ">Bien<select name="bien">${ordre.map(l => `<option value="${esc(l.id)}" ${l.id === s.bienId ? "selected" : ""}>${esc(nomBien(l))}</option>`).join("")}</select></label>` : ""}
+      <h3 style="margin:0 0 8px">${s.calendrier ? tr("Horaires du séjour") : s.id ? tr("Modifier le séjour") : tr("Ajouter un séjour")}</h3>
+      ${s.calendrier ? `<p class="petit" style="margin:0 0 8px"><b>${esc(nomBien(bienDe(s.bienId)))}</b> · ${esc(dateLongue(jourDe(s.debut)))} → ${esc(dateLongue(jourDe(s.fin)))} · ${esc(nomSource(s))}</p>` : ""}
+      ${s.calendrier ? "" : `${biens.length > 1 ? `<label class="champ">Bien<select name="bien">${ordre.map(l => `<option value="${esc(l.id)}" ${l.id === s.bienId ? "selected" : ""}>${esc(nomBien(l))}</option>`).join("")}</select></label>` : ""}
       <div class="deux-champs"><label class="champ">Arrivée<input type="date" name="debut" required value="${esc(s.debut)}"></label>
-        <label class="champ">Départ<input type="date" name="fin" required value="${esc(s.fin)}"></label></div>
-      <div class="deux-champs"><label class="champ">Voyageur (facultatif)<input name="voyageur" maxlength="60" value="${esc(s.voyageur)}" autocomplete="off"></label>
-        <label class="champ">Personnes<input type="number" name="personnes" min="1" max="30" inputmode="numeric" value="${esc(s.personnes || "")}"></label></div>
-      <label class="champ">Note (facultatif)<input name="note" maxlength="120" value="${esc(s.note)}" placeholder="${esc(tr("Ex. : arrivée tardive, lit bébé…"))}"></label>
+        <label class="champ">Départ<input type="date" name="fin" required value="${esc(s.fin)}"></label></div>`}
+      <div class="deux-champs"><label class="champ">${tr("Heure d'arrivée (anticipée dès 12 h)")}<select name="arriveeH">${heures(REGLES.ARRIVEE_SUIVANTE_MIN_H, REGLES.ARRIVEE_SUIVANTE_MAX_H, arriveeDe(s))}</select></label>
+        <label class="champ">${tr("Heure de départ (tardif jusqu'à 14 h)")}<select name="departH">${heures(REGLES.DEPART_VOYAGEURS_MIN_H, REGLES.DEPART_VOYAGEURS_MAX_H, departDe(s))}</select></label></div>
+      <div class="deux-champs">${s.calendrier ? "" : `<label class="champ">Voyageur (facultatif)<input name="voyageur" maxlength="60" value="${esc(s.voyageur)}" autocomplete="off"></label>`}
+        <label class="champ">${tr("Nombre de voyageurs")}<input type="number" name="personnes" min="1" max="30" inputmode="numeric" value="${esc(s.personnes || "")}"></label></div>
+      ${s.calendrier ? "" : `<label class="champ">Note (facultatif)<input name="note" maxlength="120" value="${esc(s.note)}" placeholder="${esc(tr("Ex. : arrivée tardive, lit bébé…"))}"></label>`}
+      <p class="petit muet" style="margin:4px 0 0">${tr("Le ménage déjà programmé ce jour-là est décalé et le Cleaneur prévenu.")}</p>
       <p class="erreur" id="erreur-sejour"></p>
       <div class="boutons"><button class="bouton plein" type="submit">Enregistrer</button><button class="bouton secondaire" type="button" data-annuler>Annuler</button>
         ${s.id ? `<button class="bouton danger" type="button" data-supprimer>Supprimer</button>` : ""}</div></form>`;
@@ -537,14 +574,35 @@ async function remplirAgenda(vue, biens, demandes, recharger) {
       try { await enregistrerSejours(l.id, (l.sejours || []).filter(x => x.id !== edition.id)); }
       catch { err.textContent = tr("Le service est momentanément indisponible. Réessayez dans quelques minutes."); }
     });
-    f.debut.onchange = () => { if (f.debut.value && (!f.fin.value || f.fin.value <= f.debut.value)) f.fin.value = iso(plusJours(jourDe(f.debut.value), 1)); };
+    if (f.debut) f.debut.onchange = () => { if (f.debut.value && (!f.fin.value || f.fin.value <= f.debut.value)) f.fin.value = iso(plusJours(jourDe(f.debut.value), 1)); };
+    const heuresSaisies = () => ({ departH: Number(f.departH.value), arriveeH: Number(f.arriveeH.value) });
+    // Séjour d'un calendrier : seuls les horaires et le nombre de voyageurs sont enregistrés, avec le bien.
+    if (edition.calendrier) {
+      f.onsubmit = async e => {
+        e.preventDefault();
+        const s = { ...edition, ...heuresSaisies(), personnes: Number(f.personnes.value) || null };
+        const autres = uniques.filter(x => x.bienId === s.bienId && cleSejour(x) !== cleSejour(s));
+        const m = erreurHoraires(s, departDe(autres.find(x => x.fin === s.debut) || {}));
+        if (m) { err.textContent = tr(m); return; }
+        const l = bienDe(s.bienId);
+        err.textContent = tr("Enregistrement…");
+        try {
+          await enregistrerBien({ ...l, horairesSejours: { ...(l.horairesSejours || {}), [cleSejour(s)]: { departH: s.departH, arriveeH: s.arriveeH, personnes: s.personnes } } });
+          const echecs = await decalerMenages(s.bienId, s, [...autres, s]);
+          if (echecs.length) { alert(`${tr("Horaires enregistrés.")} ${messageDecalage(echecs)}`); }
+          edition = null; recharger();
+        } catch { err.textContent = tr("Le service est momentanément indisponible. Réessayez dans quelques minutes."); }
+      };
+      f.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
     f.onsubmit = async e => {
       e.preventDefault();
       const bienId = f.bien ? f.bien.value : biens[0].id;
       const s = { id: edition.id || `s${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`, debut: f.debut.value, fin: f.fin.value,
-        voyageur: f.voyageur.value.trim(), personnes: Number(f.personnes.value) || null, note: f.note.value.trim() };
+        voyageur: f.voyageur.value.trim(), personnes: Number(f.personnes.value) || null, note: f.note.value.trim(), ...heuresSaisies() };
       const autres = uniques.filter(x => x.bienId === bienId && !(x.source === "manuel" && x.id === s.id));
-      const m = erreurSejour(s, autres);
+      const m = erreurSejour(s, autres) || erreurHoraires(s, departDe(autres.find(x => x.fin === s.debut) || {}));
       if (m) { err.textContent = tr(m); return; }
       const l = bienDe(bienId);
       // Changement de bien : le séjour quitte l'ancien bien.
@@ -552,6 +610,8 @@ async function remplirAgenda(vue, biens, demandes, recharger) {
       err.textContent = tr("Enregistrement…");
       try {
         if (ancien) await enregistrerBien({ ...ancien, sejours: (ancien.sejours || []).filter(x => x.id !== s.id) });
+        const echecs = await decalerMenages(bienId, s, [...autres, s]);
+        if (echecs.length) alert(`${tr("Séjour enregistré.")} ${messageDecalage(echecs)}`);
         await enregistrerSejours(bienId, [...(l.sejours || []).filter(x => x.id !== s.id), s]);
         jourChoisi = s.debut;
       } catch { err.textContent = tr("Le service est momentanément indisponible. Réessayez dans quelques minutes."); }
@@ -645,6 +705,11 @@ async function remplirAgenda(vue, biens, demandes, recharger) {
       edition = { bienId: filtreBien || ordre[0].id, debut: d, fin: iso(plusJours(jourDe(d), 1)) };
       dessiner();
     });
+    boite.querySelectorAll("[data-horaires]").forEach(b => b.onclick = () => {
+      const [bienId, debutS, finS] = b.dataset.horaires.split("|");
+      const s = uniques.find(x => x.bienId === bienId && x.debut === debutS && x.fin === finS);
+      if (s) { edition = { ...s, calendrier: true }; dessiner(); }
+    });
     boite.querySelectorAll("[data-modifier]").forEach(b => b.onclick = () => {
       const s = uniques.find(x => x.source === "manuel" && x.id === b.dataset.modifier);
       edition = { ...s }; dessiner();
@@ -728,7 +793,7 @@ export function planningSemaine(boite, biens, sejours, menageDe, auj, couleur) {
   boite.innerHTML = `<div class="planning-defile"><table class="planning"><thead><tr><th>${tr("Bien")}</th>${jours.map((d, i) => `<th class="${i === 0 ? "pl-auj" : ""}">${libJour(d)}</th>`).join("")}</tr></thead>
     <tbody>${ordre.map((l, i) => `<tr style="--c:${couleur(i)}"><th><span class="pl-pastille"></span>${esc(nomBien(l))}</th>${jours.map(d => cellule(l, d)).join("")}</tr>`).join("")}</tbody></table></div>
     <p class="petit legende-planning"><span class="pl-menage">${icone("valide")} ${tr("Ménage")}</span> ${tr("prévu")} · <span class="pl-programmer">${tr("Départ")} ›</span> ${tr("à programmer")} · <span class="pl-arrivee">${tr("Arrivée")}</span> · <span class="pl-occupe-ex"></span> ${tr("occupé")}</p>`;
-  boite.querySelectorAll("[data-programmer]").forEach(b => b.onclick = () => { preremplir({ bienId: b.dataset.programmer, jour: b.dataset.jour }); location.hash = `#/reserver/${rubriqueMenage}`; });
+  boite.querySelectorAll("[data-programmer]").forEach(b => b.onclick = () => { preremplir({ bienId: b.dataset.programmer, jour: b.dataset.jour, ...horairesDuJour(b.dataset.programmer, b.dataset.jour) }); location.hash = `#/reserver/${rubriqueMenage}`; });
 }
 
 /* Zones sans Cleaneur (24/11/2026) : si aucun Cleaneur qualifié ne couvre l'adresse d'un logement, message sur sa fiche et inscription

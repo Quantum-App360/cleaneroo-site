@@ -141,6 +141,21 @@ export function alertes({ biens, sejours, menagePrevu, erreurs = {}, aujourdhui 
   return l;
 }
 
+/* Horaires par séjour (24/11/2026, repris de l'app iPhone) : départ tardif (6 à 14 h) et arrivée anticipée (12 à 22 h), séjour par séjour.
+   Séjour saisi à la main : heures enregistrées avec lui ; séjour d'un calendrier : dans bien.horairesSejours, par « arrivée|départ ». */
+export const cleSejour = s => `${s.debut}|${s.fin}`;
+export const departDe = s => Number.isFinite(s?.departH) ? s.departH : REGLES.DEPART_VOYAGEURS_DEFAUT_H;
+export const arriveeDe = s => Number.isFinite(s?.arriveeH) ? s.arriveeH : REGLES.ARRIVEE_SUIVANTE_DEFAUT_H;
+/** Séjour complété des horaires enregistrés pour lui sur le bien (calendriers). Fonction pure, testée. */
+export const avecHoraires = (s, bien) => s.source === "manuel" ? s : { ...s, ...((bien?.horairesSejours || {})[cleSejour(s)] || {}) };
+/** Heures valables : départ 6 à 14 h, arrivée 12 à 22 h, arrivée après le départ du même jour. Renvoie un message ou "". */
+export function erreurHoraires({ departH, arriveeH }, departDuJourH = null) {
+  if (departH != null && (departH < REGLES.DEPART_VOYAGEURS_MIN_H || departH > REGLES.DEPART_VOYAGEURS_MAX_H)) return "Départ entre 6 h et 14 h.";
+  if (arriveeH != null && (arriveeH < REGLES.ARRIVEE_SUIVANTE_MIN_H || arriveeH > REGLES.ARRIVEE_SUIVANTE_MAX_H)) return "Arrivée entre 12 h et 22 h.";
+  if (arriveeH != null && departDuJourH != null && arriveeH <= departDuJourH) return "L'arrivée doit suivre le départ des voyageurs précédents.";
+  return "";
+}
+
 /**
  * Niveau de risque d'une rotation (18 novembre 2026, repris de l'app iPhone). Fonction pure, testée.
  * Urgent : départ dans moins de 48 h sans ménage · aucun Cleaneur confirmé à moins de 24 h · moins de 30 min de marge avant l'arrivée suivante ·
@@ -148,8 +163,7 @@ export function alertes({ biens, sejours, menagePrevu, erreurs = {}, aujourdhui 
  * À surveiller : ménage à programmer · Cleaneur pas encore confirmé (départ dans moins de 72 h) · moins de 1 h 30 de marge · articles sous le seuil.
  * Serein sinon. Renvoie { niveau: "urgent" | "surveiller" | "serein", raison, rang } (rang 0 = le plus urgent).
  */
-export function niveauRotation({ jour, menage = null, bien = {}, arriveeSuivanteH = null, maintenant = new Date() }) {
-  const departH = REGLES.DEPART_VOYAGEURS_DEFAUT_H;
+export function niveauRotation({ jour, menage = null, bien = {}, arriveeSuivanteH = null, departH = REGLES.DEPART_VOYAGEURS_DEFAUT_H, maintenant = new Date() }) {
   const depart = jourDe(jour); depart.setHours(departH, 0, 0, 0);
   const heures = (depart - maintenant) / 3600000;
   const confirme = menage && !["VERIFICATION", "PUBLIEE"].includes(menage.statut);
@@ -183,15 +197,17 @@ export function blocAujourdhui(boite, { biens, sejours, demandes, menageDe, erre
     if (!dep && !arr) return "";
     const m = menageDe(l.id, j), prochaine = sejours.filter(s => s.bienId === l.id && s.debut >= j).sort((a, b) => a.debut.localeCompare(b.debut))[0];
     // Niveau de risque de la rotation (départ du jour) : affiché et utilisé pour classer de la plus urgente à la plus sereine.
-    const risque = dep ? niveauRotation({ jour: j, menage: m, bien: l, arriveeSuivanteH: arr ? REGLES.ARRIVEE_SUIVANTE_DEFAUT_H : null, maintenant: aujourdhui }) : null;
+    // Heures du séjour (départ tardif, arrivée anticipée) : le risque est recalculé avec elles.
+    const dH = dep ? departDe(avecHoraires(dep, l)) : null, aH = arr ? arriveeDe(avecHoraires(arr, l)) : null;
+    const risque = dep ? niveauRotation({ jour: j, menage: m, bien: l, arriveeSuivanteH: aH, departH: dH, maintenant: aujourdhui }) : null;
     return `<div class="rotation" data-rang="${risque ? risque.rang : 3}" style="--c:${couleur(l.id)}">
       <div class="rot-bien"><span class="pl-pastille"></span><b>${esc(nomBien(l))}</b><span class="petit">${esc(l.ville || "")}</span>
         ${risque ? `<span class="risque risque-${risque.niveau}"><span class="pastille-risque" aria-hidden="true"></span> ${tr({ urgent: "Urgent", surveiller: "À surveiller", serein: "Serein" }[risque.niveau])} · ${tr(risque.raison)}</span>` : ""}</div>
       <div class="rot-flux">
-        ${dep ? `<span class="rot-etape">${icone("valise")} ${tr("Départ")} <b>${REGLES.DEPART_VOYAGEURS_DEFAUT_H} h</b></span>` : ""}
+        ${dep ? `<span class="rot-etape">${icone("valise")} ${tr("Départ")} <b>${dH} h</b>${dH !== REGLES.DEPART_VOYAGEURS_DEFAUT_H ? ` <small>${tr("tardif")}</small>` : ""}</span>` : ""}
         ${dep ? (m ? `<span class="rot-etape menage etat-${esc(m.statut)}">${icone(rubrique(m.rubrique_id)?.icone || "termine")} ${tr(ETATS[m.statut] || "")}</span>`
           : `<button type="button" class="bouton petit" data-programmer="${esc(l.id)}" data-jour="${j}">${tr("Programmer le ménage")}</button>`) : ""}
-        ${arr || (dep && prochaine && prochaine.debut === j) ? `<span class="rot-etape">${icone("cle")} ${tr("Arrivée")} <b>${REGLES.ARRIVEE_SUIVANTE_DEFAUT_H} h</b></span>` : prochaine ? `<span class="rot-etape petit">${tr("Prochaine arrivée")} ${dateCourte(jourDe(prochaine.debut))}</span>` : ""}
+        ${arr || (dep && prochaine && prochaine.debut === j) ? `<span class="rot-etape">${icone("cle")} ${tr("Arrivée")} <b>${aH ?? REGLES.ARRIVEE_SUIVANTE_DEFAUT_H} h</b>${aH != null && aH !== REGLES.ARRIVEE_SUIVANTE_DEFAUT_H ? ` <small>${tr("anticipée")}</small>` : ""}</span>` : prochaine ? `<span class="rot-etape petit">${tr("Prochaine arrivée")} ${dateCourte(jourDe(prochaine.debut))}</span>` : ""}
         ${dep && arr ? `<span class="tampon">${tr("Rotation le jour même")}</span>` : ""}
       </div></div>`;
   };
@@ -351,7 +367,9 @@ export function planProgrammerTout({ biens, departs, demandes, menagePrevu, abon
     if (!bien) continue;
     const modele = modeleDe(bien, demandes);
     if (!modele || modele.sur_devis) { sansModele.push({ bien, jour: s.fin }); continue; }
-    const creneau = instantParis(s.fin, Number(modele.details?.departVoyageursH ?? REGLES.DEPART_VOYAGEURS_DEFAUT_H));
+    // Heure de départ du séjour (départ tardif réglé séjour par séjour), sinon celle du dernier ménage.
+    const departH = Number.isFinite(s.departH) ? s.departH : Number(modele.details?.departVoyageursH ?? REGLES.DEPART_VOYAGEURS_DEFAUT_H);
+    const creneau = instantParis(s.fin, departH);
     const prixLibre = Number(bien.prixMenageC) >= 1000 && ["conciergerie", "hotellerie"].includes(modele.espace) && modele.rubrique_id === "rental";
     let prixC, creditImpotC = 0, fraisPct = abonne ? 0 : REGLES.FRAIS_SERVICE_PRO_PCT;
     if (prixLibre) prixC = Math.round(Number(bien.prixMenageC));
@@ -362,7 +380,8 @@ export function planProgrammerTout({ biens, departs, demandes, menagePrevu, abon
       if (r.devisObligatoire) { sansModele.push({ bien, jour: s.fin }); continue; }
       prixC = r.totalC; creditImpotC = r.creditImpotC || 0; fraisPct = r.fraisServicePct;
     }
-    lignes.push({ bien, jour: s.fin, creneau, prixC, creditImpotC, fraisPct, modele, prixLibre });
+    const suivant = departs.find(x => x.bienId === s.bienId && x.debut === s.fin);
+    lignes.push({ bien, jour: s.fin, creneau, prixC, creditImpotC, fraisPct, modele, prixLibre, departH, arriveeH: suivant ? arriveeDe(suivant) : null });
   }
   const prestationsC = lignes.reduce((t, x) => t + x.prixC, 0);
   const fraisC = lignes.reduce((t, x) => t + Math.round(x.prixC * x.fraisPct / 100), 0);
@@ -401,7 +420,8 @@ export function fenetreProgrammerTout(plan, { nomBien, recharger }) {
     for (const x of plan.lignes) {
       const m = x.modele, details = { ...(m.details || {}) };
       ["pilote", "depuisModele", "prixCorrigeLe", "prixNavigateurC", "fraisServicePctServeur", "passages"].forEach(k => delete details[k]);
-      Object.assign(details, { logementId: x.bien.id, programmeTout: true, fraisServicePct: x.fraisPct, fraisServiceC: Math.round(x.prixC * x.fraisPct / 100) });
+      Object.assign(details, { logementId: x.bien.id, programmeTout: true, fraisServicePct: x.fraisPct, fraisServiceC: Math.round(x.prixC * x.fraisPct / 100),
+        departVoyageursH: x.departH, ...(x.arriveeH != null ? { arriveeSuivanteH: x.arriveeH } : {}) });
       if (x.prixLibre) Object.assign(details, { prixLibre: true });
       const demande = Object.fromEntries(CHAMPS_MODELE.filter(k => m[k] !== undefined).map(k => [k, m[k]]));
       try {

@@ -21,7 +21,7 @@ import { RUBRIQUES as RUBRIQUES_CAT, rubrique, pastille, tacheChiffree, tachesPo
   import { niveauRotation } from "./assets/js/conciergerie.js";
 import { menageTientEntreVoyageurs } from "./assets/js/estimation.js";
 import { bornesPeriode } from "./assets/js/periodes.js";
-import { planProgrammerTout, instantParis } from "./assets/js/conciergerie.js";
+import { planProgrammerTout, instantParis, avecHoraires, erreurHoraires, departDe, arriveeDe } from "./assets/js/conciergerie.js";
 import { etatOffreConciergerie, offreConciergerieOuverte, fraisServicePct, reservationsOuvertes, fixerOuverture } from "./assets/js/regles.js";
 import { bornesActivite, decalerActivite, jourParis, resumeActivite, evolutionPct } from "./assets/js/activite-societe.js";
 import { euros, REGLES, indemniteAccesC, dateVersement, qualificationsRequises, calculActivite, niveauCleaneur, verifierProposition, netPortefeuille, scoreMission, fraisDeplacementC } from "./assets/js/regles.js";
@@ -93,6 +93,20 @@ egal("offre conciergerie : 0 % de frais pendant l'offre", fraisServicePct(false,
   egal("programmer tout : abonné 0 %", planProgrammerTout({ biens, departs, demandes: [modele], menagePrevu: () => false, abonne: true, aujourdhui: new Date(2027, 1, 1) }).fraisC, 0);
   egal("programmer tout : heure de Paris en hiver", instantParis("2027-02-03", 10), "2027-02-03T09:00:00.000Z");
   egal("programmer tout : heure de Paris en été", instantParis("2027-07-03", 10), "2027-07-03T08:00:00.000Z"); }
+// Horaires par séjour (24/11/2026)
+{ const bien = { horairesSejours: { "2027-02-01|2027-02-05": { departH: 13, arriveeH: 15 } } };
+  egal("horaires : séjour d'un calendrier complété par le bien", departDe(avecHoraires({ debut: "2027-02-01", fin: "2027-02-05", source: "airbnb" }, bien)), 13);
+  egal("horaires : départ par défaut 10 h", departDe({}), 10);
+  egal("horaires : arrivée par défaut 16 h", arriveeDe({}), 16);
+  egal("horaires : départ tardif au-delà de 14 h refusé", erreurHoraires({ departH: 15, arriveeH: 16 }) !== "", true);
+  egal("horaires : arrivée anticipée avant 12 h refusée", erreurHoraires({ departH: 10, arriveeH: 11 }) !== "", true);
+  egal("horaires : arrivée avant le départ précédent refusée", erreurHoraires({ departH: 10, arriveeH: 12 }, 13) !== "", true);
+  const m = { statut: "CONFIRMEE", duree_min: 180 };
+  egal("horaires : départ tardif, risque recalculé (marge courte)", niveauRotation({ jour: "2027-02-05", menage: m, departH: 13, arriveeSuivanteH: 16, maintenant: new Date(2027, 1, 1) }).niveau, "urgent");
+  egal("horaires : horaires normaux, rotation sereine", niveauRotation({ jour: "2027-02-05", menage: m, departH: 10, arriveeSuivanteH: 16, maintenant: new Date(2027, 1, 1) }).niveau, "serein");
+  const plan = planProgrammerTout({ biens: [{ id: "a", rue: "1 rue A", codePostal: "83000", prixMenageC: 6000 }], departs: [{ bienId: "a", debut: "2027-01-30", fin: "2027-02-03", departH: 12 }],
+    demandes: [{ statut: "TERMINEE", rubrique_id: "rental", espace: "conciergerie", rue: "1 rue A", code_postal: "83000", estimation_c: 5000, details: {}, cree_le: "2027-01-10" }], menagePrevu: () => false, aujourdhui: new Date(2027, 1, 1) });
+  egal("horaires : programmer tout à l'heure de départ tardif", plan.lignes[0].creneau, "2027-02-03T11:00:00.000Z"); }
 egal("niveau : débutant", niveauCleaneur({ missions: 3, note: 5 }), 0);
 egal("niveau : Confirmé", niveauCleaneur({ missions: 12, note: 4.7 }), 1);
 egal("niveau : Élite", niveauCleaneur({ missions: 60, note: 4.9 }), 3);
