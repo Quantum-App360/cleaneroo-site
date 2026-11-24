@@ -18,7 +18,7 @@ function contenu() {
     <div class="fp-tuiles">${RUBRIQUES.filter(r => p.rubriques.includes(r.id)).map((r, i) => `
       <button type="button" class="fp-tuile" style="--i:${i}" data-fp-rubrique="${r.id}">${icone(r.icone, { tuile: true })}
         <b>${r.nom}</b><span>${pastille(r)}</span></button>`).join("")}</div>
-    <p class="fp-pied"><a href="#/estimer" data-fp-fermer>Juste connaître le prix ? Estimer mon prix ›</a></p>
+    <p class="fp-pied"><a href="#/estimer" data-fp-fermer>Seulement le prix ? Estimer mon prix ›</a></p>
   </div>`;
 }
 

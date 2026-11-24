@@ -240,7 +240,7 @@ export function ongletPro(p, biens, hotellerie = false) {
     <p class="petit" style="margin-top:0">Constats du Cleaneur à son arrivée, un dossier par séjour, avec la date limite de la demande (14 jours après le départ sur Airbnb).</p>
     <div id="pro-dommages">${chargeur("Chargement…", { petit: true })}</div>
     <h2 class="titre-section">${icone("calendrier", { tuile: true })}Planning de la semaine</h2>
-    <p class="petit" style="margin-top:0">Chaque bien, jour par jour : départs, arrivées et ménages. Touchez un départ orange pour programmer son ménage.</p>
+    <p class="petit" style="margin-top:0">Chaque bien, jour par jour : départs, arrivées et ménages. Sélectionnez un départ orange pour programmer son ménage.</p>
     <div class="carte planning-semaine" id="semaine-pro">${chargeur("Lecture de vos calendriers…", { petit: true, variante: "vitre" })}</div>
     <h2 class="titre-section">${icone("calendrier", { tuile: true })}Agenda des locations</h2>
     <p class="petit" style="margin-top:0">Les séjours de vos voyageurs, lus automatiquement dans vos calendriers Airbnb, Booking, Abritel… ou ajoutés à la main si vous n'utilisez pas de calendrier.</p>
@@ -680,7 +680,7 @@ async function remplirAgenda(vue, biens, demandes, recharger) {
         ${sj ? `<div class="agenda-detail"><div class="agenda-detail-haut"><b>${dateLongue(jourDe(sj))}</b>
             ${biens.length ? `<button type="button" class="lien-bouton" data-ajout="${sj}">${icone("ajouter")} Ajouter un séjour</button>` : ""}</div>
           ${detail.length ? detail.join("") : `<p class="muet petit" style="margin:4px 0 0">Rien de prévu ce jour.</p>`}</div>`
-        : `<p class="petit muet" style="margin:10px 0 0">Touchez un jour pour voir le détail.</p>`}`;
+        : `<p class="petit muet" style="margin:10px 0 0">Sélectionnez un jour pour voir le détail.</p>`}`;
     } else {
       const jusqua = iso(plusJours(auj, REGLES.AGENDA_LISTE_JOURS));
       const parJour = [];

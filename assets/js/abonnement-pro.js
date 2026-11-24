@@ -57,7 +57,7 @@ export function blocAbonnementPro(p, biens) {
     ${blocOffreConciergerie(p, n)}
     <div class="offre-pro"><b>${tr("Abonnement conciergerie : 0 % de frais de service")}</b>
       <span class="petit">${tr("Sans abonnement, chaque intervention compte")} ${REGLES.FRAIS_SERVICE_PRO_PCT} % ${tr("de frais de service.")}</span>
-      <span class="petit"><b>${tr("Vous ne pouvez pas perdre :")}</b> ${tr("chaque mois, l'abonnement est plafonné à ce qu'auraient coûté les")} ${REGLES.FRAIS_SERVICE_PRO_PCT} % ${tr("de frais de service. En basse saison, vous payez moins.")}</span>
+      <span class="petit"><b>${tr("Votre garantie :")}</b> ${tr("chaque mois, l'abonnement est plafonné à ce qu'auraient coûté les")} ${REGLES.FRAIS_SERVICE_PRO_PCT} % ${tr("de frais de service. En basse saison, vous payez moins.")}</span>
       <span class="petit">${tr("Engagement annuel :")} ${REGLES.ABONNEMENT_ANNUEL_MOIS_OFFERTS} ${tr("mois offerts.")}</span></div>
     <div class="tranches">${visibles.map(t => {
       const prix = prixAbonnementProC(t, n), choisie = actuelle === t.id;
@@ -70,7 +70,7 @@ export function blocAbonnementPro(p, biens) {
         ${t.grandCompte ? `<span class="petit">${tr("Essai gratuit")} ${REGLES.ESSAI_GRAND_COMPTE_JOURS} ${tr("jours sur")} ${REGLES.ESSAI_GRAND_COMPTE_LOGEMENTS} ${tr("de vos logements.")}</span>` : ""}
         <ul class="plus">${t.inclus.map(x => `<li>${tr(x)}</li>`).join("")}</ul>
         ${choisie ? `<span class="tampon">${tr("Votre abonnement")}</span>`
-          : biens.length > t.max ? `<span class="petit trop-petit">${tr("Trop petite pour vos")} ${biens.length} ${tr("biens")}</span>`
+          : biens.length > t.max ? `<span class="petit trop-petit">${tr("Insuffisante pour vos")} ${biens.length} ${tr("biens")}</span>`
           : `<button type="button" class="bouton${t.id === conseillee?.id ? "" : " secondaire"}" data-tranche="${t.id}">${tr("Choisir")}</button>`}
         <span class="petit rentable">${tr("Plein tarif dès")} ${euros(seuilAbonnementProC(t, Math.max(n, (t.debut || 0) + 1)))} ${tr("de ménages par mois ; en dessous, plafonné à 8 %")}</span>
       </div>`; }).join("")}</div>

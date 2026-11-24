@@ -28,7 +28,7 @@ export function formulesCleaneur() {
       "Badge Pro visible des clients",
       ["Rentabilisé dès", seuil, "de missions par mois"],
     ], [
-      "Abonnement à payer même les mois calmes",
+      "Abonnement dû même en période de faible activité",
       ["Moins intéressant sous", seuil, "de missions par mois"],
     ]],
   ];
@@ -77,7 +77,7 @@ export function brancherFormulesCleaneur(racine, p = null, recharger = () => {})
   const calculer = () => {
     const c = Number(ca.value) * 100;
     const g = revenuCleaneurC(c, "gratuit"), pr = revenuCleaneurC(c, "pro", false);
-    sortie.innerHTML = `<span>${tr("Pour")} <b>${euros(c)}</b> ${tr("de missions par mois, vous touchez :")}</span>
+    sortie.innerHTML = `<span>${tr("Pour")} <b>${euros(c)}</b> ${tr("de missions par mois, vous percevez :")}</span>
       <span class="ligne-calcul"><span>${tr("Gratuit")}</span><b>${euros(g)}</b></span>
       <span class="ligne-calcul${pr > g ? " meilleur" : ""}"><span>${tr("Pro (abonnement déduit)")}</span><b>${euros(pr)}</b></span>
       ${offert ? `<span class="ligne-calcul meilleur"><span>${tr("Pro offert")}</span><b>${euros(revenuCleaneurC(c, "pro", true))}</b></span>` : ""}

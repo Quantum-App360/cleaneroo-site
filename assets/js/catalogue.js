@@ -311,7 +311,7 @@ export const RUBRIQUES = [
       T("sieges", "Shampoing des sièges tissu", 3500, 45, { groupe: "Espaces de travail et accueil", types: ["bureaux", "agence", "medical"] }),
       T("attente", "Salle d'attente (sièges, tables, présentoirs)", 1500, 15, { groupe: "Espaces de travail et accueil", types: ["medical", "agence"] }),
       T("paillasson", "Paillasson et sas d'entrée", 800, 10, { groupe: "Espaces de travail et accueil", types: ["bureaux", "medical", "agence"] }),
-      T("kitchenette", "Kitchenette / coin café (frigo, micro-ondes, cafetière)", 2000, 25, { groupe: "Espaces de travail et accueil", types: ["bureaux", "agence"] }),
+      T("kitchenette", "Kitchenette / coin café (réfrigérateur, micro-ondes, cafetière)", 2000, 25, { groupe: "Espaces de travail et accueil", types: ["bureaux", "agence"] }),
       T("vitrine", "Vitrine (faces intérieure et extérieure)", 2500, 25, { groupe: "Espaces de travail et accueil", types: ["agence"] }),
       T("comptoir", "Comptoir, caisses et terminaux de paiement", 1500, 15, { groupe: "Espaces de travail et accueil", types: ["agence"] }),
       T("moquette", "Shampoing moquette", 4000, 50, { groupe: "Sols", parSurface: true, types: ["bureaux", "agence", "medical"] }),
@@ -335,7 +335,7 @@ export const RUBRIQUES = [
     taches: [
       T("cloisons", "Cloisons vitrées intérieures", 2500, 30, { groupe: "Accueil et espace du personnel", types: ["showroom"] }),
       T("paillasson", "Paillasson et sas d'entrée", 800, 10, { groupe: "Accueil et espace du personnel", types: ["boutique", "magasin", "showroom", "sport"] }),
-      T("kitchenette", "Kitchenette / coin café (frigo, micro-ondes, cafetière)", 2000, 25, { groupe: "Accueil et espace du personnel", types: ["atelier", "boutique", "sport"] }),
+      T("kitchenette", "Kitchenette / coin café (réfrigérateur, micro-ondes, cafetière)", 2000, 25, { groupe: "Accueil et espace du personnel", types: ["atelier", "boutique", "sport"] }),
       T("vitrine", "Vitrine (faces intérieure et extérieure)", 2500, 25, { groupe: "Vente et exposition", types: ["boutique", "magasin", "showroom"] }),
       T("comptoir", "Comptoir, caisses et terminaux de paiement", 1500, 15, { groupe: "Vente et exposition", types: ["boutique", "magasin"] }),
       T("presentoirs", "Présentoirs, étagères et rayonnages de vente", 3000, 35, { groupe: "Vente et exposition", parSurface: true, types: ["boutique", "magasin", "showroom"] }),

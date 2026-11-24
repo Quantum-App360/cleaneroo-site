@@ -6,7 +6,7 @@ import { REGLES } from "./regles.js";
 
 export function pageGarantie(vue) {
   vue.innerHTML = `<section class="bloc"><div class="etroit">
-    <span class="surtitre">${tr("Sérénité")}</span><h1>${tr("En cas de souci ou de dommage")}</h1><div class="trait-corail"></div>
+    <span class="surtitre">${tr("Sérénité")}</span><h1>${tr("En cas de problème ou de dommage")}</h1><div class="trait-corail"></div>
     <div class="carte"><h3 style="margin-top:0">${tr("1. Un problème de qualité")}</h3>
       <p>${tr("Avant de valider, demandez une reprise au Cleaneur. Vous pouvez aussi signaler le problème depuis la prestation : rien n'est versé au Cleaneur tant que le signalement est examiné.")}</p></div>
     <div class="carte"><h3 style="margin-top:0">${tr("2. Une casse ou un dommage")}</h3>

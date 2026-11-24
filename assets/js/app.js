@@ -131,11 +131,11 @@ const bullesMontantes = () => MONTANTES.map(([x, t, d, r]) =>
 const COMPARAISON = [
   ["Prix", "Devis, attente, négociation", "Prix affiché tout de suite, sans surprise"],
   ["Réservation", "Appels, messages, relances", "2 minutes en ligne, 3 clics la fois suivante"],
-  ["Qui vient chez vous", "On ne sait pas vraiment", "Cleaneur vérifié : identité, SIRET, assurance, selfie du jour"],
-  ["Arrivée", "On attend sans nouvelles", "Suivi en direct, arrivée confirmée par géolocalisation"],
+  ["Qui vient chez vous", "Identité rarement vérifiée", "Cleaneur vérifié : identité, SIRET, assurance, photo de vérification du jour"],
+  ["Arrivée", "Attente sans information", "Suivi en direct, arrivée confirmée par géolocalisation"],
   ["Travail réalisé", "Aucune preuve", "Compte rendu photo avant / après, horodaté et signé"],
   ["Paiement", "À l'avance ou en espèces, sans recours", "Sécurisé par Stripe, versé au Cleaneur après votre validation"],
-  ["En cas de souci", "Votre parole contre la sienne", "Preuves photo horodatées et dossier prêt pour l'assurance"],
+  ["En cas de problème", "Aucune preuve en cas de litige", "Preuves photo horodatées et dossier prêt pour l'assurance"],
 ];
 const CHIFFRES = [["2 min", "pour réserver"], [String(RUBRIQUES.length), "prestations"], ["100 %", "digitalisé"], ["100 %", "paiement sécurisé"]];
 
@@ -243,12 +243,12 @@ function blocInscriptionInspirante() {
         <ul>${points.map(x => `<li>${icone("valide")}${tr(x)}</li>`).join("")}</ul>
         <span class="bouton plein">${tr("Créer mon espace")}</span>
       </a>`).join("")}</div>
-    <p class="pied-inspirant">${tr("Déjà inscrit ?")} <a href="#/compte">${tr("Se connecter")}</a> · ${tr("Juste être prévenu du lancement ?")} <a href="#/inscription/client">${tr("Laisser mon e-mail")}</a></p>
+    <p class="pied-inspirant">${tr("Déjà inscrit ?")} <a href="#/compte">${tr("Se connecter")}</a> · ${tr("Être informé de l'ouverture des réservations ?")} <a href="#/inscription/client">${tr("Laisser mon e-mail")}</a></p>
   </div></section>`;
 }
 
 const FONCTIONS_DIGITALES = [
-  ["position", "Suivi en direct", "Votre Cleaneur sur la carte, comme une livraison, avec son heure d'arrivée."],
+  ["position", "Suivi en direct", "Votre Cleaneur sur la carte, comme le suivi d'un colis, avec son heure d'arrivée."],
   ["photo", "Compte rendu photo", "Chaque pièce photographiée avant et après, horodatée, dans votre espace."],
   ["calendrier", "Agenda connecté", "Calendriers Airbnb et Booking reliés : les ménages se programment en un geste."],
   ["paiement", "Paiement 100 % sécurisé", "Vous payez en réservant ; l'argent reste bloqué et n'est versé au Cleaneur qu'après votre validation."],
@@ -323,11 +323,11 @@ function pageAccueil() {
     <div style="margin-top:34px">${blocJustePrix()}</div>
   </div></section>
   <section class="bloc"><div class="conteneur">
-    ${titreSection("Tout est digitalisé", "De la réservation au paiement, chaque étape se suit sur votre téléphone.", "Le ménage nouvelle génération")}
+    ${titreSection("Tout est digitalisé", "De la réservation au paiement, chaque étape se suit sur votre téléphone.", "Un ménage moderne et transparent")}
     <div class="grille-4 fonctions">${FONCTIONS_DIGITALES.map(([ico, titre, texte]) => `
       <div class="fonction revele" data-teinte="${teinte(ico)}">${icone(ico, { tuile: true })}<h3>${titre}</h3><p class="muet">${texte}</p></div>`).join("")}</div>
-    <div class="comparaison revele" role="table" aria-label="Le ménage nouvelle génération" style="margin-top:34px">
-      <div class="ligne entete-comp" role="row"><span role="columnheader"></span><span role="columnheader">À l'ancienne</span><span role="columnheader">Avec Cleaneroo</span></div>
+    <div class="comparaison revele" role="table" aria-label="Un ménage moderne et transparent" style="margin-top:34px">
+      <div class="ligne entete-comp" role="row"><span role="columnheader"></span><span role="columnheader">Ménage traditionnel</span><span role="columnheader">Avec Cleaneroo</span></div>
       ${COMPARAISON.map(([c, a, n]) => `<div class="ligne" role="row"><b role="rowheader">${c}</b><span class="ancien" role="cell">${a}</span><span class="nouveau" role="cell">${n}</span></div>`).join("")}
     </div>
   </div></section>
@@ -443,7 +443,7 @@ function pageComment() {
   <section class="bloc"><div class="conteneur">${blocParcours()}
     <div class="etroit" style="margin-top:28px">
       <a class="carte ligne-compte" href="#/suivi-demo">${icone("position", { tuile: true })}
-        <div class="corps"><h3 style="margin:0">Suivez votre Cleaneur en direct</h3><p class="muet" style="margin:2px 0 0">Sur une carte, jusqu'à chez vous, comme une livraison. Voir la démonstration.</p></div><span class="aller" aria-hidden="true">›</span></a>
+        <div class="corps"><h3 style="margin:0">Suivez votre Cleaneur en direct</h3><p class="muet" style="margin:2px 0 0">Sur une carte, jusqu'à chez vous, comme le suivi d'un colis. Voir la démonstration.</p></div><span class="aller" aria-hidden="true">›</span></a>
       <div style="margin-top:14px">${guideVideo("cleaneur", "page-comment-cleaneur")}</div>
     </div>
   </div></section>
@@ -463,7 +463,7 @@ function exempleRevenu() {
   const prixC = calculer(entreeEstimation({ ...brouillonExemple("rental", {}) }, false, null)).totalC;
   const gratuit = Math.round(prixC * (10000 - REGLES.COMMISSION_GRATUIT_PB) / 10000), pro = Math.round(prixC * (10000 - REGLES.COMMISSION_PRO_PB) / 10000);
   return `<div class="carte teintee" style="margin-bottom:16px"><b>${icone("paiement")} ${tr("Exemple : un ménage de location saisonnière")}</b>
-    <p style="margin:6px 0 0">${tr("Prix de la prestation")} : <b>${euros(prixC)}</b> · ${tr("vous touchez")} <b>${euros(gratuit)}</b> ${tr("en formule Gratuite")}, <b>${euros(pro)}</b> ${tr("en formule Pro")}.</p>
+    <p style="margin:6px 0 0">${tr("Prix de la prestation")} : <b>${euros(prixC)}</b> · ${tr("vous percevez")} <b>${euros(gratuit)}</b> ${tr("en formule Gratuite")}, <b>${euros(pro)}</b> ${tr("en formule Pro")}.</p>
     <p class="petit" style="margin:4px 0 0">${tr("Pourboires en plus, à 100 % pour vous. Vous déclarez vous-même votre chiffre d'affaires (micro-entreprise).")}</p></div>`;
 }
 function pageDevenir() {
@@ -536,8 +536,8 @@ async function pageDemande(ref, jeton) {
     PUBLIEE: "Votre demande est en ligne : les Cleaneurs compatibles peuvent se proposer. Vous choisirez parmi leurs propositions.",
     CONFIRMEE: "Votre nettoyage est réservé. Vous serez prévenu quand le Cleaneur sera en route.",
     A_VALIDER: "La prestation est terminée : consultez le compte rendu et validez-le.",
-    TERMINEE: "Prestation terminée et validée. Merci de votre confiance !",
-    ANNULEE: "Cette demande est annulée. Aucun débit n'a été effectué.",
+    TERMINEE: "Prestation terminée et validée. Merci de votre confiance.",
+    ANNULEE: "Cette demande est annulée. Si vous aviez déjà payé, vous êtes remboursé (5 à 10 jours selon votre banque).",
   }[d.statut] || "Intervention en cours, suivez-la ici en direct.";
   return `<section class="fond-cleaneroo" style="padding:34px 0 86px">${decor([[90, 18, 90], [5, 55, 60]], [])}
     <div class="etroit"><p style="margin:0;opacity:.85">Réf. ${esc(d.reference)}</p><h1>${icone(r.icone)} ${r.nom}</h1><div class="trait-corail"></div>
@@ -588,7 +588,7 @@ const DEMO_TRAJET = { depart: { lat: 43.4364, lon: 6.7366 }, arrivee: { lat: 43.
 function pageSuiviDemo() {
   return `<section class="fond-cleaneroo" style="padding:34px 0 86px">${decor([[90, 18, 90], [5, 55, 60]], [])}
     <div class="etroit"><span class="etiquette" style="background:rgba(255,255,255,.22)">Démonstration</span><h1>Suivez votre Cleaneur en direct</h1><div class="trait-corail"></div>
-      <p style="margin:0">Le jour J, vous voyez votre Cleaneur avancer sur la carte jusqu'à chez vous, comme une livraison.</p></div></section>
+      <p style="margin:0">Le jour J, vous voyez votre Cleaneur avancer sur la carte jusqu'à chez vous, comme le suivi d'un colis.</p></div></section>
   <section class="bloc" style="padding-top:28px"><div class="etroit">
     <div id="suivi-live" style="margin-bottom:14px"></div>
     <button type="button" class="bouton secondaire" id="rejouer">↻ Rejouer la démonstration</button>
@@ -715,7 +715,7 @@ async function afficherPage() {
       if (!data || !presence.isConnected) return;
       presence.innerHTML = `<div class="carte teintee" style="margin-bottom:14px"><b>${icone("position")} ${tr("Votre Cleaneur est-il arrivé ?")}</b>
         <p class="petit" style="margin:4px 0 10px">${tr("Sa géolocalisation n'a pas pu le confirmer. Confirmez-vous sa présence chez vous ?")}</p>
-        <div class="boutons"><button type="button" class="bouton" data-present="1">${tr("Oui, il est là")}</button>
+        <div class="boutons"><button type="button" class="bouton" data-present="1">${tr("Oui, il est arrivé")}</button>
         <button type="button" class="bouton secondaire" data-present="0">${tr("Non, pas encore")}</button></div></div>`;
       presence.querySelectorAll("[data-present]").forEach(b => b.onclick = async () => {
         b.disabled = true;

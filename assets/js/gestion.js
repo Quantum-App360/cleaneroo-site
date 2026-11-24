@@ -182,7 +182,7 @@ const NOM_DOC = Object.fromEntries(DOCUMENTS_CLEANEUR.map(d => [d.type, d.nom]))
 nomsAttestations().then(n => Object.assign(NOM_DOC, n));
 /** Contrôle des Cleaneurs (13 novembre 2026, déplacé de l'espace Cleaneur) : selfies du jour à comparer à la pièce d'identité, avertissements. */
 async function listeControle() {
-  vue.innerHTML = `${titreBO()}<p class="muet">Selfies des 7 derniers jours à comparer à la pièce d'identité, et avertissements : au 3e, le Cleaneur est banni.</p>
+  vue.innerHTML = `${titreBO()}<p class="muet">Photos de vérification des 7 derniers jours à comparer à la pièce d'identité, et avertissements : au 3e, le Cleaneur est banni.</p>
     <div id="selfies-admin" class="selfies-admin"></div><div id="salaries-admin" class="selfies-admin"></div><div id="avertissements-admin"></div>`;
   brancherOnglets();
   blocSelfiesAdmin(vue.querySelector("#selfies-admin"));

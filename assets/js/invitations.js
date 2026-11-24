@@ -77,7 +77,7 @@ const REPONSES = {
   expiree: "Cette invitation a expiré : demandez à la conciergerie de vous la renvoyer.",
   deja: "Ce code a déjà été utilisé.",
   soi_meme: "Vous ne pouvez pas utiliser votre propre invitation.",
-  ok_dossier: "Code reconnu ! Dès que votre dossier sera validé, vous deviendrez Cleaneur attitré de cette conciergerie.",
+  ok_dossier: "Code reconnu. Dès que votre dossier sera validé, vous deviendrez Cleaneur attitré de cette conciergerie.",
   ok_actif: "Code reconnu : vous êtes Cleaneur attitré de cette conciergerie et voyez ses missions en priorité.",
 };
 const codeEnAttente = () => { try { return sessionStorage.getItem("cleaneroo-invitation") || ""; } catch { return ""; } };

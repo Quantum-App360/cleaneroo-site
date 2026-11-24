@@ -119,7 +119,7 @@ export function blocListeCarte(nb) {
       <button type="button" data-vue-dispo="liste">${icone("menu")} ${tr("Liste")}</button><button type="button" data-vue-dispo="carte">${icone("position")} ${tr("Carte")}</button></div>
     <div data-zone-carte-dispo hidden><div class="carte-dispo-boite" role="img" aria-label="Carte des missions"></div>
       <p class="petit legende-carte"><span><i style="--c:${VERT}"></i>${tr("Mes missions")}</span><span><i style="--c:${CORAIL}"></i>${tr("Missions disponibles (zone approximative)")}</span></p>
-      <p class="petit muet" style="margin:0 0 8px">${tr("L'adresse exacte s'affiche une fois la mission prise. Touchez une épingle pour voir la mission.")}</p></div>`;
+      <p class="petit muet" style="margin:0 0 8px">${tr("L'adresse exacte s'affiche une fois la mission prise. Sélectionnez une épingle pour voir la mission.")}</p></div>`;
 }
 
 /**

@@ -93,7 +93,7 @@ export async function carnetFavoris(boite) {
           <button type="button" class="lien-bouton" data-retirer-favori="${esc(f.cleaneur_id)}">${tr("Retirer")}</button></div></div>`).join("")}</div>
       <p class="petit">${tr("Votre favori voit votre demande seul pendant 12 h et peut l'accepter directement ; sans réponse, elle s'ouvre aux autres Cleaneurs.")}</p>`
     : `<div class="carte vide-compte"><p class="muet" style="margin:0">${tr("Aucun Cleaneur favori pour l'instant.")}</p>
-        <p class="petit" style="margin:4px 0 0">${tr("Après une prestation, touchez « Ajouter à mes favoris » : vous pourrez ensuite le demander directement.")}</p></div>`}`;
+        <p class="petit" style="margin:4px 0 0">${tr("Après une prestation, sélectionnez « Ajouter à mes favoris » : vous pourrez ensuite le demander directement.")}</p></div>`}`;
   traduire(boite);
   boite.querySelectorAll("[data-reserver-favori]").forEach(x => x.onclick = () => reserverAvecFavori(x.dataset.reserverFavori));
   boite.querySelectorAll("[data-retirer-favori]").forEach(x => x.onclick = async () => {
@@ -170,7 +170,7 @@ export async function pageTableau(vue) {
         <div class="corps"><b>${esc(nomLogement(l))}</b><span class="petit">${esc(l.rue)}, ${esc(l.ville)}</span></div>
         <button type="button" class="bouton petit" data-reserver-ici="${esc(l.id)}">${tr("Réserver")}</button></div>`).join("")}</div>` : ""}
     ${!pro ? `<h2 class="titre-section" id="mon-agenda">${icone("calendrier", { tuile: true })}${tr("Mon agenda")}</h2>
-      <p class="petit" style="margin-top:0">${tr("Toutes vos prestations demandées, jour par jour. Touchez un jour pour voir le détail.")}</p>
+      <p class="petit" style="margin-top:0">${tr("Toutes vos prestations demandées, jour par jour. Sélectionnez un jour pour voir le détail.")}</p>
       <div class="carte agenda-carte" id="agenda-particulier"></div>` : ""}
     <div id="carnet-favoris"></div>
     ${pro ? "" : `<h2 class="titre-section">${icone("cle", { tuile: true })}${tr("Mon compte")}</h2>

@@ -18,7 +18,7 @@ export async function blocAvis(boite, reference, jeton, statut) {
   const deja = await rpc("avis_de", { p_reference: reference, p_jeton: jeton }).catch(() => null);
   if (!boite.isConnected) return;
   if (deja?.note) {
-    boite.innerHTML = `<div class="carte avis-donne"><b>${tr("Merci pour votre avis !")}</b>
+    boite.innerHTML = `<div class="carte avis-donne"><b>${tr("Merci pour votre avis.")}</b>
       <p class="etoiles-fixes" aria-label="${deja.note} / 5">${"★".repeat(deja.note)}${"☆".repeat(5 - deja.note)}</p>
       ${deja.commentaire ? `<p class="petit">« ${deja.commentaire.replace(/[<>&]/g, "")} »</p>` : ""}
       ${deja.pourboire_c ? `<p class="petit">${tr("Pourboire pour votre Cleaneur :")} <b>${euros(deja.pourboire_c)}</b></p>` : ""}</div>`;

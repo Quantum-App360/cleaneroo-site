@@ -904,7 +904,7 @@ function etape4() {
       <button type="button" class="option ${b.logementId ? "" : "choisi"}" data-logement="">+ Ajouter une nouvelle adresse</button>` : ""}
     <div class="carte ${b.logementId ? "masque" : ""}" style="margin-top:14px">
       <button type="button" class="bouton secondaire plein bouton-geoloc" data-geoloc>${icone("position")}<span>Me géolocaliser</span></button>
-      <p class="petit centre" style="margin:6px 0 2px">Vous êtes dans le logement ? Touchez « Me géolocaliser » : l'adresse se remplit toute seule. Sinon, saisissez-la.</p>
+      <p class="petit centre" style="margin:6px 0 2px">Vous êtes dans le logement ? Sélectionnez « Me géolocaliser » : l'adresse se remplit toute seule. Sinon, saisissez-la.</p>
       ${messageGeoloc ? `<p class="${messageGeoloc.startsWith("Recherche") ? "petit" : "erreur"}" style="margin:6px 0 0">${messageGeoloc}</p>` : ""}
       ${champTexte("Rue", "rue", b.rue, "text", 'autocomplete="street-address" maxlength="200"')}
       <div class="grille-2">${champTexte("Code postal", "codePostal", b.codePostal, "text", 'inputmode="numeric" maxlength="5" autocomplete="postal-code"')}${champTexte("Ville", "ville", b.ville, "text", 'autocomplete="address-level2" maxlength="100"')}</div>
@@ -912,7 +912,7 @@ function etape4() {
     ${Number.isFinite(b.lat) ? `<div class="carte-adresse" id="carte-adresse" role="img" aria-label="Carte de l'adresse"></div>
       <p class="petit" style="margin:6px 0 0">${b.logementId ? "Position enregistrée du logement." : "Déplacez le repère sur l'entrée du logement si besoin."}</p>` : ""}
     ${/^[0-9]{5}$/.test(b.codePostal) ? `<div class="note" style="margin-top:10px"><span>${mentionCodePostal(b.codePostal)}</span></div>` : ""}
-    ${titre("Touchez un créneau dans le planning")}${`
+    ${titre("Sélectionnez un créneau dans le planning")}${`
     <div class="carte">${caseCocher("Je suis flexible", "flexible", b.flexible, "Vous recevez des candidatures sur 7 jours")}</div>
     ${b.flexible ? "" : `<div class="jours" style="margin-top:12px">${joursProposes().map(d => `<button type="button" data-jour="${iso(d)}" class="${b.jour === iso(d) ? "choisi" : ""}">${dateCourte(d)}</button>`).join("")}</div>
       ${jourDate ? `<div class="creneaux" style="margin-top:12px">${creneaux}</div>
@@ -938,7 +938,7 @@ function verifierCouverture() {
 }
 /** Réservations pas encore ouvertes (interrupteur, 24/11/2026) : rien n'est envoyé ni payé ; être prévenu de l'ouverture. */
 function blocFermees(contactOk) {
-  if (attente === "ok") return `<div class="carte" style="margin-top:14px;border-color:var(--primaire)"><h3 style="margin:0 0 6px">C'est noté !</h3>
+  if (attente === "ok") return `<div class="carte" style="margin-top:14px;border-color:var(--primaire)"><h3 style="margin:0 0 6px">C'est enregistré.</h3>
     <p class="muet" style="margin:0">Nous vous prévenons dès l'ouverture des réservations. Votre estimation est gardée en brouillon.</p></div>`;
   return `<div class="carte" style="margin-top:14px"><h3 style="margin:0 0 6px">Les réservations ouvrent très bientôt</h3>
     <p class="muet" style="margin:0 0 6px">Rien n'est envoyé ni payé pour l'instant. Laissez vos coordonnées : nous vous prévenons dès l'ouverture, et votre estimation est gardée.</p>
@@ -946,7 +946,7 @@ function blocFermees(contactOk) {
     ${actions(contactOk && attente !== "envoi", contactOk ? "" : "Complétez vos coordonnées.", attente === "envoi" ? "Envoi en cours…" : "Être prévenu de l'ouverture", "prevenir")}`;
 }
 function blocAttente(r, contactOk) {
-  if (attente === "ok") return `<div class="carte" style="margin-top:14px;border-color:var(--primaire)"><h3 style="margin:0 0 6px">C'est noté !</h3>
+  if (attente === "ok") return `<div class="carte" style="margin-top:14px;border-color:var(--primaire)"><h3 style="margin:0 0 6px">C'est enregistré.</h3>
     <p class="muet" style="margin:0">Nous vous prévenons par e-mail dès qu'un Cleaneur qualifié intervient dans votre secteur. Votre demande est gardée en brouillon.</p></div>`;
   return `<div class="carte" style="margin-top:14px"><h3 style="margin:0 0 6px">Pas encore de Cleaneur dans votre secteur</h3>
     <p class="muet" style="margin:0 0 6px">Cette prestation n'est pas encore proposée à votre adresse : nous recrutons. Laissez vos coordonnées, nous vous prévenons dès qu'un Cleaneur qualifié s'installe près de chez vous.</p>

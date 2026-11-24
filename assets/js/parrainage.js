@@ -69,7 +69,7 @@ export function blocParrainage(d, espace) {
   const mouvements = (d.mouvements || []).filter(x => x.espace === espace).slice(0, 5);
   return `<h2 class="titre-section">${icone("cadeau", { tuile: true })}${tr("Parrainage et cagnotte")}</h2>
   <div class="parrainage" id="parrainage">
-    ${d.remise_bienvenue_c > 0 && espace !== "cleaneur" ? `<div class="note bienvenue-parrain"><span>${ligne(["Bienvenue ! Vous avez", m(euros(d.remise_bienvenue_c)), "de remise sur votre 1re prestation, dès", m(euros(REGLES.PARRAINAGE_MIN_COMMANDE_C))])}</span></div>` : ""}
+    ${d.remise_bienvenue_c > 0 && espace !== "cleaneur" ? `<div class="note bienvenue-parrain"><span>${ligne(["Bienvenue. Vous avez", m(euros(d.remise_bienvenue_c)), "de remise sur votre 1re prestation, dès", m(euros(REGLES.PARRAINAGE_MIN_COMMANDE_C))])}</span></div>` : ""}
     <div class="cartes-parrainage">
       <div class="carte cagnotte">
         <span class="petit">${tr(espace === "cleaneur" ? "Mes primes de parrainage" : "Ma cagnotte")}</span>
@@ -91,7 +91,7 @@ export function blocParrainage(d, espace) {
     <details class="carte"><summary>${tr("Mes filleuls")} (${(d.filleuls || []).length})</summary>
       ${(d.filleuls || []).length ? `<ul class="liste-filleuls">${d.filleuls.map(f => `<li><span>${esc(f.prenom || "—")} <span class="petit">${dateCourte(new Date(f.cree_le))}</span></span>
         <span class="tampon${STATUTS[f.statut]?.[1] || ""}">${tr(STATUTS[f.statut]?.[0] || f.statut)}</span></li>`).join("")}</ul>`
-        : `<p class="petit">${tr("Aucun filleul pour l'instant : partagez votre code !")}</p>`}
+        : `<p class="petit">${tr("Aucun filleul pour l'instant. Partagez votre code pour en parrainer.")}</p>`}
       ${mouvements.length ? `<p class="titre-liste">${tr("Historique")}</p><ul class="liste-filleuls">${mouvements.map(x => `<li><span>${tr(MOTIFS[x.motif] || x.motif)} <span class="petit">${dateCourte(new Date(x.cree_le))}</span></span>
         <b class="${x.montant_c < 0 ? "" : "positif"}">${x.montant_c < 0 ? "−" : "+"}${euros(Math.abs(x.montant_c))}</b></li>`).join("")}</ul>` : ""}
     </details>

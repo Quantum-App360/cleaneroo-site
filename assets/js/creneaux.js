@@ -19,7 +19,7 @@ export function blocCreneaux(boite, profil) {
   const dispo = JSON.parse(JSON.stringify(profil?.disponibilites || {}));
   const dessiner = () => {
     boite.innerHTML = `<details class="carte"><summary><b>${icone("calendrier")} ${tr("Mes créneaux disponibles")}</b> · <span class="petit">${heuresOuvertes(dispo)} ${tr("h ouvertes par semaine")}</span></summary>
-      <p class="petit">${tr("Touchez les heures où vous êtes disponible : les missions qui y tombent passent en tête de vos recommandations.")}</p>
+      <p class="petit">${tr("Sélectionnez les heures où vous êtes disponible : les missions qui y tombent passent en tête de vos recommandations.")}</p>
       <div class="grille-creneaux"><span></span>${HEURES.map(h => `<span class="h">${h}</span>`).join("")}
         ${JOURS.map((j, i) => `<span class="j">${tr(j)}</span>${HEURES.map(h => `<button type="button" class="${(dispo[i + 1] || []).includes(h) ? "ouvert" : ""}" data-jour="${i + 1}" data-heure="${h}" aria-label="${tr(j)} ${h} h"></button>`).join("")}`).join("")}</div>
       <div class="boutons"><button type="button" class="bouton secondaire" data-semaine-type>${tr("Lundi au vendredi, 8 h - 18 h")}</button>

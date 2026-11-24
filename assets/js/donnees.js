@@ -132,7 +132,7 @@ export async function controleIA(reference, piece) {
 export const envoyerPosition = (reference, lat, lon, cap = null) =>
   rpc("envoyer_position", { p_reference: reference, p_lat: lat, p_lon: lon, p_cap: Number.isFinite(cap) ? cap : null });
 
-/* Selfie du jour : identité du Cleaneur avant sa première mission de la journée (relu par l'administration). */
+/* Photo de vérification du jour : identité du Cleaneur avant sa première mission de la journée (relu par l'administration). */
 /** "aucun", "A_VERIFIER", "VALIDE" ou "REFUSE". */
 export const selfieDuJour = () => rpc("selfie_du_jour");
 export async function deposerSelfie(fichier) {
@@ -308,7 +308,7 @@ export async function ecouterDemandes(surChangement) {
 
 /** Documents du dossier Cleaneur. Types : identite, siret, rc_pro, urssaf (obligatoires), certibiocide (nuisibles). */
 export const DOCUMENTS_CLEANEUR = [
-  // Photo d'identité (23/11/2026) : prise avec l'appareil photo, montrée au client avant le ménage et comparée au selfie du jour.
+  // Photo d'identité (23/11/2026) : prise avec l'appareil photo, montrée au client avant le ménage et comparée à la photo de vérification du jour.
   { type: "photo_identite", nom: "Photo d'identité", aide: "Visage de face, sans lunettes de soleil ni casquette, sur un fond neutre, prise maintenant avec l'appareil photo. Elle est montrée à vos clients avant chaque ménage.", obligatoire: true, camera: true },
   { type: "identite", nom: "Pièce d'identité", aide: "Carte d'identité ou passeport en cours de validité, recto verso. Hors Union européenne : titre de séjour qui autorise à travailler.", obligatoire: true },
   { type: "siret", nom: "Justificatif SIRET", aide: "Avis de situation INSEE ou extrait Kbis de moins de 3 mois.", obligatoire: true },

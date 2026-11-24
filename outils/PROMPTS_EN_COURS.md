@@ -176,7 +176,7 @@ Constat : la rubrique est « 100 % à la carte », avec 20 tâches à cocher. Le
 affiche assets/img/affiche.jpg), étapes courtes des pages ville. Textes actuels faux : « Débit seulement après validation »,
 « Validez, le Cleaneur est payé » (le paiement a lieu à la réservation). Un parcours par profil.
 
-## Prompt 3 — Vocabulaire et formulations (demande de Michael, 24/11, 14 h 30, après le prompt 2)
+## Prompt 3 — Vocabulaire et formulations (TERMINÉ le 24/11 : 33 corrections validées par Michael, outils/vocabulaire_2411.py)
 Analyse de tous les textes du site (langue.js, pages, écrans) : vocabulaire, formulations, phrases. Certaines sont trop familières :
 relever les cas, proposer une version plus professionnelle, appliquer après validation, dans les 4 langues.
 

@@ -43,7 +43,7 @@ export async function verrouillerPrestations(form, profil) {
   const socle = cat.find(m => m.id === "socle");
   const sansSocle = socle && statut.socle !== "VALIDEE";
   if (sansSocle) cases[0].closest("label").insertAdjacentHTML("beforebegin", `<div class="encart-socle conseil">${icone("formation")} <b>${tr("Formation conseillée : Socle Cleaneroo")}</b>
-    <span>${tr("Gratuite et facultative : une fiche à lire et un petit quiz. Elle vous donne le badge « Formé », visible des clients.")}</span>
+    <span>${tr("Gratuite et facultative : une fiche à lire et un court questionnaire. Elle vous donne le badge « Formé », visible des clients.")}</span>
     <span class="liens"><button type="button" class="bouton petit" data-module="socle">${icone("formation")} ${tr("Suivre la formation")}</button>
     ${(RESSOURCES.socle || []).filter(x => x[2] === "video").map(([t, url]) => `<a class="lien-bouton" href="${url}" target="_blank" rel="noopener">▶ ${esc(tr(t))}</a>`).join("")}</span></div>`);
   cases.forEach(c => {

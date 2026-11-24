@@ -39,7 +39,7 @@ export const VITRINES = {
   // Société de nettoyage (23/11/2026, retour de Vincent) : sa propre page, jamais la présentation de l'auto-entrepreneur.
   societe: { nom: "Espace Société de nettoyage", accroche: "Référencez votre société de nettoyage : des missions près de chez vous pour vos équipes.", ico: "bureaux", video: "cleaneur",
     documents: "Kbis ou SIRET, assurance RC Pro et attestation URSSAF de la société : vous les envoyez après la pré-inscription, depuis « Mon dossier ».", points: [
-    ["cleaneurs", "Vos équipes sur les missions", "Vous attribuez chaque mission à un salarié : selfie du jour, trajet et compte rendu depuis son téléphone."],
+    ["cleaneurs", "Vos équipes sur les missions", "Vous attribuez chaque mission à un salarié : photo de vérification du jour, trajet et compte rendu depuis son téléphone."],
     ["calendrier", "Planning de vos salariés", "Toutes les missions de la société et leurs intervenants au même endroit."],
     ["paiement", "Paiement garanti", "Versé à la société après validation du client, chaque semaine."],
     ["avis", "Factures au nom de la société", "Factures, relevés et chiffre d'affaires calculés pour vous."],

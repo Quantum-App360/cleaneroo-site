@@ -140,7 +140,7 @@ function quiz(zone, m, t, statut, apres) {
     zone.querySelectorAll(".explication-formation").forEach((p, i) => { p.hidden = !data.fausses.includes(i); });
     zone.querySelectorAll("[data-q]").forEach((f, i) => f.classList.toggle("fausse", data.fausses.includes(i)));
     if (data.valide) {
-      zone.innerHTML = `<p class="note succes-formation">${icone("termine")} <b>${tr("Bravo, formation validée !")}</b> ${tr("Les missions concernées vous sont maintenant proposées.")}</p>`;
+      zone.innerHTML = `<p class="note succes-formation">${icone("termine")} <b>${tr("Formation validée.")}</b> ${tr("Les missions concernées vous sont maintenant proposées.")}</p>`;
       traduire(zone);
       apres();
     } else {
@@ -262,7 +262,7 @@ export async function pageFormation(vue, id) {
       <h2 class="titre-section">${tr("Une fois formé")}</h2>
       <div class="carte"><p style="margin:0">${tr("Déposez l'attestation ou le certificat de l'organisme de formation dans « Mon dossier » (espace Cleaneur). Cleaneroo la vérifie, puis la prestation se débloque.")}</p>
         <div class="boutons" style="margin-top:12px"><a class="bouton" href="#/compte/cleaneur">${tr("Déposer mon attestation")}</a></div></div>`
-    : `<div class="carte"><p style="margin-top:0">${tr("Formation Cleaneroo gratuite : une fiche à lire et un petit quiz. Elle est conseillée, jamais obligatoire, et vous donne le badge « Formé » visible des clients.")}</p>
+    : `<div class="carte"><p style="margin-top:0">${tr("Formation Cleaneroo gratuite : une fiche à lire et un court questionnaire. Elle est conseillée, jamais obligatoire, et vous donne le badge « Formé » visible des clients.")}</p>
         <div class="boutons"><button type="button" class="bouton" data-suivre>${tr(statut === "VALIDEE" ? "Revoir la formation" : "Suivre la formation")}</button></div></div>`}
     ${blocRessources(id)}
   </div></section>`;

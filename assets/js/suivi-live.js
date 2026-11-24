@@ -1,4 +1,4 @@
-// Suivi en direct du Cleaneur sur une carte, comme une livraison : itinéraire, position qui avance, heure d'arrivée.
+// Suivi en direct du Cleaneur sur une carte, comme le suivi d'un colis : itinéraire, position qui avance, heure d'arrivée.
 // Même écran que l'application (SuiviCarte.kt). Carte OpenStreetMap (Leaflet), itinéraire OSRM, adresse : Base Adresse Nationale.
 import { icone } from "./icones.js";
 import { REGLES, heure } from "./regles.js";

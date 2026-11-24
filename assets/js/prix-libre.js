@@ -88,7 +88,7 @@ export async function blocPrixDemande(avant, reference) {
     + (d.conseil_c ? `<p class="petit">${tr("Prix conseillé Cleaneroo")} : ${euros(d.conseil_c)}</p>` : "")
     + (d.sous_plancher ? `<div class="note"><span>${messagePlancher(d.prix_c, d.conseil_c)}</span></div>` : "")
     + (d.peut_augmenter ? `<form data-augmenter novalidate style="margin-top:10px">
-        ${d.relance_le ? `<p class="attention" style="margin:0 0 8px">${icone("horloge")} ${tr("Personne n'a encore accepté ce ménage. Augmentez le prix pour le confier plus vite.")}</p>` : ""}
+        ${d.relance_le ? `<p class="attention" style="margin:0 0 8px">${icone("horloge")} ${tr("Aucun Cleaneur n'a encore accepté ce ménage. Vous pouvez augmenter le prix pour qu'il soit attribué plus rapidement.")}</p>` : ""}
         <label class="champ">${tr("Nouveau prix (€)")}<input name="prix" type="text" inputmode="decimal" maxlength="8" value="${esc(enEuros(d.prix_relance_c || Math.max(d.prix_c + 200, d.conseil_c || 0)))}"></label>
         <p class="petit">${tr("Le complément est prélevé à la validation du ménage, sur la carte utilisée pour la réservation.")}</p>
         <p class="erreur" data-erreur-augmenter></p><button class="bouton plein" type="submit">${tr("Augmenter le prix")}</button></form>` : "");

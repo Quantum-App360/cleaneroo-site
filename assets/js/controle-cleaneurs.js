@@ -36,13 +36,13 @@ export async function blocAvertissementsAdmin(boite) {
 export async function blocSelfiesAdmin(boite) {
   const liste = await selfiesAVerifier().catch(() => []);
   if (!boite.isConnected) return;
-  boite.innerHTML = `<h2 class="titre-section">${icone("appareil-photo")} ${tr("Selfies des Cleaneurs (7 derniers jours)")}</h2>
+  boite.innerHTML = `<h2 class="titre-section">${icone("appareil-photo")} ${tr("Photos de vérification des Cleaneurs (7 derniers jours)")}</h2>
     ${liste.length ? liste.map(s => `<div class="carte" data-selfie-admin="${esc(s.id)}"><div class="paire">
-      <img alt="${esc(tr("Selfie du jour"))}" data-lien-selfie="${esc(s.chemin)}"><img alt="${esc(tr("Pièce d'identité"))}" ${s.identite ? `data-lien-identite="${esc(s.identite)}"` : ""}>
+      <img alt="${esc(tr("Photo de vérification du jour"))}" data-lien-selfie="${esc(s.chemin)}"><img alt="${esc(tr("Pièce d'identité"))}" ${s.identite ? `data-lien-identite="${esc(s.identite)}"` : ""}>
       <div style="flex:1 1 180px"><b>${esc(`${s.prenom || ""} ${s.nom || ""}`.trim())}</b><p class="petit" style="margin:2px 0 6px">${esc(dateLongue(new Date(s.jour)))} · ${tr({ A_VERIFIER: "À vérifier", VALIDE: "Validé", REFUSE: "Refusé" }[s.statut])}</p>
         ${s.statut === "A_VERIFIER" ? `<div class="boutons" style="margin:0"><button type="button" class="bouton" data-decider="1">C'est bien la même personne</button>
           <button type="button" class="bouton secondaire" data-decider="0">Refuser</button></div>` : ""}</div></div></div>`).join("")
-      : `<div class="vide-compte"><p class="muet">${tr("Aucun selfie pour l'instant.")}</p></div>`}`;
+      : `<div class="vide-compte"><p class="muet">${tr("Aucune photo de vérification pour l'instant.")}</p></div>`}`;
   traduire(boite);
   boite.querySelectorAll("[data-lien-selfie]").forEach(async i => { try { i.src = await lienSelfie(i.dataset.lienSelfie); } catch { /* rien */ } });
   boite.querySelectorAll("[data-lien-identite]").forEach(async i => { try { i.src = await lienDocument(i.dataset.lienIdentite); } catch { /* rien */ } });

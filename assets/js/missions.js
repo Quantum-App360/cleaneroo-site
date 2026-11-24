@@ -233,15 +233,15 @@ export function blocPenalites(p) {
     <p class="petit" style="margin:4px 0 0">${tr("Réserve de garantie :")} ${euros(p.garantie_c || 0)}</p></div>`;
 }
 
-/* ------------------------------------------------------------------ Selfie du jour (identité avant la première mission) */
+/* ------------------------------------------------------------------ Photo de vérification du jour (identité avant la première mission) */
 export function blocSelfie(statut) {
   if (statut === "VALIDE" || statut === "A_VERIFIER")
-    return `<div class="carte selfie-jour" id="selfie-jour"><span style="font-size:28px">${icone("valide")}</span><div><b>Selfie du jour envoyé</b>
+    return `<div class="carte selfie-jour" id="selfie-jour"><span style="font-size:28px">${icone("valide")}</span><div><b>Photo de vérification du jour envoyée</b>
       <p class="petit" style="margin:2px 0 0">${statut === "VALIDE" ? "Identité vérifiée par Cleaneroo." : "Votre identité est confirmée pour la journée."}</p></div></div>`;
   return `<div class="carte teintee selfie-jour" id="selfie-jour"><span style="font-size:28px">${icone("appareil-photo")}</span>
-    <div style="flex:1 1 220px"><b>Selfie du jour</b>
-      <p class="petit" style="margin:2px 0 8px">${statut === "REFUSE" ? "Votre selfie n'a pas été accepté : reprenez-en un, visage bien visible." : "Avant votre première mission de la journée, prenez-vous en photo : le client sait que c'est bien vous qui venez."}</p>
-      <label class="bouton">${icone("appareil-photo")} Prendre mon selfie<input type="file" accept="image/*" capture="user" hidden data-selfie></label>
+    <div style="flex:1 1 220px"><b>Photo de vérification du jour</b>
+      <p class="petit" style="margin:2px 0 8px">${statut === "REFUSE" ? "Votre photo de vérification n'a pas été acceptée : reprenez-en une, visage bien visible." : "Avant votre première mission de la journée, prenez-vous en photo : le client sait que c'est bien vous qui venez."}</p>
+      <label class="bouton">${icone("appareil-photo")} Prendre ma photo de vérification<input type="file" accept="image/*" capture="user" hidden data-selfie></label>
       <p class="erreur" data-erreur-selfie style="margin:6px 0 0"></p></div></div>`;
 }
 async function envoyerSelfie(input, err) {
@@ -249,7 +249,7 @@ async function envoyerSelfie(input, err) {
   if (!f) return false;
   err.textContent = tr("Envoi en cours…");
   try { await deposerSelfie(f); err.textContent = ""; return true; }
-  catch { err.textContent = tr("Le selfie n'a pas pu être envoyé. Réessayez."); return false; }
+  catch { err.textContent = tr("La photo de vérification n'a pas pu être envoyée. Réessayez."); return false; }
 }
 
 /* ------------------------------------------------------------------ Géolocalisation */
@@ -575,7 +575,7 @@ ${p.employeur_id ? "" : `    <h2 class="titre-section" id="missions-disponibles"
   majTemps(boite);
   clearInterval(minuterieFrise);
   minuterieFrise = setInterval(() => { if (!boite.isConnected) return clearInterval(minuterieFrise); majTemps(boite); }, 60000);
-  // Selfie du jour pris depuis le bloc du haut.
+  // Photo de vérification du jour prise depuis le bloc du haut.
   boite.querySelector("#selfie-jour [data-selfie]")?.addEventListener("change", async e => {
     if (await envoyerSelfie(e.target, boite.querySelector("[data-erreur-selfie]"))) recharger();
   });
@@ -655,7 +655,7 @@ ${p.employeur_id ? "" : `    <h2 class="titre-section" id="missions-disponibles"
       return recharger();
     }
     if (suivant === "EN_ROUTE" && !["A_VERIFIER", "VALIDE"].includes(await selfieDuJour().catch(() => "aucun"))) {
-      err.textContent = tr("Prenez d'abord votre selfie du jour (en haut de la page) : il confirme votre identité au client.");
+      err.textContent = tr("Prenez d'abord votre photo de vérification du jour (en haut de la page) : elle confirme votre identité au client.");
       boite.querySelector("#selfie-jour")?.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
@@ -678,7 +678,7 @@ ${p.employeur_id ? "" : `    <h2 class="titre-section" id="missions-disponibles"
     b.disabled = true;
     const r = await avancerMission(ref, suivant).catch(() => "erreur");
     if (r !== "ok") { b.disabled = false; err.textContent = tr(r === "controle" ? "Cochez toutes les tâches de chaque pièce avant de terminer : photos avant et après, tâches, avis de l'IA ou justification."
-      : r === "selfie" ? "Prenez d'abord votre selfie du jour (en haut de la page) : il confirme votre identité au client."
+      : r === "selfie" ? "Prenez d'abord votre photo de vérification du jour (en haut de la page) : elle confirme votre identité au client."
       : r === "consommables" ? "Notez chaque consommable avant de terminer."
       : r === "signature" ? "Signez le compte rendu avant de terminer."
       : "Le service est momentanément indisponible. Réessayez dans quelques minutes."); return; }

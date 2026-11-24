@@ -52,7 +52,7 @@ export const SUJETS = {
     liens: [["Mon espace Cleaneur", "#/compte/cleaneur"]], suite: ["probleme"] },
 
   conciergerie: { titre: "Conciergerie : logements, calendriers", cles: ["import", "importer", "logements", "calendrier", "airbnb", "booking", "ical", "pilote", "abonnement", "conciergerie"],
-    texte: "Importez tous vos logements d'un coup (Excel, CSV ou copier-coller) ou demandez la connexion à votre logiciel de gestion. Reliez le calendrier de chaque logement : avec le **pilote automatique**, chaque départ de voyageurs programme son ménage tout seul, dans la limite de votre plafond mensuel.",
+    texte: "Importez tous vos logements en une seule fois (Excel, CSV ou copier-coller) ou demandez la connexion à votre logiciel de gestion. Reliez le calendrier de chaque logement : avec le **pilote automatique**, chaque départ de voyageurs programme son ménage tout seul, dans la limite de votre plafond mensuel.",
     liens: [["Importer mes logements", "#/importer-biens"], ["Mon espace Conciergerie", "#/compte/pro"]] },
 };
 
@@ -95,7 +95,7 @@ export async function pageAssistant(vue, sujetDepart) {
     const html = `${x.texte ? `<p>${gras(remplir(tr(x.texte)))}</p>` : `<p><b>${tr(x.titre)}</b></p>`}
       ${x.liens?.length ? `<div class="liens-a">${x.liens.map(([l, h]) => `<a class="bouton secondaire petit-bouton" href="${h}">${tr(l)} ›</a>`).join("")}</div>` : ""}
       ${x.suite?.length ? `<div class="choix-a">${x.suite.map(k => `<button type="button" data-sujet="${k}">${tr(SUJETS[k].titre)}</button>`).join("")}</div>` : ""}
-      ${id !== "racine" ? `<div class="resolu-a"><span class="petit">${tr("Cela répond à votre question ?")}</span>
+      ${id !== "racine" ? `<div class="resolu-a"><span class="petit">${tr("Cette réponse vous a-t-elle aidé ?")}</span>
         <button type="button" data-resolu="oui">${tr("Oui")}</button><button type="button" data-resolu="non">${tr("Non, j'ai besoin d'aide")}</button>
         ${id !== "racine" ? `<button type="button" data-sujet="racine">${tr("Autre question")}</button>` : ""}</div>` : ""}`;
     bulle(html);
@@ -103,7 +103,7 @@ export async function pageAssistant(vue, sujetDepart) {
   fil.addEventListener("click", e => {
     const b = e.target.closest("button"); if (!b) return;
     if (b.dataset.sujet) { bulle(esc(tr(SUJETS[b.dataset.sujet].titre)), true); historique.push({ de: "client", texte: SUJETS[b.dataset.sujet].titre }); montrer(b.dataset.sujet); }
-    if (b.dataset.resolu === "oui") { b.closest(".resolu-a").innerHTML = `<span class="petit">${icone("valide")} ${tr("Parfait ! Bonne journée avec Cleaneroo.")}</span>`; }
+    if (b.dataset.resolu === "oui") { b.closest(".resolu-a").innerHTML = `<span class="petit">${icone("valide")} ${tr("Nous sommes heureux d'avoir pu vous aider. Bonne journée.")}</span>`; }
     if (b.dataset.resolu === "non") { b.closest(".resolu-a").remove(); formulaire(); }
   });
   vue.querySelector(".saisie-assistant").onsubmit = e => {

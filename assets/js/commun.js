@@ -75,7 +75,7 @@ export const PARCOURS = {
     ["calendrier", "Décrivez votre besoin", "Choisissez la prestation, répondez à quelques questions et ajoutez des photos si besoin. Le prix exact s'affiche tout de suite, sans devis."],
     ["carte-bancaire", "Réservez en toute sécurité", "Vous réglez en réservant, par paiement sécurisé Stripe. Votre argent est conservé en sécurité et n'est versé au Cleaneur qu'après votre validation."],
     ["cleaneurs", "Choisissez votre Cleaneur", "Des Cleaneurs vérifiés (identité, SIRET, assurance) se proposent. Comparez leurs avis, leur distance et leur prix : c'est vous qui choisissez. Demande annulée : vous êtes remboursé."],
-    ["position", "Suivez l'intervention en direct", "« En route », arrivée confirmée par géolocalisation, selfie du jour : vous savez qui vient, et quand. Chaque pièce est photographiée avant et après."],
+    ["position", "Suivez l'intervention en direct", "« En route », arrivée confirmée par géolocalisation, photo de vérification du jour : vous savez qui vient, et quand. Chaque pièce est photographiée avant et après."],
     ["valide", "Validez le compte rendu", "Tâches cochées, photos horodatées, signature : vous validez et le Cleaneur est payé. Sans réponse de votre part, la validation se fait automatiquement 48 h après la fin. Pourboire et avis si vous le souhaitez."],
   ],
   entreprise: [
@@ -86,14 +86,14 @@ export const PARCOURS = {
   ],
   conciergerie: [
     ["location", "Ajoutez vos logements", "Un par un ou depuis un fichier, puis reliez leurs calendriers (Airbnb, Booking…) : départs et arrivées apparaissent dans votre planning."],
-    ["calendrier", "Programmez les ménages entre voyageurs", "Ménage par ménage, ou tous d'un coup sur les semaines à venir, avec les horaires de chaque séjour."],
+    ["calendrier", "Programmez les ménages entre voyageurs", "Ménage par ménage, ou tous en une seule fois sur les semaines à venir, avec les horaires de chaque séjour."],
     ["appareil-photo", "Un état des lieux à chaque passage", "Photos avant / après de chaque pièce, consommables suivis, dommages signalés avec photos et délai de déclaration suivi."],
     ["credit-impot", "Des relevés pour vos propriétaires", "Un relevé PDF par propriétaire : séjours, ménages, incidents et montants à refacturer."],
   ],
   cleaneur: [
     ["bouclier-coche", "Inscrivez-vous gratuitement", "Identité, SIRET, attestation URSSAF et assurance RC Pro vérifiées, puis une mission test."],
     ["position", "Choisissez vos missions", "Les missions près de chez vous s'affichent avec le prix, la durée et le trajet. Vous vous proposez ; le client choisit."],
-    ["photo", "Laissez-vous guider le jour J", "En route, arrivée géolocalisée, photo avant, tâches cochées, photo après : l'appli vous guide pièce par pièce et l'IA vérifie les photos."],
+    ["photo", "Laissez-vous guider le jour J", "En route, arrivée géolocalisée, photo avant, tâches cochées, photo après : l'application vous guide pièce par pièce et l'IA vérifie les photos."],
     ["paiement", "Recevez votre paiement après validation", "Le client valide le compte rendu, ou la validation se fait automatiquement 48 h après la fin : votre paiement est alors versé."],
   ],
 };

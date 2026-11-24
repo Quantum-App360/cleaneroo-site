@@ -1,6 +1,6 @@
 // Espace « Ma société » (16 novembre 2026, validé par l'utilisateur) : une société de nettoyage avec des salariés.
 // La société est un compte Cleaneur vérifié. Elle invite ses salariés par un lien ; Cleaneroo vérifie leur pièce d'identité ;
-// elle prend les missions puis les attribue à un chef d'équipe (et des équipiers). Le salarié fait son selfie du jour, son trajet
+// elle prend les missions puis les attribue à un chef d'équipe (et des équipiers). Le salarié prend sa photo de vérification du jour, son trajet
 // et son compte rendu comme un Cleaneur ; la société reçoit le paiement et les factures à son nom.
 // Cinq rubriques : Tableau de bord · Planning · Missions · Équipe · Activité. Même espace dans l'appli (Societe.kt).
 // Base : outils/base-societe-equipe.sql.
@@ -94,7 +94,7 @@ export async function brancherEspaceSociete(vue, p) {
       <div class="tuile-chiffre"><b>${missions.filter(m => duJour(m) && ACTIVES.includes(m.statut)).length}</b><span>${tr("Missions aujourd'hui")}</span></div>
       <div class="tuile-chiffre ${aAttribuer.length ? "alerte" : "succes"}"><b>${aAttribuer.length}</b><span>${tr("À attribuer")}</span></div>
       <div class="tuile-chiffre"><b>${actifs.length}</b><span>${tr(actifs.length > 1 ? "Salariés actifs" : "Salarié actif")}</span></div>
-      <div class="tuile-chiffre"><b>${actifs.filter(s => ["A_VERIFIER", "VALIDE"].includes(s.selfie_du_jour)).length}/${actifs.length}</b><span>${tr("Selfies du jour")}</span></div>
+      <div class="tuile-chiffre"><b>${actifs.filter(s => ["A_VERIFIER", "VALIDE"].includes(s.selfie_du_jour)).length}/${actifs.length}</b><span>${tr("Photos de vérification du jour")}</span></div>
       <div class="tuile-chiffre"><b>${euros(caMois)}</b><span>${tr("Chiffre d'affaires du mois")}</span></div>
       <div class="tuile-chiffre"><b>${tableau?.note_moyenne ? `★ ${String(tableau.note_moyenne).replace(".", ",")}` : "—"}</b><span>${tr("Note de l'équipe")}</span></div>
     </div>
@@ -123,7 +123,7 @@ export async function brancherEspaceSociete(vue, p) {
       <tbody>${lignes.map(s => `<tr><th>${esc(s.prenom)}</th>${jours.map(j => `<td>${cellule(s, j)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
   };
   const missionsOnglet = () => `
-    <p class="petit" style="margin-top:0">${tr("Prenez une mission (onglet « Missions » de votre espace), puis attribuez-la ici : le chef d'équipe fait le selfie, le trajet et le compte rendu ; les équipiers l'accompagnent.")}</p>
+    <p class="petit" style="margin-top:0">${tr("Prenez une mission (onglet « Missions » de votre espace), puis attribuez-la ici : le chef d'équipe prend la photo de vérification, le trajet et le compte rendu ; les équipiers l'accompagnent.")}</p>
     <h3 class="sous-titre-societe">${tr("À attribuer")} (${aAttribuer.length})</h3>
     ${aAttribuer.map(m => ligneMission(m)).join("") || `<p class="muet">${tr("Toutes vos missions ont un intervenant.")}</p>`}
     <h3 class="sous-titre-societe">${tr("Attribuées")}</h3>
@@ -143,7 +143,7 @@ export async function brancherEspaceSociete(vue, p) {
     ${salaries.map(s => { const [lib, teinte] = STATUTS_SALARIE[s.statut] || [s.statut, ""];
       return `<div class="carte ligne-compte salarie">${`<span class="avatar-favori grand">${esc((s.prenom || "?").charAt(0).toUpperCase())}</span>`}
         <div class="corps"><div class="haut"><h3>${esc(s.prenom)} ${esc(s.nom)}</h3><span class="tampon ${teinte}">${tr(lib)}</span></div>
-          <p class="petit">${s.statut === "INVITE" ? tr("N'a pas encore ouvert son lien.") : `${s.identite ? "✓" : "✗"} ${tr("Pièce d'identité")} · ${["A_VERIFIER", "VALIDE"].includes(s.selfie_du_jour) ? "✓" : "—"} ${tr("Selfie du jour")}`}
+          <p class="petit">${s.statut === "INVITE" ? tr("N'a pas encore ouvert son lien.") : `${s.identite ? "✓" : "✗"} ${tr("Pièce d'identité")} · ${["A_VERIFIER", "VALIDE"].includes(s.selfie_du_jour) ? "✓" : "—"} ${tr("Photo de vérification du jour")}`}
             · ${s.missions_a_venir} ${tr(s.missions_a_venir > 1 ? "missions à venir" : "mission à venir")} · ${s.missions_terminees} ${tr(s.missions_terminees > 1 ? "terminées" : "terminée")}${s.note ? ` · ★ ${String(s.note).replace(".", ",")} (${s.nb_avis})` : ""}</p>
           ${s.statut !== "INVITE" ? `<p class="petit formations-salarie">${icone("formation")} ${(s.formations || []).includes("socle") ? `✓ ${tr("Socle Cleaneroo")}` : `<span class="muet">${tr("Socle Cleaneroo à suivre")}</span>`}
             ${formationsDe(s).map(id => `<span class="tampon ${MODULES_EXIGES_PAR_LA_LOI.includes(id) ? "" : "vert"}">${esc(titreModule(id))}</span>`).join(" ")}</p>` : ""}
@@ -325,7 +325,7 @@ function fenetreAttribution(m, actifs, p, recharger, titreModule = id => id) {
     <p class="muet" style="margin:0 0 8px">${esc(rubrique(m.rubrique_id)?.nom || "")} · ${m.creneau ? `${dateLongue(new Date(m.creneau))} · ${heure(new Date(m.creneau).getHours())}` : ""} · ${esc(m.ville)}</p>
     <p class="petit"><b>${tr("Besoin")} : ${n} ${tr(n > 1 ? "Cleaneurs" : "Cleaneur")}</b></p>
     ${exigees.length ? `<p class="petit note alerte">${tr("Formation exigée par la loi")} : <b>${esc(exigees.map(titreModule).join(", "))}</b>. ${tr("Seuls les salariés qui l'ont validée peuvent intervenir.")}</p>` : ""}
-    <p class="petit" style="margin:12px 0 4px"><b>${tr("Chef d'équipe")}</b> · ${tr("selfie, trajet, étapes et compte rendu")}</p>
+    <p class="petit" style="margin:12px 0 4px"><b>${tr("Chef d'équipe")}</b> · ${tr("photo de vérification, trajet, étapes et compte rendu")}</p>
     ${[{ membre_id: p.id, prenom: tr("Moi-même"), formations: exigees }, ...actifs].map(s => `<label class="case ${forme(s) ? "" : "desactive"}"><input type="radio" name="chef" value="${esc(s.membre_id)}" ${forme(s) ? "" : "disabled"} ${(m.chef_id || p.id) === s.membre_id && forme(s) ? "checked" : ""}><span>${esc(s.prenom)} ${esc(s.nom || "")}${forme(s) ? "" : ` · <span class="petit">${tr("formation manquante")}</span>`}</span></label>`).join("")}
     ${actifs.length ? `<p class="petit" style="margin:12px 0 4px"><b>${tr("Équipiers")}</b></p>
       ${actifs.map(s => `<label class="case ${forme(s) ? "" : "desactive"}"><input type="checkbox" name="equipier" value="${esc(s.membre_id)}" ${forme(s) ? "" : "disabled"} ${(m.equipiers || []).includes(s.membre_id) ? "checked" : ""}><span>${esc(s.prenom)} ${esc(s.nom || "")}${forme(s) ? "" : ` · <span class="petit">${tr("formation manquante")}</span>`}</span></label>`).join("")}`
@@ -360,7 +360,7 @@ export async function brancherSalarie(vue, p, recharger) {
   const [lib, teinte] = STATUTS_SALARIE[e.statut] || ["", ""];
   boite.innerHTML = `<div class="carte entete-societe"><span class="surtitre">${tr("Mon employeur")}</span>
       <h2 style="margin:6px 0 2px">${esc(e.societe || "")}</h2><p style="margin:0"><span class="tampon ${teinte}">${tr(lib)}</span></p>
-      <p class="petit">${tr(e.statut === "ACTIF" ? "Vos missions apparaissent ici dès que votre employeur vous les attribue. Avant la première de la journée : votre selfie." : "Envoyez votre pièce d'identité : Cleaneroo la vérifie, puis votre employeur peut vous attribuer des missions.")}</p>
+      <p class="petit">${tr(e.statut === "ACTIF" ? "Vos missions apparaissent ici dès que votre employeur vous les attribue. Avant la première de la journée : votre photo de vérification." : "Envoyez votre pièce d'identité : Cleaneroo la vérifie, puis votre employeur peut vous attribuer des missions.")}</p>
       ${e.statut === "REFUSE" && e.motif ? `<p class="petit erreur">${esc(e.motif)}</p>` : ""}
       ${e.identite && e.statut !== "REFUSE" ? `<p class="petit">✓ ${tr("Pièce d'identité envoyée")}</p>` : `<label class="bouton">${icone("photo")} ${tr("Envoyer ma pièce d'identité")}<input type="file" accept="image/*,application/pdf" hidden data-identite-salarie></label>
         <p class="erreur" id="erreur-identite"></p>`}
@@ -380,7 +380,7 @@ export async function pageRejoindre(vue, code, connecte) {
   const inv = await supabase.rpc("invitation_salarie", { p_code: code }).then(r => r.data, () => null);
   vue.innerHTML = `<section class="bloc"><div class="etroit">
     ${inv ? `<h1>${tr("Rejoindre l'équipe")} ${esc(inv.societe)}</h1>
-      <p class="muet">${tr("Bonjour")} ${esc(inv.prenom)}, ${esc(inv.societe)} ${tr("vous invite à intervenir avec Cleaneroo : vos missions, votre selfie du jour, le trajet et le compte rendu, depuis votre téléphone.")}</p>
+      <p class="muet">${tr("Bonjour")} ${esc(inv.prenom)}, ${esc(inv.societe)} ${tr("vous invite à intervenir avec Cleaneroo : vos missions, votre photo de vérification du jour, le trajet et le compte rendu, depuis votre téléphone.")}</p>
       <ol class="petit"><li>${tr("Créez votre accès (ou connectez-vous)")}</li><li>${tr("Envoyez votre pièce d'identité")}</li><li>${tr("Votre employeur vous attribue vos missions")}</li></ol>
       ${connecte ? `<button type="button" class="bouton plein" data-rejoindre>${tr("Rejoindre l'équipe")}</button>`
         : `<a class="bouton plein" href="#/compte/salarie" data-garder-code>${tr("Créer mon accès")}</a> <a class="bouton secondaire" href="#/compte" data-garder-code>${tr("J'ai déjà un compte")}</a>`}

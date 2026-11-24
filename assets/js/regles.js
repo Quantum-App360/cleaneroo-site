@@ -242,7 +242,7 @@ export const REGLES = {
   VITESSE_MOYENNE_KMH: 35,
   MARGE_TRAJET_MIN: 10,
   SUIVI_INTERVALLE_S: 10,        // suivi en direct : position envoyée et relue toutes les 10 s
-  SELFIE_MAX_PX: 600,            // selfie du jour : plus grand côté de la photo envoyée
+  SELFIE_MAX_PX: 600,            // photo de vérification du jour : plus grand côté de la photo envoyée
   AVERTISSEMENTS_MAX: 2,         // avertissements autorisés ; au suivant, le Cleaneur est banni
   // Plan d'urgence (copie des valeurs de la base : remettre_en_urgence, verifier_missions_urgence)
   URGENCE_CONTROLE_AVANT_MIN: 120,   // confirmation demandée 2 h avant le début

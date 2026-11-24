@@ -22,7 +22,7 @@ export async function blocNiveau(boite) {
       ${n.merite > n.niveau ? `<p class="erreur" style="margin:6px 0 0">${tr("Un niveau de moins : taux d'annulation au-dessus de 5 % ou avertissement en cours.")}</p>` : ""}
       ${suivant ? `<p class="petit" style="margin:10px 0 4px">${tr("Prochain niveau :")} <b>${tr(suivant.nom)}</b> — ${suivant.missions} ${tr("missions et une note d'au moins")} ${String(suivant.note).replace(".", ",")}</p>
         <div class="jauge-niveau"><i style="width:${Math.min(100, Math.round(100 * n.missions / suivant.missions))}%"></i></div>`
-        : `<p class="petit" style="margin:10px 0 0">${tr("Vous avez atteint le plus haut niveau. Bravo !")}</p>`}
+        : `<p class="petit" style="margin:10px 0 0">${tr("Félicitations : vous avez atteint le plus haut niveau.")}</p>`}
     </div>
     <div class="grille-niveaux">${N.map((x, i) => `<div class="carte niveau-carte ${i === n.niveau ? "actuel" : ""}">
       <b>${x.icone} ${tr(x.nom)}</b><span class="petit">${i ? `${x.missions} ${tr("missions")} · ${tr("note")} ≥ ${String(x.note).replace(".", ",")}` : tr("Dès votre première mission")}</span>

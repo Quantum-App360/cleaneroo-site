@@ -343,7 +343,7 @@ function ecranConnexion(vue, mode, message = "", ok = false, roleDefaut = "clien
   };
   vue.querySelector("#mdp-oublie")?.addEventListener("click", async () => {
     const email = f.email.value.trim();
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return erreur("Indiquez d'abord votre e-mail, puis touchez « Mot de passe oublié ? ».");
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return erreur("Indiquez d'abord votre e-mail, puis sélectionnez « Mot de passe oublié ? ».");
     await mdpOublie(email).catch(() => null);
     ecranConnexion(vue, "connexion", tr("Si un compte existe avec cet e-mail, vous allez recevoir un lien pour choisir un nouveau mot de passe."), true);
   });
