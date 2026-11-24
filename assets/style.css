@@ -643,8 +643,6 @@ label.champ input:focus, label.champ select:focus, label.champ textarea:focus, i
 .etape .pastille .tuile-ico { box-shadow: 0 2px 8px rgba(8, 38, 42, .08), 0 0 0 6px var(--fond); }
 .confiance li .ico { color: var(--menthe); }
 .pastille-notif { display: grid; place-items: center; font-size: 18px; color: var(--canard); }
-.cinq-etoiles { display: inline-flex; gap: 1px; margin-left: 4px; vertical-align: -.1em; color: #E0A93B; --ico-aplat: #F5C451; }
-.cinq-etoiles .ico { width: .9em; height: .9em; }
 .burger .ico { width: 26px; height: 26px; vertical-align: middle; }
 /* Planches de la page #/icones */
 .planche-ico { border-radius: var(--rayon-l); padding: 22px; margin-top: 22px; }
@@ -2755,3 +2753,19 @@ body.sans-rappel .entete .rappel-entete { display: none; }   /* jamais pendant l
 .pied .logos-paiement { margin: 10px 0 14px; }
 .pied .logos-paiement .moyen { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.28); color: #fff; }
 .pied .logos-paiement .stripe, .pied .logos-paiement .stripe .ico { color: rgba(255,255,255,.88); }
+
+/* ================================================================ Ils nous font confiance (prompt 2, partie 4) */
+.ils-confiance .note-globale { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center; margin: 10px 0 0; color: var(--texte2); font-size: 15.5px; }
+.ils-confiance .note-globale b { color: var(--texte); font-size: 18px; }
+.etoiles-avis-publics { display: inline-flex; gap: 2px; }
+.etoiles-avis-publics i { display: inline-flex; color: var(--separateur); }
+.etoiles-avis-publics i { --ico-aplat: transparent; }
+.etoiles-avis-publics i.plein { color: #D99A12; --ico-aplat: #F5C451; }
+.etoiles-avis-publics .ico { width: 18px; height: 18px; }
+.avis-public { margin: 0; display: flex; flex-direction: column; gap: 10px; }
+.avis-public blockquote { margin: 0; font-size: 15px; line-height: 1.55; color: var(--texte); }
+.avis-public figcaption { display: grid; gap: 2px; margin-top: auto; font-size: 14px; color: var(--texte2); }
+.avis-public figcaption b { color: var(--texte); }
+.avis-public small { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 12.5px; font-weight: 600; color: var(--primaire); }
+.avis-public small .ico { width: 15px; height: 15px; }
+.ils-confiance[hidden] { display: none !important; }

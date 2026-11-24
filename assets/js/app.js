@@ -23,7 +23,7 @@ import { blocFavori } from "./favoris.js";
 import { blocModifier, boutonBon, brancherBons, blocConstat } from "./demande-actions.js";
 import { blocSupplementClient } from "./supplement.js";
 import { blocPaiement } from "./paiement.js";
-import { CONDITIONS, CONFIDENTIALITE, MENTIONS, texteLegal } from "./legal.js";
+import { CONDITIONS, CONFIDENTIALITE, MENTIONS, texteLegal, GESTION_AVIS } from "./legal.js";
 import { transitionVitre } from "./vitre.js";
 import { compterPage } from "./compteur.js";
 import { suivreEnDirect, demoSuivi } from "./suivi-live.js";
@@ -35,7 +35,7 @@ import { icone, teinte, ICONES_RUBRIQUES, ICONES_INTERFACE } from "./icones.js";
 import { pageTableau, arreterTableau } from "./tableau.js";
 import { compteRenduPieces } from "./controle-ecran.js";
 import { blocFormulesCleaneur, brancherFormulesCleaneur } from "./formules-cleaneur.js";
-import { blocEtapes, bandeGaranties, logosPaiement, installerRappel, encartAideRappel, bandeauLancement, pageChargement, decorTableau, surveillerFormulaire, envoiRobot, CONTIENT_LIEN } from "./commun.js";
+import { blocEtapes, bandeGaranties, logosPaiement, sectionAvisPublics, remplirAvisPublics, installerRappel, encartAideRappel, bandeauLancement, pageChargement, decorTableau, surveillerFormulaire, envoiRobot, CONTIENT_LIEN } from "./commun.js";
 import "./fond-anime.js";
 import "./oeil.js";
 import "./choix-prestation.js";   // fenêtre animée « Réserver une prestation »   // œil pour afficher le mot de passe
@@ -147,29 +147,29 @@ const VILLES = ["Fréjus", "Saint-Raphaël", "Cannes", "Toulon", "Nice", "Hyère
 const NOTIFS = {
   fr: [
     [["position", "{p} est en route", "Arrivée dans {n} min"], ["sur-place", "{p} est sur place", "Arrivée confirmée par géolocalisation"], ["termine", "{p} a terminé", "Toutes les tâches sont cochées"]],
-    [["photo", "Compte rendu reçu", "{n} photos avant / après"], ["avis", "Nouvel avis {e}", "« Impeccable, merci {p} ! »"], ["valide", "Tâches validées", "{n} tâches cochées et horodatées"]],
+    [["appareil-photo", "Photos avant reçues", "État des lieux à l'arrivée"], ["photo", "Compte rendu reçu", "12 photos avant / après"], ["valide", "Tâches validées", "{n} tâches cochées et horodatées"]],
     [["paiement", "Paiement 100 % sécurisé", "Crédit d'impôt selon éligibilité"], ["instantane", "Prix affiché tout de suite", "Sans devis ni attente"], ["calendrier", "Réservé en 2 minutes", "{v} · créneau confirmé"]],
   ],
   en: [
     [["position", "{p} is on the way", "Arriving in {n} min"], ["sur-place", "{p} is on site", "Arrival confirmed by geolocation"], ["termine", "{p} has finished", "Every task is ticked"]],
-    [["photo", "Report received", "{n} before / after photos"], ["avis", "New review {e}", "“Spotless, thank you {p}!”"], ["valide", "Tasks approved", "{n} tasks ticked and time-stamped"]],
-    [["paiement", "Protected payment", "Tax credit subject to eligibility"], ["instantane", "Price shown instantly", "No quote, no waiting"], ["calendrier", "Booked in 2 minutes", "{v} · slot confirmed"]],
+    [["appareil-photo", "Before photos received", "Condition on arrival"], ["photo", "Report received", "12 before / after photos"], ["valide", "Tasks approved", "{n} tasks ticked and time-stamped"]],
+    [["paiement", "100% secure payment", "Tax credit subject to eligibility"], ["instantane", "Price shown instantly", "No quote, no waiting"], ["calendrier", "Booked in 2 minutes", "{v} · slot confirmed"]],
   ],
   it: [
     [["position", "{p} è in arrivo", "Arrivo tra {n} min"], ["sur-place", "{p} è sul posto", "Arrivo confermato dalla geolocalizzazione"], ["termine", "{p} ha finito", "Tutti i compiti sono spuntati"]],
-    [["photo", "Report ricevuto", "{n} foto prima / dopo"], ["avis", "Nuova recensione {e}", "«Impeccabile, grazie {p}!»"], ["valide", "Compiti convalidati", "{n} compiti spuntati e con orario"]],
-    [["paiement", "Pagamento protetto", "Credito d'imposta secondo idoneità"], ["instantane", "Prezzo subito visibile", "Senza preventivo né attesa"], ["calendrier", "Prenotato in 2 minuti", "{v} · fascia confermata"]],
+    [["appareil-photo", "Foto prima ricevute", "Stato all'arrivo"], ["photo", "Resoconto ricevuto", "12 foto prima / dopo"], ["valide", "Compiti convalidati", "{n} compiti spuntati e con orario"]],
+    [["paiement", "Pagamento sicuro al 100%", "Credito d'imposta secondo idoneità"], ["instantane", "Prezzo subito visibile", "Senza preventivo né attesa"], ["calendrier", "Prenotato in 2 minuti", "{v} · fascia confermata"]],
   ],
   es: [
     [["position", "{p} está en camino", "Llega en {n} min"], ["sur-place", "{p} está en el lugar", "Llegada confirmada por geolocalización"], ["termine", "{p} ha terminado", "Todas las tareas marcadas"]],
-    [["photo", "Informe recibido", "{n} fotos antes / después"], ["avis", "Nueva reseña {e}", "«Impecable, ¡gracias {p}!»"], ["valide", "Tareas validadas", "{n} tareas marcadas con hora"]],
-    [["paiement", "Pago protegido", "Crédito fiscal según elegibilidad"], ["instantane", "Precio al instante", "Sin presupuesto ni esperas"], ["calendrier", "Reservado en 2 minutos", "{v} · franja confirmada"]],
+    [["appareil-photo", "Fotos de antes recibidas", "Estado a la llegada"], ["photo", "Informe recibido", "12 fotos antes / después"], ["valide", "Tareas validadas", "{n} tareas marcadas con hora"]],
+    [["paiement", "Pago 100 % seguro", "Crédito fiscal según elegibilidad"], ["instantane", "Precio al instante", "Sin presupuesto ni esperas"], ["calendrier", "Reservado en 2 minutos", "{v} · franja confirmada"]],
   ],
 };
 const hasard = l => l[Math.floor(Math.random() * l.length)];
 function remplir(modele) {
   const n = { "photos": 8 + Math.floor(Math.random() * 10) };
-  return modele.replace("{e}", `<span class="cinq-etoiles">${icone("avis").repeat(5)}</span>`).replace("{p}", hasard(PRENOMS)).replace("{v}", hasard(VILLES))
+  return modele.replace("{p}", hasard(PRENOMS)).replace("{v}", hasard(VILLES))
     .replace("{n}", /photo|foto/.test(modele) ? n.photos : /tâche|task|compit|tarea/.test(modele) ? 12 + Math.floor(Math.random() * 14) : 4 + Math.floor(Math.random() * 12));
 }
 const messagesNotif = () => NOTIFS[langue] || NOTIFS.fr;
@@ -338,6 +338,7 @@ function pageAccueil() {
     </div>
   </div></section>
   ${bandeGaranties()}
+  ${sectionAvisPublics()}
   ${reservationsFermees() && !connecte() ? `<section class="appel-2026"><div class="conteneur appel-grille"><div class="revele"><span class="pastille-lancement sombre"><i></i>Bientôt</span>
       <h2>Prêts pour l'ouverture ?</h2><p>Inscrivez-vous maintenant : les premiers inscrits sont prévenus en priorité.</p>
       <div class="boutons"><a class="bouton clair" href="#/estimer">Estimer mon prix</a></div></div>
@@ -427,7 +428,8 @@ function pagePrestations() {
     <a class="carte prestation" href="#/estimer/${r.id}">${icone(r.icone, { tuile: true })}<h3>${r.nom}</h3>
       <p class="muet" style="margin:4px 0 8px">${r.sousTitre}</p>
       <span class="tampon">${pastille(r)}</span></a>`).join("")}</div>
-    <div style="margin-top:22px">${encartAideRappel()}</div></div></section>`;
+    <div style="margin-top:22px">${encartAideRappel()}</div></div></section>
+  ${sectionAvisPublics()}`;
 }
 
 function pageComment() {
@@ -484,6 +486,7 @@ const pageLegale = (titre, liste, numeros = true) => pageTexte(titre, liste.map(
 function pageConfidentialite() { return pageLegale("Confidentialité", CONFIDENTIALITE); }
 function pageConditions() { return pageLegale("Conditions générales", CONDITIONS); }
 function pageMentions() { return pageLegale("Mentions légales", MENTIONS, false); }
+function pageGestionAvis() { return pageLegale("Comment nous gérons les avis", GESTION_AVIS, false); }
 
 const STATUTS = { VERIFICATION: "En cours de vérification", PUBLIEE: "En ligne · candidatures", CONFIRMEE: "Confirmée", EN_ROUTE: "Cleaneur en route",
   SUR_PLACE: "Cleaneur sur place", EN_COURS: "En cours", A_VALIDER: "À valider", TERMINEE: "Terminée", ANNULEE: "Annulée" };
@@ -609,6 +612,7 @@ function pageIcones() {
 const ROUTES = {
   "": pageAccueil, "vitrine": pageAccueil, "prestations": pagePrestations, "comment-ca-marche": pageComment, "devenir-cleaneur": pageDevenir, "mode-cleaneur": pageDevenir,
   "inscription": () => pageInscription(), "confidentialite": pageConfidentialite, "conditions": pageConditions, "mentions-legales": pageMentions,
+  "gestion-des-avis": pageGestionAvis,
   "icones": pageIcones,
 };
 
@@ -743,6 +747,7 @@ async function afficherPage() {
   afficherAccesCleaneur(vue);
   brancherFormulesCleaneur(vue);
   brancherApercuTournee(vue);
+  remplirAvisPublics(vue);
   window.scrollTo(0, 0);
 }
 

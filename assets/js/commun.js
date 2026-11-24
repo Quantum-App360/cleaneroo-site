@@ -2,10 +2,10 @@
 // étapes « Comment ça marche », encart de réassurance, bouton et fenêtre « Être rappelé ».
 import { REGLES, reservationsFermees, MESSAGE_LANCEMENT, PORTEFEUILLES_ACTIFS, LOGOS_PAIEMENT_OFFICIELS } from "./regles.js";
 import { evenement } from "./compteur.js";
-import { eurosRond } from "./catalogue.js";
+import { eurosRond, rubrique } from "./catalogue.js";
 import { icone } from "./icones.js";
-import { inscrire } from "./donnees.js";
-import { traduire } from "./langue.js";
+import { inscrire, supabase } from "./donnees.js";
+import { traduire, tr, LOCALE, langue } from "./langue.js";
 
 export const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
@@ -120,6 +120,36 @@ export const bandeGaranties = () => `<section class="bloc bande-garanties"><div 
   <div class="titre-section revele"><span class="surtitre">En toute confiance</span><h2>Vos garanties Cleaneroo</h2><p class="muet">Sécurisé, vérifié, assuré : ce que Cleaneroo vous garantit à chaque réservation.</p></div>
   <div class="revele">${blocReassurance()}</div>
   <div class="revele" style="margin-top:22px">${logosPaiement({ classe: "centre" })}</div></div></section>`;
+
+/* ------------------------------------------------------------------ Ils nous font confiance (prompt 2, partie 4) */
+/** Nombre d'avis publiés à partir duquel la section s'affiche. */
+export const AVIS_MINIMUM = 3;
+const virgule = n => Number(n).toLocaleString(LOCALE, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+/** Contenu de la section à partir de la réponse d'avis_publics ; chaîne vide sous AVIS_MINIMUM avis publiés. */
+export function contenuAvisPublics(r) {
+  if (!r || !(r.nombre >= AVIS_MINIMUM)) return "";
+  const mois = m => { const [a, n] = String(m || "").split("-").map(Number); return a ? new Date(a, n - 1, 15).toLocaleDateString(LOCALE, { month: "long", year: "numeric" }) : ""; };
+  const etoiles = n => `<span class="etoiles-avis-publics" role="img" aria-label="${n} / 5">${[1, 2, 3, 4, 5].map(i => `<i class="${i <= n ? "plein" : ""}">${icone("avis")}</i>`).join("")}</span>`;
+  const carte = a => `<figure class="carte avis-public">${etoiles(a.note)}
+    ${a.commentaire ? `<blockquote>${langue === "en" ? `“${esc(a.commentaire)}”` : `« ${esc(a.commentaire)} »`}</blockquote>` : ""}
+    <figcaption><b>${esc(a.auteur || "")}</b><span>${[a.ville, rubrique(a.rubrique)?.nom, mois(a.mois)].filter(Boolean).map(esc).join(" · ")}</span>
+      <small>${icone("valide")} ${tr("Avis vérifié · prestation réalisée via Cleaneroo")}</small></figcaption></figure>`;
+  return `<div class="conteneur">
+    <div class="titre-section"><span class="surtitre">${tr("Avis clients")}</span><h2>${tr("Ils nous font confiance")}</h2>
+      <p class="note-globale">${etoiles(Math.round(r.moyenne))}<b>${virgule(r.moyenne)} / 5</b> · ${r.nombre} ${tr("avis vérifiés")}</p></div>
+    <div class="grille-3 avis-publics">${(r.avis || []).slice(0, 6).map(carte).join("")}</div>
+    <p class="centre petit" style="margin-top:18px"><a href="/#/gestion-des-avis">${tr("Comment nous gérons les avis")}</a></p></div>`;
+}
+/** Emplacement de la section : masqué tant qu'il n'y a pas assez d'avis publiés. */
+export const sectionAvisPublics = () => `<section class="bloc ils-confiance" data-avis-publics hidden></section>`;
+/** Lit les avis publiés et affiche la section si elle a au moins AVIS_MINIMUM avis. */
+export async function remplirAvisPublics(racine = document) {
+  const zones = [...racine.querySelectorAll("[data-avis-publics]")];
+  if (!zones.length) return;
+  const { data } = await supabase.rpc("avis_publics").then(x => x, () => ({ data: null }));
+  const html = contenuAvisPublics(data);
+  zones.forEach(z => { if (!z.isConnected) return; z.innerHTML = html; z.hidden = !html; });
+}
 
 /* ------------------------------------------------------------------ Être rappelé */
 const CRENEAUX = [["matin", "Matin", "Merci, nous vous rappelons le matin."], ["midi", "Midi", "Merci, nous vous rappelons à midi."],

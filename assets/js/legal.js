@@ -41,6 +41,15 @@ export const MENTIONS = [
   ["Nom de domaine", "cleaneroo.fr, enregistré chez IONOS."],
 ];
 
+/** Page « Comment nous gérons les avis » (prompt 2, partie 4 ; information due au consommateur sur les avis en ligne). */
+export const GESTION_AVIS = [
+  ["Qui peut laisser un avis", "Seul un client dont la prestation a été réalisée via Cleaneroo peut la noter, une seule fois, après la fin de l'intervention. Chaque avis porte donc la mention « Avis vérifié · prestation réalisée via Cleaneroo »."],
+  ["Quand l'avis est publié", "Pour que chacun note librement, l'avis du client et celui du Cleaneur restent cachés jusqu'à ce que les deux soient déposés, ou au plus tard {avisJours} jours après la prestation."],
+  ["Publication sans tri", "Les avis sont publiés sans tri ni sélection, qu'ils soient positifs ou négatifs, du plus récent au plus ancien. La note moyenne est calculée sur tous les avis publiés. Cleaneroo ne paie pas et ne récompense pas les avis."],
+  ["Ce qui est affiché", "La note, le commentaire, le prénom et l'initiale du nom, la ville, la prestation et le mois. Jamais l'adresse, le nom complet ni les coordonnées : les numéros de téléphone et adresses e-mail écrits dans un commentaire sont masqués automatiquement. Cleaneroo ne modifie pas le contenu d'un avis."],
+  ["Signaler un avis", "Écrivez à contact@cleaneroo.fr en indiquant l'avis concerné. Nous le vérifions et retirons un avis injurieux, illicite ou sans lien avec une prestation réelle ; son auteur en est informé."],
+];
+
 const societe = () => { const s = REGLES.SOCIETE || {};
   return s.nom ? [s.nom, s.adresse, s.siret ? `SIRET ${s.siret}` : ""].filter(Boolean).join(" — ") : tr("Cleaneroo, société par actions simplifiée (SAS) en cours de création : siège, SIRET et capital publiés ici avant l'ouverture des réservations."); };
 const mediateur = () => { const m = REGLES.MEDIATEUR || {};

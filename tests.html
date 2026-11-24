@@ -21,7 +21,7 @@ import { RUBRIQUES as RUBRIQUES_CAT, rubrique, pastille, tacheChiffree, tachesPo
   import { niveauRotation } from "./assets/js/conciergerie.js";
 import { menageTientEntreVoyageurs } from "./assets/js/estimation.js";
 import { bornesPeriode } from "./assets/js/periodes.js";
-import { GARANTIES, PAIEMENT_COURT, PAIEMENT_LONG, moyensPaiement, texteAnnulation } from "./assets/js/commun.js";
+import { GARANTIES, PAIEMENT_COURT, PAIEMENT_LONG, moyensPaiement, texteAnnulation, contenuAvisPublics, AVIS_MINIMUM } from "./assets/js/commun.js";
 import { ICONES } from "./assets/js/icones.js";
 import { releveProprietaire, listeCourses, texteCourses, dossiersDommages } from "./assets/js/conciergerie.js";
 import { planProgrammerTout, instantParis, avecHoraires, erreurHoraires, departDe, arriveeDe } from "./assets/js/conciergerie.js";
@@ -760,6 +760,15 @@ egal("paiement : formulation courte", PAIEMENT_COURT, "Paiement sécurisé à la
 egal("paiement : la formulation longue dit qu'on règle en réservant", PAIEMENT_LONG.startsWith("Vous réglez en réservant"), true);
 egal("paiement : Visa, Mastercard, CB (Apple Pay et Google Pay masqués)", moyensPaiement().map(m => m[1]).join(","), "Visa,Mastercard,CB");
 egal("paiement : annulation générée depuis REGLES, identique aux CGU", texteAnnulation(), "Annulation gratuite jusqu'à 48 h avant l'intervention ; ensuite, 25 % du prix accepté restent dus.");
+// Avis publics (prompt 2, partie 4) : section masquée sous 3 avis, jamais de données personnelles affichées
+const avisTest = n => ({ nombre: n, moyenne: 4.7, avis: Array.from({ length: Math.min(n, 8) }, (_, i) => ({ note: 5, commentaire: "Très bien <script>", auteur: "Marie D.", ville: "Fréjus", rubrique: "home", mois: "2027-02" })) });
+egal("avis : minimum de 3 avis", AVIS_MINIMUM, 3);
+egal("avis : masqué sans avis", contenuAvisPublics({ nombre: 0, avis: [] }), "");
+egal("avis : masqué avec 2 avis", contenuAvisPublics(avisTest(2)), "");
+egal("avis : affiché avec 3 avis, note moyenne en tête", contenuAvisPublics(avisTest(3)).includes("4,7 / 5"), true);
+egal("avis : 6 avis au plus", (contenuAvisPublics(avisTest(8)).match(/avis-public"/g) || []).length, 6);
+egal("avis : commentaire échappé", contenuAvisPublics(avisTest(3)).includes("<script>"), false);
+egal("avis : mention « Avis vérifié »", contenuAvisPublics(avisTest(3)).includes("Avis vérifié · prestation réalisée via Cleaneroo"), true);
 const ok = res.filter(r => r[1]).length;
 document.getElementById("bilan").textContent = `${ok} tests sur ${res.length} réussis`;
 document.getElementById("liste").innerHTML = res.map(([n, b, d]) => `<li class="${b ? "ok" : "ko"}">${b ? "✓" : "✗"} ${n}${b ? "" : " — " + d}</li>`).join("");

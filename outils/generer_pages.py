@@ -166,6 +166,7 @@ def gabarit(chemin, titre, description, corps, attrs="", indexer=True, og_type="
         <a href="/#/confidentialite">Confidentialité</a>
         <a href="/#/conditions">Conditions d'utilisation</a>
         <a href="/#/mentions-legales">Mentions légales</a>
+        <a href="/#/gestion-des-avis">Comment nous gérons les avis</a>
         <a href="mailto:contact@cleaneroo.fr">contact@cleaneroo.fr</a>
       </div>
       <p class="petit" style="color:rgba(255,255,255,.75);margin-top:16px">© Cleaneroo</p>
