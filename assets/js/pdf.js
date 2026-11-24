@@ -181,6 +181,30 @@ export async function relevePdf(liste, { titre, qui }) {
   return doc.save();
 }
 
+/* ------------------------------------------------------------------ Relevé mensuel du propriétaire (24/11/2026) */
+/** Relevé d'un propriétaire (conciergerie) : par logement, nuits occupées, ménages et leur coût, incidents à sa charge, total à refacturer.
+ *  r : résultat de releveProprietaire (conciergerie.js), ou l'instantané partagé. Jamais de code d'accès. */
+export async function releveProprietairePdf(r, { nomMois, conciergerie = "", proprietaire = "" }) {
+  const titre = `Relevé mensuel · ${nomMois}`;
+  const { doc, page: pg } = await nouveauDoc(titre);
+  enTete(pg, titre, [conciergerie && `Conciergerie : ${conciergerie}`, proprietaire && `Propriétaire : ${proprietaire}`, `édité le ${dateFr(new Date())}`].filter(Boolean).join(" · "));
+  const ligne = (g, d, { gras = false, taille = 9 } = {}) => { pg.place(taille * 1.6); const y = pg.y;
+    pg.p.drawText(propre(g).slice(0, 80), { x: 50, y, size: taille, font: gras ? pg.f.gras : pg.f.normal }); if (d) pg.droite(d, 545, y, { taille, gras }); pg.y -= taille * 1.5; };
+  for (const b of r.biens) {
+    pg.espace(4); pg.texte(`${b.nom}${b.ville ? ` · ${b.ville}` : ""}`, { taille: 12, gras: true });
+    pg.texte(`${b.sejours} séjour(s) · ${b.nuits} nuit(s) occupée(s) · occupation ${b.occupation} %`, { taille: 9, couleur: [0.26, 0.37, 0.38] });
+    pg.trait(); pg.espace(4);
+    if (b.menages.length) { ligne("Ménages", "", { gras: true }); b.menages.forEach(m => ligne(`${new Date(m.date + "T12:00:00").toLocaleDateString("fr-FR")} · ${m.prestation}`, eur(m.coutC))); }
+    else ligne("Aucun ménage ce mois-ci.");
+    if (b.incidents.length) { ligne("Incidents à la charge du propriétaire", "", { gras: true }); b.incidents.forEach(i => ligne(`${new Date(i.date + "T12:00:00").toLocaleDateString("fr-FR")} · ${i.texte}`, eur(i.montantC))); }
+    ligne("Total du logement", eur(b.totalC), { gras: true });
+  }
+  pg.espace(6); pg.trait(); pg.espace(4);
+  ligne("Ménages", eur(r.menagesC)); ligne("Incidents à votre charge", eur(r.incidentsC)); ligne("Total à refacturer", eur(r.totalC), { gras: true, taille: 11 });
+  pg.espace(8); pg.texte("Coût des ménages au prix de chaque réservation (frais de service exclus). Nuits lues dans les calendriers du logement et les séjours saisis par la conciergerie.", { taille: 8, couleur: [0.4, 0.5, 0.5] });
+  return doc.save();
+}
+
 /* ------------------------------------------------------------------ Attestation fiscale (services à la personne) */
 /** Attestation fiscale en PDF (art. D7233-4 du Code du travail), 22/11/2026 : une partie par prestataire (nom, adresse, SIRET,
  *  numéro et date de déclaration SAP), chaque intervention (date, durée, intervenant et son identifiant, somme payée), le total

@@ -21,6 +21,7 @@ import { RUBRIQUES as RUBRIQUES_CAT, rubrique, pastille, tacheChiffree, tachesPo
   import { niveauRotation } from "./assets/js/conciergerie.js";
 import { menageTientEntreVoyageurs } from "./assets/js/estimation.js";
 import { bornesPeriode } from "./assets/js/periodes.js";
+import { releveProprietaire } from "./assets/js/conciergerie.js";
 import { planProgrammerTout, instantParis, avecHoraires, erreurHoraires, departDe, arriveeDe } from "./assets/js/conciergerie.js";
 import { etatOffreConciergerie, offreConciergerieOuverte, fraisServicePct, reservationsOuvertes, fixerOuverture } from "./assets/js/regles.js";
 import { bornesActivite, decalerActivite, jourParis, resumeActivite, evolutionPct } from "./assets/js/activite-societe.js";
@@ -107,6 +108,18 @@ egal("offre conciergerie : 0 % de frais pendant l'offre", fraisServicePct(false,
   const plan = planProgrammerTout({ biens: [{ id: "a", rue: "1 rue A", codePostal: "83000", prixMenageC: 6000 }], departs: [{ bienId: "a", debut: "2027-01-30", fin: "2027-02-03", departH: 12 }],
     demandes: [{ statut: "TERMINEE", rubrique_id: "rental", espace: "conciergerie", rue: "1 rue A", code_postal: "83000", estimation_c: 5000, details: {}, cree_le: "2027-01-10" }], menagePrevu: () => false, aujourdhui: new Date(2027, 1, 1) });
   egal("horaires : programmer tout à l'heure de départ tardif", plan.lignes[0].creneau, "2027-02-03T11:00:00.000Z"); }
+// Relevé mensuel par propriétaire (24/11/2026)
+{ const biens = [{ id: "a", nom: "Studio", ville: "Toulon", rue: "1 rue A", codePostal: "83000", acces: { code: "1234" },
+    incidents: [{ date: "2027-02-10T10:00:00Z", texte: "Vitre cassée", montantC: 12000, chargeProprietaire: true }, { date: "2027-02-11T10:00:00Z", texte: "Ampoule", montantC: 500 }, { date: "2027-03-02T10:00:00Z", texte: "Hors mois", montantC: 900, chargeProprietaire: true }] }];
+  const demandes = [{ statut: "TERMINEE", rubrique_id: "rental", rue: "1 rue A", code_postal: "83000", creneau: "2027-02-05T09:00:00Z", estimation_c: 6000 },
+    { statut: "ANNULEE", rubrique_id: "rental", rue: "1 rue A", code_postal: "83000", creneau: "2027-02-06T09:00:00Z", estimation_c: 6000 },
+    { statut: "CONFIRMEE", rubrique_id: "rental", rue: "2 rue B", code_postal: "83000", creneau: "2027-02-07T09:00:00Z", estimation_c: 9000 }];
+  const r = releveProprietaire({ biens, mois: new Date(2027, 1, 1), sejours: [{ bienId: "a", debut: "2027-02-01", fin: "2027-02-05" }], demandes });
+  egal("relevé propriétaire : ménages de ses logements seulement", r.menagesC, 6000);
+  egal("relevé propriétaire : incidents à sa charge du mois", r.incidentsC, 12000);
+  egal("relevé propriétaire : total à refacturer", r.totalC, 18000);
+  egal("relevé propriétaire : nuits occupées", r.nuits, 4);
+  egal("relevé propriétaire : jamais de code d'accès", JSON.stringify(r).includes("1234"), false); }
 egal("niveau : débutant", niveauCleaneur({ missions: 3, note: 5 }), 0);
 egal("niveau : Confirmé", niveauCleaneur({ missions: 12, note: 4.7 }), 1);
 egal("niveau : Élite", niveauCleaneur({ missions: 60, note: 4.9 }), 3);

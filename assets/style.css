@@ -2663,3 +2663,11 @@ a.statut-choix { color: inherit; text-decoration: none; }
 /* « Programmer tout » (24/11/2026) */
 .programmer-tout { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0 0 10px; }
 .liste-programmer-tout { max-height: 40vh; overflow: auto; margin: 6px 0 10px; border-bottom: 1px solid var(--separateur); }
+/* Relevés par propriétaire et coût des incidents (24/11/2026) */
+.sous-titre-releves { margin: 18px 0 6px; font-size: 16px; }
+.ligne-releve { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 0; border-bottom: 1px solid var(--separateur); }
+.ligne-releve > div:first-child { display: flex; flex-direction: column; gap: 2px; flex: 1 1 220px; }
+.ligne-releve .boutons { display: flex; gap: 6px; flex-wrap: wrap; }
+.ligne-releve [data-releve-etat] { flex-basis: 100%; margin: 0; }
+.ajout-incident { flex-wrap: wrap; gap: 6px; }
+.ajout-incident .montant-incident { max-width: 110px; }

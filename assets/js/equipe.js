@@ -64,8 +64,22 @@ export async function blocEquipe(boite, pro, biens = []) {
     z.innerHTML = `<div class="carte teintee" style="margin:8px 0">
       <b>${tr("Biens")}</b>${data.biens.map(x => `<p class="petit" style="margin:4px 0">${icone("logement")} ${esc(nomBien(x))} · ${esc(x.rue)}, ${esc(x.code_postal)} ${esc(x.ville)}</p>`).join("") || `<p class="petit">—</p>`}
       <b>${tr("Ménages")}</b>${data.missions.map(x => `<p class="petit" style="margin:4px 0">${esc(rubrique(x.rubrique_id)?.nom || "")} · ${x.creneau ? esc(dateLongue(new Date(x.creneau))) : ""}
-        · ${esc(x.ville)} · ${euros(x.estimation_c)} · <span class="tampon">${esc(tr(libelleStatut(x.statut)))}</span></p>`).join("") || `<p class="petit">${tr("Aucun ménage pour l'instant.")}</p>`}</div>`;
+        · ${esc(x.ville)} · ${euros(x.estimation_c)} · <span class="tampon">${esc(tr(libelleStatut(x.statut)))}</span></p>`).join("") || `<p class="petit">${tr("Aucun ménage pour l'instant.")}</p>`}
+      <div data-releves-proprio></div></div>`;
     traduire(z);
+    // Relevés mensuels partagés par la conciergerie (24/11/2026) : instantanés, à télécharger en PDF ; jamais de code d'accès.
+    const { data: releves } = await supabase.rpc("releves_de", { p_membre: b.dataset.vueEquipe }).catch(() => ({ data: null }));
+    const zr = z.querySelector("[data-releves-proprio]");
+    if (zr && (releves || []).length) {
+      zr.innerHTML = `<b>${tr("Relevés mensuels")}</b>${releves.map((r, i) => `<p class="petit" style="margin:4px 0">${esc(r.donnees?.nomMois || r.mois)} · ${tr("total à refacturer")} ${euros(r.donnees?.totalC || 0)}
+        <button type="button" class="lien-bouton" data-releve="${i}">PDF</button></p>`).join("")}`;
+      traduire(zr);
+      zr.querySelectorAll("[data-releve]").forEach(x => x.onclick = async () => {
+        const r = releves[Number(x.dataset.releve)];
+        const { releveProprietairePdf, remettre } = await import("./pdf.js");
+        await remettre(await releveProprietairePdf(r.donnees, { nomMois: r.donnees?.nomMois || r.mois, conciergerie: r.donnees?.conciergerie || "" }), `cleaneroo-releve-${String(r.mois).slice(0, 7)}.pdf`, "application/pdf", { partager: true });
+      });
+    }
   });
 }
 

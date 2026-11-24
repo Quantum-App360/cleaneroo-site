@@ -4,7 +4,7 @@
 //  • « Rapports » : par mois et par bien — ménages, coût, nuits occupées, taux d'occupation ; export pour les propriétaires ;
 //  • fiche de chaque bien : stock (consommables et linge, alerte sous le seuil) et incidents (casse, panne, à réparer).
 // Stock et incidents sont enregistrés avec le bien (champs stock / incidents). Même espace dans l'appli (Conciergerie.kt).
-import { enregistrerBien, envoyerDemande } from "./donnees.js";
+import { supabase, enregistrerBien, envoyerDemande } from "./donnees.js";
 import { calculer, entreeEstimation } from "./estimation.js";
 import { lancerPaiement } from "./paiement.js";
 import { rubrique } from "./catalogue.js";
@@ -78,10 +78,12 @@ export function editeurIncidents(l) {
     <summary>${icone("outil")} ${tr("Incidents et réparations")} ${ouv.length ? `<span class="tampon spam">${ouv.length} ${tr(ouv.length > 1 ? "ouverts" : "ouvert")}</span>` : ""}</summary>
     <p class="petit">${tr("Casse, panne, objet manquant : notez-le, transmettez-le à votre artisan, marquez-le résolu.")}</p>
     ${liste.slice().reverse().map(x => { const i = liste.indexOf(x); return `<div class="ligne-incident ${x.statut === "RESOLU" ? "resolu" : ""}">
-      <div><b>${esc(x.texte)}</b><span class="petit"> · ${dateCourte(new Date(x.date))}${x.statut === "RESOLU" ? ` · ${icone("valide")} ${tr("Résolu")}` : ""}</span></div>
+      <div><b>${esc(x.texte)}</b><span class="petit"> · ${dateCourte(new Date(x.date))}${x.montantC ? ` · ${euros(x.montantC)}` : ""}${x.chargeProprietaire ? ` · ${tr("à la charge du propriétaire")}` : ""}${x.statut === "RESOLU" ? ` · ${icone("valide")} ${tr("Résolu")}` : ""}</span></div>
       <div class="actions">${x.statut === "RESOLU" ? "" : `<a class="lien-bouton" href="sms:?&body=${encodeURIComponent(`${l.nom || l.rue} (${l.rue}, ${l.ville}) : ${x.texte}`)}">${tr("Envoyer à l'artisan")}</a>
         <button type="button" class="lien-bouton" data-incident-resolu="${esc(l.id)}:${i}">${tr("Marquer résolu")}</button>`}</div></div>`; }).join("")}
-    <form class="ajout-ligne" data-incident-ajout="${esc(l.id)}" novalidate><input class="texte" name="texte" maxlength="160" placeholder="${esc(tr("Ex. : ampoule de la salle de bain grillée"))}">
+    <form class="ajout-ligne ajout-incident" data-incident-ajout="${esc(l.id)}" novalidate><input class="texte" name="texte" maxlength="160" placeholder="${esc(tr("Ex. : ampoule de la salle de bain grillée"))}">
+      <input class="texte montant-incident" name="montant" inputmode="decimal" maxlength="9" placeholder="${esc(tr("Coût (€)"))}" aria-label="${esc(tr("Coût (€)"))}">
+      <label class="case petit"><input type="checkbox" name="charge"> ${tr("À la charge du propriétaire")}</label>
       <button class="lien-bouton" type="submit">${tr("Signaler")}</button></form></details>`;
 }
 
@@ -112,7 +114,10 @@ export function brancherOutilsBiens(vue, biens, recharger) {
     e.preventDefault();
     const l = bien(f.dataset.incidentAjout), texte = f.texte.value.trim();
     if (!texte) return;
-    sauver(l, { incidents: [...incidentsDe(l), { id: `i${Date.now().toString(36)}`, date: new Date().toISOString(), texte, statut: "OUVERT" }].slice(-100) }, "incidents-" + l.id);
+    // Coût et charge du propriétaire (24/11/2026) : repris dans le relevé mensuel du propriétaire, total à refacturer.
+    const montantC = Math.max(0, Math.round(parseFloat(String(f.montant?.value || "").replace(",", ".")) * 100) || 0);
+    sauver(l, { incidents: [...incidentsDe(l), { id: `i${Date.now().toString(36)}`, date: new Date().toISOString(), texte, statut: "OUVERT",
+      ...(montantC ? { montantC } : {}), ...(f.charge?.checked ? { chargeProprietaire: true } : {}) }].slice(-100) }, "incidents-" + l.id);
   });
   vue.querySelectorAll("[data-incident-resolu]").forEach(b => b.onclick = () => {
     const [id, i] = b.dataset.incidentResolu.split(":"), l = bien(id), liste = incidentsDe(l).slice();
@@ -287,6 +292,25 @@ export function chiffresMois(bien, mois, sejours, demandes) {
     coutC: menages.reduce((s, d) => s + (d.estimation_c || 0), 0), sejours: sejours.filter(s => s.bienId === bien.id && s.fin > debut && s.debut < finMois).length };
 }
 
+/* ------------------------------------------------------------------ Relevé mensuel par propriétaire (24/11/2026, repris de l'appli iPhone)
+   Ses logements, nuits occupées, ménages et leur coût, incidents à sa charge, total à refacturer. Jamais de code d'accès ni d'autre propriétaire :
+   seuls le nom, la ville et les chiffres du mois sont repris. Fonction pure, testée. */
+export function releveProprietaire({ biens, mois, sejours, demandes, nomBien = l => l.nom || l.rue || "" }) {
+  const debut = iso(mois), finMois = iso(new Date(mois.getFullYear(), mois.getMonth() + 1, 1));
+  const lignes = biens.map(b => {
+    const c = chiffresMois(b, mois, sejours, demandes);
+    const menages = demandes.filter(d => !["ANNULEE"].includes(d.statut) && d.creneau && memeAdresse(d, b) && d.creneau.slice(0, 10) >= debut && d.creneau.slice(0, 10) < finMois)
+      .sort((x, y) => x.creneau.localeCompare(y.creneau))
+      .map(d => ({ date: d.creneau.slice(0, 10), prestation: rubrique(d.rubrique_id)?.nom || "", statut: d.statut, coutC: d.estimation_c || 0 }));
+    const incidents = incidentsDe(b).filter(i => i.chargeProprietaire && String(i.date || "").slice(0, 10) >= debut && String(i.date || "").slice(0, 10) < finMois)
+      .map(i => ({ date: String(i.date).slice(0, 10), texte: i.texte, montantC: i.montantC || 0 }));
+    const menagesC = menages.reduce((t, x) => t + x.coutC, 0), incidentsC = incidents.reduce((t, x) => t + x.montantC, 0);
+    return { nom: nomBien(b), ville: b.ville || "", nuits: c.nuits, occupation: c.occupation, sejours: c.sejours, menages, incidents, menagesC, incidentsC, totalC: menagesC + incidentsC };
+  });
+  const somme = k => lignes.reduce((t, x) => t + x[k], 0);
+  return { mois: debut.slice(0, 7), biens: lignes, nuits: somme("nuits"), menagesC: somme("menagesC"), incidentsC: somme("incidentsC"), totalC: somme("totalC") };
+}
+
 let moisRapport = null;
 export function blocRapports(boite, { biens, sejours, demandes, nomBien, societe }) {
   if (!boite) return;
@@ -307,7 +331,9 @@ export function blocRapports(boite, { biens, sejours, demandes, nomBien, societe
       <div class="table-rapport" role="table"><div class="tr entete" role="row"><span>${tr("Bien")}</span><span>${tr("Séjours")}</span><span>${tr("Nuits")}</span><span>${tr("Occupation")}</span><span>${tr("Ménages")}</span><span>${tr("Coût")}</span></div>
         ${lignes.map(x => `<div class="tr" role="row"><span><b>${esc(nomBien(x.b))}</b></span><span>${x.sejours}</span><span>${x.nuits}</span>
           <span><i class="jauge-occ"><i style="width:${x.occupation}%"></i></i> ${x.occupation} %</span><span>${x.menages}</span><span>${euros(x.coutC)}</span></div>`).join("")}</div>
-      <p class="petit">${tr("Nuits lues dans vos calendriers et séjours saisis ; coût des ménages au prix estimé de chaque réservation.")}</p>`;
+      <p class="petit">${tr("Nuits lues dans vos calendriers et séjours saisis ; coût des ménages au prix estimé de chaque réservation.")}</p>
+      <div id="releves-proprietaires"></div>`;
+    blocRelevesProprietaires(boite.querySelector("#releves-proprietaires"), { biens, sejours, demandes, nomBien, societe, mois: moisRapport, nomMois });
     boite.querySelectorAll("[data-mois]").forEach(b => b.onclick = () => { moisRapport = new Date(moisRapport.getFullYear(), moisRapport.getMonth() + Number(b.dataset.mois), 1); dessiner(); });
     boite.querySelector("[data-export]").onclick = () => {
       const csv = [["bien", "adresse", "sejours", "nuits", "occupation_pct", "menages", "cout_eur"], ...lignes.map(x => [nomBien(x.b), `${x.b.rue}, ${x.b.codePostal} ${x.b.ville}`, x.sejours, x.nuits, x.occupation, x.menages, (x.coutC / 100).toFixed(2).replace(".", ",")])]
@@ -328,6 +354,37 @@ export function blocRapports(boite, { biens, sejours, demandes, nomBien, societe
     traduire(boite);
   };
   dessiner();
+}
+
+/** Relevés par propriétaire (24/11/2026) : un par propriétaire invité (Équipe), PDF à télécharger et partage dans son espace. */
+async function blocRelevesProprietaires(zone, { biens, sejours, demandes, nomBien, societe, mois, nomMois }) {
+  if (!zone) return;
+  const { data } = await supabase.rpc("mon_equipe").catch(() => ({ data: null }));
+  const proprios = (data || []).filter(m => m.role === "PROPRIETAIRE");
+  if (!zone.isConnected) return;
+  if (!proprios.length) { zone.innerHTML = `<p class="petit muet">${tr("Relevés par propriétaire : invitez vos propriétaires dans « Équipe et propriétaires » pour leur préparer un relevé mensuel.")}</p>`; traduire(zone); return; }
+  const releve = m => releveProprietaire({ biens: biens.filter(b => (m.biens || []).includes(b.id)), mois, sejours, demandes, nomBien });
+  zone.innerHTML = `<h3 class="sous-titre-releves">${tr("Relevés par propriétaire")} · ${esc(nomMois)}</h3>
+    ${proprios.map(m => { const r = releve(m); return `<div class="ligne-releve"><div><b>${esc(m.email)}</b>
+      <span class="petit muet">${r.biens.length} ${tr(r.biens.length > 1 ? "logements" : "logement")} · ${r.nuits} ${tr("nuits")} · ${tr("total à refacturer")} <b>${euros(r.totalC)}</b></span></div>
+      <div class="boutons"><button type="button" class="bouton secondaire petit" data-releve-pdf="${esc(m.id)}">${icone("credit-impot")} PDF</button>
+        <button type="button" class="bouton petit" data-releve-partager="${esc(m.id)}" ${m.statut === "ACTIF" ? "" : "disabled"} title="${esc(m.statut === "ACTIF" ? "" : tr("Invitation pas encore acceptée"))}">${tr("Partager avec le propriétaire")}</button></div>
+      <p class="petit" data-releve-etat="${esc(m.id)}"></p></div>`; }).join("")}`;
+  traduire(zone);
+  const membre = id => proprios.find(m => m.id === id);
+  zone.querySelectorAll("[data-releve-pdf]").forEach(b => b.onclick = async () => {
+    const m = membre(b.dataset.relevePdf); b.disabled = true;
+    try { const { releveProprietairePdf, remettre } = await import("./pdf.js");
+      await remettre(await releveProprietairePdf(releve(m), { nomMois, conciergerie: societe, proprietaire: m.email }), `cleaneroo-releve-${iso(mois).slice(0, 7)}.pdf`, "application/pdf", { partager: true }); }
+    finally { b.disabled = false; }
+  });
+  zone.querySelectorAll("[data-releve-partager]").forEach(b => b.onclick = async () => {
+    const m = membre(b.dataset.relevePartager), etat = zone.querySelector(`[data-releve-etat="${CSS.escape(m.id)}"]`);
+    b.disabled = true;
+    const { data: r, error } = await supabase.rpc("publier_releve", { p_membre: m.id, p_mois: iso(mois), p_donnees: { ...releve(m), conciergerie: societe || "", nomMois } });
+    b.disabled = false;
+    etat.textContent = tr(!error && r === "ok" ? "Relevé partagé : le propriétaire le retrouve dans son espace." : "Le service est momentanément indisponible. Réessayez dans quelques minutes.");
+  });
 }
 
 /* ------------------------------------------------------------------ « Programmer tout » (24/11/2026, repris de l'appli iPhone)
