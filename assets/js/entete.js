@@ -27,9 +27,9 @@ export function typeEspace(p) {
 }
 
 const LIENS = {
-  visiteur: [["#/prestations", "Prestations"], ["#/estimer", "Estimer mon prix"], ["#/comment-ca-marche", "Comment ça marche"]],
+  visiteur: [["#/prestations", "Prestations"], ["#/estimer", "Estimer mon prix"], ["#/comment-ca-marche", "Comment ça marche"], ["#/qui-sommes-nous", "Qui sommes-nous ?"]],
   // Visiteur en mode Cleaneur : l'interface ne parle que du métier de Cleaneur.
-  visiteurCleaneur: [["#/mode-cleaneur", "Devenir Cleaneur"], ["#/comment-ca-marche", "Comment ça marche"]],
+  visiteurCleaneur: [["#/mode-cleaneur", "Devenir Cleaneur"], ["#/comment-ca-marche", "Comment ça marche"], ["#/qui-sommes-nous", "Qui sommes-nous ?"]],
   // L'essentiel, selon l'espace ouvert ; on change d'espace depuis le bouton du compte (à droite).
   particulier: [["#/tableau", "Accueil"], ["#/mes-demandes", "Mes prestations"], ["#/mes-biens", "Mes biens"]],
   entreprise: [["#/compte/entreprise", "Mon espace"], ["#/mes-demandes", "Mes prestations"], ["#/prestations", "Prestations"]],

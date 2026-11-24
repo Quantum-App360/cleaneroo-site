@@ -5,7 +5,7 @@
 const BASE = "https://wmxrmnujuqkdgvdtlnai.supabase.co/rest/v1/visites";
 const CLE = "sb_publishable_6hnw_AhmOT7nOnqYJOVaSQ_XQSMSZ_H";
 const ROUTES_CONNUES = ["", "prestations", "comment-ca-marche", "devenir-cleaneur", "inscription", "compte",
-  "confidentialite", "conditions", "mentions-legales", "mes-demandes", "reserver", "demande"];
+  "confidentialite", "conditions", "mentions-legales", "qui-sommes-nous", "gestion-des-avis", "mes-demandes", "reserver", "demande"];
 
 const surLeSite = () => ["cleaneroo.fr", "www.cleaneroo.fr"].includes(location.hostname);
 

@@ -3854,6 +3854,17 @@ const T = [
   ["Côté passager", "Passenger side", "Lato passeggero", "Lado del pasajero"],
   ["État du côté photographié (rayures, chocs)", "Condition of this side photographed (scratches, dents)", "Stato del lato fotografato (graffi, urti)", "Estado del lado fotografiado (arañazos, golpes)"],
   ["État de l'intérieur photographié", "Condition of the interior photographed", "Stato dell'interno fotografato", "Estado del interior fotografiado"],
+  // Qui sommes-nous ? (prompt 2, partie 8, 24/11/2026). Les passages à valider par Vincent seront traduits avec leur validation.
+  ["Qui sommes-nous ?", "About us", "Chi siamo", "Quiénes somos"],
+  ["Cleaneroo, une entreprise de terrain avant d'être une application", "Cleaneroo, a field business before being an app", "Cleaneroo, un'azienda sul campo prima di essere un'app", "Cleaneroo, una empresa de terreno antes que una aplicación"],
+  ["Notre histoire", "Our story", "La nostra storia", "Nuestra historia"],
+  ["Cleaneroo est née dans le Sud-Est, de l'expérience de la gestion d'équipes d'intervention sur le terrain. Nous savons ce qu'un client attend : quelqu'un de fiable, à l'heure, et la preuve que le travail est fait. Nous avons construit Cleaneroo pour l'offrir au ménage.", "Cleaneroo was born in the South-East, from experience managing field service teams. We know what a client expects: someone reliable, on time, and proof that the work is done. We built Cleaneroo to bring that to cleaning.", "Cleaneroo è nata nel Sud-Est, dall'esperienza nella gestione di squadre di intervento sul campo. Sappiamo cosa si aspetta un cliente: qualcuno di affidabile, puntuale, e la prova che il lavoro è stato fatto. Abbiamo creato Cleaneroo per offrirlo alle pulizie.", "Cleaneroo nació en el Sureste, de la experiencia en la gestión de equipos de intervención sobre el terreno. Sabemos lo que espera un cliente: alguien fiable, puntual, y la prueba de que el trabajo está hecho. Creamos Cleaneroo para ofrecerlo a la limpieza."],
+  ["Le fondateur", "The founder", "Il fondatore", "El fundador"],
+  ["Nos engagements", "Our commitments", "I nostri impegni", "Nuestros compromisos"],
+  ["Où nous intervenons", "Where we work", "Dove interveniamo", "Dónde trabajamos"],
+  ["Lancement dès l'ouverture des réservations, puis dans toute la France au fil des inscriptions des Cleaneurs.", "Launching as soon as bookings open, then across France as Cleaneurs sign up.", "Lancio all'apertura delle prenotazioni, poi in tutta la Francia man mano che i Cleaneur si iscrivono.", "Lanzamiento en cuanto se abran las reservas, y después en toda Francia a medida que se inscriban los Cleaneurs."],
+  ["Nous contacter", "Contact us", "Contattaci", "Contáctanos"],
+  ["Société", "Company", "Società", "Empresa"],
 ];
 
 const DICO = new Map();

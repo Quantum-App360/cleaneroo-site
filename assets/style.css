@@ -2808,3 +2808,16 @@ body.sans-rappel .entete .rappel-entete { display: none; }   /* jamais pendant l
 .formules-vehicule .formule .non-compris { margin: 10px 0 0; font-size: 13.5px; line-height: 1.45; color: var(--texte2); }
 .formules-vehicule .formule .non-compris b { display: block; font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: var(--texte); margin-bottom: 2px; }
 .formules-vehicule .formule p.petit { margin: 8px 0 0; font-size: 13px; line-height: 1.45; color: var(--texte2); }
+
+/* ================================================================ Qui sommes-nous ? (prompt 2, partie 8) */
+.qsn-titre { font-size: 20px; font-weight: 700; max-width: 640px; margin: 10px 0 0; }
+.qsn h2 { font-size: 24px; margin: 28px 0 8px; }
+.qsn h2:first-child { margin-top: 0; }
+.qsn p { line-height: 1.6; }
+.qsn-fondateur { display: flex; gap: 16px; align-items: center; }
+.qsn-fondateur img { width: 96px; height: 96px; border-radius: 50%; object-fit: cover; flex: none; }
+.qsn-fondateur p { margin: 0; }
+.qsn-contact { display: flex; flex-wrap: wrap; gap: 10px; margin: 6px 0 10px; }
+.qsn-societe { margin-top: 18px; }
+.qsn-societe h3 { margin: 0 0 6px; }
+.qsn-societe p { margin: 0; }

@@ -136,6 +136,7 @@ def gabarit(chemin, titre, description, corps, attrs="", indexer=True, og_type="
         <a href="/#/prestations">Prestations</a>
         <a href="/#/estimer">Estimer mon prix</a>
         <a href="/#/comment-ca-marche">Comment ça marche</a>
+        <a href="/#/qui-sommes-nous">Qui sommes-nous ?</a>
         <a href="/#/devenir-cleaneur">Devenir Cleaneur</a>
       </nav>
       <div class="actions-entete">
@@ -162,6 +163,7 @@ def gabarit(chemin, titre, description, corps, attrs="", indexer=True, og_type="
       <div class="liens">
         <a href="/calculateur/">Calculateur de prix</a>
         <a href="/#/comment-ca-marche">Comment ça marche</a>
+        <a href="/#/qui-sommes-nous">Qui sommes-nous ?</a>
         <a href="/#/devenir-cleaneur">Devenir Cleaneur</a>
         <a href="/#/confidentialite">Confidentialité</a>
         <a href="/#/conditions">Conditions d'utilisation</a>

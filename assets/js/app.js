@@ -24,6 +24,7 @@ import { blocModifier, boutonBon, brancherBons, blocConstat } from "./demande-ac
 import { blocSupplementClient } from "./supplement.js";
 import { blocPaiement } from "./paiement.js";
 import { CONDITIONS, CONFIDENTIALITE, MENTIONS, texteLegal, GESTION_AVIS } from "./legal.js";
+import { pageQuiSommesNous } from "./qui-sommes-nous.js";
 import { transitionVitre } from "./vitre.js";
 import { compterPage } from "./compteur.js";
 import { suivreEnDirect, demoSuivi } from "./suivi-live.js";
@@ -616,6 +617,7 @@ const ROUTES = {
   "": pageAccueil, "vitrine": pageAccueil, "prestations": pagePrestations, "comment-ca-marche": pageComment, "devenir-cleaneur": pageDevenir, "mode-cleaneur": pageDevenir,
   "inscription": () => pageInscription(), "confidentialite": pageConfidentialite, "conditions": pageConditions, "mentions-legales": pageMentions,
   "gestion-des-avis": pageGestionAvis,
+  "qui-sommes-nous": pageQuiSommesNous,
   "icones": pageIcones,
 };
 
