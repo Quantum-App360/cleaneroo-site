@@ -3783,6 +3783,20 @@ const T = [
   ["L'adresse exacte s'affiche une fois la mission prise. Touchez une épingle pour voir la mission.", "The exact address is shown once you take the job. Tap a pin to see the job.", "L'indirizzo esatto appare quando prendi la missione. Tocca un segnaposto per vedere la missione.", "La dirección exacta aparece cuando aceptas la misión. Toca un marcador para ver la misión."],
   ["Exemple de journée", "Sample day", "Giornata di esempio", "Día de ejemplo"],
   ["Voici à quoi ressemblera votre journée. Créez votre compte pour recevoir de vraies missions.", "This is what your day will look like. Create your account to receive real jobs.", "Ecco come sarà la tua giornata. Crea il tuo account per ricevere missioni vere.", "Así será tu día. Crea tu cuenta para recibir misiones reales."],
+  // Confiance (prompt 2, partie 2, 24/11/2026) : titre, repères, bande « Vos garanties Cleaneroo ».
+  ["100 % digitalisé et sécurisé", "100% digital and secure", "100% digitali e sicure", "100 % digital y segura"],
+  ["Cleaneroo · Le ménage 100 % digitalisé et sécurisé", "Cleaneroo · Cleaning, 100% digital and secure", "Cleaneroo · Le pulizie, 100% digitali e sicure", "Cleaneroo · La limpieza, 100 % digital y segura"],
+  ["Paiement 100 % sécurisé", "100% secure payment", "Pagamento sicuro al 100%", "Pago 100 % seguro"],
+  ["Compte rendu photo avant / après", "Before / after photo report", "Resoconto fotografico prima / dopo", "Informe fotográfico antes / después"],
+  ["Données protégées", "Protected data", "Dati protetti", "Datos protegidos"],
+  ["Vos garanties Cleaneroo", "Your Cleaneroo guarantees", "Le tue garanzie Cleaneroo", "Tus garantías Cleaneroo"],
+  ["En toute confiance", "With complete peace of mind", "In tutta fiducia", "Con total confianza"],
+  ["Sécurisé, vérifié, assuré : ce que Cleaneroo vous garantit à chaque réservation.", "Secure, verified, insured: what Cleaneroo guarantees with every booking.", "Sicuro, verificato, assicurato: ciò che Cleaneroo ti garantisce a ogni prenotazione.", "Seguro, verificado, asegurado: lo que Cleaneroo te garantiza en cada reserva."],
+  ["Paiement géré par Stripe, leader mondial du paiement en ligne. Votre numéro de carte n'est jamais vu ni conservé par Cleaneroo. Authentification 3-D Secure par votre banque.", "Payment handled by Stripe, the global leader in online payments. Your card number is never seen or stored by Cleaneroo. 3-D Secure authentication by your bank.", "Pagamento gestito da Stripe, leader mondiale dei pagamenti online. Il numero della tua carta non viene mai visto né conservato da Cleaneroo. Autenticazione 3-D Secure da parte della tua banca.", "Pago gestionado por Stripe, líder mundial del pago en línea. Cleaneroo nunca ve ni conserva el número de tu tarjeta. Autenticación 3-D Secure por tu banco."],
+  ["Identité, SIRET, attestation URSSAF et assurance responsabilité civile professionnelle contrôlés avant toute mission, puis une mission test.", "ID, SIRET number, URSSAF certificate and professional liability insurance checked before any job, followed by a test job.", "Identità, SIRET, attestato URSSAF e assicurazione di responsabilità civile professionale verificati prima di qualsiasi missione, poi una missione di prova.", "Identidad, SIRET, certificado URSSAF y seguro de responsabilidad civil profesional verificados antes de cualquier misión, y después una misión de prueba."],
+  ["Preuves photo horodatées", "Time-stamped photo proof", "Prove fotografiche con data e ora", "Pruebas fotográficas con fecha y hora"],
+  ["Avant et après chaque intervention : un dossier clair en cas de question ou de litige.", "Before and after every job: a clear record if there is a question or a dispute.", "Prima e dopo ogni intervento: un fascicolo chiaro in caso di domande o controversie.", "Antes y después de cada servicio: un expediente claro en caso de duda o de litigio."],
+  ["Vos données sont hébergées à Paris et ne sont jamais revendues.", "Your data is hosted in Paris and is never sold.", "I tuoi dati sono ospitati a Parigi e non vengono mai rivenduti.", "Tus datos se alojan en París y nunca se revenden."],
 ];
 
 const DICO = new Map();

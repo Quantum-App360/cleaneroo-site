@@ -2725,3 +2725,12 @@ body.sans-rappel .entete .rappel-entete { display: none; }   /* jamais pendant l
 .encart-rappel .rappel-encart .ico { --ico-aplat: rgba(255, 255, 255, .35); }
 /* Texte à l'encre du logo sur le corail, comme les autres boutons à dégradé : 5,7:1 à 8,3:1 (le blanc plafonnait à 2,9:1) */
 .entete .rappel-entete, .entete .rappel-entete span, .entete .rappel-entete svg, .encart-rappel .rappel-encart, .encart-rappel .rappel-encart span, .encart-rappel .rappel-encart svg { color: var(--encre-logo); }
+
+/* ================================================================ Vos garanties Cleaneroo (prompt 2, partie 2) */
+/* 5 cartes : 3 puis 2 centrées (ordinateur), 2 colonnes (tablette), 1 colonne (téléphone) */
+.reassurance.garanties:not(.compacte) { display: flex; flex-wrap: wrap; justify-content: center; }
+.reassurance.garanties:not(.compacte) .point { flex: 0 1 calc((100% - 28px) / 3); }
+@media (max-width: 980px) { .reassurance.garanties:not(.compacte) .point { flex-basis: calc((100% - 14px) / 2); } }
+@media (max-width: 640px) { .reassurance.garanties:not(.compacte) .point { flex-basis: 100%; } }
+.reassurance.garanties .point p a { color: var(--primaire); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+.heros-texte .preuves { gap: 10px 20px; }

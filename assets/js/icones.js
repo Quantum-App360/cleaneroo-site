@@ -115,6 +115,21 @@ const INTERFACE = {
   ajouter: `<circle class="a" cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/>`,
   // Importer (flèche vers un plateau)
   importer: aplat("M4 15h16v5H4Z") + `<path d="M4 15v3.5A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5V15M12 4v11M7.5 10.5 12 15l4.5-4.5"/>`,
+  // Ajouts du 24/11/2026 (prompt 2, confiance) :
+  // Cadenas (paiement sécurisé, données)
+  cadenas: aplat("M5 10.5h14v10H5Z") + `<rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3M12 14.5v2.5"/>`,
+  // Bouclier coché (vérifié et assuré)
+  "bouclier-coche": aplat("M12 2.8l7.5 3V11.5c0 4.8-3.2 8.3-7.5 9.8-4.3-1.5-7.5-5-7.5-9.8V5.8Z")
+    + `<path d="M12 2.8l7.5 3V11.5c0 4.8-3.2 8.3-7.5 9.8-4.3-1.5-7.5-5-7.5-9.8V5.8Z"/><circle cx="12" cy="11.5" r="4"/><path d="m10.3 11.6 1.2 1.2 2.2-2.3"/>`,
+  // Carte bancaire avec puce
+  "carte-bancaire": aplat("M2.5 9.5h19v7a2 2 0 0 1-2 2h-15a2 2 0 0 1-2-2Z")
+    + `<rect x="2.5" y="5.5" width="19" height="13" rx="2"/><path d="M2.5 9.5h19"/><rect x="5.5" y="12.5" width="3.5" height="3" rx=".6"/><path d="M13 14h5.5"/>`,
+  // Appareil photo à objectif (preuves avant / après)
+  "appareil-photo": `<circle class="a" cx="12" cy="13" r="4.2"/><path d="M3 8.5a2 2 0 0 1 2-2h2.5L9 4.5h6l1.5 2H19a2 2 0 0 1 2 2V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/>`
+    + `<circle cx="12" cy="13" r="4.2"/><circle cx="12" cy="13" r="1.6"/><path d="M5.5 9.5h1.5"/>`,
+  // Équipe (trois personnes)
+  equipe: aplat("M7.5 21v-1.2a4.5 4.5 0 0 1 9 0V21Z")
+    + `<circle cx="12" cy="9.5" r="2.8"/><path d="M7.5 21v-1.2a4.5 4.5 0 0 1 9 0V21"/><circle cx="5.5" cy="10.8" r="2"/><path d="M2.5 19v-.8A3.2 3.2 0 0 1 5.7 15"/><circle cx="18.5" cy="10.8" r="2"/><path d="M21.5 19v-.8a3.2 3.2 0 0 0-3.2-3.2"/>`,
   telephone: aplat("M6.5 3.5h3l1.5 4-2 1.5a11 11 0 0 0 6 6l1.5-2 4 1.5v3a2 2 0 0 1-2 2A16 16 0 0 1 4.5 5.5a2 2 0 0 1 2-2Z")
     + `<path d="M6.5 3.5h3l1.5 4-2 1.5a11 11 0 0 0 6 6l1.5-2 4 1.5v3a2 2 0 0 1-2 2A16 16 0 0 1 4.5 5.5a2 2 0 0 1 2-2Z"/>`,
 };
@@ -131,7 +146,7 @@ export const TEINTES = {
   logement: "turquoise", location: "corail", demenagement: "soleil", vehicule: "ciel", bateau: "ciel", canape: "lilas", chantier: "soleil",
   cuisine: "corail", bureaux: "ciel", commerce: "lilas", "parties-communes": "menthe", vitres: "ciel", exterieurs: "menthe",
   evenement: "rose", specialise: "rose", cleaneurs: "lilas", position: "turquoise", photo: "lilas", calendrier: "ciel",
-  paiement: "soleil", garantie: "menthe", "credit-impot": "soleil", avis: "rose", valide: "menthe",
+  paiement: "soleil", garantie: "menthe", cadenas: "turquoise", "bouclier-coche": "menthe", "carte-bancaire": "soleil", "appareil-photo": "lilas", equipe: "corail", "credit-impot": "soleil", avis: "rose", valide: "menthe",
 };
 export const teinte = nom => TEINTES[nom] || "turquoise";
 

@@ -35,7 +35,7 @@ import { icone, teinte, ICONES_RUBRIQUES, ICONES_INTERFACE } from "./icones.js";
 import { pageTableau, arreterTableau } from "./tableau.js";
 import { compteRenduPieces } from "./controle-ecran.js";
 import { blocFormulesCleaneur, brancherFormulesCleaneur } from "./formules-cleaneur.js";
-import { blocEtapes, blocReassurance, installerRappel, encartAideRappel, bandeauLancement, pageChargement, decorTableau, surveillerFormulaire, envoiRobot, CONTIENT_LIEN } from "./commun.js";
+import { blocEtapes, bandeGaranties, installerRappel, encartAideRappel, bandeauLancement, pageChargement, decorTableau, surveillerFormulaire, envoiRobot, CONTIENT_LIEN } from "./commun.js";
 import "./fond-anime.js";
 import "./oeil.js";
 import "./choix-prestation.js";   // fenêtre animée « Réserver une prestation »   // œil pour afficher le mot de passe
@@ -148,7 +148,7 @@ const NOTIFS = {
   fr: [
     [["position", "{p} est en route", "Arrivée dans {n} min"], ["sur-place", "{p} est sur place", "Arrivée confirmée par géolocalisation"], ["termine", "{p} a terminé", "Toutes les tâches sont cochées"]],
     [["photo", "Compte rendu reçu", "{n} photos avant / après"], ["avis", "Nouvel avis {e}", "« Impeccable, merci {p} ! »"], ["valide", "Tâches validées", "{n} tâches cochées et horodatées"]],
-    [["paiement", "Paiement protégé", "Crédit d'impôt selon éligibilité"], ["instantane", "Prix affiché tout de suite", "Sans devis ni attente"], ["calendrier", "Réservé en 2 minutes", "{v} · créneau confirmé"]],
+    [["paiement", "Paiement 100 % sécurisé", "Crédit d'impôt selon éligibilité"], ["instantane", "Prix affiché tout de suite", "Sans devis ni attente"], ["calendrier", "Réservé en 2 minutes", "{v} · créneau confirmé"]],
   ],
   en: [
     [["position", "{p} is on the way", "Arriving in {n} min"], ["sur-place", "{p} is on site", "Arrival confirmed by geolocation"], ["termine", "{p} has finished", "Every task is ticked"]],
@@ -250,7 +250,7 @@ const FONCTIONS_DIGITALES = [
   ["position", "Suivi en direct", "Votre Cleaneur sur la carte, comme une livraison, avec son heure d'arrivée."],
   ["photo", "Compte rendu photo", "Chaque pièce photographiée avant et après, horodatée, dans votre espace."],
   ["calendrier", "Agenda connecté", "Calendriers Airbnb et Booking reliés : les ménages se programment en un geste."],
-  ["paiement", "Paiement protégé", "Vous payez en réservant ; l'argent reste bloqué et n'est versé au Cleaneur qu'après votre validation."],
+  ["paiement", "Paiement 100 % sécurisé", "Vous payez en réservant ; l'argent reste bloqué et n'est versé au Cleaneur qu'après votre validation."],
 ];
 
 /** Maquette de l'application : carte du trajet, statut qui change, compte rendu photo et paiement (aucune image). */
@@ -279,6 +279,9 @@ function maquetteAppli(m) {
 /** Compte connecté (session Supabase lue avant chaque page, ou profil mémorisé) : l'accueil n'invite plus à s'inscrire. */
 let sessionActive = false;
 const connecte = () => sessionActive || !!profilMemorise();
+/** Repères sous le formulaire de l'accueil (prompt 2, partie 2). */
+const REPERES_HEROS = [["carte-bancaire", "Paiement 100 % sécurisé"], ["bouclier-coche", "Cleaneurs vérifiés et assurés"],
+  ["appareil-photo", "Compte rendu photo avant / après"], ["cadenas", "Données protégées"]];
 function pageAccueil() {
   const m = messagesNotif();
   return `
@@ -286,7 +289,7 @@ function pageAccueil() {
     <div class="conteneur heros-grille">
       <div class="heros-texte">
         ${reservationsFermees() ? `<span class="pastille-lancement"><i></i>Réservations bientôt ouvertes</span>` : ""}
-        <h1><span>Le ménage</span><span class="ponct">,</span> <span class="degrade-texte"><span>100 % digitalisé</span><span class="ponct">.</span></span></h1>
+        <h1><span>Le ménage</span><span class="ponct">,</span> <span class="degrade-texte"><span>100 % digitalisé et sécurisé</span><span class="ponct">.</span></span></h1>
         <p class="heros-sous">Réservez en deux minutes, suivez votre Cleaneur en direct et recevez un compte rendu photo. Vous ne payez qu'une fois le travail validé.</p>
         <form class="recherche-heros" id="express">
           <label><span>Débuter ma prestation</span><select name="rubrique" required><option value="" disabled selected>Choisir une prestation</option>${RUBRIQUES.map(r => `<option value="${r.id}">${r.nom}</option>`).join("")}</select></label>
@@ -294,12 +297,12 @@ function pageAccueil() {
         </form>
         <button type="button" class="lien-rappel-heros" data-rappel>${icone("telephone")}<span>Une question ? <b>Être rappelé gratuitement</b></span></button>
         ${blocRecommander()}
-        <ul class="preuves"><li>${icone("garantie")}Cleaneurs vérifiés</li><li>${icone("paiement")}Payé après validation</li><li>${icone("credit-impot")}Crédit d'impôt selon éligibilité</li></ul>
+        <ul class="preuves">${REPERES_HEROS.map(([ic, t]) => `<li>${icone(ic)}${t}</li>`).join("")}</ul>
       </div>
       <div class="heros-visuel" aria-hidden="true">
         <span class="forme forme-1"></span><span class="forme forme-2"></span><span class="forme forme-3"></span>
         ${maquetteAppli(m)}
-        <div class="flottant flottant-1" data-teinte="menthe">${icone("garantie", { tuile: true })}<b>Cleaneurs vérifiés</b></div>
+        <div class="flottant flottant-1" data-teinte="menthe">${icone("bouclier-coche", { tuile: true })}<b>Cleaneurs vérifiés et assurés</b></div>
         <div class="flottant flottant-2" data-teinte="soleil">${icone("credit-impot", { tuile: true })}<b>Crédit d'impôt<small>selon éligibilité</small></b></div>
       </div>
     </div>
@@ -329,12 +332,12 @@ function pageAccueil() {
   <section class="bloc bloc-doux"><div class="conteneur">
     ${titreSection("Comment ça marche ?", "Du clic à la validation, tout se passe en ligne.", "En 5 étapes")}
     ${blocEtapes()}
-    <div class="revele" style="margin-top:34px">${blocReassurance()}</div>
     <div class="credit revele">
       <div class="pastille-credit">${icone("credit-impot")}</div>
       <div><h3>Crédit d'impôt selon éligibilité</h3><p>Possible si le Cleaneur est déclaré « services à la personne » : le ménage, les vitres et les textiles à votre domicile peuvent alors ouvrir droit à un crédit d'impôt, selon votre situation et dans la limite des plafonds légaux. L'attestation fiscale des prestations éligibles vous est envoyée chaque mois.</p></div>
     </div>
   </div></section>
+  ${bandeGaranties()}
   ${reservationsFermees() && !connecte() ? `<section class="appel-2026"><div class="conteneur appel-grille"><div class="revele"><span class="pastille-lancement sombre"><i></i>Bientôt</span>
       <h2>Prêts pour l'ouverture ?</h2><p>Inscrivez-vous maintenant : les premiers inscrits sont prévenus en priorité.</p>
       <div class="boutons"><a class="bouton clair" href="#/estimer">Estimer mon prix</a></div></div>

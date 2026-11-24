@@ -80,17 +80,23 @@ export const blocEtapes = (liste = ETAPES) => `<div class="etapes etroit">${list
   <div class="etape"><div class="pastille">${icone(e, { tuile: true })}<b>${i + 1}</b></div>
     <div class="carte"><div class="surtitre">ÉTAPE ${i + 1}</div><h3>${t}</h3><p class="muet" style="margin:6px 0 0">${d}</p></div></div>`).join("")}</div>`;
 
-/* ------------------------------------------------------------------ Réassurance (accueil, pages ville, étape 5 de la réservation) */
+/* ------------------------------------------------------------------ Vos garanties Cleaneroo (accueil, pages ville, étape 5, Qui sommes-nous) */
+/** Les 5 garanties (prompt 2, partie 2) : textes repris mot pour mot, chacun vrai aujourd'hui. */
+export const GARANTIES = [
+  ["carte-bancaire", "Paiement 100 % sécurisé", "Paiement géré par Stripe, leader mondial du paiement en ligne. Votre numéro de carte n'est jamais vu ni conservé par Cleaneroo. Authentification 3-D Secure par votre banque."],
+  ["bouclier-coche", "Cleaneurs vérifiés et assurés", "Identité, SIRET, attestation URSSAF et assurance responsabilité civile professionnelle contrôlés avant toute mission, puis une mission test."],
+  ["cleaneurs", "Garantie remplacement", "Votre Cleaneur ne peut pas venir ? Un remplaçant vérifié en priorité, sinon annulation sans frais : vous êtes remboursé."],
+  ["appareil-photo", "Preuves photo horodatées", "Avant et après chaque intervention : un dossier clair en cas de question ou de litige."],
+  ["cadenas", "Données protégées", "Vos données sont hébergées à Paris et ne sont jamais revendues.", "/#/confidentialite", "Politique de confidentialité"],
+];
 export function blocReassurance({ compact = false } = {}) {
-  const lignes = [
-    ["cleaneurs", "Cleaneurs vérifiés", "Identité, SIRET, attestation URSSAF et assurance RC Pro contrôlés avant activation, puis une mission test."],
-    ["garantie", "Garantie remplacement", "Votre Cleaneur ne peut pas venir ? Un remplaçant vérifié en priorité, sinon annulation sans frais : vous êtes remboursé."],
-    ["paiement", "Paiement protégé", "Payé en réservant, versé au Cleaneur seulement après votre validation."],
-    ["photo", "Preuves photo avant et après", "L'état du logement à l'arrivée et au départ du Cleaneur (location saisonnière)."],
-  ];
-  return `<div class="reassurance${compact ? " compacte" : ""}">${lignes.map(([ic, t, d]) =>
-    `<div class="point">${icone(ic, { tuile: !compact })}<div><b>${t}</b><p>${d}</p></div></div>`).join("")}</div>`;
+  return `<div class="reassurance garanties${compact ? " compacte" : ""}">${GARANTIES.map(([ic, t, d, lien, texteLien]) =>
+    `<div class="point">${icone(ic, { tuile: !compact })}<div><b>${t}</b><p>${d}${lien ? ` <a href="${lien}">${texteLien}</a>` : ""}</p></div></div>`).join("")}</div>`;
 }
+/** Bande « Vos garanties Cleaneroo » (accueil, juste après « Comment ça marche ? »). */
+export const bandeGaranties = () => `<section class="bloc bande-garanties"><div class="conteneur">
+  <div class="titre-section revele"><span class="surtitre">En toute confiance</span><h2>Vos garanties Cleaneroo</h2><p class="muet">Sécurisé, vérifié, assuré : ce que Cleaneroo vous garantit à chaque réservation.</p></div>
+  <div class="revele">${blocReassurance()}</div></div></section>`;
 
 /* ------------------------------------------------------------------ Être rappelé */
 const CRENEAUX = [["matin", "Matin", "Merci, nous vous rappelons le matin."], ["midi", "Midi", "Merci, nous vous rappelons à midi."],

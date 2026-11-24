@@ -21,6 +21,8 @@ import { RUBRIQUES as RUBRIQUES_CAT, rubrique, pastille, tacheChiffree, tachesPo
   import { niveauRotation } from "./assets/js/conciergerie.js";
 import { menageTientEntreVoyageurs } from "./assets/js/estimation.js";
 import { bornesPeriode } from "./assets/js/periodes.js";
+import { GARANTIES } from "./assets/js/commun.js";
+import { ICONES } from "./assets/js/icones.js";
 import { releveProprietaire, listeCourses, texteCourses, dossiersDommages } from "./assets/js/conciergerie.js";
 import { planProgrammerTout, instantParis, avecHoraires, erreurHoraires, departDe, arriveeDe } from "./assets/js/conciergerie.js";
 import { etatOffreConciergerie, offreConciergerieOuverte, fraisServicePct, reservationsOuvertes, fixerOuverture } from "./assets/js/regles.js";
@@ -747,6 +749,12 @@ import("./assets/js/catalogue.js").then(() => {});
   egal("formules : ordre croissant et plancher horaire respectés partout", pb.slice(0, 5).join(" ; "), "");
 }
 
+// Confiance (prompt 2, partie 2) : 5 garanties, icônes existantes, aucune promesse de paiement fausse
+egal("garanties : 5 cartes", GARANTIES.length, 5);
+egal("garanties : toutes les icônes existent", GARANTIES.every(g => !!ICONES[g[0]]), true);
+egal("icônes de confiance créées", ["cadenas", "bouclier-coche", "carte-bancaire", "appareil-photo", "equipe"].every(n => !!ICONES[n]), true);
+egal("garanties : aucune promesse « payé après validation »", GARANTIES.some(g => /après validation|avant validation|qu'une fois/.test(g[2])), false);
+egal("garanties : lien vers la confidentialité", GARANTIES[4][3], "/#/confidentialite");
 const ok = res.filter(r => r[1]).length;
 document.getElementById("bilan").textContent = `${ok} tests sur ${res.length} réussis`;
 document.getElementById("liste").innerHTML = res.map(([n, b, d]) => `<li class="${b ? "ok" : "ko"}">${b ? "✓" : "✗"} ${n}${b ? "" : " — " + d}</li>`).join("");
