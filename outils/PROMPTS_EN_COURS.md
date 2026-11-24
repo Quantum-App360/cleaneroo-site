@@ -189,3 +189,851 @@ Texte complet transmis par Michael ; à exécuter par Vincent dans Xcode (build/
 Lien « ‹ Accueil Cleaneroo » dans l'espace Cleaneur et les espaces client (fondu simple, 44 pt, VoiceOver) ; journée de démonstration
 du Cleaneur crédible (2-3 missions sans chevauchement, 6 à 8 h, statuts cohérents, chiffres = somme) ; test automatique ; build/bak45,
 build/lot45.diff, ARCHITECTURE.md.
+
+## Prompt 4 — Refonte totale du produit (reçu le 24/11, 14 h 44, après les prompts 1 à 3)
+
+# CLEANEROO — REFONTE TOTALE DU PRODUIT
+
+Tu dois réaliser une **refonte complète de Cleaneroo**, à la fois visuelle, UX, UI, fonctionnelle et structurelle.
+
+Il ne s'agit PAS d'un simple redesign esthétique.
+
+Je veux que tu considères Cleaneroo comme un produit qui doit pouvoir rivaliser visuellement et ergonomiquement avec les meilleures plateformes modernes de réservation et de services.
+
+**Ne te contente pas d'améliorer quelques composants. Analyse l'ensemble du produit et repense-le de manière cohérente.**
+
+---
+
+# 1. OBJECTIF GLOBAL
+
+Transformer Cleaneroo en une plateforme :
+
+- moderne
+- premium
+- immersive
+- vivante
+- intuitive
+- rapide
+- rassurante
+- professionnelle
+- différenciante
+- évolutive
+
+L'application doit donner l'impression d'un produit technologique abouti.
+
+Je veux que l'utilisateur ressente une vraie identité Cleaneroo dès les premières secondes.
+
+**Cleaneroo ne doit pas ressembler à un template SaaS ou à une marketplace générique.**
+
+---
+
+# 2. REFONTE DES DEUX UNIVERS
+
+Il existe deux expériences principales :
+
+## ESPACE CLIENT
+
+Le client vient pour :
+
+**chercher → explorer → comparer → choisir → réserver → payer → suivre → évaluer**
+
+Son interface doit donc être orientée :
+
+- découverte
+- simplicité
+- confiance
+- rapidité
+- réservation
+- localisation
+- transparence
+- suivi
+
+## ESPACE CLEANER
+
+Le Cleaner vient pour :
+
+**recevoir → analyser → accepter → organiser → se déplacer → réaliser → suivre ses revenus**
+
+Son interface doit être orientée :
+
+- efficacité
+- planning
+- missions
+- revenus
+- disponibilité
+- navigation
+- communication
+- performance
+
+### IMPORTANT
+
+Ne construis PAS deux interfaces identiques avec simplement des menus différents.
+
+Les deux espaces doivent avoir :
+
+- leurs propres dashboards
+- leurs propres priorités
+- leurs propres composants
+- leurs propres parcours
+- leurs propres informations importantes
+- leurs propres interactions
+
+Mais ils doivent partager la même identité Cleaneroo.
+
+---
+
+# 3. CRÉER UNE VÉRITABLE IDENTITÉ CLEANEROO
+
+Conserve strictement le **code couleur actuel de Cleaneroo**.
+
+Ne change pas arbitrairement les couleurs de la marque.
+
+Tu peux cependant travailler :
+
+- nuances
+- gradients
+- transparences
+- ombres
+- profondeurs
+- contrastes
+- états actifs
+- états hover
+- effets lumineux
+
+Je veux créer un véritable :
+
+## CLEANEROO DESIGN SYSTEM
+
+avec :
+
+- palette
+- typographie
+- boutons
+- cartes
+- badges
+- inputs
+- menus
+- modales
+- notifications
+- icônes
+- illustrations
+- composants cartographiques
+- animations
+- transitions
+- rayons
+- espacements
+- ombres
+- effets de profondeur
+
+Tous les écrans doivent utiliser ce système.
+
+---
+
+# 4. LA CARTE DOIT DEVENIR LA SIGNATURE DE CLEANEROO
+
+C'est une priorité absolue.
+
+Je veux que la carte soit l'un des éléments les plus impressionnants du produit.
+
+L'utilisateur doit avoir l'impression de **plonger dans son environnement**.
+
+Évite absolument l'effet :
+
+> "Google Maps intégré dans une application."
+
+La carte doit sembler appartenir à Cleaneroo.
+
+---
+
+## CARTE CLIENT
+
+Elle doit permettre de :
+
+- voir les Cleaners disponibles
+- voir les zones couvertes
+- explorer son environnement
+- rechercher une prestation
+- filtrer les résultats
+- sélectionner un Cleaner
+- voir sa disponibilité
+- ouvrir sa fiche
+- réserver
+
+Utiliser lorsque possible :
+
+- profondeur
+- relief
+- bâtiments
+- couleurs
+- ombres
+- effets 3D
+- animations
+- marqueurs personnalisés
+- clusters intelligents
+- zones d'intervention
+- badges
+- indicateurs de disponibilité
+
+Les marqueurs doivent être immédiatement reconnaissables.
+
+Lorsqu'un Cleaner est sélectionné :
+
+**la carte doit réagir.**
+
+Exemples :
+
+- zoom
+- animation du marqueur
+- mise en évidence
+- ouverture d'une fiche
+- déplacement de la caméra
+- affichage des disponibilités
+
+---
+
+# 5. CARTE CLEANER
+
+Le Cleaner doit disposer d'une expérience cartographique complètement différente.
+
+La carte doit lui permettre de voir :
+
+- missions
+- lieux d'intervention
+- prochaines prestations
+- itinéraires
+- zones favorites
+- zones d'activité
+- disponibilité
+
+Elle doit être conçue comme un **outil de travail**.
+
+Le Cleaner doit comprendre instantanément :
+
+**où je dois aller, quand, pour quelle prestation et dans quel ordre.**
+
+---
+
+# 6. ESPACE CLIENT — REFONTE COMPLÈTE
+
+Repenser entièrement le dashboard client.
+
+La page d'accueil doit être contextuelle.
+
+Exemples :
+
+Bonjour,
+
+**Que souhaitez-vous faire aujourd'hui ?**
+
+Puis :
+
+- rechercher une prestation
+- voir les professionnels disponibles
+- réserver
+- consulter une réservation
+- suivre une prestation
+- retrouver ses prestations favorites
+
+Afficher intelligemment :
+
+- prochaine réservation
+- historique
+- favoris
+- recommandations
+- promotions éventuelles
+- prestations proches
+- disponibilité locale
+
+Éviter les dashboards remplis de blocs inutiles.
+
+Chaque élément doit avoir une utilité.
+
+---
+
+# 7. RECHERCHE CLIENT
+
+Créer une recherche extrêmement fluide.
+
+Le client doit pouvoir rechercher :
+
+- type de prestation
+- lieu
+- date
+- heure
+- fréquence
+- budget
+
+Les résultats doivent pouvoir être affichés :
+
+### LISTE
+
+et
+
+### CARTE
+
+avec possibilité de basculer instantanément entre les deux.
+
+---
+
+# 8. FICHES CLEANER
+
+Repenser totalement les profils.
+
+Afficher clairement :
+
+- photo
+- nom
+- note
+- nombre de prestations
+- expérience
+- prestations proposées
+- zone d'intervention
+- disponibilité
+- prix
+- avis
+- badges
+- informations de confiance
+
+Créer une hiérarchie visuelle très forte.
+
+Le client doit pouvoir répondre rapidement à :
+
+**Puis-je lui faire confiance ?**
+
+**Est-il disponible ?**
+
+**Combien cela coûte ?**
+
+**Que propose-t-il ?**
+
+---
+
+# 9. RÉSERVATION
+
+Repenser le parcours de réservation.
+
+Le parcours idéal :
+
+**Prestation → lieu → date → heure → options → Cleaner → prix → confirmation → paiement**
+
+Afficher constamment :
+
+- prix
+- durée
+- date
+- heure
+- lieu
+- Cleaner sélectionné
+
+Éviter toute surprise.
+
+---
+
+# 10. ESPACE CLEANER — NOUVEAU DASHBOARD
+
+Le dashboard Cleaner doit être conçu comme un véritable **centre de contrôle professionnel**.
+
+Il doit immédiatement afficher :
+
+- missions du jour
+- prochaines missions
+- revenus
+- disponibilité
+- demandes en attente
+- notifications
+- évaluations
+- statistiques
+
+Créer une hiérarchie :
+
+### URGENT
+Ce que le Cleaner doit faire maintenant.
+
+### AUJOURD'HUI
+Ce qui est prévu aujourd'hui.
+
+### À VENIR
+Les prochaines missions.
+
+### PERFORMANCE
+Revenus, notes, réservations, etc.
+
+---
+
+# 11. PLANNING CLEANER
+
+Créer un planning extrêmement clair.
+
+Le Cleaner doit pouvoir voir :
+
+- jour
+- semaine
+- mois
+
+avec :
+
+- horaires
+- prestations
+- durée
+- adresse
+- statut
+- temps de déplacement
+
+Prévoir la détection des conflits horaires.
+
+---
+
+# 12. MISSIONS CLEANER
+
+Chaque mission doit avoir une page dédiée.
+
+Afficher :
+
+- client
+- adresse
+- carte
+- itinéraire
+- type de prestation
+- durée
+- prix
+- instructions
+- photos éventuelles
+- heure
+- statut
+
+Étapes possibles :
+
+**Nouvelle demande**
+
+↓
+
+**Acceptée**
+
+↓
+
+**En route**
+
+↓
+
+**Arrivé**
+
+↓
+
+**Prestation en cours**
+
+↓
+
+**Terminée**
+
+Chaque changement de statut doit être clair et éventuellement accompagné d'une micro-interaction.
+
+---
+
+# 13. REVENUS CLEANER
+
+Créer un véritable dashboard financier.
+
+Afficher :
+
+- revenus du jour
+- semaine
+- mois
+- année
+- missions réalisées
+- moyenne par mission
+- évolution
+- paiements
+- historique
+
+Utiliser des graphiques modernes mais simples à comprendre.
+
+---
+
+# 14. DISPONIBILITÉS
+
+Le Cleaner doit pouvoir gérer facilement :
+
+- horaires
+- jours disponibles
+- zones
+- périodes d'indisponibilité
+- congés
+- prestations acceptées
+
+L'expérience doit être extrêmement rapide.
+
+---
+
+# 15. NOTIFICATIONS
+
+Créer un véritable centre de notifications.
+
+Exemples :
+
+- nouvelle demande
+- réservation confirmée
+- modification
+- annulation
+- nouveau message
+- paiement
+- nouvel avis
+- rappel de mission
+
+Différencier visuellement les notifications importantes.
+
+---
+
+# 16. MESSAGERIE
+
+Créer une messagerie propre entre :
+
+Client ↔ Cleaner
+
+Elle doit permettre :
+
+- messages
+- photos si nécessaire
+- informations de rendez-vous
+- notifications contextuelles
+
+La conversation doit rester liée à la réservation.
+
+---
+
+# 17. AVIS ET RÉPUTATION
+
+Créer un système de réputation visuellement fort.
+
+Afficher :
+
+- note globale
+- nombre d'avis
+- répartition
+- avis récents
+- badges
+- taux de satisfaction
+
+Le système doit favoriser la confiance.
+
+---
+
+# 18. MICRO-INTERACTIONS
+
+Ajouter des animations intelligentes :
+
+- transitions
+- hover
+- sélection
+- ouverture de cartes
+- changement de statut
+- confirmation
+- chargement
+- réservation
+- paiement
+- notifications
+
+Mais :
+
+**pas d'animation gratuite.**
+
+Chaque animation doit améliorer la compréhension ou donner du feedback.
+
+---
+
+# 19. ÉTATS À NE PAS OUBLIER
+
+Pour chaque page, prévoir :
+
+- chargement
+- skeleton
+- vide
+- erreur
+- succès
+- indisponibilité
+- réservation annulée
+- paiement échoué
+- connexion perdue
+- aucun résultat
+- aucun Cleaner disponible
+
+Une application premium ne doit jamais laisser l'utilisateur face à un écran vide ou incompréhensible.
+
+---
+
+# 20. RESPONSIVE
+
+Optimiser séparément :
+
+### MOBILE CLIENT
+
+### MOBILE CLEANER
+
+### DESKTOP CLIENT
+
+### DESKTOP CLEANER
+
+Ne jamais simplement réduire la version desktop.
+
+Le mobile doit avoir sa propre logique d'interface.
+
+---
+
+# 21. ACCESSIBILITÉ
+
+Vérifier :
+
+- contraste
+- tailles de texte
+- zones tactiles
+- navigation
+- lisibilité
+- feedback visuel
+- états actifs
+
+---
+
+# 22. PERFORMANCE
+
+La refonte doit rester performante.
+
+Optimiser :
+
+- images
+- carte
+- 3D
+- animations
+- composants
+- chargement
+- données
+- responsive
+
+La sensation doit rester fluide.
+
+---
+
+# 23. ARCHITECTURE
+
+Avant de modifier le code :
+
+analyse l'architecture actuelle.
+
+Identifie :
+
+- composants réutilisables
+- duplication
+- incohérences
+- dette technique
+- problèmes de responsive
+- problèmes de performance
+- problèmes UX
+
+Ne casse aucune fonctionnalité existante.
+
+Si une refonte technique est nécessaire, procède proprement.
+
+---
+
+# 24. NE PAS INVENTER DES FONCTIONNALITÉS INUTILES
+
+Tu peux proposer de nouvelles fonctionnalités uniquement lorsqu'elles améliorent réellement :
+
+- conversion
+- confiance
+- réservation
+- fidélisation
+- productivité du Cleaner
+
+Ne transforme pas Cleaneroo en usine à gaz.
+
+Chaque nouvelle fonctionnalité doit avoir une justification UX ou business.
+
+---
+
+# 25. AUDIT PAGE PAR PAGE
+
+Avant de finaliser la refonte, passe systématiquement sur :
+
+**TOUTES LES PAGES**
+
+et
+
+**TOUTES LES PRESTATIONS**
+
+Pour chacune, vérifie :
+
+- design
+- cohérence
+- responsive
+- navigation
+- contenu
+- CTA
+- couleurs
+- accessibilité
+- performance
+- état vide
+- chargement
+- erreur
+- mobile
+- desktop
+
+Aucune page ne doit rester visuellement en arrière par rapport au reste du produit.
+
+---
+
+# 26. COHÉRENCE CLIENT / CLEANER
+
+Les deux univers doivent être connectés.
+
+Une action côté Client doit avoir une conséquence logique côté Cleaner.
+
+Exemple :
+
+Client réserve
+
+↓
+
+Cleaner reçoit la demande
+
+↓
+
+Cleaner accepte
+
+↓
+
+Client reçoit confirmation
+
+↓
+
+Cleaner se rend sur place
+
+↓
+
+Client voit le statut
+
+↓
+
+Prestation terminée
+
+↓
+
+Paiement
+
+↓
+
+Avis
+
+Le design doit rendre cette chaîne évidente.
+
+---
+
+# 27. OBJECTIF BUSINESS
+
+La refonte ne doit pas uniquement être belle.
+
+Elle doit améliorer :
+
+- conversion
+- nombre de réservations
+- confiance
+- rétention
+- fréquence d'utilisation
+- taux d'acceptation des missions
+- productivité des Cleaners
+
+Chaque écran doit avoir un objectif.
+
+---
+
+# 28. DIRECTION ARTISTIQUE
+
+Je veux une esthétique :
+
+**premium + technologie + humain + proximité + propreté**
+
+Éviter :
+
+- design froid
+- interface générique
+- surcharge
+- effets 3D gratuits
+- gradients excessifs
+- animations inutiles
+- aspect "template"
+
+La technologie doit servir l'expérience.
+
+---
+
+# 29. LE NIVEAU DE FINITION ATTENDU
+
+Je veux que tu travailles comme une équipe composée de :
+
+- UX designer
+- UI designer
+- product designer
+- développeur frontend
+- développeur mobile
+- expert cartographie
+- expert responsive
+- expert accessibilité
+- expert conversion
+
+Ne pense pas uniquement à l'apparence.
+
+Pense à l'ensemble du produit.
+
+---
+
+# 30. PRIORITÉ ABSOLUE
+
+Si tu dois choisir où investir le plus d'efforts :
+
+### 1. CARTE
+
+### 2. ESPACE CLIENT
+
+### 3. ESPACE CLEANER
+
+### 4. RÉSERVATION
+
+### 5. FICHES CLEANER
+
+### 6. DESIGN SYSTEM
+
+### 7. ANIMATIONS / MICRO-INTERACTIONS
+
+### 8. PERFORMANCE
+
+---
+
+# CONSIGNE FINALE
+
+Je ne veux pas une simple amélioration cosmétique.
+
+Je veux que tu **repenses Cleaneroo comme un produit complet**.
+
+Analyse l'existant.
+
+Comprends ce qui fonctionne.
+
+Identifie ce qui doit être amélioré.
+
+Puis réalise une refonte cohérente de l'ensemble.
+
+**Ne détruis pas ce qui fonctionne. Améliore-le.**
+
+Et surtout :
+
+**ne laisse aucune page, aucun espace utilisateur, aucune prestation ou aucun parcours avec un niveau de finition inférieur au reste de l'application.**
+
+Le résultat final doit donner cette sensation :
+
+> **"Cleaneroo est une plateforme moderne, premium, immersive et réellement professionnelle."**
+
+La carte doit être sa signature.
+
+Le parcours Client doit être extrêmement simple.
+
+L'espace Cleaner doit être extrêmement efficace.
+
+Et les deux doivent former un seul écosystème cohérent.
