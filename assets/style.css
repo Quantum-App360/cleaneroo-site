@@ -2821,3 +2821,12 @@ body.sans-rappel .entete .rappel-entete { display: none; }   /* jamais pendant l
 .qsn-societe { margin-top: 18px; }
 .qsn-societe h3 { margin: 0 0 6px; }
 .qsn-societe p { margin: 0; }
+.qsn-tete { padding: 40px 0 70px; }
+.surtitre-qsn { display: inline-block; font-size: 13px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; opacity: .85; margin-bottom: 6px; }
+.qsn-accroche { font-size: 19px; line-height: 1.5; max-width: 680px; margin: 12px 0 0; }
+.qsn-cotes .carte h3 { margin: 12px 0 6px; }
+.qsn-cotes .carte p { margin: 0; line-height: 1.55; }
+.qsn-aides { list-style: none; padding: 0; margin: 6px 0 14px; display: grid; gap: 8px; }
+.qsn-aides li { display: flex; gap: 10px; align-items: flex-start; line-height: 1.5; }
+.qsn-aides .ico { flex: none; width: 20px; height: 20px; color: var(--primaire); margin-top: 2px; }
+.qsn-conclusion { margin: 28px 0 0; padding: 18px 22px; border-left: 4px solid var(--corail); border-radius: 0 var(--rayon-l) var(--rayon-l) 0; background: var(--surface); box-shadow: var(--ombre); font-size: 18px; font-weight: 600; line-height: 1.55; color: var(--texte); }

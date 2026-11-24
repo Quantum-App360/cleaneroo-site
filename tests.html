@@ -22,7 +22,7 @@ import { RUBRIQUES as RUBRIQUES_CAT, rubrique, pastille, tacheChiffree, tachesPo
 import { menageTientEntreVoyageurs } from "./assets/js/estimation.js";
 import { bornesPeriode } from "./assets/js/periodes.js";
 import { formuleStandardVehicule } from "./assets/js/commun.js";
-import { textesQuiSommesNous, encadreSociete, A_VALIDER } from "./assets/js/qui-sommes-nous.js";
+import { pageQuiSommesNous, encadreSociete, QUI_SOMMES_NOUS } from "./assets/js/qui-sommes-nous.js";
 import { GARANTIES, PAIEMENT_COURT, PAIEMENT_LONG, moyensPaiement, texteAnnulation, contenuAvisPublics, AVIS_MINIMUM, mentionCodePostal, ligneZone } from "./assets/js/commun.js";
 import { ICONES } from "./assets/js/icones.js";
 import { releveProprietaire, listeCourses, texteCourses, dossiersDommages } from "./assets/js/conciergerie.js";
@@ -788,11 +788,12 @@ egal("véhicule : remises inchangées (10 % et 15 %)", rubrique("car").packs.map
 egal("véhicule : intérieur + 4 côtés contrôlés", piecesDe("car", { taches: ["aspiration", "lavage_main"] }).map(z => z.id).join(), "interieur,avant,conducteur,arriere,passager");
 egal("véhicule : lavage coché sur chaque côté", piecesDe("car", { taches: ["lavage_main"] }).slice(1).every(z => z.taches.some(t => t.id === "lavage_main")), true);
 egal("véhicule : pas de tâche en double", piecesDe("car", { taches: ["aspiration", "tableau"] })[0].taches.map(t => t.id).join(), "aspiration,tableau");
-// Qui sommes-nous ? (prompt 2, partie 8) : rien d'invérifié tant que Vincent n'a pas validé, encadré Société masqué sans données
-egal("qui sommes-nous : non validé par défaut", A_VALIDER.valide, false);
-const tq = textesQuiSommesNous();
-egal("qui sommes-nous : ni durée, ni nom, ni zone, ni date sans validation", /six ans|Rhode|SCOFITEC|Var|décembre/.test(tq.histoire + tq.zones) || tq.fondateur !== null, false);
-egal("qui sommes-nous : textes complets une fois validés", textesQuiSommesNous({ ...A_VALIDER, valide: true }).histoire.includes("plus de six ans"), true);
+// Qui sommes-nous ? (prompt de Michael, 24/11/2026) : projet anonyme, aucune identité, aucun cliché
+const qsn = pageQuiSommesNous();
+egal("qui sommes-nous : aucune identité personnelle", /Rhode|Vincent|Michael|SCOFITEC|fondateur/i.test(qsn), false);
+egal("qui sommes-nous : aucune date de lancement", /décembre 2026|31 décembre/.test(qsn), false);
+egal("qui sommes-nous : pas de cliché « révolutionner »", /révolution/i.test(JSON.stringify(QUI_SOMMES_NOUS)), false);
+egal("qui sommes-nous : les 6 parties", ["Notre constat", "Pourquoi Cleaneroo existe", "Une plateforme pensée pour les deux côtés", "La technologie au service de l'humain", "qsn-conclusion"].every(x => qsn.includes(x)) && qsn.includes(QUI_SOMMES_NOUS.titre), true);
 egal("qui sommes-nous : encadré Société masqué si vide", encadreSociete({ nom: "", adresse: "", siret: "" }), "");
 egal("qui sommes-nous : encadré Société affiché si rempli", encadreSociete({ nom: "Cleaneroo SAS", adresse: "1 rue X, 83600 Fréjus", siret: "12345678900011" }).includes("SIRET 12345678900011"), true);
 const ok = res.filter(r => r[1]).length;
