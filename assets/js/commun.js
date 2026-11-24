@@ -121,6 +121,19 @@ export const bandeGaranties = () => `<section class="bloc bande-garanties"><div 
   <div class="revele">${blocReassurance()}</div>
   <div class="revele" style="margin-top:22px">${logosPaiement({ classe: "centre" })}</div></div></section>`;
 
+/* ------------------------------------------------------------------ Le juste prix, près de chez vous (prompt 2, partie 5) */
+/** Mention sous le total : le code postal seulement, jamais le nom de la zone ni son pourcentage. */
+export const mentionCodePostal = cp => `${tr("Prix calculé pour le code postal")} ${esc(cp)}`;
+/** Ligne d'information « Tarif zone … » de l'estimation : jamais affichée au client (le prix l'inclut déjà). */
+export const ligneZone = l => /^Tarif zone /.test(l?.libelle || "");
+export const JUSTE_PRIX = [
+  ["position", "Nos tarifs sont établis à partir des prix pratiqués par les professionnels du nettoyage dans votre secteur."],
+  ["instantane", "Le prix tient compte de votre code postal, de la prestation et de la surface : vous voyez le montant exact avant de réserver, sans devis ni négociation."],
+  ["valide", "Pas de frais cachés : déplacement inclus jusqu'à 15 km, frais de service indiqués avant le paiement."],
+];
+export const blocJustePrix = () => `<div class="juste-prix revele"><div class="jp-titre">${icone("paiement", { tuile: true })}<h3>Le juste prix, près de chez vous</h3></div>
+  <ul>${JUSTE_PRIX.map(([ic, t]) => `<li>${icone(ic)}<span>${t}</span></li>`).join("")}</ul></div>`;
+
 /* ------------------------------------------------------------------ Ils nous font confiance (prompt 2, partie 4) */
 /** Nombre d'avis publiés à partir duquel la section s'affiche. */
 export const AVIS_MINIMUM = 3;

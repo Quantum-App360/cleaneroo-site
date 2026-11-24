@@ -7,14 +7,14 @@ import { PARTIES, partie, partiePour, PARTIE_DE_L_ESPACE, rubriquesProposees, li
 import { calculer, entreeEstimation, SALISSURE, disponibilite, meilleurPack, tachesChiffrees, formuleDe, niveauLocation, passagesPlanifies, datesPassages,
   etapesDe, consommablesDe, menageTientEntreVoyageurs, frequenceDe, minutesEquipements, prixIndicatifEquipement, heuresEvenement, litsDe, litsTailles,
   tachesPourOccasion, niveauOccasion } from "./estimation.js";
-import { REGLES, euros, duree, heure, dateCourte, dateLongue, reservationsFermees, MESSAGE_LANCEMENT, pctZone, libelleZone } from "./regles.js";
+import { REGLES, euros, duree, heure, dateCourte, dateLongue, reservationsFermees, MESSAGE_LANCEMENT } from "./regles.js";
 import { envoyerDemande, secteurCouvert, rejoindreAttente, enregistrerBien, synchroniserBiens, marquerDonneesInvite } from "./donnees.js";
 import { etapesPhotoDe, etapesPersoDe } from "./etapes-bien.js";
 import { maPosition, adresseDe, chercherAdresse, afficherCarte } from "./cartes.js";
 import { traduire, langue, tr } from "./langue.js";
 import { profilMemorise } from "./entete.js";
 import { icone } from "./icones.js";
-import { blocReassurance, encartAideRappel, encartPaiementSecurise } from "./commun.js";
+import { blocReassurance, encartAideRappel, encartPaiementSecurise, mentionCodePostal, ligneZone } from "./commun.js";
 import { monParrainage } from "./parrainage.js";
 import { lancerPaiement } from "./paiement.js";
 import { session, monProfil, majProfil, supabase } from "./donnees.js";
@@ -251,7 +251,7 @@ export function ouvrirSimulateur(conteneur, rubriqueId) {
 function rendreSimulation() {
   const p = partie(b.espace), r = rubrique(b.rubriqueId);
   const est = calculer(entreeEstimation(b, b.espace === "personnel", null));
-  const lignes = est.devisObligatoire ? "" : est.lignes.map(l => { const inclus = l.montantC === 0 && l.note === "inclus";
+  const lignes = est.devisObligatoire ? "" : est.lignes.filter(l => !ligneZone(l)).map(l => { const inclus = l.montantC === 0 && l.note === "inclus";
     return `<div class="ligne-montant"><span>${esc(l.libelle)}${l.note && !inclus ? `<span class="note-ligne">${l.note}</span>` : ""}</span><span>${inclus ? "Inclus" : euros(l.montantC)}</span></div>`; }).join("");
   const prix = est.devisObligatoire
     ? `<h3 style="color:var(--primaire);margin:0">Sur devis</h3><p class="muet" style="margin:4px 0 0">Un professionnel qualifié évalue votre besoin et vous propose un devis. Aucun engagement.</p>`
@@ -271,7 +271,7 @@ function rendreSimulation() {
     ${questionnaire(false)}
     ${titre("Code postal (facultatif)")}
     <div class="carte">${champTexte("Le prix peut varier selon la ville", "codePostal", b.codePostal || "", "text", 'inputmode="numeric" maxlength="5" placeholder="Ex. : 83600"')}
-      ${/^[0-9]{5}$/.test(b.codePostal || "") && pctZone(b.codePostal) ? `<p class="petit" style="margin:0"><b>${libelleZone(pctZone(b.codePostal))}</b></p>` : ""}</div>
+      ${/^[0-9]{5}$/.test(b.codePostal || "") ? `<p class="petit" style="margin:0">${mentionCodePostal(b.codePostal)}</p>` : ""}</div>
     <div class="carte resultat-simulation" id="resultat-simulation" style="margin-top:22px">
       <p class="surtitre">Votre prix estimé</p>
       <p class="prix-simulation">${est.devisObligatoire ? "Sur devis" : euros(est.fraisServicePct ? est.totalAPayerC : est.totalC)}</p>
@@ -884,7 +884,7 @@ function etape4() {
       <p class="petit">Elle sert au calcul du déplacement et à l'arrivée du Cleaneur.</p></div>
     ${Number.isFinite(b.lat) ? `<div class="carte-adresse" id="carte-adresse" role="img" aria-label="Carte de l'adresse"></div>
       <p class="petit" style="margin:6px 0 0">${b.logementId ? "Position enregistrée du logement." : "Déplacez le repère sur l'entrée du logement si besoin."}</p>` : ""}
-    ${/^[0-9]{5}$/.test(b.codePostal) && pctZone(b.codePostal) ? `<div class="note" style="margin-top:10px"><span><b>${libelleZone(pctZone(b.codePostal))}</b> · <span>prix adaptés à votre ville</span></span></div>` : ""}
+    ${/^[0-9]{5}$/.test(b.codePostal) ? `<div class="note" style="margin-top:10px"><span>${mentionCodePostal(b.codePostal)}</span></div>` : ""}
     ${titre("Touchez un créneau dans le planning")}${`
     <div class="carte">${caseCocher("Je suis flexible", "flexible", b.flexible, "Vous recevez des candidatures sur 7 jours")}</div>
     ${b.flexible ? "" : `<div class="jours" style="margin-top:12px">${joursProposes().map(d => `<button type="button" data-jour="${iso(d)}" class="${b.jour === iso(d) ? "choisi" : ""}">${dateCourte(d)}</button>`).join("")}</div>
@@ -943,7 +943,7 @@ function etape5() {
     ${reservationsFermees() ? `<div class="note" style="margin-top:10px"><span><b>Les réservations ouvrent très bientôt.</b> ${MESSAGE_LANCEMENT} Votre estimation est gardée : vous pourrez l'envoyer dès l'ouverture.</span></div>` : ""}
     <div class="carte" style="margin-top:12px">
       ${est.devisObligatoire ? `<h3 style="color:var(--primaire)">Sur devis</h3><p class="muet" style="margin:4px 0 0">Un professionnel qualifié évalue votre besoin et vous propose un devis. Aucun engagement.</p>`
-        : est.lignes.map(l => { const inclus = l.montantC === 0 && l.note === "inclus";
+        : est.lignes.filter(l => !ligneZone(l)).map(l => { const inclus = l.montantC === 0 && l.note === "inclus";
             return `<div class="ligne-montant"><span>${esc(l.libelle)}${l.note && !inclus ? `<span class="note-ligne">${l.note}</span>` : ""}</span><span>${inclus ? "Inclus" : euros(l.montantC)}</span></div>`; }).join("")
           + `<div class="ligne-montant total"><span>Total estimé</span><span>${euros(est.totalC)}</span></div>
              ${est.prixLibre ? `<p class="petit">${tr("Prix conseillé Cleaneroo pour ce logement")} : <b>${euros(est.prixConseilleC)}</b>. ${tr("Les frais Cleaneroo sont compris dans ce prix : le Cleaneur reçoit le reste.")}</p>
@@ -953,6 +953,7 @@ function etape5() {
              ${est.remiseParrainageC ? `<div class="ligne-montant remise"><span>${tr("Remise de parrainage")}</span><span>−${euros(est.remiseParrainageC)}</span></div>` : ""}
              ${est.cagnotteC ? `<div class="ligne-montant remise"><span>${tr("Ma cagnotte")}</span><span>−${euros(est.cagnotteC)}</span></div>` : ""}
              ${est.fraisServicePct || est.remiseParrainageC || est.cagnotteC ? `<div class="ligne-montant total"><span>${tr("Total à payer")}</span><span>${euros(est.totalAPayerC)}</span></div>` : ""}
+             ${/^[0-9]{5}$/.test(b.codePostal || "") ? `<p class="petit mention-cp">${icone("position")} ${mentionCodePostal(b.codePostal)}</p>` : ""}
              ${b.remiseParrainageC && !est.remiseParrainageC ? `<p class="petit">${tr("Votre remise de parrainage de")} ${euros(b.remiseParrainageC)} ${tr("s'applique dès")} ${euros(REGLES.PARRAINAGE_MIN_COMMANDE_C)}.</p>` : ""}
              ${b.cagnotteDispoC > 0 ? caseCocher(`${tr("Utiliser ma cagnotte")} (${euros(b.cagnotteDispoC)} ${tr("disponibles")})`, "utiliserCagnotte", !!b.utiliserCagnotte) : ""}
              ${est.creditImpotC ? `<div class="ligne-montant" style="color:var(--succes);font-weight:700"><span>soit ${euros(est.apresCreditImpotC)} après crédit d'impôt, si éligible</span></div>` : ""}

@@ -2769,3 +2769,13 @@ body.sans-rappel .entete .rappel-entete { display: none; }   /* jamais pendant l
 .avis-public small { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 12.5px; font-weight: 600; color: var(--primaire); }
 .avis-public small .ico { width: 15px; height: 15px; }
 .ils-confiance[hidden] { display: none !important; }
+
+/* ================================================================ Le juste prix (prompt 2, partie 5) */
+.juste-prix { max-width: 860px; margin: 0 auto; padding: 22px 24px; border-radius: var(--rayon-l); background: var(--surface); border: 1px solid var(--separateur); box-shadow: var(--ombre); }
+.juste-prix .jp-titre { display: flex; align-items: center; gap: 14px; }
+.juste-prix h3 { margin: 0; font-size: 20px; }
+.juste-prix ul { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 10px; }
+.juste-prix li { display: flex; gap: 12px; align-items: flex-start; font-size: 15px; line-height: 1.5; color: var(--texte2); }
+.juste-prix li .ico { flex: none; width: 20px; height: 20px; margin-top: 2px; color: var(--primaire); }
+.mention-cp { display: flex; align-items: center; gap: 6px; margin: 6px 0 0; color: var(--texte2); }
+.mention-cp .ico { width: 15px; height: 15px; }

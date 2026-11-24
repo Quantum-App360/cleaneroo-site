@@ -21,7 +21,7 @@ import { RUBRIQUES as RUBRIQUES_CAT, rubrique, pastille, tacheChiffree, tachesPo
   import { niveauRotation } from "./assets/js/conciergerie.js";
 import { menageTientEntreVoyageurs } from "./assets/js/estimation.js";
 import { bornesPeriode } from "./assets/js/periodes.js";
-import { GARANTIES, PAIEMENT_COURT, PAIEMENT_LONG, moyensPaiement, texteAnnulation, contenuAvisPublics, AVIS_MINIMUM } from "./assets/js/commun.js";
+import { GARANTIES, PAIEMENT_COURT, PAIEMENT_LONG, moyensPaiement, texteAnnulation, contenuAvisPublics, AVIS_MINIMUM, mentionCodePostal, ligneZone } from "./assets/js/commun.js";
 import { ICONES } from "./assets/js/icones.js";
 import { releveProprietaire, listeCourses, texteCourses, dossiersDommages } from "./assets/js/conciergerie.js";
 import { planProgrammerTout, instantParis, avecHoraires, erreurHoraires, departDe, arriveeDe } from "./assets/js/conciergerie.js";
@@ -769,6 +769,11 @@ egal("avis : affiché avec 3 avis, note moyenne en tête", contenuAvisPublics(av
 egal("avis : 6 avis au plus", (contenuAvisPublics(avisTest(8)).match(/avis-public"/g) || []).length, 6);
 egal("avis : commentaire échappé", contenuAvisPublics(avisTest(3)).includes("<script>"), false);
 egal("avis : mention « Avis vérifié »", contenuAvisPublics(avisTest(3)).includes("Avis vérifié · prestation réalisée via Cleaneroo"), true);
+// Juste prix (prompt 2, partie 5) : code postal seul, jamais la zone ni son pourcentage ; 15 km inclus comme le dit le texte
+egal("juste prix : mention du code postal", mentionCodePostal("83600"), "Prix calculé pour le code postal 83600");
+egal("juste prix : ligne de zone masquée", ligneZone({ libelle: "Tarif zone Prestige (+10 %)" }), true);
+egal("juste prix : autres lignes gardées", ligneZone({ libelle: "Déplacement" }), false);
+egal("juste prix : déplacement inclus jusqu'à 15 km", REGLES.FRAIS_DEPLACEMENT.inclusKm, 15);
 const ok = res.filter(r => r[1]).length;
 document.getElementById("bilan").textContent = `${ok} tests sur ${res.length} réussis`;
 document.getElementById("liste").innerHTML = res.map(([n, b, d]) => `<li class="${b ? "ok" : "ko"}">${b ? "✓" : "✗"} ${n}${b ? "" : " — " + d}</li>`).join("");

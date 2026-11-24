@@ -35,7 +35,7 @@ import { icone, teinte, ICONES_RUBRIQUES, ICONES_INTERFACE } from "./icones.js";
 import { pageTableau, arreterTableau } from "./tableau.js";
 import { compteRenduPieces } from "./controle-ecran.js";
 import { blocFormulesCleaneur, brancherFormulesCleaneur } from "./formules-cleaneur.js";
-import { blocEtapes, bandeGaranties, logosPaiement, sectionAvisPublics, remplirAvisPublics, installerRappel, encartAideRappel, bandeauLancement, pageChargement, decorTableau, surveillerFormulaire, envoiRobot, CONTIENT_LIEN } from "./commun.js";
+import { blocEtapes, bandeGaranties, logosPaiement, blocJustePrix, sectionAvisPublics, remplirAvisPublics, installerRappel, encartAideRappel, bandeauLancement, pageChargement, decorTableau, surveillerFormulaire, envoiRobot, CONTIENT_LIEN } from "./commun.js";
 import "./fond-anime.js";
 import "./oeil.js";
 import "./choix-prestation.js";   // fenêtre animée « Réserver une prestation »   // œil pour afficher le mot de passe
@@ -319,6 +319,7 @@ function pageAccueil() {
     <div class="grille-3">${RACCOURCIS_VITRINE.map(([id, nom, sous]) => `
       <a class="carte prestation revele" data-teinte="${teinte(rubrique(id).icone)}" href="#/estimer/${id}">${icone(rubrique(id).icone, { tuile: true })}<h3>${nom}</h3><p class="muet">${sous}</p><span class="aller">Estimer ›</span></a>`).join("")}</div>
     <p class="centre" style="margin-top:26px"><a class="bouton secondaire" href="#/prestations">Voir toutes les prestations ›</a></p>
+    <div style="margin-top:34px">${blocJustePrix()}</div>
   </div></section>
   <section class="bloc"><div class="conteneur">
     ${titreSection("Tout est digitalisé", "De la réservation au paiement, chaque étape se suit sur votre téléphone.", "Le ménage nouvelle génération")}
@@ -428,6 +429,7 @@ function pagePrestations() {
     <a class="carte prestation" href="#/estimer/${r.id}">${icone(r.icone, { tuile: true })}<h3>${r.nom}</h3>
       <p class="muet" style="margin:4px 0 8px">${r.sousTitre}</p>
       <span class="tampon">${pastille(r)}</span></a>`).join("")}</div>
+    <div style="margin-top:28px">${blocJustePrix()}</div>
     <div style="margin-top:22px">${encartAideRappel()}</div></div></section>
   ${sectionAvisPublics()}`;
 }
