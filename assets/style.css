@@ -1,36 +1,114 @@
 /* Cleaneroo — style du site, repris de l'application et des bannières (design/propositions-bannieres). */
+/* ================================================================================================
+   DESIGN SYSTEM CLEANEROO · jetons (prompt 4, lot 1, 24/11/2026)
+   Une seule source pour les couleurs, ombres, rayons et dégradés. Couleurs de la marque inchangées :
+   espace client clair à dominante bleue (#0596C4 → #04BEE5 → #0DC88D), espace Cleaneur sombre à dominante verte (#1AD934).
+   Valeurs reprises à l'identique de la cascade précédente (vérifié par captures avant / après).
+   ================================================================================================ */
 :root {
+  --alerte: #D9822B;
   --canard: #1A5E57;
   --canard-profond: #0E3B40;
-  --turquoise: #3BAE96;
-  --menthe: #7FD3A6;
+  --carte-fond: #E8F3F1;
   --corail: #FA8C66;
-  --or: #F5C451;
-  --fond: #EEF3F3;
-  --surface: #FFFFFF;
-  --creux: #E3EDED;
-  --texte: #16343A;
-  --texte2: #425E62;
-  --texte3: #566C6F;
-  --primaire: #1E7A5E;
-  --corail-texte: #B4502E;   /* textes orangés lisibles sur fond clair */   /* textes et liens turquoise : primary de l'appli */
-  --separateur: rgba(74, 107, 110, 0.18);
-  --succes: #24735A;
-  --alerte: #D9822B;
+  --corail-texte: #B4502E;
+  --creux: #EDF4F3;
+  --degrade: linear-gradient(120deg, #0596C4 0%, #04BEE5 45%, #0DC88D 100%);
+  --degrade-corail: linear-gradient(135deg, #FFA273 0%, #F4705C 100%);
+  --degrade-fond: radial-gradient(1200px 500px at 50% -10%, rgba(42,157,147,.10), transparent 70%), #F5F9F8;
+  --degrade-texte: linear-gradient(100deg, #9BF5EA 0%, #7FD3A6 35%, #F5D27A 75%, #FFE7A8 100%);
+  --encre: #0B2F33;
+  --encre-logo: #231F20;
   --erreur: #B43F4A;
-  --rayon: 16px;
-  --rayon-l: 24px;
-  --ombre: 0 6px 22px rgba(14, 59, 64, 0.10);
-  --degrade: linear-gradient(120deg, #04BEE5, #0DC88D 50%, #1AD934);
+  --fond: #F5F9F8;
+  --ico-accent: #FA8C66;
+  --ico-aplat: rgba(94, 214, 203, .38);
+  --ico-trait: #1A5E57;
+  --ico-tuile: linear-gradient(145deg, #E6F7F5 0%, #FFFFFF 100%);
+  --marque: #0596C4;
+  --marque-clair: #04BEE5;
+  --marque-fonce: #0A6F93;
+  --menthe: #7FD3A6;
+  --ombre: 0 1px 2px rgba(11, 47, 51, .05), 0 12px 32px rgba(11, 47, 51, .07);
+  --ombre-forte: 0 2px 6px rgba(11, 47, 51, .06), 0 24px 60px rgba(11, 47, 51, .14);
+  --ombre-relief: 0 2px 4px rgba(11, 47, 51, .04), 0 18px 40px -12px rgba(11, 47, 51, .18);
+  --or: #F5C451;
+  --pastel-1: #DDF7F2;
+  --pastel-2: #FFE8DC;
+  --pastel-3: #E1F7FC;
+  --primaire: #0A6F93;
+  --rayon: 14px;
+  --rayon-l: 22px;
+  --separateur: rgba(11, 47, 51, 0.10);
+  --succes: #24735A;
+  --surface: #FFFFFF;
+  --texte: #0B2F33;
+  --texte2: #3E5A5E;
+  --texte3: #566C6F;
+  --turquoise: #0596C4;
 }
 @media (prefers-color-scheme: dark) {
-  :root {
-    --fond: #0E1A1B; --surface: #1C2F31; --creux: #152425; --texte: #E4EEEE; --texte2: #A9BEC0; --texte3: #8AA0A2;
-    --separateur: rgba(169, 190, 192, 0.22); --ombre: 0 6px 22px rgba(0, 0, 0, 0.35);
-    /* Mêmes couleurs que l'appli en mode sombre (Charte.kt, CouleursSombre) : plus lisibles sur fond foncé */
-    --primaire: #6CC79A; --corail-texte: #E09A55; --succes: #5CC49E; --alerte: #E3A955; --erreur: #F07D86;
+  :root:not([data-theme="light"]) {
+    --alerte: #E3A955;
+    --carte-fond: #1E3436;
+    --corail-texte: #E09A55;
+    --creux: #1B2D2F;
+    --degrade-fond: radial-gradient(1200px 500px at 50% -10%, rgba(42,157,147,.10), transparent 70%), #0C1718;
+    --encre: #E4EEEE;
+    --erreur: #F07D86;
+    --fond: #0C1718;
+    --ico-aplat: rgba(94, 214, 203, .22);
+    --ico-trait: #7FD3A6;
+    --ico-tuile: linear-gradient(145deg, #1F3B3D 0%, #172C2E 100%);
+    --marque: #3CC6EE;
+    --ombre: 0 1px 2px rgba(0, 0, 0, .3), 0 12px 32px rgba(0, 0, 0, .35);
+    --ombre-relief: 0 2px 4px rgba(0, 0, 0, .3), 0 18px 40px -12px rgba(0, 0, 0, .6);
+    --pastel-1: #11302E;
+    --pastel-2: #33221C;
+    --pastel-3: #10303A;
+    --primaire: #5CCCF0;
+    --separateur: rgba(169, 190, 192, .18);
+    --succes: #5CC49E;
+    --surface: #142224;
+    --texte: #E6EFEF;
+    --texte2: #A9BEC0;
+    --texte3: #8AA0A2;
+    --turquoise: #3CC6EE;
   }
 }
+body.mode-cleaneur {
+  --alerte: #E3A955;
+  --carte-fond: #1F3437;
+  --corail-texte: #E09A55;
+  --creux: #12221F;
+  --degrade: linear-gradient(120deg, #0DC88D, #1AD934);
+  --degrade-fond: radial-gradient(1100px 480px at 50% -10%, rgba(26, 217, 52, .10), transparent 70%), #0E1A1C;
+  --encre: #ECF5F3;
+  --erreur: #F07D86;
+  --fond: #0E1A1C;
+  --ico-aplat: rgba(26, 217, 52, .18);
+  --ico-trait: #7FE3B0;
+  --ico-tuile: linear-gradient(145deg, #1F3B37 0%, #172C2E 100%);
+  --marque: #1AD934;
+  --marque-clair: #0DC88D;
+  --marque-fonce: #0DC88D;
+  --menthe: #7FE3B0;
+  --ombre: 0 1px 2px rgba(0, 0, 0, .3), 0 12px 32px rgba(0, 0, 0, .35);
+  --ombre-forte: 0 2px 6px rgba(0, 0, 0, .35), 0 24px 60px rgba(0, 0, 0, .5);
+  --ombre-relief: 0 2px 4px rgba(0, 0, 0, .3), 0 18px 40px -12px rgba(0, 0, 0, .6);
+  --pastel-1: #11302A;
+  --pastel-2: #33221C;
+  --pastel-3: #1E2A38;
+  --primaire: #3FE07A;
+  --separateur: rgba(181, 201, 199, .16);
+  --succes: #5CE08F;
+  --surface: #172A2D;
+  --texte: #ECF5F3;
+  --texte2: #B5C9C7;
+  --texte3: #93ABA9;
+  --turquoise: #1AD934;
+}
+
 
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
@@ -358,20 +436,7 @@ label.case .info { margin-left: auto; color: var(--texte3); font-size: 13px; whi
   font-family: "Plus Jakarta Sans"; font-style: normal; font-weight: 400 800; font-display: swap;
   src: url("polices/plus-jakarta-sans.woff2") format("woff2");
 }
-:root {
-  --encre: #08262A;
-  --degrade: linear-gradient(135deg, #0F7F78 0%, #1FA39C 48%, #3BB8C4 100%);
-  --degrade-corail: linear-gradient(135deg, #FFA273 0%, #F4705C 100%);
-  --degrade-texte: linear-gradient(100deg, #9BF5EA 0%, #7FD3A6 35%, #F5D27A 75%, #FFE7A8 100%);
-  --degrade-fond: radial-gradient(1200px 500px at 50% -10%, rgba(42,157,147,.10), transparent 70%), var(--fond);
-  --ombre: 0 1px 2px rgba(8,38,42,.04), 0 8px 24px rgba(8,38,42,.07);
-  --ombre-forte: 0 2px 6px rgba(8,38,42,.06), 0 24px 48px rgba(8,38,42,.14);
-  --rayon: 14px; --rayon-l: 22px;
-  --fond: #F3F7F7;
-}
-@media (prefers-color-scheme: dark) {
-  :root { --fond: #0B1718; --ombre: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.3); --ombre-forte: 0 24px 48px rgba(0,0,0,.45); }
-}
+
 body {
   font-family: "Plus Jakarta Sans", "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, Arial, sans-serif;
   font-size: 16px; line-height: 1.6; background: var(--degrade-fond); -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
@@ -611,14 +676,7 @@ label.champ input:focus, label.champ select:focus, label.champ textarea:focus, i
 @media (min-width: 861px) and (max-width: 1080px) { .marque .nom { display: none; } }
 
 /* ---------------------------------------------------------------- Icônes Cleaneroo (assets/js/icones.js) */
-:root {
-  --ico-trait: var(--canard); --ico-aplat: rgba(94, 214, 203, .38); --ico-accent: var(--corail);
-  --ico-tuile: linear-gradient(145deg, #E6F7F5 0%, #FFFFFF 100%);
-}
-@media (prefers-color-scheme: dark) {
-  :root { --ico-trait: var(--menthe); --ico-aplat: rgba(94, 214, 203, .22); --ico-accent: var(--corail);
-    --ico-tuile: linear-gradient(145deg, #1F3B3D 0%, #172C2E 100%); }
-}
+
 /* Thèmes forcés (page de contrôle #/icones) */
 .ico-clair { --ico-trait: #1C5C61; --ico-aplat: rgba(94, 214, 203, .38); --ico-tuile: linear-gradient(145deg, #E6F7F5 0%, #FFFFFF 100%); background: #F3F7F7; color: #16343A; }
 .ico-sombre { --ico-trait: #7FD3A6; --ico-aplat: rgba(94, 214, 203, .22); --ico-tuile: linear-gradient(145deg, #1F3B3D 0%, #172C2E 100%); background: #0B1718; color: #E4EEEE; }
@@ -1004,23 +1062,7 @@ button.carte.ligne-compte:hover { border-color: color-mix(in srgb, var(--turquoi
    Refonte 2026 : identité claire, structurée, professionnelle (logo 2026, en-tête par espace, accueil).
    Cette couche vient en dernier : elle remplace l'ancien habillage (fond sombre, bulles, éponge 3D).
    ================================================================================================ */
-:root {
-  --encre: #0B2F33; --marque: #0AA88F; --marque-fonce: #2E9C86; --marque-clair: #04BEE5;
-  --degrade: linear-gradient(135deg, #2E9C86, #0DC88D 55%, #04BEE5);
-  --fond: #F5F9F8; --surface: #FFFFFF; --creux: #EDF4F3;
-  --texte: #0B2F33; --texte2: #3E5A5E; --texte3: #5F777A;
-  --separateur: rgba(11, 47, 51, 0.10);
-  --ombre: 0 1px 2px rgba(11, 47, 51, .05), 0 12px 32px rgba(11, 47, 51, .07);
-  --ombre-forte: 0 2px 6px rgba(11, 47, 51, .06), 0 24px 60px rgba(11, 47, 51, .14);
-  --carte-fond: #E8F3F1;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --encre: #E4EEEE; --fond: #0C1718; --surface: #142224; --creux: #1B2D2F;
-    --texte: #E6EFEF; --texte2: #A9BEC0; --texte3: #8AA0A2; --separateur: rgba(169, 190, 192, .18);
-    --ombre: 0 1px 2px rgba(0, 0, 0, .3), 0 12px 32px rgba(0, 0, 0, .35); --carte-fond: #1E3436;
-  }
-}
+
 body { background: var(--fond); }
 .degrade-texte { background: var(--degrade); -webkit-background-clip: text; background-clip: text; color: transparent; }
 
@@ -1246,14 +1288,7 @@ div.titre-section .surtitre { margin: 0; }
    Direction B « Lumineux et coloré » (7 novembre 2026) : dégradés pastel, formes arrondies,
    cartes flottantes en relief, une couleur par prestation (data-teinte, voir TEINTES dans icones.js).
    ================================================================================================ */
-:root {
-  --pastel-1: #DDF7F2; --pastel-2: #FFE8DC; --pastel-3: #ECE8FF;
-  --ombre-relief: 0 2px 4px rgba(11, 47, 51, .04), 0 18px 40px -12px rgba(11, 47, 51, .18);
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) { --pastel-1: #11302E; --pastel-2: #33221C; --pastel-3: #221F38;
-    --ombre-relief: 0 2px 4px rgba(0, 0, 0, .3), 0 18px 40px -12px rgba(0, 0, 0, .6); }
-}
+
 [data-teinte="turquoise"] { --t: #0AA88F; --t2: #04BEE5; --tc: #DDF5F1; }
 [data-teinte="corail"]    { --t: #E5603A; --t2: #FF9A6B; --tc: #FFE6DC; }
 [data-teinte="lilas"]     { --t: #0DC88D; --t2: #1AD934; --tc: #ECE9FF; }
@@ -2336,27 +2371,9 @@ body::after { content: ""; display: block; height: 72px; }
    - mode Cleaneur (« Cleaneroo Pro ») : sombre ardoise, dominante VERTE (#1AD934), quel que soit le réglage du téléphone.
    Contrastes vérifiés : textes ≥ 4,5:1 sur leur fond ; les boutons verts portent un texte foncé.
    ================================================================================================ */
-body:not(.mode-cleaneur) {
-  --marque: #0596C4; --turquoise: #0596C4; --marque-clair: #04BEE5; --marque-fonce: #0A6F93;
-  --primaire: #0A6F93;
-  --degrade: linear-gradient(120deg, #0596C4 0%, #04BEE5 45%, #0DC88D 100%);
-}
-@media (prefers-color-scheme: dark) {
-  body:not(.mode-cleaneur) { --primaire: #5CCCF0; --marque: #3CC6EE; --turquoise: #3CC6EE; }
-}
+
 body.mode-cleaneur {
   color-scheme: dark;
-  --encre: #ECF5F3; --fond: #0E1A1C; --surface: #172A2D; --creux: #12221F; --carte-fond: #1F3437;
-  --texte: #ECF5F3; --texte2: #B5C9C7; --texte3: #93ABA9; --separateur: rgba(181, 201, 199, .16);
-  --marque: #1AD934; --turquoise: #1AD934; --marque-clair: #0DC88D; --marque-fonce: #0DC88D; --menthe: #7FE3B0;
-  --primaire: #3FE07A; --succes: #5CE08F; --alerte: #E3A955; --erreur: #F07D86; --corail-texte: #E09A55;
-  --degrade: linear-gradient(120deg, #0DC88D, #1AD934);
-  --degrade-fond: radial-gradient(1100px 480px at 50% -10%, rgba(26, 217, 52, .10), transparent 70%), #0E1A1C;
-  --ombre: 0 1px 2px rgba(0, 0, 0, .3), 0 12px 32px rgba(0, 0, 0, .35);
-  --ombre-forte: 0 2px 6px rgba(0, 0, 0, .35), 0 24px 60px rgba(0, 0, 0, .5);
-  --ombre-relief: 0 2px 4px rgba(0, 0, 0, .3), 0 18px 40px -12px rgba(0, 0, 0, .6);
-  --pastel-1: #11302A; --pastel-2: #33221C; --pastel-3: #1E2A38;
-  --ico-trait: #7FE3B0; --ico-aplat: rgba(26, 217, 52, .18); --ico-tuile: linear-gradient(145deg, #1F3B37 0%, #172C2E 100%);
   background: var(--degrade-fond); color: var(--texte);
 }
 body.mode-cleaneur [data-teinte] { --tc: color-mix(in srgb, var(--t) 22%, #172A2D); }
@@ -2515,7 +2532,6 @@ body.mode-cleaneur .bascule-mini { background: rgba(255,255,255,.08); color: #ff
    (design/logo-officiel/CHARTE.md). Sur les dégradés du logo, le texte est à l'ENCRE du logo (#231F20) :
    7,4:1 sur #04BEE5, 7,5:1 sur #0DC88D, 8,6:1 sur #1AD934 (le blanc n'y dépassait pas 2,2:1).
    ================================================================================================ */
-:root { --encre-logo: #231F20; }
 
 /* Boutons et pastilles sur dégradé : texte à l'encre du logo */
 .bouton:not(.secondaire):not(.danger):not(.clair),
@@ -2554,8 +2570,7 @@ body.mode-cleaneur [data-teinte="ciel"] { --tt: #5DB4FF; }
 .offre-pro .phrase-offre { color: #087A69; }
 
 /* Violets hors charte remplacés par les couleurs du logo */
-:root { --pastel-3: #E1F7FC; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --pastel-3: #10303A; } }
+
 .etoile-decor.lilas { background: linear-gradient(135deg, #7FE3B0, #0DC88D); }
 .b-presta.etat-SUR_PLACE, .b-presta.etat-EN_COURS, .rot-etape.menage.etat-SUR_PLACE, .rot-etape.menage.etat-EN_COURS { background: #0A6F93; }
 .etat-texte.etat-EN_COURS, .etat-texte.etat-SUR_PLACE { color: #0A6F93; }
@@ -2580,7 +2595,6 @@ body::after { display: none; }
 
 /* Textes encore trop clairs, repérés page par page (22/11/2026) */
 /* Gris tertiaire : 4,5:1 au lieu de 4,49:1 sur le fond */
-:root { --texte3: #566C6F; }
 /* Textes couleur de marque : la teinte foncée prévue pour les textes (#0A6F93 côté client) au lieu du bleu vif #0596C4 (3,4:1) */
 .entete .nav a.actif, .lancement a, .tel-eta b, .titre-section .surtitre, .espace-carte .aller, .carte.prestation .aller,
 .controle-tete span, .sous-formule, .formule li::before, .case.incluse .info, .bloc-video .surtitre-video { color: var(--primaire); }
