@@ -3918,6 +3918,9 @@ const T = [
   // Vocabulaire (prompt 3, 24/11/2026).
   ["En cas de problème ou de dommage", "If there is a problem or damage", "In caso di problemi o danni", "En caso de problema o daño"],
   ["Votre garantie :", "Your guarantee:", "La tua garanzia:", "Tu garantía:"],
+  // Design system (prompt 4, lot 1).
+  ["Connexion perdue. Vérifiez votre réseau avant de continuer.", "Connection lost. Check your network before continuing.", "Connessione persa. Controlla la rete prima di continuare.", "Conexión perdida. Comprueba tu red antes de continuar."],
+  ["Connexion rétablie.", "Connection restored.", "Connessione ripristinata.", "Conexión restablecida."],
 ];
 
 const DICO = new Map();

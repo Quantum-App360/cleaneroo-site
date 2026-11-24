@@ -309,3 +309,37 @@ export function formuleStandardVehicule() {
   try { const e = calculer(entreeEstimation(br, true, null)); return { prixC: e.totalC, dureeMin: e.dureeMin }; } catch { return null; }
 }
 { const f = formuleStandardVehicule(); if (f) PRIX_FORMULES.car = f; }
+
+/* ------------------------------------------------------------------ Design system : messages flottants, états, connexion (lot 1) */
+/** Message flottant : type "succes" | "erreur" | "info" ; disparaît seul (5 s), annoncé aux lecteurs d'écran. */
+export function afficherToast(message, type = "succes", duree = 5000) {
+  let zone = document.querySelector(".toasts");
+  if (!zone) { zone = document.createElement("div"); zone.className = "toasts"; zone.setAttribute("role", "status"); zone.setAttribute("aria-live", "polite"); document.body.append(zone); }
+  const t = document.createElement("div");
+  t.className = `toast ${type}`;
+  t.innerHTML = `${icone(type === "erreur" ? "alerte" : type === "info" ? "document" : "valide")}<span></span>`;
+  t.querySelector("span").textContent = tr(message);
+  zone.append(t);
+  setTimeout(() => { t.classList.add("sortie"); setTimeout(() => t.remove(), 260); }, duree);
+  return t;
+}
+/** État vide, erreur ou indisponible : icône, titre, explication et action facultative ({ libelle, href } ou bouton déjà écrit). */
+export const blocEtat = ({ icone: ic = "document", titre, texte = "", action = "", erreur = false, compact = false }) =>
+  `<div class="etat${erreur ? " erreur-etat" : ""}${compact ? " compact" : ""}">${icone(ic, { tuile: true })}<h3>${titre}</h3>${texte ? `<p>${texte}</p>` : ""}`
+  + `${action ? `<div class="boutons">${typeof action === "string" ? action : `<a class="bouton" href="${action.href}">${action.libelle}</a>`}</div>` : ""}</div>`;
+/** Squelette de chargement : n cartes avec pastille et lignes (forme du contenu à venir). */
+export const blocSquelette = (n = 3) => Array.from({ length: n }, () => `<div class="squelette-carte" aria-hidden="true"><div class="squelette-rangee">
+  <div class="squelette squelette-pastille"></div><div><div class="squelette squelette-titre"></div><div class="squelette squelette-ligne moyenne"></div></div></div>
+  <div class="squelette squelette-ligne"></div><div class="squelette squelette-ligne courte"></div></div>`).join("");
+/** Bandeau « Connexion perdue » : apparaît hors connexion, disparaît au retour (une fois par page). */
+export function surveillerConnexion() {
+  if (document.querySelector(".bandeau-hors-ligne")) return;
+  const b = document.createElement("div");
+  b.className = "bandeau-hors-ligne"; b.setAttribute("role", "alert");
+  b.innerHTML = `${icone("alerte")}<span></span>`;
+  document.body.append(b);
+  const maj = () => { const hors = navigator.onLine === false; b.classList.toggle("visible", hors);
+    b.querySelector("span").textContent = tr(hors ? "Connexion perdue. Vérifiez votre réseau avant de continuer." : ""); };
+  addEventListener("offline", maj); addEventListener("online", () => { maj(); afficherToast("Connexion rétablie.", "succes", 3000); });
+  maj();
+}

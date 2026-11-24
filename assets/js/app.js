@@ -25,6 +25,7 @@ import { blocSupplementClient } from "./supplement.js";
 import { blocPaiement } from "./paiement.js";
 import { CONDITIONS, CONFIDENTIALITE, MENTIONS, texteLegal, GESTION_AVIS } from "./legal.js";
 import { pageQuiSommesNous } from "./qui-sommes-nous.js";
+import { pageDesignSystem, brancherDesignSystem } from "./design-system.js";
 import { transitionVitre } from "./vitre.js";
 import { compterPage } from "./compteur.js";
 import { suivreEnDirect, demoSuivi } from "./suivi-live.js";
@@ -36,7 +37,7 @@ import { icone, teinte, ICONES_RUBRIQUES, ICONES_INTERFACE } from "./icones.js";
 import { pageTableau, arreterTableau } from "./tableau.js";
 import { compteRenduPieces } from "./controle-ecran.js";
 import { blocFormulesCleaneur, brancherFormulesCleaneur } from "./formules-cleaneur.js";
-import { blocEtapes, blocParcours, brancherParcours, bandeGaranties, logosPaiement, blocJustePrix, blocAvantApres, brancherAvantApres, sectionAvisPublics, remplirAvisPublics, installerRappel, encartAideRappel, bandeauLancement, pageChargement, decorTableau, surveillerFormulaire, envoiRobot, CONTIENT_LIEN } from "./commun.js";
+import { blocEtapes, blocParcours, brancherParcours, surveillerConnexion, bandeGaranties, logosPaiement, blocJustePrix, blocAvantApres, brancherAvantApres, sectionAvisPublics, remplirAvisPublics, installerRappel, encartAideRappel, bandeauLancement, pageChargement, decorTableau, surveillerFormulaire, envoiRobot, CONTIENT_LIEN } from "./commun.js";
 import "./fond-anime.js";
 import "./oeil.js";
 import "./choix-prestation.js";   // fenêtre animée « Réserver une prestation »   // œil pour afficher le mot de passe
@@ -617,6 +618,7 @@ const ROUTES = {
   "gestion-des-avis": pageGestionAvis,
   "qui-sommes-nous": pageQuiSommesNous,
   "icones": pageIcones,
+  "design-system": pageDesignSystem,
 };
 
 let arreterSuivi = () => {};
@@ -753,6 +755,7 @@ async function afficherPage() {
   remplirAvisPublics(vue);
   brancherAvantApres(vue);
   brancherParcours(vue);
+  brancherDesignSystem(vue);
   window.scrollTo(0, 0);
 }
 
@@ -800,6 +803,7 @@ document.querySelectorAll("[data-logos-paiement]").forEach(z => { z.innerHTML = 
 traduire(document.querySelector("footer"));
 document.title = tr(document.title);
 installerRappel();
+surveillerConnexion();
 memoriserCodeParrain();
 window.addEventListener("hashchange", afficher);
 await Promise.all([retourEmail(), chargerOuverture().catch(() => false)]);

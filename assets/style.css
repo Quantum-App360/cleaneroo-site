@@ -76,7 +76,7 @@
     --turquoise: #3CC6EE;
   }
 }
-body.mode-cleaneur {
+body.mode-cleaneur, .theme-cleaneur {
   --alerte: #E3A955;
   --carte-fond: #1F3437;
   --corail-texte: #E09A55;
@@ -109,6 +109,22 @@ body.mode-cleaneur {
   --turquoise: #1AD934;
 }
 
+
+/* Échelles du design system (lot 1) : espacements, rayons, typographie, mouvements, profondeurs, plans. */
+:root {
+  --esp-1: 4px; --esp-2: 8px; --esp-3: 12px; --esp-4: 16px; --esp-5: 24px; --esp-6: 32px; --esp-7: 48px; --esp-8: 64px;
+  --rayon-s: 10px; --rayon-xl: 28px; --rayon-pilule: 999px;
+  --police: "Plus Jakarta Sans", "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, Arial, sans-serif;
+  --t-xs: 12px; --t-s: 13px; --t-m: 15px; --t-base: 16px; --t-l: 19px; --t-xl: 24px; --t-2xl: 30px; --t-3xl: clamp(30px, 4.6vw, 48px);
+  --duree-rapide: 120ms; --duree: 200ms; --duree-lente: 320ms;
+  --courbe: cubic-bezier(.2, .8, .2, 1); --courbe-ressort: cubic-bezier(.34, 1.4, .64, 1);
+  --ombre-focus: 0 0 0 3px color-mix(in srgb, var(--marque) 40%, transparent);
+  --z-barre: 40; --z-entete: 50; --z-fenetre: 100; --z-toast: 120;
+  --info: #0A6F93;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --info: #5CCCF0; } }
+body.mode-cleaneur { --info: #5CCCF0; }
+@media (prefers-reduced-motion: reduce) { :root { --duree-rapide: 0ms; --duree: 0ms; --duree-lente: 0ms; } }
 
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
@@ -2844,3 +2860,80 @@ body.sans-rappel .entete .rappel-entete { display: none; }   /* jamais pendant l
 .qsn-aides li { display: flex; gap: 10px; align-items: flex-start; line-height: 1.5; }
 .qsn-aides .ico { flex: none; width: 20px; height: 20px; color: var(--primaire); margin-top: 2px; }
 .qsn-conclusion { margin: 28px 0 0; padding: 18px 22px; border-left: 4px solid var(--corail); border-radius: 0 var(--rayon-l) var(--rayon-l) 0; background: var(--surface); box-shadow: var(--ombre); font-size: 18px; font-weight: 600; line-height: 1.55; color: var(--texte); }
+
+
+/* ================================================================================================
+   DESIGN SYSTEM CLEANEROO · composants communs (prompt 4, lot 1, 24/11/2026)
+   Squelettes de chargement, badges, états (vide, erreur, hors connexion), messages flottants. Utilisés par tous les écrans.
+   ================================================================================================ */
+/* Squelettes : la forme du contenu à venir, jamais un écran vide */
+.squelette { position: relative; overflow: hidden; background: var(--creux); border-radius: var(--rayon-s); }
+.squelette::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--surface) 70%, transparent), transparent);
+  animation: squelette-reflet 1.4s var(--courbe) infinite; }
+@keyframes squelette-reflet { to { transform: translateX(100%); } }
+@media (prefers-reduced-motion: reduce) { .squelette::after { animation: none; } }
+.squelette-ligne { height: 12px; margin: 8px 0; }
+.squelette-ligne.courte { width: 45%; } .squelette-ligne.moyenne { width: 70%; }
+.squelette-titre { height: 20px; width: 55%; margin: 4px 0 12px; }
+.squelette-carte { background: var(--surface); border: 1px solid var(--separateur); border-radius: var(--rayon-l); padding: var(--esp-5); box-shadow: var(--ombre); }
+.squelette-pastille { width: 44px; height: 44px; border-radius: 14px; flex: none; }
+.squelette-rangee { display: flex; gap: var(--esp-4); align-items: center; }
+.squelette-rangee > div { flex: 1; }
+
+/* Badges : une information courte, une seule couleur de sens */
+.badge { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 10px; border-radius: var(--rayon-pilule);
+  font-size: var(--t-xs); font-weight: 700; line-height: 1; white-space: nowrap; background: var(--creux); color: var(--texte2); }
+.badge .ico { width: 14px; height: 14px; }
+.badge.marque { background: color-mix(in srgb, var(--marque) 14%, var(--surface)); color: var(--primaire); }
+.badge.succes { background: color-mix(in srgb, var(--succes) 14%, var(--surface)); color: var(--succes); }
+.badge.alerte { background: color-mix(in srgb, var(--alerte) 16%, var(--surface)); color: color-mix(in srgb, var(--alerte) 70%, var(--texte)); }
+.badge.erreur { background: color-mix(in srgb, var(--erreur) 13%, var(--surface)); color: var(--erreur); }
+.badge.info { background: color-mix(in srgb, var(--info) 13%, var(--surface)); color: var(--info); }
+
+/* États : vide, erreur, indisponible, aucun résultat. Toujours une explication et, si possible, une action. */
+.etat { display: flex; flex-direction: column; align-items: center; text-align: center; gap: var(--esp-3);
+  padding: var(--esp-6) var(--esp-5); border-radius: var(--rayon-l); border: 1.5px dashed var(--separateur);
+  background: color-mix(in srgb, var(--surface) 60%, transparent); }
+.etat .tuile-ico { margin-bottom: var(--esp-1); }
+.etat h3 { font-size: var(--t-l); margin: 0; }
+.etat p { margin: 0; max-width: 460px; color: var(--texte2); }
+.etat .boutons { display: flex; gap: var(--esp-2); flex-wrap: wrap; justify-content: center; margin-top: var(--esp-2); }
+.etat.erreur-etat { border-color: color-mix(in srgb, var(--erreur) 40%, transparent); border-style: solid; }
+.etat.compact { padding: var(--esp-5) var(--esp-4); }
+
+/* Bandeau « connexion perdue » : fixe en haut, au-dessus du contenu, annoncé aux lecteurs d'écran */
+.bandeau-hors-ligne { position: fixed; left: 50%; top: 12px; transform: translate(-50%, -140%); z-index: var(--z-toast);
+  display: inline-flex; align-items: center; gap: 10px; padding: 10px 16px; border-radius: var(--rayon-pilule);
+  background: var(--texte); color: var(--surface); font-weight: 600; font-size: var(--t-m); box-shadow: var(--ombre-forte);
+  transition: transform var(--duree-lente) var(--courbe); }
+.bandeau-hors-ligne:not(.visible) { visibility: hidden; box-shadow: none; }
+.bandeau-hors-ligne.visible { transform: translate(-50%, 0); }
+.bandeau-hors-ligne .ico { width: 18px; height: 18px; }
+
+/* Messages flottants (confirmation, erreur) : en bas, au-dessus de la barre « Être rappelé » sur téléphone */
+.toasts { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: var(--z-toast); display: grid; gap: 8px;
+  width: min(440px, calc(100% - 32px)); pointer-events: none; }
+@media (max-width: 860px) { .toasts { bottom: calc(84px + env(safe-area-inset-bottom)); } }
+.toast { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: var(--rayon); background: var(--surface);
+  color: var(--texte); border: 1px solid var(--separateur); box-shadow: var(--ombre-forte); font-weight: 600; font-size: var(--t-m);
+  pointer-events: auto; animation: toast-entree var(--duree-lente) var(--courbe-ressort); }
+.toast .ico { width: 20px; height: 20px; flex: none; }
+.toast.succes .ico { color: var(--succes); } .toast.erreur .ico { color: var(--erreur); } .toast.info .ico { color: var(--info); }
+.toast.sortie { opacity: 0; transform: translateY(8px); transition: opacity var(--duree) ease, transform var(--duree) ease; }
+@keyframes toast-entree { from { opacity: 0; transform: translateY(12px) scale(.98); } }
+/* Page de référence #/design-system */
+.ds h3 { margin: 28px 0 12px; }
+.ds-deux { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 24px; margin-top: 32px; }
+.ds-univers { padding: 24px; border-radius: var(--rayon-xl); background: var(--fond); color: var(--texte); border: 1px solid var(--separateur); }
+.ds-nuancier { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-bottom: 10px; }
+.ds-nuance { display: grid; gap: 2px; font-size: var(--t-s); }
+.ds-nuance i { height: 44px; border-radius: var(--rayon-s); border: 1px solid var(--separateur); }
+.ds-nuance.large { grid-column: span 2; }
+.ds-nuance code, .ds code { font-size: 11.5px; color: var(--texte3); }
+.ds-ligne { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 12px; }
+.ds-grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+.ds-typo { display: grid; gap: 6px; }
+.ds-espace { display: inline-block; height: 24px; background: var(--marque); border-radius: 4px; }
+.ds-rayon, .ds-ombre { display: inline-grid; place-items: center; width: 140px; height: 80px; background: var(--surface); border: 1px solid var(--separateur); }
+.ds-ombre { border-radius: var(--rayon); border: 0; }
