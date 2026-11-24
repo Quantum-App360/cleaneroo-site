@@ -1,4 +1,5 @@
 -- Relevé mensuel par propriétaire (24 novembre 2026, repris de l'appli iPhone) : ses logements, nuits occupées, ménages et leur coût,
+-- Appliqué dans Supabase le 24/11/2026 (migration releves_proprietaires_2411), testé : partage par la conciergerie, lecture par le propriétaire, refus pour un tiers.
 -- incidents à sa charge, total à refacturer. La conciergerie le calcule (site), le télécharge en PDF et le partage : le relevé partagé
 -- est gardé tel quel (instantané) et le propriétaire invité le voit dans « Mes équipes ». Jamais de code d'accès ni d'autre propriétaire :
 -- l'instantané ne contient que le nom, la ville, les chiffres du mois et les incidents à sa charge.
