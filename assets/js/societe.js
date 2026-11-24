@@ -12,6 +12,7 @@ import { tr, traduire, LOCALE } from "./langue.js";
 import { esc, chargeur } from "./commun.js";
 import { chargerFormations, textes } from "./formations.js";
 import { MODULES_EXIGES_PAR_LA_LOI } from "./regles.js";
+import { TYPES_PERIODE, aujourdhuiParis, bornesActivite, decalerActivite, joursDe, resumeActivite, evolutionPct, parMois, jourParis, heureParis } from "./activite-societe.js";
 
 const appel = (nom, args) => supabase.rpc(nom, args).then(r => { if (r.error) throw new Error(r.error.message); return r.data; });
 const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -23,6 +24,8 @@ const LIEN = code => `https://cleaneroo.fr/#/rejoindre/${code}`;
 /** Cleaneurs nécessaires pour une mission : 2 au-delà de 6 h, plus pour une rotation d'hôtel ou de camping. */
 const besoin = m => Math.max(m.nombre_cleaneurs || 1, m.rubrique_id === "hospitality" ? cleaneursRotation(m.duree_min || 0) : 1);
 let rubriqueSociete = "tableau";
+/** Période affichée dans « Activité » : par défaut la semaine en cours (jour de référence null = aujourd'hui). */
+const periodeActivite = { type: "semaine", jour: null };
 
 /* ------------------------------------------------------------------ Activation (Cleaneur indépendant → société) */
 export function blocActiverSociete(p) {
@@ -149,6 +152,8 @@ export async function brancherEspaceSociete(vue, p) {
             <button type="button" class="lien-bouton" style="color:var(--erreur)" data-retirer-salarie="${esc(s.id)}">${tr("Retirer de l'équipe")}</button></div></div></div>`; }).join("")
       || `<p class="muet">${tr("Aucun salarié pour l'instant : invitez le premier ci-dessus.")}</p>`}`;
   const activite = () => `
+    <div id="activite-periode" class="activite-periode">${chargeur("Calcul de votre activité…", { petit: true })}</div>
+    <h3 class="sous-titre-societe">${tr("Depuis le début de l'année")}</h3>
     <div class="tuiles-chiffres">
       <div class="tuile-chiffre"><b>${euros(portefeuille?.prestations_c || 0)}</b><span>${tr("Prestations facturées cette année")}</span></div>
       <div class="tuile-chiffre"><b>${euros(portefeuille?.commissions_c || 0)}</b><span>${tr("Commissions Cleaneroo")}</span></div>
@@ -167,6 +172,7 @@ export async function brancherEspaceSociete(vue, p) {
     <nav class="onglets-biens onglets-societe">${RUBRIQUES.map(([id, nom, ico]) => `<button type="button" class="${id === rubriqueSociete ? "actif" : ""}" data-rubrique-societe="${id}">${icone(ico)}<span>${tr(nom)}</span>${id === "missions" && aAttribuer.length ? `<em>${aAttribuer.length}</em>` : ""}</button>`).join("")}</nav>
     <div class="contenu-societe">${contenu[rubriqueSociete]()}</div>`;
   traduire(boite);
+  if (rubriqueSociete === "activite") afficherActivitePeriode(boite.querySelector("#activite-periode"), { p, missions, salaries, tableau });
   boite.querySelectorAll("[data-rubrique-societe]").forEach(b => b.onclick = () => { rubriqueSociete = b.dataset.rubriqueSociete; brancherEspaceSociete(vue, p); });
   // Attribuer une mission : chef d'équipe et équipiers
   boite.querySelectorAll("[data-attribuer]").forEach(b => b.onclick = () => fenetreAttribution(missions.find(m => m.reference === b.dataset.attribuer), actifs, p, recharger, titreModule));
@@ -188,6 +194,108 @@ export async function brancherEspaceSociete(vue, p) {
     if (!confirm(tr("Retirer ce salarié de l'équipe ? Ses missions à venir reviennent à la société, à réattribuer."))) return;
     await appel("retirer_salarie", { p_id: b.dataset.retirerSalarie }).catch(() => null); recharger();
   });
+}
+
+/* ------------------------------------------------------------------ Activité : résumé par période (calculs dans activite-societe.js) */
+const SUR_LA_PRECEDENTE = { jour: "sur la veille", semaine: "sur la semaine précédente", mois: "sur le mois précédent", annee: "sur l'année précédente" };
+const dateCivile = (j, options) => new Date(`${j}T12:00:00Z`).toLocaleDateString(LOCALE, { timeZone: "UTC", ...options });
+const majuscule = t => t.charAt(0).toUpperCase() + t.slice(1);
+function titrePeriode(type, { debut, fin }) {
+  if (type === "jour") return majuscule(dateCivile(debut, { weekday: "long", day: "numeric", month: "long", year: "numeric" }));
+  if (type === "mois") return majuscule(dateCivile(debut, { month: "long", year: "numeric" }));
+  if (type === "annee") return `${tr("Année")} ${debut.slice(0, 4)}`;
+  const memeAn = debut.slice(0, 4) === fin.slice(0, 4), memeMois = debut.slice(0, 7) === fin.slice(0, 7);
+  const du = dateCivile(debut, memeMois ? { day: "numeric" } : memeAn ? { day: "numeric", month: "long" } : { day: "numeric", month: "long", year: "numeric" });
+  return `${tr("Semaine du")} ${du} ${tr("au")} ${dateCivile(fin, { day: "numeric", month: "long", year: "numeric" })}`;
+}
+const ligneBarre = (libelle, detail, valeurC, maxC) => `<div class="ligne-activite"><div class="nom-activite"><b>${libelle}</b>${detail ? `<span class="petit muet">${detail}</span>` : ""}</div>
+  <div class="barre-activite" aria-hidden="true"><span style="width:${maxC > 0 ? Math.max(valeurC > 0 ? 2 : 0, Math.round(valeurC * 100 / maxC)) : 0}%"></span></div><b class="montant-activite">${euros(valeurC)}</b></div>`;
+
+let calculActivite = 0;
+async function afficherActivitePeriode(zone, { p, missions, salaries, tableau }) {
+  if (!zone) return;
+  stylesActivite();
+  const numero = ++calculActivite;
+  const auj = aujourdhuiParis(), jour = periodeActivite.jour || auj, type = periodeActivite.type;
+  const b = bornesActivite(type, jour), precedente = bornesActivite(type, decalerActivite(type, jour, -1));
+  // Toute la période (et la précédente, pour la comparaison) ; à défaut de la fonction en base, les 45 derniers jours déjà chargés.
+  let lignes = null;
+  try { lignes = await appel("activite_societe", { p_debut: precedente.debut, p_fin: b.fin }); } catch { lignes = null; }
+  if (numero !== calculActivite || !zone.isConnected) return;
+  const partiel = !lignes && precedente.debut < jourParis(Date.now() - 45 * 864e5);
+  lignes = lignes || missions;
+  const pro = tableau?.formule === "pro", tauxPb = pro ? REGLES.COMMISSION_PRO_PB : REGLES.COMMISSION_GRATUIT_PB;
+  const noms = new Map(salaries.map(s => [s.membre_id, `${s.prenom || ""}${s.nom ? ` ${s.nom.charAt(0).toUpperCase()}.` : ""}`.trim()]));
+  const options = { tauxCommissionPb: tauxPb, gerant: { id: p.id, nom: tr("Moi (gérant)") }, nomDe: (id, defaut) => noms.get(id) || defaut };
+  const r = resumeActivite(lignes, b, options), avant = resumeActivite(lignes, precedente, options);
+  const evo = evolutionPct(r.caC, avant.caC);
+  const maxSal = Math.max(0, ...r.salaries.map(s => s.ca_c));
+  const missionsMot = n => `${n} ${tr(n > 1 ? "missions" : "mission")}`;
+  let detail = "";
+  if (type === "jour") {
+    const duJour = lignes.filter(m => m.statut === "TERMINEE" && m.creneau && jourParis(m.creneau) === b.debut);
+    const max = Math.max(0, ...duJour.map(m => m.estimation_c || 0));
+    detail = duJour.length ? duJour.map(m => ligneBarre(`${heure(...heureParis(m.creneau))} · ${esc(rubrique(m.rubrique_id)?.nom || "")}`,
+      `${esc(m.chef_id ? (noms.get(m.chef_id) || m.chef_prenom || "") : tr("Moi (gérant)"))}${(m.equipiers || []).length ? ` + ${(m.equipiers || []).length}` : ""}${m.duree_min ? ` · ${duree(m.duree_min)}` : ""}`,
+      m.estimation_c || 0, max)).join("") : "";
+  } else {
+    const cases = type === "annee" ? parMois(r.parJour, b.debut.slice(0, 4)).map(([mois, c]) => [majuscule(dateCivile(`${mois}-01`, { month: "long" })), c])
+      : joursDe(b).filter(j => type === "semaine" || r.parJour.get(j)).map(j => [majuscule(dateCivile(j, { weekday: "long", day: "numeric" })), r.parJour.get(j) || 0]);
+    const max = Math.max(0, ...cases.map(c => c[1]));
+    detail = cases.length ? cases.map(([lib, c]) => ligneBarre(esc(lib), "", c, max)).join("") : "";
+  }
+  const vide = `<p class="muet" style="margin:4px 0">${tr("Aucune mission terminée sur cette période.")}</p>`;
+  zone.innerHTML = `<div class="entete-activite">
+      <div><span class="petit muet">${tr("Ma société")} · ${esc(p.societe || tr("Votre société"))} · ${tr("Activité")}</span><h3 style="margin:2px 0 0">${esc(titrePeriode(type, b))}</h3></div>
+      <div class="choix-periode" role="group" aria-label="${tr("Période")}">${TYPES_PERIODE.map(([id, nom]) => `<button type="button" class="${id === type ? "actif" : ""}" aria-pressed="${id === type}" data-type-periode="${id}">${tr(nom)}</button>`).join("")}</div></div>
+    <div class="navigation-periode"><button type="button" class="bouton petit secondaire" data-periode-sens="-1" aria-label="${tr("Période précédente")}">‹ ${tr("Précédent")}</button>
+      <button type="button" class="bouton petit secondaire" data-periode-auj ${jour === auj ? "disabled" : ""}>${tr("Aujourd'hui")}</button>
+      <button type="button" class="bouton petit secondaire" data-periode-sens="1" aria-label="${tr("Période suivante")}">${tr("Suivant")} ›</button></div>
+    ${partiel ? `<p class="petit note alerte">${tr("Seuls les 45 derniers jours sont disponibles pour l'instant : les montants de cette période peuvent être incomplets.")}</p>` : ""}
+    <div class="tuiles-activite">
+      <div class="carte tuile-activite"><span>${tr("Chiffre d'affaires")}</span><b>${euros(r.caC)}</b>
+        <small class="${evo === null ? "muet" : evo >= 0 ? "hausse" : "baisse"}">${evo === null ? tr("Pas de comparaison possible") : `${evo > 0 ? "+" : evo < 0 ? "−" : ""}${Math.abs(evo)} % ${tr(SUR_LA_PRECEDENTE[type])}`}</small></div>
+      <div class="carte tuile-activite"><span>${tr("Net après commission")}</span><b>${euros(r.netC)}</b><small class="muet">${tr(pro ? "Formule Pro" : "Formule Gratuite")}, ${tauxPb / 100} %</small></div>
+      <div class="carte tuile-activite"><span>${tr("Missions terminées")}</span><b>${r.missions}</b><small class="muet">${duree(r.minutes)} ${tr("travaillées")}</small></div>
+      <div class="carte tuile-activite"><span>${tr("Par heure travaillée")}</span><b>${r.minutes ? euros(r.parHeureC) : "—"}</b><small class="muet">${tr("Moyenne de l'équipe")}</small></div>
+    </div>
+    ${r.aValider ? `<p class="petit">⏳ ${tr("En attente de validation")} : ${missionsMot(r.aValider)} · ${euros(r.aValiderC)} (${tr("comptées dans le chiffre d'affaires une fois validées")})</p>` : ""}
+    <h3 class="sous-titre-societe">${tr("Par salarié")}</h3>
+    <div class="carte liste-activite">${r.salaries.map(s => ligneBarre(esc(s.nom), `${missionsMot(s.missions)} · ${duree(s.minutes)} · ${euros(s.parHeureC)} ${tr("par heure")}`, s.ca_c, maxSal)).join("") || vide}</div>
+    <h3 class="sous-titre-societe">${tr(type === "jour" ? "Missions du jour" : type === "annee" ? "Mois par mois" : "Jour par jour")}</h3>
+    <div class="carte liste-activite">${detail || vide}</div>
+    <p class="petit muet">${tr("Montant d'une mission partagé à parts égales entre le chef d'équipe et ses équipiers ; heures : durée prévue de chaque mission. Date retenue : jour de l'intervention, heure de Paris.")}</p>`;
+  traduire(zone);
+  const relancer = () => afficherActivitePeriode(zone, { p, missions, salaries, tableau });
+  zone.querySelectorAll("[data-type-periode]").forEach(x => x.onclick = () => { periodeActivite.type = x.dataset.typePeriode; relancer(); });
+  zone.querySelectorAll("[data-periode-sens]").forEach(x => x.onclick = () => { periodeActivite.jour = decalerActivite(type, jour, Number(x.dataset.periodeSens)); relancer(); });
+  zone.querySelector("[data-periode-auj]").onclick = () => { periodeActivite.jour = null; relancer(); };
+}
+function stylesActivite() {
+  if (document.getElementById("styles-activite-societe")) return;
+  const s = document.createElement("style");
+  s.id = "styles-activite-societe";
+  s.textContent = `.entete-activite{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+    .choix-periode{display:flex;gap:6px;flex-wrap:wrap}
+    .choix-periode button{border:1px solid var(--separateur);background:var(--surface);color:var(--texte);border-radius:10px;padding:8px 14px;font:inherit;cursor:pointer}
+    .choix-periode button.actif{background:var(--creux);border-color:var(--primaire);color:var(--primaire);font-weight:700}
+    .navigation-periode{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+    .tuiles-activite{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:8px}
+    .tuile-activite{display:flex;flex-direction:column;gap:4px;margin:0}
+    .tuile-activite span{font-size:14px;color:var(--texte2)}
+    .tuile-activite b{font-size:26px;font-weight:800;color:var(--texte)}
+    .tuile-activite small{font-size:13px}
+    .tuile-activite small.hausse{color:var(--succes)} .tuile-activite small.baisse{color:var(--corail-texte)}
+    .liste-activite{padding-top:4px;padding-bottom:4px}
+    .ligne-activite{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(80px,1fr) auto;align-items:center;gap:14px;padding:10px 0;border-bottom:1px solid var(--separateur)}
+    .ligne-activite:last-child{border-bottom:0}
+    .nom-activite{display:flex;flex-direction:column;gap:2px;min-width:0}
+    .barre-activite{height:8px;border-radius:8px;background:var(--creux);overflow:hidden}
+    .barre-activite span{display:block;height:100%;border-radius:8px;background:var(--primaire)}
+    .montant-activite{text-align:right;white-space:nowrap}
+    @media (max-width:720px){.tuiles-activite{grid-template-columns:repeat(2,1fr)}}
+    @media (max-width:480px){.ligne-activite{grid-template-columns:1fr auto}.barre-activite{grid-column:1/-1;grid-row:2}}`;
+  document.head.appendChild(s);
 }
 
 /** Lien d'invitation : à copier ou à envoyer par SMS / WhatsApp. */
