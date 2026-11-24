@@ -38,9 +38,15 @@ grant execute on function public.ouvrir_reservations(boolean) to authenticated;
 
 -- Contrôle des demandes : plus de date ; aucune nouvelle demande tant que les réservations sont fermées (sauf administrateur, pour les essais).
 create or replace function public.verifier_ouverture() returns trigger language plpgsql set search_path = '' as $$
+declare admin boolean := false;
 begin
-  if tg_op = 'INSERT' and not public.reservations_ouvertes() and not public.est_admin() and coalesce(auth.role(), '') <> 'service_role' then
-    raise exception 'ouverture' using hint = 'Les réservations ne sont pas encore ouvertes.';
+  -- Aucune nouvelle demande tant que les réservations sont fermées (aussi pour le pilote automatique) ; l'administrateur peut tester.
+  -- est_admin() n'est appelé que pour un compte connecté (anon n'a pas le droit de l'exécuter).
+  if tg_op = 'INSERT' and not public.reservations_ouvertes() then
+    if coalesce(auth.role(), '') = 'authenticated' then admin := public.est_admin(); end if;
+    if not admin then
+      raise exception 'ouverture' using hint = 'Les réservations ne sont pas encore ouvertes.';
+    end if;
   end if;
   if tg_op = 'UPDATE' and new.statut = 'PUBLIEE' and old.statut is distinct from 'PUBLIEE'
      and new.creneau is not null and new.creneau < now() then
@@ -63,6 +69,7 @@ begin
   execute f;
 end $$;
 
+-- Appliqué dans Supabase le 24/11/2026 (migrations ouverture_reservations_interrupteur_2411 et ouverture_reservations_correctif_anon_2411).
 -- Pré-réservations déjà enregistrées (3 au 24/11/2026) : gardées telles quelles ; la fonction « paiement » ne les fait payer
 -- qu'à partir de l'ouverture (ouvert_le), avec le délai de 48 h.
 -- « stripe_reel » est mis à jour par la fonction « paiement » (action etat_ouverture, administrateur) selon la clé Stripe en service.

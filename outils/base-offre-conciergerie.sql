@@ -5,7 +5,8 @@
 --  - +1 mois (une seule fois, ajouté à la fin) si 3 Cleaneurs invités ont leur dossier validé et au moins une intervention ;
 --  - prix garanti 12 mois après la fin ; rappels 30 et 7 jours avant ; AUCUN PRÉLÈVEMENT SANS ACCORD EXPLICITE :
 --    sans réponse, la conciergerie reste sans abonnement (8 % de frais de service).
--- Ne touche ni aux prix, ni aux commissions, ni aux tranches.
+-- Ne touche ni aux prix, ni aux commissions, ni aux tranches. Appliqué dans Supabase le 24/11/2026 (migration offre_conciergerie_fondatrice_2411) ;
+-- fonction « paiement » (version 8) : 0 % de frais de service pendant l'offre (estAbonne).
 
 alter table public.profils add column if not exists offre_conciergerie_debut timestamptz;
 alter table public.profils add column if not exists offre_conciergerie_choix text not null default '';
@@ -93,5 +94,5 @@ begin
   end loop;
 end $$;
 revoke all on function public.tache_offre_conciergerie() from public, anon, authenticated;
--- select cron.schedule('offre-conciergerie', '17 8 * * *', 'select public.tache_offre_conciergerie()');
+select cron.schedule('offre-conciergerie', '17 8 * * *', 'select public.tache_offre_conciergerie()');   -- appliqué le 24/11/2026
 -- E-mail des rappels : à brancher sur l'envoi d'e-mails existant (la notification ci-dessus est déjà envoyée).

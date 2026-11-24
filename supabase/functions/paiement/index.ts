@@ -75,10 +75,11 @@ type Demande = Record<string, any>;
 // deno-lint-ignore no-explicit-any
 type Admin = any;
 
-/** Le client est-il abonné Pro (0 % de frais de service) ? */
+/** Le client est-il abonné Pro (0 % de frais de service) ? Pendant l'offre « Conciergerie fondatrice » (24/11/2026) : oui. */
 async function estAbonne(admin: Admin, d: Demande) {
-  const { data: prof } = d.client_id ? await admin.from("profils").select("abonnement_pro").eq("id", d.client_id).maybeSingle() : { data: null };
-  return !!prof?.abonnement_pro && prof.abonnement_pro !== "aucun";
+  const { data: prof } = d.client_id ? await admin.from("profils").select("abonnement_pro, offre_conciergerie_fin").eq("id", d.client_id).maybeSingle() : { data: null };
+  const offre = !!prof?.offre_conciergerie_fin && Date.parse(prof.offre_conciergerie_fin) > Date.now();
+  return offre || (!!prof?.abonnement_pro && prof.abonnement_pro !== "aucun");
 }
 let tarifsCharges = false;
 async function chargerTarifs(admin: Admin) {
