@@ -21,6 +21,7 @@ import { RUBRIQUES as RUBRIQUES_CAT, rubrique, pastille, tacheChiffree, tachesPo
   import { niveauRotation } from "./assets/js/conciergerie.js";
 import { menageTientEntreVoyageurs } from "./assets/js/estimation.js";
 import { bornesPeriode } from "./assets/js/periodes.js";
+import { planProgrammerTout, instantParis } from "./assets/js/conciergerie.js";
 import { etatOffreConciergerie, offreConciergerieOuverte, fraisServicePct } from "./assets/js/regles.js";
 import { bornesActivite, decalerActivite, jourParis, resumeActivite, evolutionPct } from "./assets/js/activite-societe.js";
 import { euros, REGLES, indemniteAccesC, dateVersement, qualificationsRequises, calculActivite, niveauCleaneur, verifierProposition, netPortefeuille, scoreMission, fraisDeplacementC } from "./assets/js/regles.js";
@@ -80,6 +81,18 @@ egal("offre conciergerie : terminée après 3 mois sans bonus", etatOffreConcier
 egal("offre conciergerie : +1 mois avec 3 Cleaneurs", etatOffreConciergerie({ inscritLe: "2026-12-01", debut: "2027-03-15T12:00:00Z", cleaneursBonus: 3, maintenant: new Date("2027-07-01T12:00:00Z") }).statut, "en_cours");
 egal("offre conciergerie : sans réponse, sans abonnement", etatOffreConciergerie({ inscritLe: "2026-12-01", debut: "2027-03-15T12:00:00Z", maintenant: new Date("2027-08-01T12:00:00Z") }).apres, "sans_abonnement");
 egal("offre conciergerie : 0 % de frais pendant l'offre", fraisServicePct(false, true), 0);
+// « Programmer tout » (24/11/2026)
+{ const biens = [{ id: "a", rue: "1 rue A", codePostal: "83000", prixMenageC: 6000 }, { id: "b", rue: "2 rue B", codePostal: "83000" }, { id: "c", rue: "3 rue C", codePostal: "83000" }];
+  const modele = { reference: "M1", statut: "TERMINEE", rubrique_id: "rental", espace: "conciergerie", rue: "1 rue A", code_postal: "83000", estimation_c: 5000, details: { logementId: "a" }, cree_le: "2027-01-10" };
+  const departs = [{ bienId: "a", fin: "2027-02-03" }, { bienId: "a", fin: "2027-02-03" }, { bienId: "a", fin: "2027-02-05" }, { bienId: "a", fin: "2027-02-25" }, { bienId: "b", fin: "2027-02-04" }];
+  const plan = planProgrammerTout({ biens, departs, demandes: [modele], menagePrevu: (b, j) => b === "a" && j === "2027-02-05", aujourdhui: new Date(2027, 1, 1) });
+  egal("programmer tout : un ménage par départ, ni prévu ni hors 14 jours", plan.lignes.length, 1);
+  egal("programmer tout : prix fixé par la conciergerie", plan.prestationsC, 6000);
+  egal("programmer tout : frais de service 8 % sans abonnement", plan.totalC, 6480);
+  egal("programmer tout : logement sans ménage précédent à faire à la main", plan.sansModele.length, 1);
+  egal("programmer tout : abonné 0 %", planProgrammerTout({ biens, departs, demandes: [modele], menagePrevu: () => false, abonne: true, aujourdhui: new Date(2027, 1, 1) }).fraisC, 0);
+  egal("programmer tout : heure de Paris en hiver", instantParis("2027-02-03", 10), "2027-02-03T09:00:00.000Z");
+  egal("programmer tout : heure de Paris en été", instantParis("2027-07-03", 10), "2027-07-03T08:00:00.000Z"); }
 egal("niveau : débutant", niveauCleaneur({ missions: 3, note: 5 }), 0);
 egal("niveau : Confirmé", niveauCleaneur({ missions: 12, note: 4.7 }), 1);
 egal("niveau : Élite", niveauCleaneur({ missions: 60, note: 4.9 }), 3);

@@ -11,12 +11,14 @@ import { couleurBien, voies, morceau, erreurSejour, sejoursGardes, nuits, versIc
 import { afficherCarte, coordonnees } from "./cartes.js";
 import { guideVideo } from "./guide-video.js";
 import { chargeur } from "./commun.js";
+import { profilMemorise } from "./entete.js";
 import { blocFormulesCleaneur } from "./formules-cleaneur.js";
 import { preremplir, brouillonExemple } from "./reserver.js";
 import { editeurGuide, brancherGuides } from "./guides.js";
 import { editeurEtapesPhoto, brancherEtapesPhoto, etapesPhotoDe, etapesPersoDe } from "./etapes-bien.js";
 import { editeurTemoins, brancherTemoins } from "./temoins.js";
-import { editeurStock, editeurIncidents, brancherOutilsBiens, blocAujourdhui, blocMenages, blocRapports, stockBas, incidentsDe, consommerStock } from "./conciergerie.js";
+import { editeurStock, editeurIncidents, brancherOutilsBiens, blocAujourdhui, blocMenages, blocRapports, stockBas, incidentsDe, consommerStock,
+  planProgrammerTout, boutonProgrammerTout, fenetreProgrammerTout } from "./conciergerie.js";
 export { brancherMissions, demanderGeoloc } from "./missions.js";
 import { blocSociete, blocActiverSociete, blocSalarie } from "./societe.js";
 
@@ -437,6 +439,12 @@ async function remplirAgenda(vue, biens, demandes, recharger) {
   const programmerMenage = (bienId, jour) => { preremplir({ bienId, jour }); location.hash = `#/reserver/${rubriqueMenage}`; };
   blocAujourdhui(vue.querySelector("#pro-aujourdhui"), { biens, sejours: uniques, demandes, menageDe, erreurs, nomBien, couleur: couleurDe, programmer: programmerMenage });
   blocMenages(vue.querySelector("#pro-menages"), { biens, demandes, nomBien });
+  // « Programmer tout » (24/11/2026) : sur « Aujourd'hui » et la liste des ménages, total affiché avant confirmation.
+  const planTout = planProgrammerTout({ biens, departs: uniques, demandes, menagePrevu, abonne: !!profilMemorise()?.abonnePro });
+  vue.querySelectorAll(".programmer-tout").forEach(x => x.remove());
+  ["#pro-aujourdhui", "#pro-menages"].forEach(sel => { const z = vue.querySelector(sel); if (!z || !planTout.lignes.length) return;
+    z.insertAdjacentHTML("beforebegin", boutonProgrammerTout(planTout)); const b = z.previousElementSibling; traduire(b);
+    b.querySelector("[data-programmer-tout]").onclick = () => fenetreProgrammerTout(planTout, { nomBien, recharger }); });
   blocRapports(vue.querySelector("#pro-rapports"), { biens, sejours: uniques, demandes, nomBien, societe: vue.querySelector(".entete-pro h2")?.textContent || "" });
   const programmer = b => b.onclick = () => { preremplir({ bienId: b.dataset.programmer, jour: b.dataset.jour }); location.hash = `#/reserver/${rubriqueMenage}`; };
 

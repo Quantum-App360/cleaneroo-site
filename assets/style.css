@@ -2660,3 +2660,6 @@ a.statut-choix { color: inherit; text-decoration: none; }
 .risque-urgent .pastille-risque { background: var(--erreur); }
 .risque-surveiller .pastille-risque { background: var(--alerte); }
 .rot-etape .ico, .alerte-concierge > .ico, .outil-bien summary .ico, .etat-bien .ico { width: 18px; height: 18px; vertical-align: -4px; }
+/* « Programmer tout » (24/11/2026) */
+.programmer-tout { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0 0 10px; }
+.liste-programmer-tout { max-height: 40vh; overflow: auto; margin: 6px 0 10px; border-bottom: 1px solid var(--separateur); }

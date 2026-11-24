@@ -4,9 +4,11 @@
 //  • « Rapports » : par mois et par bien — ménages, coût, nuits occupées, taux d'occupation ; export pour les propriétaires ;
 //  • fiche de chaque bien : stock (consommables et linge, alerte sous le seuil) et incidents (casse, panne, à réparer).
 // Stock et incidents sont enregistrés avec le bien (champs stock / incidents). Même espace dans l'appli (Conciergerie.kt).
-import { enregistrerBien } from "./donnees.js";
+import { enregistrerBien, envoyerDemande } from "./donnees.js";
+import { calculer, entreeEstimation } from "./estimation.js";
+import { lancerPaiement } from "./paiement.js";
 import { rubrique } from "./catalogue.js";
-import { REGLES, euros, dateLongue, dateCourte } from "./regles.js";
+import { REGLES, euros, dateLongue, dateCourte, DATE_PREMIERES_INTERVENTIONS } from "./regles.js";
 import { icone } from "./icones.js";
 import { tr, traduire, LOCALE } from "./langue.js";
 import { esc } from "./commun.js";
@@ -310,4 +312,107 @@ export function blocRapports(boite, { biens, sejours, demandes, nomBien, societe
     traduire(boite);
   };
   dessiner();
+}
+
+/* ------------------------------------------------------------------ « Programmer tout » (24/11/2026, repris de l'appli iPhone)
+   Programme d'un coup tous les départs sans ménage des 14 prochains jours, au prix de chaque logement (prix fixé par la conciergerie,
+   sinon le prix de la grille recalculé pour la date, comme le serveur), un seul ménage par départ. Le total est affiché avant la
+   confirmation. Chaque ménage reprend le dernier ménage réservé pour ce logement (consignes, accès, tâches) ; sans ménage précédent,
+   le logement est à programmer à la main. Paiement : le premier ménage est payé sur la page sécurisée Stripe, les suivants sont
+   prélevés sur la même carte 3 jours avant chacun (groupe de paiement, comme les passages d'un entretien régulier). */
+export const PROGRAMMER_TOUT_JOURS = 14;
+const CHAMPS_MODELE = ["rubrique_id", "duree_min", "nombre_cleaneurs", "espace", "prenom", "nom", "email", "telephone", "rue", "code_postal", "ville",
+  "accueil", "acces", "remarque", "choix_cleaneur", "cleaneur_favori"];
+/** Instant (ISO) d'une heure de Paris un jour donné, quel que soit le fuseau du navigateur. */
+export function instantParis(jour, h) {
+  const [a, m, j] = jour.split("-").map(Number);
+  const utc = Date.UTC(a, m - 1, j, h);
+  const vu = new Date(new Date(utc).toLocaleString("en-US", { timeZone: "Europe/Paris" }));
+  const ecart = vu.getTime() - new Date(new Date(utc).toLocaleString("en-US", { timeZone: "UTC" })).getTime();
+  return new Date(utc - ecart).toISOString();
+}
+/** Dernier ménage réservé pour un logement (modèle). */
+export const modeleDe = (l, demandes) => demandes.filter(d => d.statut !== "ANNULEE" && ["rental", "hospitality"].includes(d.rubrique_id)
+    && (d.details?.logementId === l.id || memeAdresse(d, l)))
+  .sort((a, b) => String(b.cree_le || b.creneau || "").localeCompare(String(a.cree_le || a.creneau || "")))[0] || null;
+
+/**
+ * Plan de « Programmer tout ». Fonction pure, testée. departs : [{ bienId, fin }] ; menagePrevu(bienId, jour) ; abonne : 0 % de frais.
+ * Renvoie { lignes: [{ bien, jour, creneau, prixC, creditImpotC, fraisPct, modele }], sansModele: [{ bien, jour }], prestationsC, fraisC, totalC }.
+ */
+export function planProgrammerTout({ biens, departs, demandes, menagePrevu, abonne = false, aujourdhui = new Date(), jours = PROGRAMMER_TOUT_JOURS }) {
+  const debut = iso(aujourdhui), limite = iso(plusJours(aujourdhui, jours)), ouverture = iso(DATE_PREMIERES_INTERVENTIONS);
+  const vus = new Set(), lignes = [], sansModele = [];
+  for (const s of [...departs].sort((a, b) => a.fin.localeCompare(b.fin))) {
+    const cle = `${s.bienId}|${s.fin}`;
+    if (vus.has(cle) || s.fin < debut || s.fin > limite || s.fin < ouverture || menagePrevu(s.bienId, s.fin)) continue;
+    vus.add(cle);
+    const bien = biens.find(b => b.id === s.bienId);
+    if (!bien) continue;
+    const modele = modeleDe(bien, demandes);
+    if (!modele || modele.sur_devis) { sansModele.push({ bien, jour: s.fin }); continue; }
+    const creneau = instantParis(s.fin, Number(modele.details?.departVoyageursH ?? REGLES.DEPART_VOYAGEURS_DEFAUT_H));
+    const prixLibre = Number(bien.prixMenageC) >= 1000 && ["conciergerie", "hotellerie"].includes(modele.espace) && modele.rubrique_id === "rental";
+    let prixC, creditImpotC = 0, fraisPct = abonne ? 0 : REGLES.FRAIS_SERVICE_PRO_PCT;
+    if (prixLibre) prixC = Math.round(Number(bien.prixMenageC));
+    else {
+      // Même calcul que le serveur au paiement (dimanche, créneau, zone) : le prix affiché est celui qui sera payé.
+      const b = { taches: [], tachesPerso: [], ...(modele.details || {}), rubriqueId: modele.rubrique_id, codePostal: modele.code_postal || "", abonnePro: abonne };
+      const r = calculer(entreeEstimation(b, modele.espace === "personnel", new Date(creneau)));
+      if (r.devisObligatoire) { sansModele.push({ bien, jour: s.fin }); continue; }
+      prixC = r.totalC; creditImpotC = r.creditImpotC || 0; fraisPct = r.fraisServicePct;
+    }
+    lignes.push({ bien, jour: s.fin, creneau, prixC, creditImpotC, fraisPct, modele, prixLibre });
+  }
+  const prestationsC = lignes.reduce((t, x) => t + x.prixC, 0);
+  const fraisC = lignes.reduce((t, x) => t + Math.round(x.prixC * x.fraisPct / 100), 0);
+  return { lignes, sansModele, prestationsC, fraisC, totalC: prestationsC + fraisC };
+}
+
+/** Bouton « Programmer tout » (vide s'il n'y a rien à programmer). */
+export const boutonProgrammerTout = plan => plan.lignes.length
+  ? `<div class="programmer-tout"><button type="button" class="bouton plein petit" data-programmer-tout>${icone("calendrier")} ${tr("Programmer tout")} (${plan.lignes.length})</button>
+      <span class="petit muet">${tr("Tous les départs sans ménage des 14 prochains jours")} · ${euros(plan.totalC)}</span></div>` : "";
+
+/** Fenêtre de confirmation puis programmation. */
+export function fenetreProgrammerTout(plan, { nomBien, recharger }) {
+  const fond = document.createElement("div");
+  fond.className = "fenetre-fond";
+  fond.innerHTML = `<div class="fenetre carte" role="dialog" aria-modal="true" aria-labelledby="titre-programmer-tout">
+    <h2 id="titre-programmer-tout" style="margin-top:0">${tr("Programmer tous les ménages")}</h2>
+    <p class="petit" style="margin-top:0">${tr("Un ménage par départ de voyageurs des 14 prochains jours, au prix de chaque logement.")}</p>
+    <div class="liste-programmer-tout">${plan.lignes.map(x => `<div class="ligne-montant"><span><b>${esc(nomBien(x.bien))}</b> · ${esc(dateCourte(jourDe(x.jour)))}</span><span>${euros(x.prixC)}</span></div>`).join("")}</div>
+    <div class="ligne-montant"><span>${tr("Ménages")} (${plan.lignes.length})</span><span>${euros(plan.prestationsC)}</span></div>
+    <div class="ligne-montant"><span>${tr("Frais de service Cleaneroo")}</span><span>${plan.fraisC ? euros(plan.fraisC) : tr("0 € (abonné)")}</span></div>
+    <div class="ligne-montant total"><span>${tr("Total")}</span><span>${euros(plan.totalC)}</span></div>
+    ${plan.sansModele.length ? `<p class="petit note alerte">${tr("À programmer à la main (aucun ménage précédent pour reprendre les consignes)")} : ${plan.sansModele.map(x => `${esc(nomBien(x.bien))} · ${esc(dateCourte(jourDe(x.jour)))}`).join(", ")}</p>` : ""}
+    <p class="petit">${icone("paiement")} ${tr("Le premier ménage est payé maintenant sur la page sécurisée Stripe ; les suivants sont prélevés sur la même carte 3 jours avant chacun. Chaque montant reste bloqué jusqu'à la validation du ménage.")}</p>
+    <p class="erreur" data-erreur-programmer></p>
+    <div class="boutons"><button type="button" class="bouton plein" data-confirmer>${tr("Programmer")} ${plan.lignes.length} ${tr(plan.lignes.length > 1 ? "ménages" : "ménage")} · ${euros(plan.totalC)}</button>
+      <button type="button" class="bouton secondaire" data-fermer>${tr("Annuler")}</button></div></div>`;
+  document.body.appendChild(fond); traduire(fond);
+  const fermer = () => fond.remove();
+  fond.querySelector("[data-fermer]").onclick = fermer;
+  fond.onclick = e => { if (e.target === fond) fermer(); };
+  fond.querySelector("[data-confirmer]").onclick = async e => {
+    const bouton = e.currentTarget, err = fond.querySelector("[data-erreur-programmer]");
+    bouton.disabled = true; err.textContent = tr("Programmation en cours…");
+    const groupe = crypto.randomUUID(), faits = [];
+    for (const x of plan.lignes) {
+      const m = x.modele, details = { ...(m.details || {}) };
+      ["pilote", "depuisModele", "prixCorrigeLe", "prixNavigateurC", "fraisServicePctServeur", "passages"].forEach(k => delete details[k]);
+      Object.assign(details, { logementId: x.bien.id, programmeTout: true, fraisServicePct: x.fraisPct, fraisServiceC: Math.round(x.prixC * x.fraisPct / 100) });
+      if (x.prixLibre) Object.assign(details, { prixLibre: true });
+      const demande = Object.fromEntries(CHAMPS_MODELE.filter(k => m[k] !== undefined).map(k => [k, m[k]]));
+      try {
+        faits.push(await envoyerDemande({ ...demande, details, estimation_c: x.prixC, credit_impot_c: x.creditImpotC, sur_devis: false, flexible: false,
+          prelancement: false, creneau: x.creneau, groupe_paiement: groupe, remise_parrainage_c: 0, cagnotte_c: 0 }));
+      } catch { /* les autres continuent ; le compte est donné ci-dessous */ }
+    }
+    if (!faits.length) { bouton.disabled = false; err.textContent = tr("Le service est momentanément indisponible. Réessayez dans quelques minutes."); return; }
+    if (faits.length < plan.lignes.length) err.textContent = `${faits.length} / ${plan.lignes.length} ${tr("ménages programmés : relancez « Programmer tout » pour les autres.")}`;
+    const url = await lancerPaiement(faits[0].reference, faits[0].jeton).catch(() => null);
+    if (url) { location.href = url; return; }
+    fermer(); recharger();
+  };
 }

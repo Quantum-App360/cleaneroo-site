@@ -171,3 +171,21 @@ Constat : la rubrique est « 100 % à la carte », avec 20 tâches à cocher. Le
   - les fichiers modifiés ;
   - les textes à faire valider par Vincent (partie 8) ;
   - ce qu'il reste à faire dans le tableau de bord Stripe (Apple Pay, Google Pay).
+## Ajout de Michael (24/11, 14 h 30) — à traiter avec le prompt 2
+« Comment ça marche » est à reprendre entièrement : accueil (5 étapes), page #/comment-ca-marche (Côté Cleaneur, Vos garanties,
+affiche assets/img/affiche.jpg), étapes courtes des pages ville. Textes actuels faux : « Débit seulement après validation »,
+« Validez, le Cleaneur est payé » (le paiement a lieu à la réservation). Un parcours par profil.
+
+## Prompt 3 — Vocabulaire et formulations (demande de Michael, 24/11, 14 h 30, après le prompt 2)
+Analyse de tous les textes du site (langue.js, pages, écrans) : vocabulaire, formulations, phrases. Certaines sont trop familières :
+relever les cas, proposer une version plus professionnelle, appliquer après validation, dans les 4 langues.
+
+## Prompt iOS — Lot 44 (reçu le 24/11, 14 h 30) — pour l'app iPhone (Xcode, Mac de Vincent), pas pour le site
+Écran de choix du profil client (et Cleaneur) plus vivant : en-tête en dégradé #0596C4 → #04BEE5 → #0DC88D, cartes avec filet coloré,
+tuile en dégradé, étiquette colorée en 3e ligne, apparition en cascade, retour haptique, pastilles « Comment ça marche » reliées.
+Texte complet transmis par Michael ; à exécuter par Vincent dans Xcode (build/bak44, build/lot44.diff, ARCHITECTURE.md).
+
+## Prompt iOS — Lot 45 (reçu le 24/11, 14 h 31) — pour l'app iPhone (Mac de Vincent)
+Lien « ‹ Accueil Cleaneroo » dans l'espace Cleaneur et les espaces client (fondu simple, 44 pt, VoiceOver) ; journée de démonstration
+du Cleaneur crédible (2-3 missions sans chevauchement, 6 à 8 h, statuts cohérents, chiffres = somme) ; test automatique ; build/bak45,
+build/lot45.diff, ARCHITECTURE.md.
