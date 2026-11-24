@@ -2779,3 +2779,25 @@ body.sans-rappel .entete .rappel-entete { display: none; }   /* jamais pendant l
 .juste-prix li .ico { flex: none; width: 20px; height: 20px; margin-top: 2px; color: var(--primaire); }
 .mention-cp { display: flex; align-items: center; gap: 6px; margin: 6px 0 0; color: var(--texte2); }
 .mention-cp .ico { width: 15px; height: 15px; }
+
+/* ================================================================ Avant / après (prompt 2, partie 6) */
+.avant-apres { max-width: 900px; margin: 0 auto; }
+.aa-onglets { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.aa-onglets button { border: 1px solid var(--separateur); background: var(--surface); color: var(--texte); border-radius: 999px; padding: 8px 16px; font-weight: 600; font-size: 14.5px; cursor: pointer; }
+.aa-onglets button[aria-selected="true"] { background: var(--primaire); border-color: var(--primaire); color: #fff; }
+.aa-cadre { position: relative; aspect-ratio: 3 / 2; border-radius: var(--rayon-l); overflow: hidden; box-shadow: var(--ombre); user-select: none; background: var(--surface); }
+.aa-cadre img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.aa-cadre .aa-apres { clip-path: inset(0 0 0 var(--pos)); }
+.aa-poignee { position: absolute; top: 0; bottom: 0; left: var(--pos); width: 3px; margin-left: -1.5px; background: #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.08); pointer-events: none; }
+.aa-poignee i { position: absolute; top: 50%; left: 50%; width: 44px; height: 44px; margin: -22px 0 0 -22px; border-radius: 50%; background: #fff; box-shadow: 0 6px 16px rgba(0,0,0,.2); }
+.aa-poignee i::before, .aa-poignee i::after { content: ""; position: absolute; top: 50%; width: 0; height: 0; margin-top: -6px; border: 6px solid transparent; }
+.aa-poignee i::before { left: 7px; border-right-color: var(--texte); } .aa-poignee i::after { right: 7px; border-left-color: var(--texte); }
+.aa-cadre input[type=range] { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: ew-resize; }
+.aa-cadre input[type=range]:focus-visible ~ .aa-poignee i, .aa-cadre:focus-within .aa-poignee i { outline: 3px solid var(--primaire); }
+.aa-etiquette, .aa-exemple { position: absolute; padding: 5px 12px; border-radius: 999px; font-size: 13px; font-weight: 700; pointer-events: none; }
+.aa-etiquette { top: 14px; background: rgba(15, 30, 35, .72); color: #fff; }
+.aa-g { left: 14px; } .aa-d { right: 14px; }
+.aa-exemple { bottom: 14px; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,.92); color: var(--encre-logo); letter-spacing: .06em; text-transform: uppercase; font-size: 12px; }
+.aa-texte { text-align: center; margin: 16px auto 0; max-width: 640px; }
+.photos-obligatoires { display: flex; gap: 10px; align-items: flex-start; margin: 0; font-size: 14.5px; color: var(--texte2); }
+.photos-obligatoires .ico { flex: none; width: 20px; height: 20px; color: var(--primaire); margin-top: 2px; }

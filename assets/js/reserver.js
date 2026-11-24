@@ -7,7 +7,7 @@ import { PARTIES, partie, partiePour, PARTIE_DE_L_ESPACE, rubriquesProposees, li
 import { calculer, entreeEstimation, SALISSURE, disponibilite, meilleurPack, tachesChiffrees, formuleDe, niveauLocation, passagesPlanifies, datesPassages,
   etapesDe, consommablesDe, menageTientEntreVoyageurs, frequenceDe, minutesEquipements, prixIndicatifEquipement, heuresEvenement, litsDe, litsTailles,
   tachesPourOccasion, niveauOccasion } from "./estimation.js";
-import { REGLES, euros, duree, heure, dateCourte, dateLongue, reservationsFermees, MESSAGE_LANCEMENT } from "./regles.js";
+import { REGLES, euros, duree, heure, dateCourte, dateLongue, reservationsFermees, MESSAGE_LANCEMENT, photosAvantObligatoires } from "./regles.js";
 import { envoyerDemande, secteurCouvert, rejoindreAttente, enregistrerBien, synchroniserBiens, marquerDonneesInvite } from "./donnees.js";
 import { etapesPhotoDe, etapesPersoDe } from "./etapes-bien.js";
 import { maPosition, adresseDe, chercherAdresse, afficherCarte } from "./cartes.js";
@@ -150,7 +150,7 @@ function brouillonInitialSansFavori(rubriqueId, espace = "personnel", rapide = f
 const SURFACE_DEPART = { office: 120, commerce: 120, communal: 200, kitchen: 30, outdoor: 40, event: 100, construction: 80, leisure: 7, boat: 10 };
 function vierge(rubriqueId, espace, r, lieux) {
   return {
-    photosAvantExigees: REGLES.PHOTOS_AVANT_PAR_DEFAUT.includes(rubriqueId),
+    photosAvantExigees: photosAvantObligatoires(rubriqueId),
     rubriqueId, espace, etape: 2, typeLogementId: "appartement", surface: SURFACE_DEPART[rubriqueId] ?? 62, chambres: 2, sdb: 1, niveaux: 1, fenetres: 8,
     formuleId: formulesPour(r)[0]?.id || "", typeLieuId: lieux ? lieux[0].id : "", salissure: "NORMAL",
     taches: [], tachesPerso: [], animaux: false, etapesLocation: 8, consommables: true, remarque: "",
@@ -971,7 +971,7 @@ function etape5() {
     <div class="carte">${caseCocher("Suivi par SMS", "suiviSms", !!b.suiviSms, `${euros(REGLES.OPTION_SMS_C)} : un SMS au nom de Cleaneroo à chaque étape (confirmation, « en route » avec l'heure d'arrivée, arrivée, fin avec le compte rendu), dans la langue de votre réservation.`)}
       ${b.suiviSms && b.accueil === "TIERS" && b.tiersNom.trim() ? caseCocher(`Envoyer aussi les SMS à ${esc(b.tiersNom.trim())}`, "smsTiers", !!b.smsTiers) : ""}</div>
     ${titre("Photos avant le ménage")}
-    <div class="carte">${caseCocher("Photos avant exigées", "photosAvantExigees", !!b.photosAvantExigees, "Le Cleaneur photographie chaque pièce avant et après le ménage. Conseillé pour les locations saisonnières et les états des lieux. Sinon, il photographie chaque pièce après le ménage et signale tout problème constaté à son arrivée.")}</div>
+    <div class="carte">${photosAvantObligatoires(b.rubriqueId) ? `<p class="photos-obligatoires">${icone("appareil-photo")} <span>${tr("Le Cleaneur photographie chaque pièce ou zone avant et après l'intervention. Les photos sont horodatées et rangées dans votre espace avec le compte rendu signé.")}</span></p>` : caseCocher("Photos avant exigées", "photosAvantExigees", !!b.photosAvantExigees, "Le Cleaneur photographie chaque pièce avant et après le ménage. Conseillé pour les locations saisonnières et les états des lieux. Sinon, il photographie chaque pièce après le ménage et signale tout problème constaté à son arrivée.")}</div>
     <div style="margin-top:14px">${encartAideRappel()}</div>
     ${notePaiement(est)}
     <div class="carte" style="margin-top:12px">${caseCocher(`J'accepte les <a href="#/conditions" target="_blank">conditions d'utilisation</a> et la <a href="#/confidentialite" target="_blank">politique de confidentialité</a>`, "cgv", b.cgv)}</div>
@@ -1264,6 +1264,7 @@ async function envoyer() {
     const acces = { TIERS: { nom: b.tiersNom, telephone: b.tiersTel }, BOITE: { emplacement: b.boiteEmplacement, code: b.code }, AUTONOME: { code: b.code } }[b.accueil] || {};
     const details = { ...b }; ["prenom", "nom", "email", "telephone", "rue", "codePostal", "ville", "code", "tiersNom", "tiersTel", "boiteEmplacement", "cgv", "etape", "passagesEnvoyes", "groupePaiement"].forEach(k => delete details[k]);
     details.lignes = est.lignes;
+    details.photosAvantExigees = photosAvantObligatoires(b.rubriqueId) || !!b.photosAvantExigees;   // prompt 2, partie 6
     details.langue = langue;
     details.fraisServicePct = est.fraisServicePct; details.fraisServiceC = est.fraisServiceC;
     delete details.prixLibre; delete details.prixConseilleC;

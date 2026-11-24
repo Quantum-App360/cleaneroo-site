@@ -121,6 +121,37 @@ export const bandeGaranties = () => `<section class="bloc bande-garanties"><div 
   <div class="revele">${blocReassurance()}</div>
   <div class="revele" style="margin-top:22px">${logosPaiement({ classe: "centre" })}</div></div></section>`;
 
+/* ------------------------------------------------------------------ Avant / après : la preuve en images (prompt 2, partie 6) */
+/** Exemples du curseur : illustrations neutres marquées « Exemple », en attendant les vraies photos de Cleaneroo. */
+export const EXEMPLES_AVANT_APRES = [["salle-de-bain", "Salle de bain"], ["canape", "Canapé"], ["voiture", "Voiture"]];
+export const blocAvantApres = () => `<section class="bloc avant-apres-bloc"><div class="conteneur">
+  <div class="titre-section revele"><span class="surtitre">Preuves photo</span><h2>Avant / après : la preuve en images</h2></div>
+  <div class="avant-apres revele" data-avant-apres>
+    <div class="aa-onglets" role="tablist">${EXEMPLES_AVANT_APRES.map(([id, nom], i) =>
+      `<button type="button" role="tab" aria-selected="${i === 0}" data-aa="${id}">${nom}</button>`).join("")}</div>
+    <div class="aa-cadre" style="--pos:50%">
+      <img class="aa-avant" src="/assets/img/avant-apres/${EXEMPLES_AVANT_APRES[0][0]}-avant.svg" alt="Exemple : avant l'intervention" width="1200" height="800" loading="lazy">
+      <img class="aa-apres" src="/assets/img/avant-apres/${EXEMPLES_AVANT_APRES[0][0]}-apres.svg" alt="Exemple : après l'intervention" width="1200" height="800" loading="lazy">
+      <span class="aa-etiquette aa-g">Avant</span><span class="aa-etiquette aa-d">Après</span><span class="aa-exemple">Exemple</span>
+      <span class="aa-poignee" aria-hidden="true"><i></i></span>
+      <input type="range" min="0" max="100" value="50" aria-label="Comparer avant et après">
+    </div>
+    <p class="muet aa-texte">Chaque pièce est photographiée avant et après l'intervention. Les photos sont horodatées et rangées dans votre espace avec le compte rendu signé.</p>
+  </div></div></section>`;
+/** Branche le curseur et les onglets (à appeler après l'affichage). */
+export function brancherAvantApres(racine = document) {
+  racine.querySelectorAll("[data-avant-apres]").forEach(z => {
+    const cadre = z.querySelector(".aa-cadre"), curseur = z.querySelector("input[type=range]");
+    curseur.oninput = () => cadre.style.setProperty("--pos", curseur.value + "%");
+    z.querySelectorAll("[data-aa]").forEach(bt => bt.onclick = () => {
+      z.querySelectorAll("[data-aa]").forEach(x => x.setAttribute("aria-selected", String(x === bt)));
+      z.querySelector(".aa-avant").src = `/assets/img/avant-apres/${bt.dataset.aa}-avant.svg`;
+      z.querySelector(".aa-apres").src = `/assets/img/avant-apres/${bt.dataset.aa}-apres.svg`;
+      curseur.value = 50; curseur.oninput();
+    });
+  });
+}
+
 /* ------------------------------------------------------------------ Le juste prix, près de chez vous (prompt 2, partie 5) */
 /** Mention sous le total : le code postal seulement, jamais le nom de la zone ni son pourcentage. */
 export const mentionCodePostal = cp => `${tr("Prix calculé pour le code postal")} ${esc(cp)}`;

@@ -1,11 +1,12 @@
 // Écrans du contrôle de fin de mission, pièce par pièce (même déroulé dans l'appli : ControlePieces.kt) :
-// Cleaneur : tâches cochées › photo après › contrôle IA (écart → reprendre la photo ou justifier). Photo avant seulement si la
-// réservation coche « Photos avant exigées » ; sinon « Signaler un problème à l'arrivée » (dégât, saleté, casse) avec photo au besoin.
+// Cleaneur : photo avant › tâches cochées › photo après › contrôle IA (écart → reprendre la photo ou justifier). Photo avant obligatoire dans
+// toutes les rubriques sauf les prestations spécialisées (prompt 2, partie 6) ; « Signaler un problème à l'arrivée » reste disponible.
 // Client : compte rendu (signalements d'arrivée, photos, tâches, avis de l'IA, justification).
 import { blocLitige } from "./litiges.js";
 import { icone } from "./icones.js";
 import { traduire, tr, langue } from "./langue.js";
 import { piecesDe, pieceComplete } from "./controle.js";
+import { photosAvantObligatoires } from "./regles.js";
 import { criteresDe } from "./catalogue.js";
 import { blocSupplementCleaneur } from "./supplement.js";
 import { controlesDe, enregistrerPieces, majPiece, deposerPhotoControle, lienPhotoControle, controleIA, signalerArrivee, signalementsDe } from "./donnees.js";
@@ -52,7 +53,8 @@ export async function brancherControle(boite, m, surFin) {
   if (!liste) { boite.innerHTML = `<p class="erreur">${tr("Le service est momentanément indisponible. Réessayez dans quelques minutes.")}</p>`; return; }
   const photos = {};
   await Promise.all(liste.flatMap(c => [c.photo_avant, c.photo_apres].filter(Boolean).map(async p => { photos[p] = await lienPhotoControle(p).catch(() => ""); })));
-  const avantExigee = !!(m.details || {}).photosAvantExigees;
+  // Photos avant obligatoires selon la rubrique (prompt 2, partie 6), ou demandées par le client (prestations spécialisées).
+  const avantExigee = !!(m.details || {}).photosAvantExigees || photosAvantObligatoires(m.rubrique_id);
   const complete = c => pieceComplete(c, avantExigee);
   const faites = liste.filter(complete).length;
   const ouverte = liste.find(c => !complete(c))?.piece_id;
@@ -72,7 +74,7 @@ export async function brancherControle(boite, m, surFin) {
     <div data-supplement></div>
     <div class="controle-tete"><b>${tr("Contrôle pièce par pièce")}</b><span>${faites} / ${liste.length}</span></div>
     <div class="jauge"><i style="width:${Math.round(faites / liste.length * 100)}%"></i></div>
-    <p class="petit" style="margin:6px 0 10px">${tr(avantExigee ? "Photos avant exigées par le client : pour chaque pièce, photo avant, tâches cochées, photo après au même endroit. L'IA compare les deux photos."
+    <p class="petit" style="margin:6px 0 10px">${tr(avantExigee ? "Photos avant et après obligatoires : pour chaque pièce ou zone, photo avant, tâches cochées, puis photo après au même endroit. L'IA compare les deux photos."
       : "Pour chaque pièce : cochez les tâches, puis prenez une photo après. L'IA vérifie que la pièce est propre.")}</p>
     ${liste.map(c => {
       const ok = complete(c), toutes = (c.taches || []).every(t => t.fait), pret = !avantExigee || !!c.photo_avant;

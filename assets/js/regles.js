@@ -191,8 +191,9 @@ export const REGLES = {
   INDEMNITE_MIN_C: 2000,
   INDEMNITE_MAX_C: 6000,
   ATTENTE_ACCES_IMPOSSIBLE_MIN: 15,
-  // « Photos avant exigées » cochée d'office (décision du 12 novembre 2026) : preuve de l'état laissé par les voyageurs.
-  PHOTOS_AVANT_PAR_DEFAUT: ["rental"],
+  // Photos avant ET après obligatoires dans toutes les rubriques, sauf celles-ci (prompt 2, partie 6, 24/11/2026).
+  // À reporter dans Regles.kt (appli Android) et dans l'écran de contrôle du Cleaneur de l'appli.
+  PHOTOS_AVANT_SAUF: ["special"],
   // « Mon activité » du Cleaneur micro-entrepreneur (taux 2026, prestations de services BIC dont le nettoyage) — à revoir chaque année.
   URSSAF_SERVICES_PCT: 21.2,
   URSSAF_ACRE_PCT: 10.6,
@@ -516,3 +517,6 @@ export const PORTEFEUILLES_ACTIFS = false;
 // (visa.svg, mastercard.svg, cb.svg, stripe.svg, apple-pay.svg, google-pay.svg), puis passer cette constante à true.
 // Tant qu'elle vaut false, les noms des moyens de paiement s'affichent en texte.
 export const LOGOS_PAIEMENT_OFFICIELS = false;
+
+/** Photos avant obligatoires pour cette rubrique (au moins une photo avant et une photo après par pièce ou par zone contrôlée). */
+export const photosAvantObligatoires = rubriqueId => !!rubriqueId && !REGLES.PHOTOS_AVANT_SAUF.includes(rubriqueId);

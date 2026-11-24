@@ -25,6 +25,7 @@ import { GARANTIES, PAIEMENT_COURT, PAIEMENT_LONG, moyensPaiement, texteAnnulati
 import { ICONES } from "./assets/js/icones.js";
 import { releveProprietaire, listeCourses, texteCourses, dossiersDommages } from "./assets/js/conciergerie.js";
 import { planProgrammerTout, instantParis, avecHoraires, erreurHoraires, departDe, arriveeDe } from "./assets/js/conciergerie.js";
+import { photosAvantObligatoires } from "./assets/js/regles.js";
 import { etatOffreConciergerie, offreConciergerieOuverte, fraisServicePct, reservationsOuvertes, fixerOuverture } from "./assets/js/regles.js";
 import { bornesActivite, decalerActivite, jourParis, resumeActivite, evolutionPct } from "./assets/js/activite-societe.js";
 import { euros, REGLES, indemniteAccesC, dateVersement, qualificationsRequises, calculActivite, niveauCleaneur, verifierProposition, netPortefeuille, scoreMission, fraisDeplacementC } from "./assets/js/regles.js";
@@ -183,8 +184,8 @@ egal("formations : dératisation", qualificationsRequises("special", "rats").joi
   egal("formations : cuisine pro, HACCP seulement conseillé", formationsExigees("kitchen", "restaurant").join(), "");
 }
 egal("formations : après sinistre", qualificationsRequises("special", "sinistre").join(), "socle,specialise,biocides");
-egal("photos avant cochées d'office : location saisonnière", REGLES.PHOTOS_AVANT_PAR_DEFAUT.includes("rental"), true);
-egal("photos avant non cochées : logement", REGLES.PHOTOS_AVANT_PAR_DEFAUT.includes("home"), false);
+egal("photos avant obligatoires : location saisonnière", photosAvantObligatoires("rental"), true);
+egal("photos avant au choix : prestations spécialisées", photosAvantObligatoires("special"), false);
 egal("versement : mission validée un lundi", jourVersement("2027-01-04"), "2027-01-08");
 egal("versement : mission validée un mercredi", jourVersement("2027-01-06"), "2027-01-08");
 egal("versement : mission validée un jeudi", jourVersement("2027-01-07"), "2027-01-15");
@@ -774,6 +775,10 @@ egal("juste prix : mention du code postal", mentionCodePostal("83600"), "Prix ca
 egal("juste prix : ligne de zone masquée", ligneZone({ libelle: "Tarif zone Prestige (+10 %)" }), true);
 egal("juste prix : autres lignes gardées", ligneZone({ libelle: "Déplacement" }), false);
 egal("juste prix : déplacement inclus jusqu'à 15 km", REGLES.FRAIS_DEPLACEMENT.inclusKm, 15);
+// Photos avant (prompt 2, partie 6) : obligatoires partout sauf « Prestations spécialisées »
+egal("photos avant : logement", photosAvantObligatoires("home"), true);
+egal("photos avant : véhicule", photosAvantObligatoires("car"), true);
+egal("photos avant : toutes les rubriques sauf spécialisées", RUBRIQUES_CAT.filter(r => !photosAvantObligatoires(r.id)).map(r => r.id).join(","), "special");
 const ok = res.filter(r => r[1]).length;
 document.getElementById("bilan").textContent = `${ok} tests sur ${res.length} réussis`;
 document.getElementById("liste").innerHTML = res.map(([n, b, d]) => `<li class="${b ? "ok" : "ko"}">${b ? "✓" : "✗"} ${n}${b ? "" : " — " + d}</li>`).join("");

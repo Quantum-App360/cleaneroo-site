@@ -35,7 +35,7 @@ import { icone, teinte, ICONES_RUBRIQUES, ICONES_INTERFACE } from "./icones.js";
 import { pageTableau, arreterTableau } from "./tableau.js";
 import { compteRenduPieces } from "./controle-ecran.js";
 import { blocFormulesCleaneur, brancherFormulesCleaneur } from "./formules-cleaneur.js";
-import { blocEtapes, bandeGaranties, logosPaiement, blocJustePrix, sectionAvisPublics, remplirAvisPublics, installerRappel, encartAideRappel, bandeauLancement, pageChargement, decorTableau, surveillerFormulaire, envoiRobot, CONTIENT_LIEN } from "./commun.js";
+import { blocEtapes, bandeGaranties, logosPaiement, blocJustePrix, blocAvantApres, brancherAvantApres, sectionAvisPublics, remplirAvisPublics, installerRappel, encartAideRappel, bandeauLancement, pageChargement, decorTableau, surveillerFormulaire, envoiRobot, CONTIENT_LIEN } from "./commun.js";
 import "./fond-anime.js";
 import "./oeil.js";
 import "./choix-prestation.js";   // fenêtre animée « Réserver une prestation »   // œil pour afficher le mot de passe
@@ -330,6 +330,7 @@ function pageAccueil() {
       ${COMPARAISON.map(([c, a, n]) => `<div class="ligne" role="row"><b role="rowheader">${c}</b><span class="ancien" role="cell">${a}</span><span class="nouveau" role="cell">${n}</span></div>`).join("")}
     </div>
   </div></section>
+  ${blocAvantApres()}
   <section class="bloc bloc-doux"><div class="conteneur">
     ${titreSection("Comment ça marche ?", "Du clic à la validation, tout se passe en ligne.", "En 5 étapes")}
     ${blocEtapes()}
@@ -750,6 +751,7 @@ async function afficherPage() {
   brancherFormulesCleaneur(vue);
   brancherApercuTournee(vue);
   remplirAvisPublics(vue);
+  brancherAvantApres(vue);
   window.scrollTo(0, 0);
 }
 

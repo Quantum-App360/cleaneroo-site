@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800"><rect width="1200" height="800" fill="#f6f1ea"/><rect y="600" width="1200" height="200" fill="#e7dccd"/>
+<rect x="120" y="230" width="960" height="250" rx="60" fill="#6fa6b8"/>
+<rect x="120" y="400" width="960" height="190" rx="40" fill="#5f97aa"/>
+<rect x="160" y="300" width="290" height="190" rx="40" fill="#7fb4c5"/><rect x="455" y="300" width="290" height="190" rx="40" fill="#7fb4c5"/><rect x="750" y="300" width="290" height="190" rx="40" fill="#7fb4c5"/>
+<rect x="80" y="330" width="110" height="270" rx="44" fill="#5a8fa1"/><rect x="1010" y="330" width="110" height="270" rx="44" fill="#5a8fa1"/>
+<rect x="180" y="590" width="30" height="60" rx="8" fill="#8a6f52"/><rect x="990" y="590" width="30" height="60" rx="8" fill="#8a6f52"/>
+<circle cx="320" cy="200" r="0" fill="none"/><path d="M300 336Q304.32 355.68 324 360Q304.32 364.32 300 384Q295.68 364.32 276 360Q295.68 355.68 300 336Z" fill="#fff" opacity=".95"/><path d="M640 342Q645.04 364.96 668 370Q645.04 375.04 640 398Q634.96 375.04 612 370Q634.96 364.96 640 342Z" fill="#fff" opacity=".95"/><path d="M930 330Q933.6 346.4 950 350Q933.6 353.6 930 370Q926.4 353.6 910 350Q926.4 346.4 930 330Z" fill="#fff" opacity=".95"/></svg>
