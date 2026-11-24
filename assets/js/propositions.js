@@ -15,7 +15,7 @@ const nomRaison = id => [...RAISONS_REMISE, ...RAISONS_HAUSSE].find(r => r[0] ==
 export const MESSAGES_PROPOSITION = {
   ok: "Proposition envoyée : le client est prévenu et choisit.", remise: "La remise ne peut pas dépasser 10 % de l'estimation.",
   devis: "Au-delà de 50 % de plus que l'estimation, la prestation passe sur devis.", justification: "Une hausse se justifie : choisissez une raison et écrivez au moins 20 caractères pour le client.",
-  raison: "Choisissez la raison de votre remise.", complet: "Cette demande a déjà reçu 5 propositions.", ouverture: "Les missions commencent le 1er janvier 2027.",
+  raison: "Choisissez la raison de votre remise.", complet: "Cette demande a déjà reçu 5 propositions.", ouverture: "Les missions commencent dès l'ouverture des réservations.",
   dossier: "Votre dossier doit être validé pour proposer.", indisponible: "Cette mission n'est plus disponible.",
   frais: "Les frais de déplacement ne peuvent pas dépasser 60 €.", planning: "Ce créneau chevauche une de vos missions confirmées (30 min de trajet comprises).",
   chevauchement: "Vous avez déjà une proposition en attente sur un créneau qui chevauche celui-ci.",

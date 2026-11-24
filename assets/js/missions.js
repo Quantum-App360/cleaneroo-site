@@ -491,7 +491,7 @@ export async function brancherMissions(vue, p) {
     ${duJour.map((m, i) => (i === 0 ? `<h2 class="titre-section">▶ ${tr("Prochaine action")}</h2>` : i === 1 ? `<h2 class="titre-section">🕒 ${tr("Plus tard aujourd'hui")}</h2>` : "") + carteMission(m) + (i === 0 ? `<div id="tournee-jour">${blocTournee(etapesJour)}</div>` : "")).join("")}
     ${!duJour.length && plusTard.length ? `<a class="carte ligne-compte prochaine-mission" href="#mes-missions-a-venir" data-segment-aller="a_venir">📅
       <div class="corps"><b>${tr("Prochaine mission")}</b><p class="petit" style="margin:2px 0 0">${esc(rubrique(plusTard[0].rubrique_id)?.nom || "")} · ${plusTard[0].creneau ? esc(dateLongue(new Date(plusTard[0].creneau))) : ""} · ${esc(plusTard[0].ville)}</p></div><span aria-hidden="true">›</span></a>` : ""}
-    ${!duJour.length && !plusTard.length ? `<div class="carte vide-jour"><b>${tr("Aucune mission aujourd'hui")}</b><p class="petit" style="margin:4px 0 0">${tr("Les missions commencent le 1er janvier 2027. Elles s'afficheront ici, dans l'ordre de la journée.")}</p></div>` : ""}
+    ${!duJour.length && !plusTard.length ? `<div class="carte vide-jour"><b>${tr("Aucune mission aujourd'hui")}</b><p class="petit" style="margin:4px 0 0">${tr("Les missions commencent dès l'ouverture des réservations. Elles s'afficheront ici, dans l'ordre de la journée.")}</p></div>` : ""}
   </div>
   <div id="cleaneur-missions" class="cleaneur-partie">
     <div class="segments segments-missions">${[...(p.employeur_id ? [] : [["disponibles", `${tr("Disponibles")} (${dispo.length})`]]), ["a_venir", `${tr("À venir")} (${plusTard.length})`], ["terminees", tr("Terminées")]]
@@ -603,7 +603,7 @@ ${p.employeur_id ? "" : `    <h2 class="titre-section" id="missions-disponibles"
     if (r === "ok") return recharger();
     b.disabled = false;
     b.closest(".carte").querySelector("[data-erreur-prendre]").textContent = tr({
-      deja_prise: "Un autre Cleaneur a pris cette mission juste avant vous.", ouverture: "Les missions commencent le 1er janvier 2027.",
+      deja_prise: "Un autre Cleaneur a pris cette mission juste avant vous.", ouverture: "Les missions commencent dès l'ouverture des réservations.",
       dossier: "Votre dossier doit être validé pour prendre des missions.", formule: "Cette mission est réservée aux Cleaneurs Pro pendant ses 30 premières minutes.",
       qualification: "Cette prestation exige une formation imposée par la loi (Certibiocide). Voir « Formations » pour savoir comment l'obtenir.",
       fermee: "Cette mission tombe pendant une de vos périodes fermées.",

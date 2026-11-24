@@ -126,6 +126,7 @@ function brancherCalcul(zone) {
 /* ------------------------------------------------------------------ Mise en place */
 document.getElementById("choix-langue").innerHTML = selecteurLangue();
 document.getElementById("lancement").innerHTML = bandeauLancement();
+import("./donnees.js").then(({ chargerOuverture }) => chargerOuverture()).then(() => { document.getElementById("lancement").innerHTML = bandeauLancement(); }).catch(() => null);
 document.querySelectorAll("[data-exemples]").forEach(z => { z.innerHTML = blocExemples(); });
 document.querySelectorAll("[data-etapes]").forEach(z => { z.innerHTML = blocEtapes(ETAPES_COURTES); });
 document.querySelectorAll("[data-reassurance]").forEach(z => { z.innerHTML = blocReassurance(); });

@@ -85,7 +85,7 @@ export function agendaParticulier(boite, { demandes, biens }) {
         ${ordre.length > 1 ? `<div class="ap-legende">${ordre.map((l, i) => `<span><i style="background:${couleurBien(i)}"></i>${esc(nomBien(l))}</span>`).join("")}</div>` : ""}
         ${detail}</div>` : `<div class="ap-liste">${liste}</div>`}
       ${sansDate.length ? `<div class="ap-sans-date"><span class="surtitre">${tr("Date à fixer")}</span>${sansDate.map(ligne).join("")}
-        <p class="petit" style="margin:6px 0 0">${tr("Pré-réservations : la date sera fixée avec votre Cleaneur à l'ouverture, le 31 décembre 2026.")}</p></div>` : ""}
+        <p class="petit" style="margin:6px 0 0">${tr("Pré-réservations : la date sera fixée avec votre Cleaneur dès l'ouverture des réservations.")}</p></div>` : ""}
     </div>`;
     traduire(boite);
     boite.querySelectorAll("[data-vue]").forEach(b => b.onclick = () => { vue = b.dataset.vue; dessiner(); });

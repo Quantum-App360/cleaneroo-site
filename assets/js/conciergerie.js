@@ -8,7 +8,7 @@ import { enregistrerBien, envoyerDemande } from "./donnees.js";
 import { calculer, entreeEstimation } from "./estimation.js";
 import { lancerPaiement } from "./paiement.js";
 import { rubrique } from "./catalogue.js";
-import { REGLES, euros, dateLongue, dateCourte, DATE_PREMIERES_INTERVENTIONS } from "./regles.js";
+import { REGLES, euros, dateLongue, dateCourte, reservationsFermees } from "./regles.js";
 import { icone } from "./icones.js";
 import { tr, traduire, LOCALE } from "./langue.js";
 import { esc } from "./commun.js";
@@ -341,11 +341,11 @@ export const modeleDe = (l, demandes) => demandes.filter(d => d.statut !== "ANNU
  * Renvoie { lignes: [{ bien, jour, creneau, prixC, creditImpotC, fraisPct, modele }], sansModele: [{ bien, jour }], prestationsC, fraisC, totalC }.
  */
 export function planProgrammerTout({ biens, departs, demandes, menagePrevu, abonne = false, aujourdhui = new Date(), jours = PROGRAMMER_TOUT_JOURS }) {
-  const debut = iso(aujourdhui), limite = iso(plusJours(aujourdhui, jours)), ouverture = iso(DATE_PREMIERES_INTERVENTIONS);
+  const debut = iso(aujourdhui), limite = iso(plusJours(aujourdhui, jours));
   const vus = new Set(), lignes = [], sansModele = [];
   for (const s of [...departs].sort((a, b) => a.fin.localeCompare(b.fin))) {
     const cle = `${s.bienId}|${s.fin}`;
-    if (vus.has(cle) || s.fin < debut || s.fin > limite || s.fin < ouverture || menagePrevu(s.bienId, s.fin)) continue;
+    if (vus.has(cle) || s.fin < debut || s.fin > limite || menagePrevu(s.bienId, s.fin)) continue;
     vus.add(cle);
     const bien = biens.find(b => b.id === s.bienId);
     if (!bien) continue;
@@ -370,7 +370,7 @@ export function planProgrammerTout({ biens, departs, demandes, menagePrevu, abon
 }
 
 /** Bouton « Programmer tout » (vide s'il n'y a rien à programmer). */
-export const boutonProgrammerTout = plan => plan.lignes.length
+export const boutonProgrammerTout = plan => plan.lignes.length && !reservationsFermees()
   ? `<div class="programmer-tout"><button type="button" class="bouton plein petit" data-programmer-tout>${icone("calendrier")} ${tr("Programmer tout")} (${plan.lignes.length})</button>
       <span class="petit muet">${tr("Tous les départs sans ménage des 14 prochains jours")} · ${euros(plan.totalC)}</span></div>` : "";
 

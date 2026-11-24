@@ -4,14 +4,14 @@ import { RUBRIQUES, RACCOURCIS_VITRINE, rubrique, TYPES_LIEU, pastille } from ".
 import { traduire, traduireCatalogue, selecteurLangue, tr, langue } from "./langue.js";
 import { barreOnglets } from "./espaces.js";
 import { modeCleaneur, fixerMode, boutonMode, brancherBascule, blocChoixCleaneur } from "./mode.js";
-import { euros, duree, dateLongue, dateHeure, heure, estPrelancement, joursAvantLancement, MESSAGE_LANCEMENT, REGLES, offreConciergerieOuverte } from "./regles.js";
+import { euros, duree, dateLongue, dateHeure, heure, reservationsFermees, MESSAGE_LANCEMENT, REGLES, offreConciergerieOuverte } from "./regles.js";
 
 // Langue : catalogue traduit avant tout affichage.
 traduireCatalogue(RUBRIQUES, TYPES_LIEU);
 import { ouvrirReservation, ouvrirSimulateur, modeles, logements, nomLogement, brouillonExemple } from "./reserver.js";
 import { calculer, entreeEstimation } from "./estimation.js";
 import "./tarifs.js";   // dernière version des tarifs gardée sur l'appareil, appliquée avant le premier affichage
-import { supabase, suivre, annuler, memoriser, inscrire } from "./donnees.js";
+import { supabase, suivre, annuler, memoriser, inscrire, chargerOuverture } from "./donnees.js";
 import { blocRetardClient, blocRemplacementClient } from "./retards.js";
 import { guideVideo } from "./guide-video.js";
 import { blocApercuTournee, brancherApercuTournee } from "./tournee.js";
@@ -54,7 +54,7 @@ export function decor(bulles = [[88, 18, 120], [6, 62, 90], [72, 78, 40], [16, 8
     + VAGUES;
 }
 
-/* ------------------------------------------------------------------ Pré-lancement (ouverture le 31 décembre 2026) */
+/* ------------------------------------------------------------------ Avant l'ouverture des réservations */
 
 const TYPES_INSCRIPTION = [["client", "Je cherche un nettoyage"], ["cleaneur", "Je veux devenir Cleaneur"], ["conciergerie", "Je gère des locations / une conciergerie"]];
 
@@ -62,7 +62,7 @@ const TYPES_INSCRIPTION = [["client", "Je cherche un nettoyage"], ["cleaneur", "
 function formulaireInscription(typeDefaut = "client", fixe = false) {
   return `<form class="carte" id="form-inscription" novalidate><input class="piege" name="site_web" tabindex="-1" autocomplete="off" aria-hidden="true">
     <h3>Inscrivez-vous pour le lancement</h3>
-    <p class="muet" style="margin:4px 0 14px">Ouverture le <b>31 décembre 2026</b>. ${MESSAGE_LANCEMENT} Les premiers inscrits sont prévenus en priorité.</p>
+    <p class="muet" style="margin:4px 0 14px">Les réservations ouvrent très bientôt. ${MESSAGE_LANCEMENT} Les premiers inscrits sont prévenus en priorité.</p>
     ${fixe ? "" : `<div class="choix" style="margin-bottom:14px">${TYPES_INSCRIPTION.map(([id, lib]) =>
       `<button type="button" data-type-inscription="${id}" class="${id === typeDefaut ? "choisi" : ""}">${lib}</button>`).join("")}</div>`}
     <input type="hidden" name="type" value="${typeDefaut}">
@@ -108,7 +108,7 @@ export function brancherInscription(racine) {
         code_postal: v.code_postal, ville: v.ville.trim(), message: v.message.trim(), consentement: true,
         ...(v.code_parrain?.trim() ? { code_parrain: v.code_parrain.trim().toUpperCase().slice(0, 20) } : {}) });
       f.innerHTML = `<h3>${r === "deja" ? "Vous êtes déjà inscrit ✓" : "Merci, vous êtes inscrit ✓"}</h3>
-        <p class="muet" style="margin:6px 0 0">Nous vous préviendrons avant l'ouverture du <b>31 décembre 2026</b>. ${MESSAGE_LANCEMENT}</p>`;
+        <p class="muet" style="margin:6px 0 0">Nous vous préviendrons dès l'ouverture des réservations. ${MESSAGE_LANCEMENT}</p>`;
       traduire(f);
     } catch (ex) {
       bouton.disabled = false; bouton.textContent = tr("Je m'inscris");
@@ -229,9 +229,9 @@ const INSCRIPTION_ESPACES = () => [
 function blocInscriptionInspirante() {
   return `<section class="inscription-inspirante"><div class="conteneur">
     <div class="tete-inspirante revele">
-      <span class="pastille-lancement sombre"><i></i>${estPrelancement() ? `J-${joursAvantLancement()} · ` : ""}${tr("Gratuit · sans engagement · 1 minute")}</span>
+      <span class="pastille-lancement sombre"><i></i>${tr("Gratuit · sans engagement · 1 minute")}</span>
       <h2>${tr("Votre espace Cleaneroo vous attend.")}</h2>
-      <p>${tr("Créez-le dès maintenant : tout sera prêt pour le 31 décembre 2026, et vos avantages de lancement sont gardés.")}</p>
+      <p>${tr("Créez-le dès maintenant : tout sera prêt pour l'ouverture des réservations, et vos avantages de lancement sont gardés.")}</p>
     </div>
     <div class="cartes-inspirantes">${INSCRIPTION_ESPACES().map(([ico, titre, accroche, points, cadeau, lien], i) => `
       <a class="carte-inspirante revele" href="${lien}" style="--retard:${i * 90}ms">
@@ -285,7 +285,7 @@ function pageAccueil() {
   <section class="heros-2026">
     <div class="conteneur heros-grille">
       <div class="heros-texte">
-        <span class="pastille-lancement"><i></i>Lancement le 31 décembre 2026</span>
+        ${reservationsFermees() ? `<span class="pastille-lancement"><i></i>Réservations bientôt ouvertes</span>` : ""}
         <h1><span>Le ménage</span><span class="ponct">,</span> <span class="degrade-texte"><span>100 % digitalisé</span><span class="ponct">.</span></span></h1>
         <p class="heros-sous">Réservez en deux minutes, suivez votre Cleaneur en direct et recevez un compte rendu photo. Vous ne payez qu'une fois le travail validé.</p>
         <form class="recherche-heros" id="express">
@@ -334,8 +334,8 @@ function pageAccueil() {
       <div><h3>Crédit d'impôt selon éligibilité</h3><p>Possible si le Cleaneur est déclaré « services à la personne » : le ménage, les vitres et les textiles à votre domicile peuvent alors ouvrir droit à un crédit d'impôt, selon votre situation et dans la limite des plafonds légaux. L'attestation fiscale des prestations éligibles vous est envoyée chaque mois.</p></div>
     </div>
   </div></section>
-  ${estPrelancement() && !connecte() ? `<section class="appel-2026"><div class="conteneur appel-grille"><div class="revele"><span class="pastille-lancement sombre"><i></i>J-${joursAvantLancement()}</span>
-      <h2>Prêts pour le 31 décembre ?</h2><p>Inscrivez-vous maintenant : les premiers inscrits sont prévenus en priorité.</p>
+  ${reservationsFermees() && !connecte() ? `<section class="appel-2026"><div class="conteneur appel-grille"><div class="revele"><span class="pastille-lancement sombre"><i></i>Bientôt</span>
+      <h2>Prêts pour l'ouverture ?</h2><p>Inscrivez-vous maintenant : les premiers inscrits sont prévenus en priorité.</p>
       <div class="boutons"><a class="bouton clair" href="#/estimer">Estimer mon prix</a></div></div>
       <div class="revele" id="inscription">${formulaireInscription()}</div></div></section>` : ""}`;
 }
@@ -411,8 +411,7 @@ function reveler(racine) {
 
 function pageInscription(type = "client") {
   return `<section class="fond-cleaneroo" style="padding:40px 0 90px">${decor([[90, 20, 90], [4, 60, 60]], [])}
-    <div class="conteneur"><span class="etiquette" style="background:#C24A38">J-${joursAvantLancement()}</span>
-      <h1 style="margin-top:10px">Lancement le 31 décembre 2026</h1><div class="trait-corail"></div>
+    <div class="conteneur"><h1 style="margin-top:10px">Les réservations ouvrent très bientôt</h1><div class="trait-corail"></div>
       <p class="slogan" style="font-size:20px;font-weight:600;margin:0">${MESSAGE_LANCEMENT}</p></div></section>
   <section class="bloc"><div class="etroit">${formulaireInscription(type, type === "cleaneur")}</div></section>`;
 }
@@ -523,7 +522,7 @@ async function pageDemande(ref, jeton) {
   const lien = `${location.origin}${location.pathname}#/demande/${ref}/${jeton}`;
   const annulable = ["VERIFICATION", "PUBLIEE"].includes(d.statut);
   const etat = {
-    VERIFICATION: estPrelancement() ? "Pré-réservation enregistrée. Les réservations ouvrent le 31 décembre 2026 : nous vous recontacterons pour fixer le créneau, en priorité." : "Nous vérifions votre demande. Ensuite, les Cleaneurs compatibles sont prévenus.",
+    VERIFICATION: d.prelancement ? "Pré-réservation enregistrée : nous vous recontacterons dès l'ouverture des réservations pour fixer le créneau, en priorité." : "Nous vérifions votre demande. Ensuite, les Cleaneurs compatibles sont prévenus.",
     PUBLIEE: "Votre demande est en ligne : les Cleaneurs compatibles peuvent se proposer. Vous choisirez parmi leurs propositions.",
     CONFIRMEE: "Votre nettoyage est réservé. Vous serez prévenu quand le Cleaneur sera en route.",
     A_VALIDER: "La prestation est terminée : consultez le compte rendu et validez-le.",
@@ -787,7 +786,8 @@ document.title = tr(document.title);
 installerRappel();
 memoriserCodeParrain();
 window.addEventListener("hashchange", afficher);
-await retourEmail();
+await Promise.all([retourEmail(), chargerOuverture().catch(() => false)]);
+document.getElementById("lancement").innerHTML = bandeauLancement(); traduire(document.getElementById("lancement"));
 // La page s'affiche tout de suite ; le compte est relu ensuite (l'en-tête se met à jour tout seul).
 afficher();
 // Tarifs publiés depuis l'espace de gestion (20/11/2026) : relus en arrière-plan, la page se redessine s'ils ont changé.

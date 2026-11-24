@@ -276,13 +276,15 @@ export function conseilSecteur(distancesKm, zoneKm) {
   return { dansZone: n, zoneKm, conseilKm: conseil, enPlus: dans(conseil) - n };
 }
 
-// ---- Lancement (copie de Regles.DATE_LANCEMENT dans l'application) : ouverture de l'activité et des réservations.
-export const DATE_LANCEMENT = new Date(2026, 11, 31, 0, 0, 0);
-// Premières interventions (copie de Regles.DATE_PREMIERES_INTERVENTIONS) : les comptes s'ouvrent avant, aucune intervention avant cette date.
-export const DATE_PREMIERES_INTERVENTIONS = new Date(2027, 0, 1, 0, 0, 0);
+// ---- Ouverture des réservations (24/11/2026, décision de Michael) : plus de date de lancement fixe. Un interrupteur en base
+// (infos_cleaneroo « reservations_ouvertes », outils/base-ouverture-reservations.sql), ouvert depuis l'espace de gestion une fois
+// la SAS renseignée et Stripe en mode réel. Fermé : comptes, espaces, logements et dossiers fonctionnent ; réservation, paiement,
+// prise de mission et propositions sont bloqués. Lu au démarrage (chargerOuverture dans donnees.js) ; fermé par défaut.
 export const MESSAGE_LANCEMENT = "Soyez prêts pour une nouvelle dimension du nettoyage, 100 % digitalisé.";
-export const estPrelancement = (maintenant = new Date()) => maintenant < DATE_LANCEMENT;
-export const joursAvantLancement = (maintenant = new Date()) => Math.max(0, Math.ceil((DATE_LANCEMENT - maintenant) / 864e5));
+let ouvertes = false;
+export const reservationsOuvertes = () => ouvertes;
+export const reservationsFermees = () => !ouvertes;
+export const fixerOuverture = v => { ouvertes = v === true; };
 
 // ---- Formats français (copie de Formats.kt)
 export function euros(c) {

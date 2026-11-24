@@ -23,8 +23,14 @@ const PRELEVEMENT_AVANT_H = 72;
 const DELAI_PAIEMENT_H = 24;
 /** Prélèvement refusé : le client a jusqu'à ce nombre d'heures avant le passage pour payer, sinon le passage est annulé. */
 const DERNIER_DELAI_AVANT_H = 24;
-/** Ouverture des réservations : 31 décembre 2026, 0 h à Paris. */
-const OUVERTURE = Date.parse("2026-12-30T23:00:00Z");
+/** Ouverture des réservations (24/11/2026) : plus de date fixe, interrupteur en base (infos_cleaneroo « reservations_ouvertes »,
+ *  « ouvert_le »). Fermé : rien n'est payé ; les anciennes pré-réservations ont 48 h à partir de l'ouverture. */
+let OUVERTURE = Infinity;
+async function lireOuverture(admin: Admin) {
+  const { data } = await admin.from("infos_cleaneroo").select("cle, valeur").in("cle", ["reservations_ouvertes", "ouvert_le"]);
+  const v = Object.fromEntries((data || []).map((x: { cle: string; valeur: string }) => [x.cle, x.valeur]));
+  OUVERTURE = v.reservations_ouvertes === "oui" ? (Date.parse(v.ouvert_le || "") || 0) : Infinity;
+}
 const H = 3600_000;
 
 /** Date affichée à Paris (le serveur tourne en UTC) : dimanche et créneau malin se jugent à l'heure de Paris. */
@@ -291,7 +297,7 @@ Deno.serve(async (req) => {
     if (internes.includes(action)) {
       const { data: cle } = await admin.from("config_privee").select("valeur").eq("cle", "alertes").maybeSingle();
       if (!cle?.valeur || req.headers.get("x-cle-alertes") !== cle.valeur) return reponse({ erreur: "refuse" }, 403);
-      if (action === "synchroniser") return reponse(await synchroniser(admin));
+      if (action === "synchroniser") { await lireOuverture(admin); return reponse(await synchroniser(admin)); }
     }
 
     // Compte de versement du Cleaneur connecté (Stripe Connect Express : identité et IBAN saisis chez Stripe, jamais chez Cleaneroo).
@@ -327,6 +333,18 @@ Deno.serve(async (req) => {
       return reponse({ url: lien.url });
     }
 
+    // Administrateur : Stripe est-il en mode réel ? (condition d'ouverture des réservations, enregistrée en base)
+    if (action === "etat_ouverture") {
+      const jwt = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
+      const { data: u } = jwt ? await admin.auth.getUser(jwt) : { data: null };
+      const { data: p } = u?.user?.id ? await admin.from("profils").select("role").eq("id", u.user.id).maybeSingle() : { data: null };
+      if (p?.role !== "admin") return reponse({ erreur: "refuse" }, 403);
+      const reel = (Deno.env.get("STRIPE_SECRET_KEY") ?? "").startsWith("sk_live_");
+      await admin.from("infos_cleaneroo").update({ valeur: reel ? "oui" : "non" }).eq("cle", "stripe_reel");
+      return reponse({ stripe_reel: reel });
+    }
+
+    await lireOuverture(admin);
     const { data: d } = await admin.from("demandes").select("*").eq("reference", String(reference ?? "")).maybeSingle();
     if (!d) return reponse({ erreur: "introuvable" }, 404);
     const maj = (champs: Record<string, unknown>) => admin.from("demandes").update(champs).eq("id", d.id);
@@ -393,7 +411,7 @@ Deno.serve(async (req) => {
       if (d.sur_devis) return reponse({ erreur: "sur_devis" }, 400);
       if (["ANNULEE", "TERMINEE"].includes(d.statut)) return reponse({ erreur: "statut" }, 400);
       if (["AUTORISE", "ENCAISSE", "PAYE", "LIBERE", "A_PRELEVER"].includes(d.paiement_statut)) return reponse({ erreur: "deja_paye" }, 400);
-      if (d.prelancement && Date.now() < OUVERTURE) return reponse({ erreur: "prelancement" }, 400);
+      if (Date.now() < OUVERTURE) return reponse({ erreur: "fermees" }, 400);
       // Session déjà ouverte : peut-être payée entre-temps.
       if (d.paiement_statut === "EN_ATTENTE" && d.paiement_session) {
         const st = await confirmerSession(admin, d, d.paiement_session).catch(() => d.paiement_statut);

@@ -7,7 +7,7 @@ import { PARTIES, partie, partiePour, PARTIE_DE_L_ESPACE, rubriquesProposees, li
 import { calculer, entreeEstimation, SALISSURE, disponibilite, meilleurPack, tachesChiffrees, formuleDe, niveauLocation, passagesPlanifies, datesPassages,
   etapesDe, consommablesDe, menageTientEntreVoyageurs, frequenceDe, minutesEquipements, prixIndicatifEquipement, heuresEvenement, litsDe, litsTailles,
   tachesPourOccasion, niveauOccasion } from "./estimation.js";
-import { REGLES, euros, duree, heure, dateCourte, dateLongue, estPrelancement, MESSAGE_LANCEMENT, DATE_PREMIERES_INTERVENTIONS, pctZone, libelleZone } from "./regles.js";
+import { REGLES, euros, duree, heure, dateCourte, dateLongue, reservationsFermees, MESSAGE_LANCEMENT, pctZone, libelleZone } from "./regles.js";
 import { envoyerDemande, secteurCouvert, rejoindreAttente, enregistrerBien, synchroniserBiens, marquerDonneesInvite } from "./donnees.js";
 import { etapesPhotoDe, etapesPersoDe } from "./etapes-bien.js";
 import { maPosition, adresseDe, chercherAdresse, afficherCarte } from "./cartes.js";
@@ -278,11 +278,11 @@ function rendreSimulation() {
       <p class="muet" style="margin:0 0 12px">${icone(r.icone)} ${esc(r.nom)}${est.dureeMin ? ` · ${duree(est.dureeMin)}` : ""}${est.nombreCleaneurs === 2 ? " · 2 Cleaneurs" : ""}</p>
       ${prix}
       <p class="petit">Prix maximum : le montant final ne peut pas le dépasser sans votre accord. Le jour et l'heure choisis ensuite peuvent encore le baisser (créneau malin −${REGLES.CRENEAU_MALIN_PCT} %).</p>
-      ${estPrelancement() ? `<p class="petit"><b>Lancement le 31 décembre 2026.</b> ${MESSAGE_LANCEMENT}</p>` : ""}
+      ${reservationsFermees() ? `<p class="petit"><b>Les réservations ouvrent très bientôt.</b> ${MESSAGE_LANCEMENT}</p>` : ""}
     </div>
     <div class="barre-actions"><div class="barre-prix">
       <a class="prix-barre" href="#resultat-simulation" data-voir-prix><span>Votre prix estimé</span><b>${est.devisObligatoire ? "Sur devis" : euros(est.fraisServicePct ? est.totalAPayerC : est.totalC)}</b><span class="lien">Voir le détail</span></a>
-      <button type="button" class="bouton plein" id="sim-reserver">${estPrelancement() ? "Pré-réserver avec ces choix" : "Réserver avec ces choix"}</button></div></div>
+      <button type="button" class="bouton plein" id="sim-reserver">Réserver avec ces choix</button></div></div>
   </div></section>`;
   traduire(racine);
 }
@@ -830,9 +830,6 @@ function etape3() {
 
 function joursProposes() {
   const j = []; const d = new Date(); d.setHours(0, 0, 0, 0);
-  // Aucune intervention avant le 1er janvier 2027 : le planning commence au plus tôt ce jour-là.
-  const veille = new Date(DATE_PREMIERES_INTERVENTIONS); veille.setDate(veille.getDate() - 1);
-  if (d < veille) d.setTime(veille.getTime());
   for (let i = 1; i <= 21; i++) { const x = new Date(d); x.setDate(d.getDate() + i); j.push(x); }
   return j;
 }
@@ -869,7 +866,7 @@ function etape4() {
       title="${{ MALIN: "Créneau malin −10 %", FORTE_DEMANDE: "Forte demande", PEU: "Peu de Cleaneurs" }[dispo] || ""}">${heure(h)}</button>`;
   }).join("") : "";
   const adresseOk = b.rue.trim().length >= 3 && /^[0-9]{5}$/.test(b.codePostal) && b.ville.trim();
-  const creneauOk = estPrelancement() || b.flexible || (b.jour && b.heure >= 0 && (!location || b.heure === (b.departVoyageursH ?? REGLES.DEPART_VOYAGEURS_DEFAUT_H)));
+  const creneauOk = b.flexible || (b.jour && b.heure >= 0 && (!location || b.heure === (b.departVoyageursH ?? REGLES.DEPART_VOYAGEURS_DEFAUT_H)));
   const manque = !adresseOk ? "Vérifiez l'adresse pour continuer."
     : !tient ? "Le ménage ne tient pas entre le départ et l'arrivée suivante : avancez le départ ou retardez l'arrivée." : !creneauOk ? "Choisissez un créneau." : "";
   return `<h2>Adresse et créneau</h2>
@@ -886,8 +883,7 @@ function etape4() {
     ${Number.isFinite(b.lat) ? `<div class="carte-adresse" id="carte-adresse" role="img" aria-label="Carte de l'adresse"></div>
       <p class="petit" style="margin:6px 0 0">${b.logementId ? "Position enregistrée du logement." : "Déplacez le repère sur l'entrée du logement si besoin."}</p>` : ""}
     ${/^[0-9]{5}$/.test(b.codePostal) && pctZone(b.codePostal) ? `<div class="note" style="margin-top:10px"><span><b>${libelleZone(pctZone(b.codePostal))}</b> · <span>prix adaptés à votre ville</span></span></div>` : ""}
-    ${titre(estPrelancement() ? "Date souhaitée (facultatif)" : "Touchez un créneau dans le planning")}
-    ${estPrelancement() ? `<div class="note" style="margin:0 0 10px">Les réservations ouvrent le <b>31 décembre 2026</b>. Choisissez une date à partir du 1er janvier 2027 si vous le souhaitez : nous la confirmerons en priorité. Sinon, cochez « Je suis flexible ».</div>` : ""}${`
+    ${titre("Touchez un créneau dans le planning")}${`
     <div class="carte">${caseCocher("Je suis flexible", "flexible", b.flexible, "Vous recevez des candidatures sur 7 jours")}</div>
     ${b.flexible ? "" : `<div class="jours" style="margin-top:12px">${joursProposes().map(d => `<button type="button" data-jour="${iso(d)}" class="${b.jour === iso(d) ? "choisi" : ""}">${dateCourte(d)}</button>`).join("")}</div>
       ${jourDate ? `<div class="creneaux" style="margin-top:12px">${creneaux}</div>
@@ -903,13 +899,22 @@ function etape4() {
 /* « Être prévenu » : après le lancement, une prestation ne se réserve que si un Cleaneur validé couvre l'adresse. */
 let couverture = { cle: "", n: null }, attente = "";
 function verifierCouverture() {
-  if (estPrelancement() || !b || !Number.isFinite(b.lat)) return null;
+  if (!b || !Number.isFinite(b.lat)) return null;
   const cle = `${b.rubriqueId}|${b.lat.toFixed(3)}|${b.lon.toFixed(3)}`;
   if (couverture.cle !== cle) {
     couverture = { cle, n: null }; attente = "";
     secteurCouvert(b.rubriqueId, b.lat, b.lon).then(n => { if (couverture.cle === cle) { couverture.n = n; if (b?.etape === 5 && racine?.isConnected) rendre(); } }).catch(() => {});
   }
   return couverture.n;
+}
+/** Réservations pas encore ouvertes (interrupteur, 24/11/2026) : rien n'est envoyé ni payé ; être prévenu de l'ouverture. */
+function blocFermees(contactOk) {
+  if (attente === "ok") return `<div class="carte" style="margin-top:14px;border-color:var(--primaire)"><h3 style="margin:0 0 6px">C'est noté !</h3>
+    <p class="muet" style="margin:0">Nous vous prévenons dès l'ouverture des réservations. Votre estimation est gardée en brouillon.</p></div>`;
+  return `<div class="carte" style="margin-top:14px"><h3 style="margin:0 0 6px">Les réservations ouvrent très bientôt</h3>
+    <p class="muet" style="margin:0 0 6px">Rien n'est envoyé ni payé pour l'instant. Laissez vos coordonnées : nous vous prévenons dès l'ouverture, et votre estimation est gardée.</p>
+    ${attente === "erreur" ? `<p class="erreur" style="margin:6px 0 0">Le service est momentanément indisponible. Réessayez dans quelques minutes.</p>` : ""}</div>
+    ${actions(contactOk && attente !== "envoi", contactOk ? "" : "Complétez vos coordonnées.", attente === "envoi" ? "Envoi en cours…" : "Être prévenu de l'ouverture", "prevenir")}`;
 }
 function blocAttente(r, contactOk) {
   if (attente === "ok") return `<div class="carte" style="margin-top:14px;border-color:var(--primaire)"><h3 style="margin:0 0 6px">C'est noté !</h3>
@@ -933,7 +938,7 @@ function etape5() {
   const manque = !contactOk ? "Complétez vos coordonnées." : !b.cgv ? "Acceptez les conditions pour envoyer la demande." : "";
   return `<h2>Votre estimation</h2>
     <p class="muet">${icone(r.icone)} ${r.nom} · ${est.nombreCleaneurs === 2 ? `2 Cleaneurs × ${duree(est.dureeMin)}` : duree(est.dureeMin)}</p>
-    ${estPrelancement() ? `<div class="note" style="margin-top:10px"><span><b>Lancement le 31 décembre 2026.</b> ${MESSAGE_LANCEMENT} Votre pré-réservation est gratuite et sans engagement.</span></div>` : ""}
+    ${reservationsFermees() ? `<div class="note" style="margin-top:10px"><span><b>Les réservations ouvrent très bientôt.</b> ${MESSAGE_LANCEMENT} Votre estimation est gardée : vous pourrez l'envoyer dès l'ouverture.</span></div>` : ""}
     <div class="carte" style="margin-top:12px">
       ${est.devisObligatoire ? `<h3 style="color:var(--primaire)">Sur devis</h3><p class="muet" style="margin:4px 0 0">Un professionnel qualifié évalue votre besoin et vous propose un devis. Aucun engagement.</p>`
         : est.lignes.map(l => { const inclus = l.montantC === 0 && l.note === "inclus";
@@ -966,12 +971,11 @@ function etape5() {
     <div class="carte">${caseCocher("Photos avant exigées", "photosAvantExigees", !!b.photosAvantExigees, "Le Cleaneur photographie chaque pièce avant et après le ménage. Conseillé pour les locations saisonnières et les états des lieux. Sinon, il photographie chaque pièce après le ménage et signale tout problème constaté à son arrivée.")}</div>
     ${notePaiement(est)}
     <div class="carte" style="margin-top:12px">${caseCocher(`J'accepte les <a href="#/conditions" target="_blank">conditions d'utilisation</a> et la <a href="#/confidentialite" target="_blank">politique de confidentialité</a>`, "cgv", b.cgv)}</div>
-    ${verifierCouverture() === 0 ? blocAttente(r, contactOk) : actions(!manque && !envoi, manque, envoi ? "Envoi en cours…" : estPrelancement() ? "Envoyer ma pré-réservation" : est.devisObligatoire ? "Envoyer ma demande de devis" : "Payer et envoyer ma demande", "envoyer")}`;
+    ${reservationsFermees() ? blocFermees(contactOk) : verifierCouverture() === 0 ? blocAttente(r, contactOk) : actions(!manque && !envoi, manque, envoi ? "Envoi en cours…" : est.devisObligatoire ? "Envoyer ma demande de devis" : "Payer et envoyer ma demande", "envoyer")}`;
 }
 
 /** Paiement (22/11/2026, règle de l'utilisateur) : payé à l'envoi, bloqué jusqu'à la validation, versé ensuite au Cleaneur. */
 function notePaiement(est) {
-  if (estPrelancement()) return `<div class="note" style="margin-top:14px">💳 <span>${tr("Pré-réservation gratuite : rien n'est payé maintenant. À l'ouverture, vous paierez en ligne pour la confirmer ; le montant restera bloqué jusqu'à votre validation de la prestation.")}</span></div>`;
   if (est.devisObligatoire) return `<div class="note" style="margin-top:14px">💳 <span>${tr("Aucun paiement maintenant : le paiement vous sera proposé avec le devis.")}</span></div>`;
   return `<div class="note" style="margin-top:14px">💳 <span>${tr("Paiement sécurisé à l'envoi (carte, Apple Pay, Google Pay) : le montant est débité maintenant et reste bloqué par Cleaneroo jusqu'à votre validation de la prestation, puis il est versé au Cleaneur. Votre demande est transmise aux Cleaneurs dès le paiement. Demande annulée : vous êtes remboursé. Annulation gratuite jusqu'à 48 h avant ; ensuite 25 % du prix accepté.")}</span></div>`
     + (passagesPlanifies(b) > 1 ? `<p class="petit" style="margin:6px 0 0">🔁 ${tr("Entretien régulier : le 1er passage est payé maintenant ; les suivants sont prélevés automatiquement sur la même carte, 3 jours avant chaque passage.")}</p>` : "");
@@ -1018,7 +1022,7 @@ function blocChoixCleaneur(est) {
         <small>${etoiles(f)}${f.ensemble} ${tr(f.ensemble > 1 ? "prestations ensemble" : "prestation ensemble")}</small></span></button>`).join("")}</div>
       ${favoriChoisi() ? "" : `<p class="petit" style="color:var(--alerte)">Choisissez le Cleaneur favori à qui proposer la demande.</p>`}` : ""}`
     : `<p class="petit">Ajoutez un Cleaneur à vos favoris après une prestation : vous pourrez ensuite le demander directement.</p>`}
-    ${estPrelancement() ? `<p class="petit">Votre choix est gardé : il s'appliquera dès l'ouverture, le 31 décembre 2026.</p>` : ""}`;
+    `;
 }
 
 function appliquerParrainage() {
@@ -1247,6 +1251,7 @@ document.addEventListener("input", e => {
 
 let totalPassages = 0;   // nombre de passages de l'envoi en cours (message en cas d'échec partiel)
 async function envoyer() {
+  if (reservationsFermees()) { rendre(); return; }   // interrupteur fermé : rien n'est envoyé (la base refuse aussi)
   const debut = debutChoisi();
   const est = estimer(b, debut);
   envoi = true; rendre();
@@ -1260,7 +1265,7 @@ async function envoyer() {
     if (est.prixLibre) { details.prixLibre = true; details.prixConseilleC = est.prixConseilleC; }   // prix fixé par la conciergerie   // frais de service Cleaneroo (à part)   // langue des SMS et des messages : celle de la réservation
     const nombre = passagesPlanifies(b);
     details.passages = nombre;
-    const dates = debut && nombre > 1 && !estPrelancement() ? datesPassages(debut, frequenceDe(b), b.jours || [], nombre) : [debut];
+    const dates = debut && nombre > 1 ? datesPassages(debut, frequenceDe(b), b.jours || [], nombre) : [debut];
     // Passages déjà créés lors d'un essai précédent (22/11/2026) : jamais renvoyés, pour éviter les doublons.
     totalPassages = dates.length;
     // Paiement (22/11/2026) : tous les passages d'une même réservation partagent la carte du 1er (prélevés 3 jours avant chacun).
@@ -1271,7 +1276,7 @@ async function envoyer() {
     const envoi1 = await envoyerDemande({
       rubrique_id: b.rubriqueId, details, estimation_c: est.totalC, credit_impot_c: est.creditImpotC, duree_min: est.dureeMin,
       remise_parrainage_c: n === 0 ? est.remiseParrainageC : 0, cagnotte_c: n === 0 ? est.cagnotteC : 0,
-      nombre_cleaneurs: est.nombreCleaneurs, sur_devis: est.devisObligatoire, creneau: d ? d.toISOString() : null, flexible: b.flexible || (estPrelancement() && !d), prelancement: estPrelancement(),
+      nombre_cleaneurs: est.nombreCleaneurs, sur_devis: est.devisObligatoire, creneau: d ? d.toISOString() : null, flexible: !!b.flexible, prelancement: false,
       choix_cleaneur: choixEnvoye(), cleaneur_favori: choixEnvoye() === "favori" ? b.cleaneurFavori : null, espace: b.espace, prenom: b.prenom.trim(), nom: b.nom.trim(), email: b.email.trim(), telephone: b.telephone.trim(),
       rue: b.rue.trim(), code_postal: b.codePostal.trim(), ville: b.ville.trim(), accueil: b.accueil || "PRESENT", acces, groupe_paiement: b.groupePaiement,
       remarque: (dates.length > 1 ? `Passage ${n + 1}/${dates.length}. ` : "")
@@ -1283,7 +1288,7 @@ async function envoyer() {
     sauver();
     }
     const { reference, jeton } = premiere;
-    const aPayer = !estPrelancement() && !est.devisObligatoire;
+    const aPayer = !est.devisObligatoire;
     const tel = b.telephone.trim();
     if (tel) session().then(x => x ? monProfil() : null).then(p => { if (p && !p.telephone) majProfil({ telephone: tel }); }).catch(() => null);
     memoriserCommande(b);

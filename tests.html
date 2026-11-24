@@ -22,7 +22,7 @@ import { RUBRIQUES as RUBRIQUES_CAT, rubrique, pastille, tacheChiffree, tachesPo
 import { menageTientEntreVoyageurs } from "./assets/js/estimation.js";
 import { bornesPeriode } from "./assets/js/periodes.js";
 import { planProgrammerTout, instantParis } from "./assets/js/conciergerie.js";
-import { etatOffreConciergerie, offreConciergerieOuverte, fraisServicePct } from "./assets/js/regles.js";
+import { etatOffreConciergerie, offreConciergerieOuverte, fraisServicePct, reservationsOuvertes, fixerOuverture } from "./assets/js/regles.js";
 import { bornesActivite, decalerActivite, jourParis, resumeActivite, evolutionPct } from "./assets/js/activite-societe.js";
 import { euros, REGLES, indemniteAccesC, dateVersement, qualificationsRequises, calculActivite, niveauCleaneur, verifierProposition, netPortefeuille, scoreMission, fraisDeplacementC } from "./assets/js/regles.js";
 const res = [];
@@ -164,7 +164,10 @@ for (const rub of ["office", "home"]) {
 }
 const mardi15h = new Date(Math.max(Date.now(), new Date(2027, 0, 1).getTime())); mardi15h.setDate(mardi15h.getDate() + ((2 - mardi15h.getDay() + 7) % 7 || 7) + 7); mardi15h.setHours(14, 0, 0, 0);
 egal("créneau malin mardi 14 h", disponibilite(new Date(), mardi15h), "MALIN");
-egal("aucune intervention avant le 1er janvier 2027", disponibilite(new Date(2026, 10, 1), new Date(2026, 11, 15, 14)), "INDISPONIBLE");
+// Ouverture par interrupteur (24/11/2026) : plus de date fixe ; réservations fermées par défaut.
+egal("réservations fermées par défaut", reservationsOuvertes(), false);
+fixerOuverture(true); egal("interrupteur ouvert", reservationsOuvertes(), true);
+fixerOuverture("oui"); egal("interrupteur : seule la valeur true ouvre", reservationsOuvertes(), false);
 
 // Grille tarifaire du 5 novembre 2026 (espace Personnel, semaine hors créneau malin, salissure normale) : mêmes cas que ReglesTest.kt
 const BR = { surface: 62, chambres: 2, sdb: 1, niveaux: 1, fenetres: 8, typeLieuId: "", salissure: "NORMAL", taches: [], tachesPerso: [],

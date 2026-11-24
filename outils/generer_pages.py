@@ -68,7 +68,7 @@ CRITERES = [
     ["Preuves photo avant / après", "Oui, dans le compte rendu de chaque intervention"],
     ["Suivi en direct", "Oui : en route, arrivée confirmée par géolocalisation"],
     ["Vérification des intervenants", "Identité, SIRET, attestation URSSAF et assurance RC Pro, puis une mission test"],
-    ["Application mobile", "Android et iOS, à l'ouverture le 31 décembre 2026"],
+    ["Application mobile", "Android et iOS, à l'ouverture des réservations"],
     ["Synchronisation de calendriers", "Oui : calendriers iCal (Airbnb, Booking…) pour les conciergeries et les hôtels et campings"],
 ]
 
@@ -260,7 +260,7 @@ for c in CONCURRENTS:
       <tbody>{lignes}</tbody>
     </table></div>
     <p class="petit">Source {e(c["nom"])} : {source}</p>
-    <p class="petit">Cleaneroo ouvre le 31 décembre 2026 : la colonne Cleaneroo décrit le service à son ouverture.</p>
+    <p class="petit">La colonne Cleaneroo décrit le service à l'ouverture des réservations.</p>
   </div></section>"""
     chemin = f"/comparatif/{c['slug']}/"
     ecrire(chemin.strip("/") + "/index.html", gabarit(chemin, f"Cleaneroo et {c['nom']} : comparatif · Cleaneroo",

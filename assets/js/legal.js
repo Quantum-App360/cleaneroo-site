@@ -18,7 +18,7 @@ export const CONDITIONS = [
   ["Échanges et coordonnées", "Pour la sécurité de tous, le client et le Cleaneur échangent par la messagerie de Cleaneroo : les numéros de téléphone, adresses e-mail, liens et réseaux sociaux y sont masqués automatiquement, comme dans les vitrines des professionnels. Proposer de réserver ou de payer en dehors de Cleaneroo une prestation née d'une mise en relation sur la plateforme est interdit : le client perdrait le paiement protégé, l'assurance, le remplaçant et les factures. Après un avertissement, un manquement répété peut entraîner la suspension du compte. Le Cleaneur bénéficie d'une commission réduite dès le 3e ménage avec un même client."],
   ["Rôle de Cleaneroo", "Cleaneroo vérifie les Cleaneurs avant de les activer (identité, SIRET, attestation URSSAF, assurance, contrat, mission test) et assure le bon fonctionnement du service. Le Cleaneur, professionnel indépendant, est responsable de la prestation qu'il réalise."],
   ["Cleaneurs", "Les Cleaneurs exercent selon le contrat de prestataire qu'ils signent dans leur espace : formule Gratuite (commission de {commissionGratuit} %) ou Pro ({abonnementPro} par mois, commission de {commissionPro} %), 3 mois de Pro offerts aux inscrits jusqu'au 31 janvier 2027."],
-  ["Lancement", "Avant le 31 décembre 2026, les réservations sont des pré-réservations gratuites et sans engagement ; aucune intervention n'a lieu avant le 1er janvier 2027."],
+  ["Lancement", "Tant que les réservations ne sont pas ouvertes, aucune réservation ni aucun paiement ne peut être fait : les comptes, les espaces et les dossiers des Cleaneurs peuvent être créés et préparés. Les pré-réservations déjà enregistrées sont confirmées à l'ouverture."],
   ["Réclamations, médiation et droit applicable", "Toute réclamation peut être adressée à contact@cleaneroo.fr. À défaut d'accord sous 30 jours, le consommateur peut recourir gratuitement au médiateur de la consommation (article L612-1 du Code de la consommation) : {mediateur}. Il peut ensuite saisir le tribunal compétent. Les présentes conditions sont soumises au droit français ; la version applicable est celle acceptée lors de la réservation."],
 ];
 export const CONFIDENTIALITE = [
@@ -42,9 +42,9 @@ export const MENTIONS = [
 ];
 
 const societe = () => { const s = REGLES.SOCIETE || {};
-  return s.nom ? [s.nom, s.adresse, s.siret ? `SIRET ${s.siret}` : ""].filter(Boolean).join(" — ") : tr("Cleaneroo, société par actions simplifiée (SAS) en cours de création : siège, SIRET et capital publiés ici avant l'ouverture du 31 décembre 2026."); };
+  return s.nom ? [s.nom, s.adresse, s.siret ? `SIRET ${s.siret}` : ""].filter(Boolean).join(" — ") : tr("Cleaneroo, société par actions simplifiée (SAS) en cours de création : siège, SIRET et capital publiés ici avant l'ouverture des réservations."); };
 const mediateur = () => { const m = REGLES.MEDIATEUR || {};
-  return m.actif ? `${m.nom}, ${m.adresse} — ${m.site}` : tr("désigné avant l'ouverture du 31 décembre 2026, ses coordonnées seront indiquées ici"); };
+  return m.actif ? `${m.nom}, ${m.adresse} — ${m.site}` : tr("désigné avant l'ouverture des réservations, ses coordonnées seront indiquées ici"); };
 const valeurs = () => ({ fraisPart: REGLES.FRAIS_SERVICE_PARTICULIER_PCT, fraisPro: REGLES.FRAIS_SERVICE_PRO_PCT, validationAuto: REGLES.VALIDATION_AUTO_H,
   annulH: REGLES.ANNULATION_GRATUITE_H, annulPct: REGLES.ANNULATION_TARDIVE_PCT, retard: REGLES.RETARD_TOLERE_MIN, attente: REGLES.ATTENTE_ACCES_IMPOSSIBLE_MIN,
   indemnitePct: REGLES.INDEMNITE_PCT, indemniteMin: REGLES.INDEMNITE_MIN_C / 100, indemniteMax: REGLES.INDEMNITE_MAX_C / 100, avoir: REGLES.GARANTIE_REMPLACEMENT_OFFERT_C / 100,

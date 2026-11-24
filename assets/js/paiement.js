@@ -4,7 +4,7 @@
 // non payée n'est pas transmise aux Cleaneurs. Le serveur (fonction Supabase « paiement ») calcule le montant, parle à Stripe,
 // libère, rembourse et prélève les passages suivants ; même fonctionnement dans l'application (Paiement.kt).
 import { supabase } from "./donnees.js";
-import { euros } from "./regles.js";
+import { euros, reservationsFermees } from "./regles.js";
 import { traduire, tr } from "./langue.js";
 import { icone } from "./icones.js";
 
@@ -34,7 +34,8 @@ export async function lancerPaiement(reference, jeton) {
 const MESSAGES_ERREUR = {
   non_configure: "Le paiement en ligne n'est pas encore activé.",
   sur_devis: "Le prix de cette demande est sur devis : le paiement sera proposé avec le devis.",
-  prelancement: "Pré-réservation gratuite : le paiement sera proposé à l'ouverture, le 31 décembre 2026.",
+  prelancement: "Pré-réservation gratuite : le paiement sera proposé dès l'ouverture des réservations.",
+  fermees: "Les réservations ne sont pas encore ouvertes : le paiement sera proposé dès l'ouverture.",
   prix_corrige: "Le prix a été mis à jour selon nos tarifs en vigueur. Vérifiez le nouveau montant ci-dessus, puis payez votre réservation.",
   prix_a_verifier: "Le prix de cette demande doit être vérifié par notre équipe : nous revenons vers vous rapidement.",
   deja_paye: "Cette réservation est déjà payée.",
@@ -71,7 +72,7 @@ export async function blocPaiement(el, reference, jeton) {
     traduire(el); return;
   }
   if (!p.a_payer) { el.innerHTML = ""; return; }
-  if (p.prelancement && new Date() < new Date(2026, 11, 31)) {
+  if (reservationsFermees()) {
     el.innerHTML = `<div class="carte" style="margin-bottom:14px">${icone("paiement", { tuile: true })}<b>${tr("Paiement")}</b>
       <p class="petit" style="margin:4px 0 0">${tr(MESSAGES_ERREUR.prelancement)}</p></div>`;
     traduire(el); return;

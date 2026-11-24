@@ -1,5 +1,5 @@
 // Comptes : « Mon compte » (client, Cleaneur, administration) et « Mes prestations » (biens, prestations à venir et passées).
-// Les comptes s'ouvrent avant l'ouverture ; aucune intervention avant le 1er janvier 2027 (DATE_PREMIERES_INTERVENTIONS).
+// Les comptes s'ouvrent avant l'ouverture des réservations (interrupteur en base, 24/11/2026).
 // Mêmes écrans que l'application (EcranCompte.kt).
 import { blocParrainage, brancherParrainage, champCodeParrain, oublierCodeParrain, monParrainage } from "./parrainage.js";
 import { surveiller } from "./sons.js";
@@ -32,13 +32,13 @@ import { ONGLETS, ongletParDefaut, espaceDu, statutsDu, NOMS_ESPACES, barreOngle
 import { brancherEspaceSociete, brancherActiverSociete, brancherSalarie, utiliserCodeEquipeGarde } from "./societe.js";
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const OUVERTURE = "Les interventions commencent le 1er janvier 2027.";
+const OUVERTURE = "Les interventions commencent dès l'ouverture des réservations.";
 const STATUTS = { VERIFICATION: "En cours de vérification", PUBLIEE: "En ligne · candidatures", CONFIRMEE: "Confirmée", EN_ROUTE: "Cleaneur en route",
   SUR_PLACE: "Cleaneur sur place", EN_COURS: "En cours", A_VALIDER: "À valider", TERMINEE: "Terminée", ANNULEE: "Annulée" };
 const DOSSIER = {
   BROUILLON: ["À compléter", "Complétez votre profil et ajoutez vos documents, puis envoyez votre dossier."],
   A_VERIFIER: ["En vérification", "Votre dossier est en cours de vérification par l'équipe Cleaneroo. Vous recevrez un e-mail."],
-  VALIDE: ["Validé", "Votre dossier est validé. Vous pourrez accepter des missions à partir du 1er janvier 2027."],
+  VALIDE: ["Validé", "Votre dossier est validé. Vous pourrez accepter des missions dès l'ouverture des réservations."],
   REFUSE: ["À corriger", "Votre dossier doit être corrigé :"],
 };
 const ROLES = { client: "Client", cleaneur: "Cleaneur", admin: "Administrateur" };
@@ -126,7 +126,7 @@ export async function pageCompte(vue, param) {
     <span class="surtitre">${NOMS_ESPACES[onglet]}</span>
     ${titre(`Bonjour ${esc(p.prenom || "")}`.trim())}
     <p><span class="tampon">${etiquette}</span> <span class="petit">${esc(p.email)}</span></p>
-    <div class="note" style="margin:14px 0"><span>${tr("Ouverture le 31 décembre 2026, premières interventions le 1er janvier 2027 : votre espace est prêt.")}</span></div>
+    <div class="note" style="margin:14px 0"><span>${tr("Les réservations ouvrent très bientôt : votre espace est prêt.")}</span></div>
     ${admin ? `<div class="carte teintee" style="margin-bottom:14px"><b>Espace administrateur</b>
       <p class="petit" style="margin:4px 0 10px">Demandes, inscriptions et dossiers des Cleaneurs (documents, validation).</p>
       <a class="bouton secondaire" href="gestion.html">Ouvrir le tableau de bord</a></div>` : ""}
@@ -576,7 +576,7 @@ export async function afficherAccesCleaneur(racine) {
   const p = await monProfil().catch(() => null);
   const carte = (titre, texte, bouton, lien, second = "") => `<div class="carte teintee" style="margin-bottom:16px"><b>${titre}</b>
     <p class="petit" style="margin:4px 0 10px">${texte}</p><div class="boutons" style="margin-top:0"><a class="bouton" href="${lien}">${bouton}</a>${second}</div></div>`;
-  bloc.innerHTML = !p ? carte("Créez votre compte Cleaneur", "Préparez dès maintenant votre profil et votre dossier : tout sera prêt pour vos premières missions le 1er janvier 2027.",
+  bloc.innerHTML = !p ? carte("Créez votre compte Cleaneur", "Préparez dès maintenant votre profil et votre dossier : tout sera prêt pour vos premières missions dès l'ouverture.",
       "Créer mon compte Cleaneur", "#/compte/cleaneur", `<a class="bouton secondaire" href="#/compte">J'ai déjà un compte</a>`)
     : p.role === "admin" ? carte("Accès administrateur", "Votre espace Cleaneur est ouvert sans dossier ni documents.", "Ouvrir mon espace Cleaneur", "#/compte/cleaneur")
     : p.role === "cleaneur" ? carte("Mon espace Cleaneur", "Votre profil, votre dossier et vos missions sont dans votre compte.", "Ouvrir mon espace Cleaneur", "#/compte/cleaneur")

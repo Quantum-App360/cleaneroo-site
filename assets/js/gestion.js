@@ -16,7 +16,7 @@ const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": 
 const STATUTS = { VERIFICATION: "À vérifier", PUBLIEE: "En ligne", CONFIRMEE: "Confirmée", EN_ROUTE: "En route", SUR_PLACE: "Sur place",
   EN_COURS: "En cours", A_VALIDER: "À valider", TERMINEE: "Terminée", ANNULEE: "Annulée" };
 /** Erreurs de la base en français simple (règle d'ouverture, date passée). */
-const messageErreur = e => /ouverture/.test(e?.message || "") ? "Aucune intervention avant l'ouverture du 1er janvier 2027 : choisissez une date à partir de cette ouverture."
+const messageErreur = e => /ouverture/.test(e?.message || "") ? "Les réservations ne sont pas encore ouvertes : ouvrez-les depuis « Ouverture des réservations »."
   : /creneau_passe/.test(e?.message || "") ? "La date de cette demande est déjà passée : elle ne peut plus être mise en ligne. Annulez-la."
   : e?.message || "Le service est momentanément indisponible. Réessayez dans quelques minutes.";
 const SUIVANT = { VERIFICATION: "PUBLIEE", PUBLIEE: "CONFIRMEE", CONFIRMEE: "EN_ROUTE", EN_ROUTE: "SUR_PLACE", SUR_PLACE: "EN_COURS", EN_COURS: "A_VALIDER", A_VALIDER: "TERMINEE" };
@@ -79,7 +79,7 @@ const CRENEAUX_RAPPEL = { matin: "le matin", midi: "à midi", apres_midi: "l'apr
 let onglet = "demandes";
 
 /** Rubriques du back-office : identifiant, nom, icône. */
-const RUBRIQUES_BO = [["demandes", "Demandes", "calendrier"], ["inscriptions", "Inscriptions au lancement", "avis"], ["dossiers", "Dossiers Cleaneurs", "cleaneurs"],
+const RUBRIQUES_BO = [["ouverture", "Ouverture des réservations", "cle"], ["demandes", "Demandes", "calendrier"], ["inscriptions", "Inscriptions au lancement", "avis"], ["dossiers", "Dossiers Cleaneurs", "cleaneurs"],
   ["litiges", "Litiges", "garantie"], ["controle", "Contrôle des Cleaneurs", "photo"], ["support", "Support", "telephone"], ["secteurs", "Secteurs à recruter", "position"], ["zones", "Zones et partenaires", "position"], ["risques", "Risques de contournement", "garantie"], ["visites", "Visites", "instantane"], ["tarifs", "Tarifs", "paiement"], ["connexions", "Connexions logiciels", "logement"]];
 let compteurs = {};
 /** Chiffres clés (en tête et pastilles du menu), relus à chaque changement de rubrique. */
@@ -268,6 +268,33 @@ async function detailDossier(d) {
   });
 }
 
+/* Ouverture des réservations (24/11/2026) : interrupteur unique, à la place de la date du 31 décembre 2026.
+   Il ne s'ouvre que si la SAS est renseignée (raison sociale, SIRET, adresse : table infos_cleaneroo) et Stripe en mode réel. */
+const MANQUES = { raison_sociale: "Raison sociale de la SAS", siret: "SIRET de la SAS (14 chiffres)", adresse: "Adresse du siège", stripe: "Stripe en mode réel (clé sk_live dans les secrets Supabase)" };
+async function ecranOuverture() {
+  vue.innerHTML = titreBO() + `<div class="carte">Vérification…</div>`;
+  // Stripe : l'état réel est lu par la fonction « paiement » (seule à connaître la clé) et enregistré en base.
+  await supabase.functions.invoke("paiement", { body: { action: "etat_ouverture" } }).catch(() => null);
+  const [{ data: ouvertes, error }, { data: manques }] = await Promise.all([supabase.rpc("reservations_ouvertes"), supabase.rpc("manques_ouverture")]);
+  if (error) { vue.innerHTML = titreBO() + `<div class="carte"><p class="erreur">Fonction absente : appliquez outils/base-ouverture-reservations.sql dans Supabase.</p></div>`; return brancherOnglets(); }
+  const liste = manques || [];
+  vue.innerHTML = titreBO() + `<div class="carte">
+    <p style="margin-top:0"><b>${ouvertes ? "Réservations ouvertes" : "Réservations fermées"}</b></p>
+    <p class="petit">Fermées : les comptes, espaces, logements, agendas, vitrines et dossiers fonctionnent ; réservation, paiement, prise de mission et propositions sont bloqués.</p>
+    ${Object.entries(MANQUES).map(([cle, lib]) => `<p class="petit" style="margin:4px 0">${icone(liste.includes(cle) ? "alerte" : "valide")} ${lib}</p>`).join("")}
+    <p class="erreur" id="erreur-ouverture"></p>
+    ${ouvertes ? `<button type="button" class="bouton secondaire" data-ouvrir="non">Fermer les réservations</button>`
+      : `<button type="button" class="bouton plein" data-ouvrir="oui" ${liste.length ? "disabled" : ""}>Ouvrir les réservations</button>`}</div>`;
+  vue.querySelector("[data-ouvrir]").onclick = async e => {
+    const oui = e.currentTarget.dataset.ouvrir === "oui";
+    if (!confirm(oui ? "Ouvrir les réservations et les paiements à tous ?" : "Fermer les réservations ? Plus aucune réservation ni aucun paiement ne sera possible.")) return;
+    const { data, error: err } = await supabase.rpc("ouvrir_reservations", { p_oui: oui });
+    if (err || data !== "ok") { vue.querySelector("#erreur-ouverture").textContent = data?.startsWith?.("manque") ? "Il manque encore des informations (voir ci-dessus)." : "Échec : réessayez."; return; }
+    ecranOuverture();
+  };
+  brancherOnglets();
+}
+
 /* Visites du site et ouvertures de l'appli (table « visites », sans donnée personnelle). */
 const APPAREILS = { mobile: "Téléphone", tablette: "Tablette", ordinateur: "Ordinateur" };
 async function listeVisites() {
@@ -389,6 +416,7 @@ async function listeSecteurs() {
 
 async function liste() {
   chargerCompteurs().catch(() => null);
+  if (onglet === "ouverture") return ecranOuverture();
   if (onglet === "inscriptions") return listeInscriptions();
   if (onglet === "dossiers") return listeDossiers();
   if (onglet === "visites") return listeVisites();

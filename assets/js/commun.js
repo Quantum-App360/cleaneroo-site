@@ -1,6 +1,6 @@
 // Éléments communs au site (index.html) et aux pages statiques (villes, calculateur, comparatifs) :
 // étapes « Comment ça marche », encart de réassurance, bouton et fenêtre « Être rappelé ».
-import { REGLES, estPrelancement, joursAvantLancement, MESSAGE_LANCEMENT } from "./regles.js";
+import { REGLES, reservationsFermees, MESSAGE_LANCEMENT } from "./regles.js";
 import { evenement } from "./compteur.js";
 import { eurosRond } from "./catalogue.js";
 import { icone } from "./icones.js";
@@ -19,13 +19,11 @@ export const surveillerFormulaire = f => ouvertsLe.set(f, Date.now());
 /** Vrai si l'envoi ressemble à un robot : champ piège rempli ou envoi en moins de 3 secondes. */
 export const envoiRobot = f => !!f.querySelector("[name=site_web]")?.value || Date.now() - (ouvertsLe.get(f) || 0) < 3000;
 
-/* ------------------------------------------------------------------ Pré-lancement (ouverture le 31 décembre 2026) */
+/* ------------------------------------------------------------------ Avant l'ouverture des réservations (interrupteur, 24/11/2026) */
 export function bandeauLancement() {
-  if (!estPrelancement()) return "";
-  const j = joursAvantLancement();
+  if (!reservationsFermees()) return "";
   return `<div class="lancement"><div class="conteneur">
-    <span class="compte">J-${j}</span>
-    <span><b>Lancement le 31 décembre 2026</b><span class="message-lancement"> · ${MESSAGE_LANCEMENT}</span></span></div></div>`;
+    <span><b>Les réservations ouvrent très bientôt</b><span class="message-lancement"> · ${MESSAGE_LANCEMENT}</span></span></div></div>`;
 }
 
 /* ------------------------------------------------------------------ Chargement (8 novembre 2026) : logo Cleaneroo + silhouette de la page */

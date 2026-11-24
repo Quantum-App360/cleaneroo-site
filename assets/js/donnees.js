@@ -1,7 +1,7 @@
 // Accès aux données : base Supabase « cleaneroo » (Paris). La clé publiable est faite pour être publique :
 // la sécurité est assurée par les règles de la base (dépôt libre, lecture réservée au client concerné et à l'administration).
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/+esm";
-import { REGLES } from "./regles.js";
+import { REGLES, fixerOuverture } from "./regles.js";
 
 export const CONFIG = {
   supabaseUrl: "https://wmxrmnujuqkdgvdtlnai.supabase.co",
@@ -82,7 +82,7 @@ export async function lienPhotoDemande(chemin) {
   if (error) throw new Error(error.message);
   return data.signedUrl;
 }
-/** "ok", "deja_prise", "ouverture" (avant le 1er janvier 2027), "dossier" ou "connexion". */
+/** "ok", "deja_prise", "ouverture" (réservations pas encore ouvertes), "dossier" ou "connexion". */
 export const prendreMission = reference => rpc("prendre_mission", { p_reference: reference });
 export const avancerMission = (reference, statut) => rpc("avancer_mission", { p_reference: reference, p_statut: statut });
 
@@ -206,7 +206,7 @@ export function memoriser(reference, jeton, rubriqueId) {
 
 /* ------------------------------------------------------------------ Comptes (clients, Cleaneurs, administration)
  * Comptes ouverts avant l'ouverture : profil, documents et demandes se préparent maintenant,
- * aucune intervention avant le 1er janvier 2027 (règle de la base : demandes_ouverture_check). */
+ * aucune demande tant que les réservations sont fermées (interrupteur en base, verifier_ouverture). */
 
 const retour = vers => `${location.origin}${location.pathname}?vers=${vers}`;
 
@@ -459,6 +459,13 @@ export async function lireCalendrier(url, forcer = false) {
   else r = data;
   if (!r.erreur) { cache[url] = { quand: Date.now(), r }; try { sessionStorage.setItem(CLE_AGENDA, JSON.stringify(cache)); } catch { /* rien */ } }
   return r;
+}
+
+/** Ouverture des réservations (24/11/2026) : interrupteur lu en base ; service muet ou fonction absente : fermées. */
+export async function chargerOuverture() {
+  const { data, error } = await supabase.rpc("reservations_ouvertes");
+  fixerOuverture(!error && data === true);
+  return !error && data === true;
 }
 
 /* « Être prévenu » (11 novembre 2026, comme l'appli iPhone) : la prestation est-elle disponible à cette adresse ?
