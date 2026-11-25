@@ -3144,3 +3144,25 @@ body.sans-rappel .entete .rappel-entete { display: none; }   /* jamais pendant l
 .materiel-mission summary { cursor: pointer; min-height: 32px; display: flex; align-items: center; }
 .materiel-mission ul { margin: 4px 0 0; padding-left: 20px; display: grid; gap: 2px; }
 .combler-journee { display: grid; gap: 2px; }
+
+/* Mode mission plein écran (lot 6) et envois en attente sans réseau */
+.barre-plein-ecran { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 10px 0 0; }
+.barre-plein-ecran .quitter-plein-ecran { display: none; }
+.minuteur-mission { font-weight: 800; font-variant-numeric: tabular-nums; color: var(--texte2); }
+.minuteur-mission.depasse { color: var(--alerte); }
+.mission-plein-ecran { position: fixed !important; inset: 0; z-index: var(--z-fenetre); margin: 0 !important; border-radius: 0 !important; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  padding: 0 16px calc(24px + env(safe-area-inset-bottom)) !important; font-size: 17px; }
+.mission-plein-ecran > :first-child { margin-top: calc(16px + env(safe-area-inset-top)); }
+.mission-plein-ecran .barre-plein-ecran { position: sticky; top: 0; z-index: 2; margin: 0 -16px 12px; padding: calc(10px + env(safe-area-inset-top)) 16px 10px; background: var(--surface); box-shadow: var(--ombre); }
+.mission-plein-ecran [data-plein-ecran] { display: none; }
+.mission-plein-ecran .quitter-plein-ecran { display: inline-flex; margin-left: auto; }
+.mission-plein-ecran .minuteur-mission { font-size: 18px; color: var(--texte); }
+.mission-plein-ecran .bouton { min-height: 56px; font-size: 17px; }
+.mission-plein-ecran .piece summary { min-height: 56px; font-size: 18px; }
+.mission-plein-ecran .case { min-height: 48px; font-size: 17px; }
+.mission-plein-ecran .photo-piece { min-height: 120px; }
+body.sans-defilement { overflow: hidden; }
+.bandeau-envois { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 12px; margin: 0 0 10px; border-radius: 12px; font-size: 14px; font-weight: 600;
+  background: color-mix(in srgb, var(--info, #04BEE5) 12%, var(--surface)); }
+.bandeau-envois.hors-ligne { background: color-mix(in srgb, var(--alerte) 14%, var(--surface)); }
+.bandeau-envois span { flex: 1; min-width: 200px; }

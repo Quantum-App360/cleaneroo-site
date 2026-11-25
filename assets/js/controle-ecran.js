@@ -13,6 +13,7 @@ import { controlesDe, enregistrerPieces, majPiece, deposerPhotoControle, lienPho
 import { chargeur } from "./commun.js";
 import { blocAvis } from "./avis.js";
 import { suivre } from "./donnees.js";
+import { garder, enAttente, vider, erreurReseau, garderListe, listeGardee } from "./file-attente.js";
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const L = langue in { fr: 1, en: 1, it: 1, es: 1 } ? langue : "fr";
@@ -45,14 +46,28 @@ function avisIA(c) {
 /** Bloc du contrôle dans la carte d'une mission sur place / en cours ; surFin(toutComplet) met à jour « J'ai terminé ». */
 export async function brancherControle(boite, m, surFin) {
   boite.innerHTML = chargeur("Préparation de la liste des pièces…", { petit: true, variante: "eponge" });
-  let liste = await controlesDe(m.reference).catch(() => null);
+  // Sans réseau (lot 6) : on vide d'abord ce qui attend, puis liste gardée sur l'appareil si le serveur ne répond pas.
+  if (navigator.onLine) await vider().catch(() => null);
+  let liste = navigator.onLine ? await controlesDe(m.reference).catch(() => null) : null;
   if (liste && !liste.length) {
     await enregistrerPieces(m.reference, piecesDe(m.rubrique_id, m.details || {})).catch(() => null);
     liste = await controlesDe(m.reference).catch(() => null);
   }
-  if (!liste) { boite.innerHTML = `<p class="erreur">${tr("Le service est momentanément indisponible. Réessayez dans quelques minutes.")}</p>`; return; }
+  const horsLigne = !liste;
+  if (liste) garderListe(m.reference, liste); else liste = listeGardee(m.reference);
+  if (!liste) { boite.innerHTML = `<p class="erreur">${tr(navigator.onLine ? "Le service est momentanément indisponible. Réessayez dans quelques minutes." : "Pas de réseau : la liste des pièces s'affichera dès que la connexion revient. Ouvrez la mission une fois avec du réseau pour pouvoir la faire ensuite sans connexion.")}</p>`; return; }
+  liste = JSON.parse(JSON.stringify(liste));
+  // Ce qui attend d'être envoyé est appliqué à l'écran (coches, photos, justifications).
+  const attente = await enAttente(m.reference).catch(() => []);
   const photos = {};
-  await Promise.all(liste.flatMap(c => [c.photo_avant, c.photo_apres].filter(Boolean).map(async p => { photos[p] = await lienPhotoControle(p).catch(() => ""); })));
+  for (const e of attente) {
+    const c = liste.find(x => x.piece_id === e.piece);
+    if (!c) continue;
+    if (e.type === "tache") (c.taches || []).forEach(t => { if (t.id === e.tache) t.fait = e.valeur; });
+    if (e.type === "justif") c.justification = e.texte;
+    if (e.type === "photo") { const cle = `local:${e.id}`; photos[cle] = URL.createObjectURL(e.blob); c[e.moment === "avant" ? "photo_avant" : "photo_apres"] = cle; if (e.moment === "apres") c.ia_statut = null; }
+  }
+  await Promise.all(liste.flatMap(c => [c.photo_avant, c.photo_apres].filter(p => p && !String(p).startsWith("local:")).map(async p => { photos[p] = horsLigne ? "" : await lienPhotoControle(p).catch(() => ""); })));
   // Photos avant obligatoires selon la rubrique (prompt 2, partie 6), ou demandées par le client (prestations spécialisées).
   const avantExigee = !!(m.details || {}).photosAvantExigees || photosAvantObligatoires(m.rubrique_id);
   const complete = c => pieceComplete(c, avantExigee);
@@ -60,6 +75,10 @@ export async function brancherControle(boite, m, surFin) {
   const ouverte = liste.find(c => !complete(c))?.piece_id;
   const signalements = await listeSignalements(m.reference);
   boite.innerHTML = `<div class="controle">
+    ${horsLigne || attente.length ? `<div class="bandeau-envois${horsLigne ? " hors-ligne" : ""}" role="status">${icone(horsLigne ? "alerte" : "repeter")}
+      <span>${horsLigne ? tr("Pas de réseau : continuez normalement, tout est gardé sur votre téléphone.") : ""}
+      ${attente.length ? `${attente.length} ${tr(attente.length > 1 ? "envois en attente : ils partent dès que le réseau revient. « J'ai terminé » s'active après l'envoi." : "envoi en attente : il part dès que le réseau revient. « J'ai terminé » s'active après l'envoi.")}` : ""}</span>
+      ${attente.length && navigator.onLine ? `<button type="button" class="lien-bouton" data-envoyer-attente>${tr("Envoyer maintenant")}</button>` : ""}</div>` : ""}
     <details class="signaler-arrivee"><summary>${icone("alerte")} ${tr("Signaler un problème à l'arrivée")}</summary>
       <p class="petit" style="margin:6px 0">${tr("Dégât, saleté exceptionnelle, objet cassé : signalez-le avant de commencer. Le client le voit dans le compte rendu.")}</p>
       <div class="choix-signal">${TYPES_SIGNAL.map(([id, nom], i) => `<label class="case"><input type="radio" name="type-signal" value="${id}" ${i === 0 ? "checked" : ""}><span>${tr(nom)}</span></label>`).join("")}</div>
@@ -104,8 +123,15 @@ export async function brancherControle(boite, m, surFin) {
         </div></details>`; }).join("")}
   </div>`;
   traduire(boite);
-  surFin(faites === liste.length);
+  surFin(faites === liste.length && !attente.length && !horsLigne);
   const recharger = () => brancherControle(boite, m, surFin);
+  boite.querySelector("[data-envoyer-attente]")?.addEventListener("click", async () => { await vider(); recharger(); });
+  // Retour du réseau ou file vidée : on rafraîchit (une seule écoute par écran).
+  if (!boite.dataset.ecouteFile) {
+    boite.dataset.ecouteFile = "1";
+    const maj = () => { if (!boite.isConnected) { removeEventListener("cleaneroo-file-attente", maj); removeEventListener("online", maj); return; } clearTimeout(boite._maj); boite._maj = setTimeout(() => brancherControle(boite, m, surFin), 400); };
+    addEventListener("cleaneroo-file-attente", maj); addEventListener("online", maj); addEventListener("offline", maj);
+  }
   boite.querySelectorAll("[data-reprendre-piece]").forEach(bt => bt.onclick = () => bt.closest("details")?.querySelector('[data-photo="apres"]')?.click());
   // Signalement d'arrivée : type, texte, photo facultative.
   const photoSignal = boite.querySelector("[data-photo-signal]");
@@ -123,23 +149,30 @@ export async function brancherControle(boite, m, surFin) {
     const piece = d.dataset.piece, err = d.querySelector("[data-erreur-piece]");
     const echec = () => { err.textContent = tr("Le service est momentanément indisponible. Réessayez dans quelques minutes."); };
     d.querySelectorAll("[data-tache]").forEach(cb => cb.onchange = async () => {
-      if ((await majPiece(m.reference, piece, { taches: { [cb.dataset.tache]: cb.checked } }).catch(() => "erreur")) !== "ok") return echec();
+      const envoi = { type: "tache", reference: m.reference, piece, tache: cb.dataset.tache, valeur: cb.checked };
+      if (horsLigne || attente.length || !navigator.onLine) { await garder(envoi).catch(echec); return; }
+      const r = await majPiece(m.reference, piece, { taches: { [cb.dataset.tache]: cb.checked } }).catch(e => (erreurReseau(e) ? "reseau" : "erreur"));
+      if (r === "reseau") { await garder(envoi).catch(echec); return; }
+      if (r !== "ok") return echec();
       recharger();
     });
     d.querySelectorAll("[data-photo]").forEach(inp => inp.onchange = async () => {
       const f = inp.files?.[0]; if (!f) return;
       const moment = inp.dataset.photo;
       inp.closest(".photo-piece").classList.add("envoi");
+      const envoi = { type: "photo", reference: m.reference, piece, moment, blob: f };
+      if (horsLigne || attente.length || !navigator.onLine) { await garder(envoi).catch(echec); return; }
       try {
         const chemin = await deposerPhotoControle(m.reference, piece, moment, f);
         if ((await majPiece(m.reference, piece, moment === "avant" ? { photoAvant: chemin } : { photoApres: chemin })) !== "ok") throw new Error();
-      } catch { return echec(); }
+      } catch (e) { if (erreurReseau(e)) { await garder(envoi).catch(echec); return; } return echec(); }
       if (moment === "apres") { await recharger(); await controleIA(m.reference, piece); }
       recharger();
     });
     d.querySelector("[data-enregistrer-justif]")?.addEventListener("click", async () => {
       const texte = d.querySelector("[data-justif]").value.trim();
       if (texte.length < 5) { err.textContent = tr("Écrivez au moins quelques mots."); return; }
+      if (horsLigne || attente.length || !navigator.onLine) { await garder({ type: "justif", reference: m.reference, piece, texte }).catch(echec); return; }
       if ((await majPiece(m.reference, piece, { justification: texte }).catch(() => "erreur")) !== "ok") return echec();
       recharger();
     });

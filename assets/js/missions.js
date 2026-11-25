@@ -418,7 +418,11 @@ function carteMission(m) {
     ${blocGuideMission(m)}
     ${["CONFIRMEE", "EN_ROUTE"].includes(m.statut) ? blocMateriel(m) : ""}
     ${m.statut === "EN_ROUTE" ? `<p class="petit partage-actif" style="margin:8px 0 0">${icone("position")} Position partagée avec le client pendant le trajet</p>` : ""}
-    ${["SUR_PLACE", "EN_COURS"].includes(m.statut) ? `<div class="controle-mission" data-controle="${esc(m.reference)}"></div>` : ""}
+    ${["SUR_PLACE", "EN_COURS"].includes(m.statut) ? `<div class="barre-plein-ecran">
+        <button type="button" class="bouton secondaire" data-plein-ecran>${icone("agrandir")} ${tr("Mode mission plein écran")}</button>
+        <span class="minuteur-mission" data-minuteur="${esc((m.etapes || {}).debut || "")}" data-duree="${m.duree_min || 0}"></span>
+        <button type="button" class="bouton secondaire quitter-plein-ecran" data-quitter-plein-ecran>${tr("Quitter le plein écran")}</button></div>
+      <div class="controle-mission" data-controle="${esc(m.reference)}"></div>` : ""}
     ${m.statut === "SUR_PLACE" ? blocAccesImpossible(m) : ""}
     ${m.rubrique_id === "rental" && ["SUR_PLACE", "EN_COURS"].includes(m.statut) ? `<div data-consommables="${esc(m.reference)}"></div>` : ""}
     ${m.statut === "EN_COURS" ? `<div data-signature-cleaneur="${esc(m.reference)}"></div>` : ""}
@@ -621,6 +625,9 @@ export async function brancherMissions(vue, p) {
   if (p.role !== "admin" && !p.employeur_id && p.dossier !== "VALIDE") urgent.push(`<a class="carte ligne-compte urgent-ligne" href="#dossier" data-aller="dossier">${icone("garantie", { tuile: true })}
       <div class="corps"><b>${tr("Complétez votre dossier Cleaneur")}</b><p class="petit" style="margin:2px 0 0">${tr("Pièce d'identité, SIRET, assurance et URSSAF.")}</p></div><span aria-hidden="true">›</span></a>`);
   // Refonte du 22/11/2026 : quatre parties rangées dans les onglets Aujourd'hui · Missions (Disponibles, À venir, Terminées) · Gains · Profil.
+  // Plein écran en cours : la carte posée sur la page est remplacée par la nouvelle (rouverte en plein écran après l'affichage).
+  const pleinEcran = document.querySelector("body > .mission-plein-ecran")?.dataset.mission || "";
+  document.querySelectorAll("body > .mission-plein-ecran").forEach(x => { x._repere?.remove(); x.remove(); });
   boite.innerHTML = `
   <div id="cleaneur-aujourdhui" class="cleaneur-partie">
     ${urgent.length ? `<section class="niveau-tdb urgent" aria-labelledby="titre-urgent"><h2 class="titre-niveau" id="titre-urgent"><i class="pastille-niveau"></i>${tr("Urgent")}</h2>${urgent.join("")}</section>` : ""}
@@ -782,6 +789,40 @@ ${p.employeur_id ? "" : `    <h2 class="titre-section" id="missions-disponibles"
       candidature: "Le client choisit parmi les propositions : proposez vos conditions.",
       assurance: "Votre RC Pro ne couvre pas cette activité : mettez-la à jour dans votre dossier." }[r] || "Le service est momentanément indisponible. Réessayez dans quelques minutes.");
   });
+  // Mode mission plein écran (lot 6, validé le 25/11) : la carte de la mission occupe tout l'écran, gros boutons, minuteur
+  // (temps écoulé depuis « Je commence » / durée prévue). Le contrôle continue de fonctionner sans réseau (file-attente.js).
+  boite.querySelectorAll("[data-plein-ecran]").forEach(b => b.onclick = () => {
+    const carte = b.closest(".carte.mission");
+    // Posée sur la page entière (un parent animé empêcherait la position fixe) ; remise à sa place en quittant.
+    const repere = document.createComment("mission"); carte.before(repere); carte._repere = repere; document.body.append(carte);
+    carte.classList.add("mission-plein-ecran"); document.body.classList.add("sans-defilement");
+    document.documentElement.requestFullscreen?.().catch(() => null);
+    // On arrive directement sur la zone de travail : minuteur puis contrôle pièce par pièce.
+    requestAnimationFrame(() => { carte.scrollTop = Math.max(0, carte.querySelector(".barre-plein-ecran").offsetTop - 4); });
+  });
+  boite.querySelectorAll("[data-quitter-plein-ecran]").forEach(b => b.onclick = () => {
+    const carte = b.closest(".carte.mission");
+    carte.classList.remove("mission-plein-ecran"); document.body.classList.remove("sans-defilement");
+    if (carte._repere?.isConnected) carte._repere.replaceWith(carte); else carte.remove();
+    if (document.fullscreenElement) document.exitFullscreen?.().catch(() => null);
+  });
+  if (pleinEcran) {
+    const nb = boite.querySelector(`.carte.mission[data-mission="${CSS.escape(pleinEcran)}"] [data-plein-ecran]`);
+    if (nb) nb.click(); else document.body.classList.remove("sans-defilement");
+  }
+  if (!window._finPleinEcran) window._finPleinEcran = addEventListener("hashchange", () => {
+    document.querySelectorAll("body > .mission-plein-ecran").forEach(x => { x._repere?.remove(); x.remove(); });
+    document.body.classList.remove("sans-defilement");
+  }) || true;
+  const minuteurs = () => boite.querySelectorAll("[data-minuteur]").forEach(z => {
+    if (!z.isConnected) return;
+    const debut = z.dataset.minuteur ? new Date(z.dataset.minuteur) : null, prevu = Number(z.dataset.duree) || 0;
+    if (!debut || isNaN(debut)) { z.textContent = prevu ? `${tr("Durée prévue :")} ${duree(prevu)}` : ""; return; }
+    const ecoule = Math.max(0, Math.floor((Date.now() - debut) / 60000));
+    z.textContent = `${tr("Écoulé")} ${duree(ecoule) || "0 min"}${prevu ? ` / ${tr("prévu")} ${duree(prevu)}` : ""}`;
+    z.classList.toggle("depasse", prevu && ecoule > prevu);
+  });
+  minuteurs(); clearInterval(boite._minuteur); boite._minuteur = setInterval(minuteurs, 30000);
   // Contrôle pièce par pièce : « J'ai terminé » reste grisé tant qu'une pièce n'est pas complète.
   boite.querySelectorAll("[data-controle]").forEach(c => {
     const m = miennes.find(x => x.reference === c.dataset.controle);
