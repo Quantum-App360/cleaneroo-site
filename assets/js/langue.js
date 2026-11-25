@@ -4076,7 +4076,6 @@ const T = [
   ["missions facturées", "jobs invoiced", "missioni fatturate", "misiones facturadas"],
   ["mission facturée", "job invoiced", "missione fatturata", "misión facturada"],
   ["prestations et pourboires, le montant à déclarer", "services and tips, the amount to declare", "servizi e mance, l'importo da dichiarare", "servicios y propinas, el importe a declarar"],
-  ["Net versé par Cleaneroo", "Net paid by Cleaneroo", "Netto versato da Cleaneroo", "Neto abonado por Cleaneroo"],
   ["Reste pour vous", "Left for you", "Resta a te", "Te queda"],
   ["Semaine par semaine", "Week by week", "Settimana per settimana", "Semana a semana"],
   ["Mois par mois", "Month by month", "Mese per mese", "Mes a mes"],
@@ -4103,6 +4102,9 @@ const T = [
   ["À déclarer avant le", "To declare before", "Da dichiarare entro il", "A declarar antes del"],
   ["même s'il est nul.", "even if it is zero.", "anche se è nullo.", "aunque sea cero."],
   ["Vous approchez du plafond : parlez-en à un expert-comptable avant de le dépasser.", "You are close to the ceiling: talk to an accountant before going over it.", "Ti avvicini al tetto: parlane con un commercialista prima di superarlo.", "Te acercas al tope: háblalo con un contable antes de superarlo."],
+  ["Net pour vous, après commission", "Net for you, after commission", "Netto per te, dopo la commissione", "Neto para ti, tras la comisión"],
+  ["Net après commission", "Net after commission", "Netto dopo la commissione", "Neto tras la comisión"],
+  ["Prochain virement de vos paiements clients :", "Next transfer of your client payments:", "Prossimo bonifico dei pagamenti dei tuoi clienti:", "Próxima transferencia de los pagos de tus clientes:"],
 ];
 
 const DICO = new Map();

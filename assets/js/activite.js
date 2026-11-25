@@ -84,7 +84,7 @@ function blocChiffreAffaires(c, reglages, prevu) {
       <div class="ca-comparaison">${comparaison || `<span class="petit muet">${tr("Pas encore de comparaison possible.")}</span>`}</div>
       <p class="petit muet" style="margin:4px 0 10px">${c.missions} ${tr(c.missions > 1 ? "missions facturées" : "mission facturée")}${c.missions ? ` · ${tr("moyenne par mission :")} ${euros(Math.round((c.caC) / c.missions))}` : ""} · ${tr("prestations et pourboires, le montant à déclarer")}</p>
       <div class="ligne-activite"><span>${tr("Commission Cleaneroo")}</span><span>−${euros(c.commissionC)}</span></div>
-      <div class="ligne-activite"><span>${tr("Net versé par Cleaneroo")}</span><b>${euros(c.netC)}</b></div>
+      <div class="ligne-activite"><span>${tr("Net pour vous, après commission")}</span><b>${euros(c.netC)}</b></div>
       <div class="ligne-activite"><span>${tr("Cotisations URSSAF estimées")} (${pct(c.tauxPct)})</span><span>−${euros(c.cotisationsC)}</span></div>
       <div class="ligne-activite total"><span>${tr("Reste pour vous")}</span><b>${euros(c.resteC)}</b></div>
       <label class="case-activite"><input type="checkbox" data-reglage="acre" ${reglages.acre ? "checked" : ""}> ${tr("ACRE (1re année, taux réduit)")}</label>
@@ -92,7 +92,7 @@ function blocChiffreAffaires(c, reglages, prevu) {
       <p class="petit">${tr("Taux 2026 des prestations de services (dont le nettoyage) :")} ${pct(REGLES.URSSAF_SERVICES_PCT)}, ${tr("ou")} ${pct(REGLES.URSSAF_ACRE_PCT)} ${tr("avec l'ACRE. Estimation indicative, hors contribution à la formation professionnelle.")}</p>
     </div>
     <div class="carte">
-      <b>${tr(mois ? "Semaine par semaine" : "Mois par mois")}</b>${mois ? "" : `<span class="legende-ca"><i class="brut"></i>${tr("Brut")} <i class="net"></i>${tr("Net versé")}</span>`}
+      <b>${tr(mois ? "Semaine par semaine" : "Mois par mois")}</b>${mois ? "" : `<span class="legende-ca"><i class="brut"></i>${tr("Brut")} <i class="net"></i>${tr("Net après commission")}</span>`}
       <div class="barres-ca ${mois ? "semaines" : "annee"}" role="img" aria-label="${esc(tr(mois ? "Chiffre d'affaires semaine par semaine" : "Chiffre d'affaires mois par mois"))}">
         ${c.graphe.map(g => `<div class="barre-ca${g.futur ? " futur" : ""}" title="${esc(`${g.libelle || nomMois(g.mois)} : ${euros(g.ca)}`)}">
           <span class="valeur">${g.ca ? esc(euros(g.ca).replace(/,00\s?€/, " €")) : ""}</span>
@@ -154,7 +154,7 @@ export async function blocActivite(boite, profil) {
         <div class="ligne-activite"><span>${tr("Primes d'urgence")}</span><span>+${euros(portefeuille.primes_c || 0)}</span></div>
         <div class="ligne-activite"><span>${tr("Moins-values")}</span><span>−${euros(portefeuille.moins_values_c || 0)}</span></div>
         <div class="ligne-activite total"><span>${tr("Net de l'année")}</span><b>${euros(netPortefeuille(portefeuille))}</b></div>
-        <p class="petit">${tr("Prochain versement :")} ${dateLongue(dateVersement(new Date()))}.</p>
+        <p class="petit">${tr("Prochain virement de vos paiements clients :")} ${dateLongue(dateVersement(new Date()))}.</p>
       </div>
       <div class="carte" id="versements"><b>${icone("carte-bancaire")} ${tr("Mes versements")}</b><p class="petit">…</p></div>
       <div class="carte">

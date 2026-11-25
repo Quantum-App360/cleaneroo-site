@@ -178,7 +178,7 @@ export function tableauDeBord(p, docs, miennes, dispo, t, vue = "aujourdhui", re
   const conforme = p.dossier === "VALIDE";
   const auj = vue === "aujourdhui", gains = vue === "gains";
   return `<div class="tableau-cleaneur">
-    ${gains ? `<p class="petit" style="margin:0 0 8px">${icone("paiement")} ${tr("Prochain versement :")} <b>${esc(dateLongue(dateVersement()))}</b> · ${tr("chaque vendredi, pour les missions validées jusqu'au mercredi minuit.")}</p>
+    ${gains ? `<p class="petit" style="margin:0 0 8px">${icone("paiement")} ${tr("Prochain virement de vos paiements clients :")} <b>${esc(dateLongue(dateVersement()))}</b> · ${tr("chaque vendredi, pour les missions validées jusqu'au mercredi minuit.")}</p>
     <span class="badge-niveau">★ ${tr("Niveau")} ${tr(niveauDe(t?.missions_terminees || 0))} · ${tr("commission")} ${commission} %</span>
     <p class="petit" style="margin:4px 0 8px">${icone("equipe")} ${tr("Client fidèle : dès le 3e ménage avec un même client, votre commission passe à")} <b>${t?.formule === "pro" ? 9 : 15} %</b>.</p>
     ${t?.nb_avis ? `<p class="petit" style="margin:0">${icone("avis")} ${String(t.note_moyenne).replace(".", ",")} / 5 · ${t.nb_avis} ${tr(t.nb_avis > 1 ? "avis" : "avis")}${t.pourboires_c ? ` · ${tr("pourboires :")} ${euros(t.pourboires_c)}` : ""}</p>` : ""}
