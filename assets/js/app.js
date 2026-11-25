@@ -11,7 +11,7 @@ traduireCatalogue(RUBRIQUES, TYPES_LIEU);
 import { ouvrirReservation, ouvrirSimulateur, modeles, logements, nomLogement, brouillonExemple } from "./reserver.js";
 import { calculer, entreeEstimation } from "./estimation.js";
 import "./tarifs.js";   // dernière version des tarifs gardée sur l'appareil, appliquée avant le premier affichage
-import { supabase, suivre, annuler, memoriser, inscrire, chargerOuverture, favoriDeDemande, libererFavori } from "./donnees.js";
+import { supabase, suivre, annuler, memoriser, inscrire, chargerOuverture, favoriDeDemande, libererFavori, propositionPassage, repondrePassage } from "./donnees.js";
 import { blocRetardClient, blocRemplacementClient } from "./retards.js";
 import { guideVideo } from "./guide-video.js";
 import { blocApercuTournee, brancherApercuTournee } from "./tournee.js";
@@ -549,6 +549,7 @@ async function pageDemande(ref, jeton) {
     ${!d.sur_devis && d.statut !== "ANNULEE" ? `<div id="paiement-client"></div>` : ""}
     ${["PUBLIEE", "CONFIRMEE"].includes(d.statut) ? `<div id="remplacement-client"></div>` : ""}
     ${d.statut === "PUBLIEE" && d.choix_cleaneur === "favori" ? `<div id="favori-demande"></div>` : ""}
+    ${["A_VALIDER", "TERMINEE"].includes(d.statut) ? `<div id="prochain-passage"></div>` : ""}
     ${d.statut === "PUBLIEE" && d.choix_cleaneur !== "directe" ? `<div id="propositions-client"></div>` : ""}
     ${["CONFIRMEE", "EN_ROUTE"].includes(d.statut) ? `<div id="retard-client"></div>` : ""}
     ${d.statut === "EN_ROUTE" ? `<div id="presence-client"></div>` : ""}
@@ -602,6 +603,31 @@ async function blocFavoriDemande(boite, ref, jeton) {
     e.target.disabled = true;
     try { await libererFavori(ref, jeton); afficherToast("Votre demande est proposée à tous les Cleaneurs vérifiés de votre secteur."); boite.innerHTML = ""; }
     catch { e.target.disabled = false; afficherToast("Le service est momentanément indisponible. Réessayez dans quelques minutes.", "erreur"); }
+  };
+}
+/* Prochain passage proposé par le Cleaneur (lot 6) : réserver en un geste (mêmes réglages, même adresse, ce Cleaneur en premier) ou décliner. */
+async function blocProchainPassage(boite, d, jeton) {
+  if (!boite) return;
+  const x = await propositionPassage(d.reference, jeton);
+  if (!boite.isConnected || !x) return;
+  const quand = new Date(`${x.jour}T12:00`);
+  boite.innerHTML = `<div class="carte teintee prochain-passage" style="margin-bottom:14px">
+      <b>${icone("repeter")} ${esc(x.prenom)}${x.initiale ? ` ${esc(x.initiale)}.` : ""} ${tr("vous propose un prochain passage")}</b>
+      <p style="margin:4px 0 10px">${esc(dateLongue(quand))} ${tr("à")} ${x.heure} h · ${esc(rubrique(d.rubrique_id)?.nom || "")}</p>
+      <div class="boutons-ligne"><button type="button" class="bouton" data-accepter-passage>${tr("Réserver ce passage")}</button>
+        <button type="button" class="bouton secondaire" data-refuser-passage>${tr("Non merci")}</button></div>
+      <p class="petit muet" style="margin:8px 0 0">${tr("Mêmes réglages et même adresse : vous vérifiez, puis vous payez comme d'habitude. La demande lui est proposée en premier.")}</p></div>`;
+  boite.querySelector("[data-accepter-passage]").onclick = async () => {
+    await repondrePassage(x.id, jeton, true).catch(() => null);
+    const { jour, heure, creneau, ...reglages } = d.details || {};
+    const { reserverAvecCleaneur } = await import("./reserver.js");
+    reserverAvecCleaneur(d.rubrique_id, { cleaneur_id: x.cleaneur_id, prenom: x.prenom, initiale: x.initiale },
+      { ...reglages, rue: d.rue || "", codePostal: d.code_postal || "", ville: d.ville || "", jour: x.jour, heure: x.heure });
+  };
+  boite.querySelector("[data-refuser-passage]").onclick = async e => {
+    e.target.disabled = true;
+    await repondrePassage(x.id, jeton, false).catch(() => null);
+    boite.innerHTML = "";
   };
 }
 const heureMinute = d => d.toLocaleTimeString(LOCALE, { hour: "2-digit", minute: "2-digit" });
@@ -735,6 +761,7 @@ async function afficherPage() {
     blocConsommablesClient(document.getElementById("consommables-client"), decodeURIComponent(ref || ""), decodeURIComponent(jeton || ""));
     blocPropositionsClient(document.getElementById("propositions-client"), decodeURIComponent(ref || ""), decodeURIComponent(jeton || ""));
     blocFavoriDemande(document.getElementById("favori-demande"), decodeURIComponent(ref || ""), decodeURIComponent(jeton || ""));
+    blocProchainPassage(document.getElementById("prochain-passage"), d, decodeURIComponent(jeton || ""));
     blocRetardClient(document.getElementById("retard-client"), decodeURIComponent(ref || ""), decodeURIComponent(jeton || ""));
     const presence = document.getElementById("presence-client");
     if (presence) supabase.rpc("presence_a_confirmer", { p_reference: decodeURIComponent(ref || ""), p_jeton: decodeURIComponent(jeton || "") }).then(({ data }) => {

@@ -222,6 +222,11 @@ dossier) ; planning jour/semaine/mois avec heure de fin, adresse, durée et conf
 revenus (aujourd'hui, semaine, mois, année, moyenne par mission, graphique 6 mois) ; disponibilités en tête du Profil ;
 boutons d'accès « devant le logement » seulement le jour même ; guidage (guidage.js). Correction base : cleaneurs_publics lit
 les créneaux par jour de la semaine (clés 1 à 7) et exclut les périodes fermées.
+Idées Cleaneur validées le 25/11 (après le lot 6) : combler ma journée, indisponible en un geste, matériel à prévoir, missions en .ics,
+objectif de niveau et notes par critère, relevé de chiffre d'affaires PDF, mode mission plein écran + contrôle sans réseau (file-attente.js),
+proposer le prochain passage, bouton de sécurité, alertes ciblées : partie base dans outils/base-cleaneur-idees.sql (À APPLIQUER après accord).
+Contrat Cleaneur 2026-12-b (25/11) : paiement direct sur le compte Stripe du Cleaneur, commission prélevée, frais Stripe à sa charge.
+À REPORTER PAR VINCENT : tout ce qui précède, et l'envoi de lat / lon avec chaque demande.
 Lot 6 (accord du 25/11) : Waze par coordonnées GPS, un bouton par étape et dans chaque mission, appli de guidage au choix (Waze, Google Maps, Plans) : FAIT.
 Signalé : itineraire() utilise le serveur de démonstration OSRM, pas fait pour la production.
 

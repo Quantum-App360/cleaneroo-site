@@ -55,9 +55,13 @@ export async function envoyerDemande(demande, photos = [], photoBoite = null) {
     if (!error) chemins.push(chemin);
   }
   const { data: session } = await supabase.auth.getSession();
-  const { error } = await supabase.from("demandes").insert({
-    ...demande, reference, jeton, photos: chemins, client_id: session?.session?.user?.id ?? null,
-  });
+  const ligne = { ...demande, reference, jeton, photos: chemins, client_id: session?.session?.user?.id ?? null };
+  let { error } = await supabase.from("demandes").insert(ligne);
+  // Position de la demande (lat / lon) : ignorée tant que la base n'a pas ces colonnes (base-cleaneur-idees.sql).
+  if (error && /\b(lat|lon)\b/.test(error.message || "") && "lat" in ligne) {
+    const { lat, lon, ...sans } = ligne;
+    ({ error } = await supabase.from("demandes").insert(sans));
+  }
   if (error) throw new Error(error.message);
   const l = lireLocal();
   l.unshift({ reference, jeton, rubriqueId: demande.rubrique_id, creeLe: new Date().toISOString() });
@@ -501,6 +505,30 @@ export async function favoriDeDemande(reference, jeton) {
 export async function mesDemandesPersonnelles() {
   const { data, error } = await supabase.rpc("mes_demandes_personnelles");
   return error ? [] : data || [];
+}
+/* Idées validées le 25/11 (base-cleaneur-idees.sql) : prochain passage proposé par le Cleaneur, bouton de sécurité. */
+export async function proposerProchainPassage(reference, jour, heure) {
+  const { data, error } = await supabase.rpc("proposer_prochain_passage", { p_reference: reference, p_jour: jour, p_heure: heure });
+  if (error) throw error;
+  return data;
+}
+export async function mesPropositionsPassage() {
+  const { data, error } = await supabase.rpc("mes_propositions_passage");
+  return error ? null : data || [];
+}
+export async function propositionPassage(reference, jeton) {
+  const { data, error } = await supabase.rpc("proposition_passage", { p_reference: reference, p_jeton: jeton });
+  return error ? null : (data || [])[0] || null;
+}
+export async function repondrePassage(id, jeton, accepte) {
+  const { data, error } = await supabase.rpc("repondre_passage", { p_id: id, p_jeton: jeton, p_accepte: accepte });
+  if (error) throw error;
+  return data;
+}
+export async function alerteSecurite(reference, lat, lon, message) {
+  const { data, error } = await supabase.rpc("alerte_securite", { p_reference: reference || "", p_lat: lat, p_lon: lon, p_message: message || "" });
+  if (error) throw error;
+  return data;
 }
 /** Inscrit le client sur la liste d'attente de son secteur ; il est prévenu dès qu'un Cleaneur qualifié s'y installe. */
 export async function rejoindreAttente(a) {

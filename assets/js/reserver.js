@@ -1404,6 +1404,7 @@ async function envoyer() {
       nombre_cleaneurs: est.nombreCleaneurs, sur_devis: est.devisObligatoire, creneau: d ? d.toISOString() : null, flexible: !!b.flexible, prelancement: false,
       choix_cleaneur: choixEnvoye(), cleaneur_favori: choixEnvoye() === "favori" ? b.cleaneurFavori : null, espace: b.espace, prenom: b.prenom.trim(), nom: b.nom.trim(), email: b.email.trim(), telephone: b.telephone.trim(),
       rue: b.rue.trim(), code_postal: b.codePostal.trim(), ville: b.ville.trim(), accueil: b.accueil || "PRESENT", acces, groupe_paiement: b.groupePaiement,
+      ...(Number.isFinite(b.lat) && Number.isFinite(b.lon) ? { lat: b.lat, lon: b.lon } : {}),   // alertes ciblées des Cleaneurs (base-cleaneur-idees.sql)
       remarque: (dates.length > 1 ? `Passage ${n + 1}/${dates.length}. ` : "")
         + (photosPlusTardPossibles(b.rubriqueId) && b.sansPhotos && !vuesCompletes(b, Object.keys(vuesPrises)) ? "Photos de l'état actuel à prendre à l'arrivée. " : "")
         + (b.rubriqueId === "boat" && (b.port || b.place) ? `Port : ${[b.port, b.place].filter(Boolean).join(", ")}${b.accesPonton ? ` · accès : ${b.accesPonton}` : ""}. ` : "") + b.remarque.trim(),

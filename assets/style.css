@@ -3166,3 +3166,11 @@ body.sans-defilement { overflow: hidden; }
   background: color-mix(in srgb, var(--info, #04BEE5) 12%, var(--surface)); }
 .bandeau-envois.hors-ligne { background: color-mix(in srgb, var(--alerte) 14%, var(--surface)); }
 .bandeau-envois span { flex: 1; min-width: 200px; }
+.securite-mission { margin-top: 8px; }
+.securite-mission summary { cursor: pointer; min-height: 36px; display: flex; align-items: center; gap: 6px; font-weight: 700; color: var(--erreur); }
+.securite-mission .bouton.urgence { background: var(--erreur); color: #fff; border-color: var(--erreur); }
+.prochains-passages { display: grid; gap: 8px; margin-bottom: 12px; }
+.ligne-passage { display: grid; gap: 6px; padding: 10px 0; border-top: 1px solid var(--separateur); }
+.ligne-passage > div:first-child { display: grid; }
+.raccourcis-passage { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.raccourcis-passage .puce { padding: 6px 12px; border-radius: 999px; border: 1px solid var(--separateur); background: var(--surface); color: var(--texte); font: inherit; font-size: 13px; cursor: pointer; min-height: 36px; }

@@ -4,7 +4,7 @@
 import { rubrique } from "./catalogue.js";
 import { REGLES, euros, dateLongue, dateCourte, heure, duree, finOffreLancement, indemniteAccesC, dateVersement, conseilSecteur, lienWhatsAppSupport } from "./regles.js";
 import { monParrainage, lienInviterClient } from "./parrainage.js";
-import { supabase, majProfil, mesDemandesPersonnelles, libererFavori } from "./donnees.js";
+import { supabase, majProfil, mesDemandesPersonnelles, libererFavori, proposerProchainPassage, mesPropositionsPassage, alerteSecurite } from "./donnees.js";
 import { positionAdresse, distanceKm } from "./suivi-live.js";
 import { blocNoterClients, remplirNotesClients, blocAvisRecus } from "./avis-clients.js";
 import { blocFormations } from "./formations.js";
@@ -395,6 +395,39 @@ function blocMateriel(m) {
     <p class="petit muet" style="margin:4px 0 0">${tr("Liste indicative selon la prestation : adaptez-la à votre organisation et aux demandes du client.")}</p></details>`;
 }
 
+/* Bouton de sécurité (lot 6, validé le 25/11) : d'abord les secours (17, 112) ; sinon prévenir le support Cleaneroo avec sa position
+   (alerte_securite, base-cleaneur-idees.sql), et WhatsApp du support en secours. */
+function blocSecurite(m) {
+  return `<details class="securite-mission"><summary>${icone("garantie")} ${tr("Sécurité")}</summary>
+    <p class="petit" style="margin:6px 0"><b>${tr("En danger immédiat ? Appelez les secours.")}</b></p>
+    <div class="boutons-ligne"><a class="bouton urgence" href="tel:17">${tr("Police")} · 17</a><a class="bouton urgence" href="tel:112">${tr("Urgences")} · 112</a></div>
+    <p class="petit" style="margin:10px 0 6px">${tr("Situation inquiétante (personne agressive, sentiment d'insécurité) ? Prévenez Cleaneroo avec votre position.")}</p>
+    <label class="champ"><span>${tr("Ce qui se passe (facultatif)")}</span><textarea maxlength="300" rows="2" data-message-securite></textarea></label>
+    <button type="button" class="bouton secondaire" data-alerte-securite="${esc(m.reference)}">${tr("Prévenir le support avec ma position")}</button>
+    <p class="petit" data-retour-securite style="margin:6px 0 0"></p></details>`;
+}
+/* Proposer le prochain passage (lot 6, validé le 25/11) : après une mission, une date et une heure proposées au client,
+   qui réserve en un geste (proposer_prochain_passage, base-cleaneur-idees.sql). */
+const ETAT_PASSAGE = { PROPOSEE: "en attente de la réponse du client", ACCEPTEE: "accepté par le client", REFUSEE: "décliné par le client" };
+function blocProchainsPassages(miennes, propositions) {
+  const limite = Date.now() - 30 * 864e5;
+  const recentes = miennes.filter(m => ["A_VALIDER", "TERMINEE"].includes(m.statut) && m.creneau && new Date(m.creneau).getTime() > limite).slice(0, 5);
+  if (!recentes.length) return "";
+  const demain = new Date(Date.now() + 864e5), iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const dans = n => { const d = new Date(); d.setDate(d.getDate() + n); return iso(d); };
+  return `<div class="carte prochains-passages"><b>${icone("repeter")} ${tr("Proposer un prochain passage")}</b>
+    <p class="petit muet" style="margin:2px 0 8px">${tr("Le client reçoit votre proposition et réserve en un geste ; la demande vous est proposée en premier.")}</p>
+    ${recentes.map(m => { const p = propositions.find(x => x.reference === m.reference); const h0 = m.creneau ? new Date(m.creneau).getHours() : 9;
+      return `<div class="ligne-passage" data-passage="${esc(m.reference)}"><div><b>${esc(rubrique(m.rubrique_id)?.nom || "")}</b>
+        <span class="petit">${esc(dateCourte(new Date(m.creneau)))} · ${esc(m.ville || "")}${m.prenom ? ` · ${esc(m.prenom)}` : ""}</span></div>
+        ${p ? `<span class="petit">${tr("Proposé pour le")} ${esc(dateCourte(new Date(p.jour + "T12:00")))} ${tr("à")} ${p.heure} h · ${tr(ETAT_PASSAGE[p.statut] || "")}</span>`
+          : `<details><summary class="lien-bouton">${tr("Proposer une date")}</summary>
+            <div class="raccourcis-passage">${[[7, "Dans 1 semaine"], [14, "Dans 2 semaines"], [28, "Dans 4 semaines"]].map(([n, t]) => `<button type="button" class="puce" data-dans="${dans(n)}">${tr(t)}</button>`).join("")}</div>
+            <div class="grille-2"><label class="champ"><span>${tr("Date")}</span><input type="date" min="${iso(demain)}" value="${dans(14)}" data-jour-passage></label>
+              <label class="champ"><span>${tr("Heure d'arrivée")}</span><select data-heure-passage>${[7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18].map(h => `<option value="${h}"${h === (h0 >= 7 && h0 <= 18 ? h0 : 9) ? " selected" : ""}>${h} h</option>`).join("")}</select></label></div>
+            <button type="button" class="bouton" data-proposer-passage>${tr("Proposer au client")}</button><p class="petit erreur" data-erreur-passage></p></details>`}</div>`; }).join("")}</div>`;
+}
+
 function carteMission(m) {
   const r = rubrique(m.rubrique_id), [bouton, , etat] = ETAPE[m.statut] || [];
   return `<div class="carte mission" data-mission="${esc(m.reference)}">
@@ -417,6 +450,7 @@ function carteMission(m) {
     ${blocAcces(m)}
     ${blocGuideMission(m)}
     ${["CONFIRMEE", "EN_ROUTE"].includes(m.statut) ? blocMateriel(m) : ""}
+    ${["EN_ROUTE", "SUR_PLACE", "EN_COURS"].includes(m.statut) ? blocSecurite(m) : ""}
     ${m.statut === "EN_ROUTE" ? `<p class="petit partage-actif" style="margin:8px 0 0">${icone("position")} Position partagée avec le client pendant le trajet</p>` : ""}
     ${["SUR_PLACE", "EN_COURS"].includes(m.statut) ? `<div class="barre-plein-ecran">
         <button type="button" class="bouton secondaire" data-plein-ecran>${icone("agrandir")} ${tr("Mode mission plein écran")}</button>
@@ -588,6 +622,7 @@ export async function brancherMissions(vue, p) {
     selfieDuJour().catch(() => "aucun"), p.role === "admin" ? null : mesAvertissements().catch(() => null)]);
   mesPropositions = await supabase.rpc("mes_propositions").then(r => r.data || []).catch(() => []);
   personnelles = new Map((await mesDemandesPersonnelles().catch(() => [])).map(x => [x.reference, x.jusqu]));
+  const propositions = p.employeur_id ? [] : (await mesPropositionsPassage().catch(() => null)) || [];
   const [penalites, docs, tableau] = await Promise.all([p.role === "admin" ? null : mesPenalites().catch(() => null),
     mesDocuments().catch(() => []), tableauCleaneur().catch(() => null)]);
   if (!document.body.contains(boite)) return;
@@ -681,6 +716,7 @@ ${p.employeur_id ? "" : `    <h2 class="titre-section" id="missions-disponibles"
     ${plusTard.length ? plusTard.map(carteMission).join("") : vide("Aucune mission pour l'instant.", p.employeur_id ? "" : "Prenez une mission dans « Disponibles » : elle est à vous dès que vous la prenez.")}
     </div>
     <div data-segment="terminees">
+    ${p.employeur_id ? "" : blocProchainsPassages(miennes, propositions)}
     <div id="noter-clients"></div>
     <div id="comptes-rendus"></div>
     </div>
@@ -823,6 +859,29 @@ ${p.employeur_id ? "" : `    <h2 class="titre-section" id="missions-disponibles"
     z.classList.toggle("depasse", prevu && ecoule > prevu);
   });
   minuteurs(); clearInterval(boite._minuteur); boite._minuteur = setInterval(minuteurs, 30000);
+  boite.querySelectorAll("[data-alerte-securite]").forEach(b => b.onclick = async () => {
+    const zone = b.closest(".securite-mission"), retour = zone.querySelector("[data-retour-securite]"), message = zone.querySelector("[data-message-securite]").value.trim();
+    b.disabled = true; retour.textContent = tr("Envoi en cours…");
+    const pos = await new Promise(ok => navigator.geolocation ? navigator.geolocation.getCurrentPosition(p => ok(p.coords), () => ok(null), { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 }) : ok(null));
+    const r = await alerteSecurite(b.dataset.alerteSecurite, pos?.latitude ?? null, pos?.longitude ?? null, message).catch(() => null);
+    const lien = lienWhatsAppSupport(`${tr("ALERTE SÉCURITÉ")} · ${tr("Mission")} ${b.dataset.alerteSecurite}${message ? ` · ${message}` : ""}${pos ? ` · https://www.google.com/maps?q=${pos.latitude},${pos.longitude}` : ""}`);
+    retour.innerHTML = r === "ok" || r === "deja" ? `${icone("valide")} ${tr("Le support Cleaneroo est prévenu, avec votre position.")} <a href="${esc(lien)}" target="_blank" rel="noopener">${tr("Écrire aussi sur WhatsApp")}</a>`
+      : `${tr("L'alerte n'a pas pu partir : prévenez le support sur WhatsApp.")} <a class="bouton" href="${esc(lien)}" target="_blank" rel="noopener">WhatsApp</a>`;
+    b.disabled = false;
+  });
+  boite.querySelectorAll("[data-passage]").forEach(z => {
+    z.querySelectorAll("[data-dans]").forEach(x => x.onclick = () => { z.querySelector("[data-jour-passage]").value = x.dataset.dans; });
+    const bt = z.querySelector("[data-proposer-passage]");
+    if (bt) bt.onclick = async () => {
+      const jour = z.querySelector("[data-jour-passage]").value, h = Number(z.querySelector("[data-heure-passage]").value), err = z.querySelector("[data-erreur-passage]");
+      if (!jour) { err.textContent = tr("Choisissez une date."); return; }
+      bt.disabled = true;
+      const r = await proposerProchainPassage(z.dataset.passage, jour, h).catch(() => "erreur");
+      if (r === "ok") return recharger();
+      bt.disabled = false;
+      err.textContent = tr({ deja: "Une proposition est déjà en attente pour ce client.", date: "Choisissez une date entre demain et dans 3 mois.", impossible: "Ce client n'a pas de compte : il ne peut pas recevoir de proposition." }[r] || "Le service est momentanément indisponible. Réessayez dans quelques minutes.");
+    };
+  });
   // Contrôle pièce par pièce : « J'ai terminé » reste grisé tant qu'une pièce n'est pas complète.
   boite.querySelectorAll("[data-controle]").forEach(c => {
     const m = miennes.find(x => x.reference === c.dataset.controle);
