@@ -1,0 +1,1 @@
+MapLibre GL JS 5.24.1 (npm maplibre-gl), licence BSD-3 : LICENSE.txt. Hébergé sur le site pour ne dépendre d'aucun CDN.

@@ -1,9 +1,11 @@
 // Suivi en direct du Cleaneur sur une carte, comme le suivi d'un colis : itinéraire, position qui avance, heure d'arrivée.
-// Même écran que l'application (SuiviCarte.kt). Carte OpenStreetMap (Leaflet), itinéraire OSRM, adresse : Base Adresse Nationale.
+// Même écran que l'application (SuiviCarte.kt). Carte Cleaneroo (MapLibre, cartes.js ; Leaflet en secours), itinéraire OSRM,
+// adresse : Base Adresse Nationale.
 import { icone } from "./icones.js";
 import { REGLES, heure } from "./regles.js";
 import { traduire, tr } from "./langue.js";
 import { suivrePosition } from "./donnees.js";
+import { webglDisponible, chargerMaplibre, styleCleaneroo, themeCarte, PALETTES_CARTE } from "./cartes.js";
 
 let leaflet = null;
 export function chargerLeaflet() {
@@ -19,6 +21,61 @@ export function chargerLeaflet() {
     document.head.appendChild(js);
   });
   return leaflet;
+}
+
+/**
+ * Carte du suivi (prompt 4, lot 2) : MapLibre aux couleurs Cleaneroo, ou Leaflet si le navigateur n'a pas WebGL.
+ * Interface commune : { cleaneur(lat, lon), trajet(points [[lat, lon]…]), cadrer(points), suivre(p), redim(), remove() }.
+ */
+async function carteSuivi(el, arrivee, prenom) {
+  const initiale = (prenom || "C").trim().charAt(0).toUpperCase();
+  const htmlCleaneur = `<span class="onde"></span><b>${initiale}</b>`;
+  if (webglDisponible()) {
+    try {
+      const gl = await chargerMaplibre(), theme = themeCarte(), c = PALETTES_CARTE[theme];
+      el.classList.add("carte-cleaneroo", `carte-${theme}`);
+      const carte = new gl.Map({ container: el, style: styleCleaneroo(theme), center: [arrivee.lon, arrivee.lat], zoom: 14, attributionControl: false,
+        cooperativeGestures: true, dragRotate: false, pitchWithRotate: false, touchPitch: false });
+      carte.addControl(new gl.AttributionControl({ compact: true }), "bottom-right");
+      const maison = document.createElement("div"); maison.className = "pin-maison"; maison.innerHTML = `<span>${icone("logement")}</span>`;
+      new gl.Marker({ element: maison, anchor: "bottom" }).setLngLat([arrivee.lon, arrivee.lat]).addTo(carte);
+      const pc = document.createElement("div"); pc.className = "pin-cleaneur"; pc.innerHTML = htmlCleaneur;
+      const mk = new gl.Marker({ element: pc }).setLngLat([arrivee.lon, arrivee.lat]);
+      let pret = false, enAttente = null;
+      const ligne = pts => ({ type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: pts.map(([la, lo]) => [lo, la]) } });
+      carte.on("load", () => {
+        carte.addSource("route", { type: "geojson", data: ligne([]) });
+        carte.addLayer({ id: "route-ombre", type: "line", source: "route", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": "#0E3B40", "line-width": 10, "line-opacity": .12 } });
+        carte.addLayer({ id: "route", type: "line", source: "route", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": c.trajet, "line-width": 5 } });
+        pret = true; if (enAttente) carte.getSource("route").setData(ligne(enAttente));
+      });
+      const bornes = pts => { const lo = pts.map(p => p[1]), la = pts.map(p => p[0]); return [[Math.min(...lo), Math.min(...la)], [Math.max(...lo), Math.max(...la)]]; };
+      return {
+        cleaneur: (lat, lon) => { mk.setLngLat([lon, lat]); if (!mk._map) mk.addTo(carte); },
+        trajet: pts => { enAttente = pts; if (pret) carte.getSource("route").setData(ligne(pts)); },
+        cadrer: pts => carte.fitBounds(bornes(pts), { padding: { top: 40, left: 40, right: 50, bottom: 80 }, maxZoom: 16, duration: 0 }),
+        suivre: p => { const b = carte.getBounds(); if (!b.contains([p.lon, p.lat])) carte.panTo([p.lon, p.lat]); },
+        redim: () => carte.resize(),
+        remove: () => carte.remove(),
+      };
+    } catch { /* secours Leaflet */ }
+  }
+  const L = await chargerLeaflet();
+  const carte = L.map(el, { zoomControl: false, scrollWheelZoom: false, tap: false, dragging: !L.Browser.mobile, zoomSnap: 0.25 });
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "© OpenStreetMap" }).addTo(carte);
+  L.marker([arrivee.lat, arrivee.lon], { icon: L.divIcon({ className: "pin-maison", html: "<span>" + icone("logement") + "</span>", iconSize: [40, 40], iconAnchor: [20, 48] }) }).addTo(carte);
+  const mk = L.marker([arrivee.lat, arrivee.lon], { icon: L.divIcon({ className: "pin-cleaneur", html: htmlCleaneur, iconSize: [46, 46], iconAnchor: [23, 23] }), zIndexOffset: 500 });
+  const trace = L.polyline([], { color: "#1F8A80", weight: 5, opacity: .9, lineCap: "round" }).addTo(carte);
+  const ombre = L.polyline([], { color: "#0E3B40", weight: 9, opacity: .12 }).addTo(carte);
+  carte.setView([arrivee.lat, arrivee.lon], 14);
+  return {
+    cleaneur: (lat, lon) => { mk.setLatLng([lat, lon]); if (!mk._map) mk.addTo(carte); },
+    trajet: pts => { trace.setLatLngs(pts); ombre.setLatLngs(pts); },
+    cadrer: pts => { carte.invalidateSize(); carte.fitBounds(L.latLngBounds(pts), { paddingTopLeft: [40, 40], paddingBottomRight: [50, 80] }); },
+    suivre: p => { if (!carte.getBounds().pad(-0.1).contains([p.lat, p.lon])) carte.panTo([p.lat, p.lon]); },
+    redim: () => carte.invalidateSize(),
+    remove: () => carte.remove(),
+  };
 }
 
 /** Position d'une adresse (Base Adresse Nationale). null si introuvable. */
@@ -78,15 +135,7 @@ export async function blocSuivi(boite, { arrivee, prenom }) {
     </div>
     <p class="petit" data-info-fond style="margin:6px 0 0"></p>`;
   traduire(boite);
-  const L = await chargerLeaflet();
-  const carte = L.map(boite.querySelector(".carte-live"), { zoomControl: false, scrollWheelZoom: false, tap: false, dragging: !L.Browser.mobile, zoomSnap: 0.25 });
-  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "© OpenStreetMap" }).addTo(carte);
-  const maison = L.marker([arrivee.lat, arrivee.lon], { icon: L.divIcon({ className: "pin-maison", html: "<span>" + icone("logement") + "</span>", iconSize: [40, 40], iconAnchor: [20, 48] }) }).addTo(carte);
-  const initiale = (prenom || "C").trim().charAt(0).toUpperCase();
-  const cleaneur = L.marker([arrivee.lat, arrivee.lon], { icon: L.divIcon({ className: "pin-cleaneur", html: `<span class="onde"></span><b>${initiale}</b>`, iconSize: [46, 46], iconAnchor: [23, 23] }), zIndexOffset: 500 });
-  const trace = L.polyline([], { color: "#1F8A80", weight: 5, opacity: .9, lineCap: "round" }).addTo(carte);
-  const ombre = L.polyline([], { color: "#0E3B40", weight: 9, opacity: .12 }).addTo(carte);
-  carte.setView([arrivee.lat, arrivee.lon], 14);
+  const carte = await carteSuivi(boite.querySelector(".carte-live"), arrivee, prenom);
   let actuelle = null, anim = 0, cadre = false, derniereRoute = 0, route = null, prevenu = false, mini = null;
   const titreAvant = document.title;
 
@@ -100,12 +149,12 @@ export async function blocSuivi(boite, { arrivee, prenom }) {
       mini.document.title = "Cleaneroo";
       mini.document.body.classList.add("corps-mini");
       mini.document.body.appendChild(suivi);
-      setTimeout(() => carte.invalidateSize(), 100);
+      setTimeout(() => carte.redim(), 100);
       boite.querySelector("[data-info-fond]").textContent = tr("Le suivi est dans la petite fenêtre : elle reste au-dessus de vos autres fenêtres.");
       mini.addEventListener("pagehide", () => {
         boite.prepend(suivi); mini = null;
         boite.querySelector("[data-info-fond]").textContent = "";
-        setTimeout(() => carte.invalidateSize(), 100);
+        setTimeout(() => carte.redim(), 100);
       });
     } catch { mini = null; }
   });
@@ -117,10 +166,10 @@ export async function blocSuivi(boite, { arrivee, prenom }) {
 
   const glisser = (vers) => {   // déplacement fluide de l'icône (1 s)
     const depuis = actuelle || vers, t0 = performance.now();
-    cleaneur.setLatLng([depuis.lat, depuis.lon]);   // visible tout de suite, même si l'onglet est en arrière-plan (pas d'animation)
-    if (document.hidden) { cleaneur.setLatLng([vers.lat, vers.lon]); actuelle = vers; return; }
+    carte.cleaneur(depuis.lat, depuis.lon);   // visible tout de suite, même si l'onglet est en arrière-plan (pas d'animation)
+    if (document.hidden) { carte.cleaneur(vers.lat, vers.lon); actuelle = vers; return; }
     cancelAnimationFrame(anim);
-    const pas = t => { const k = Math.min((t - t0) / 1000, 1); cleaneur.setLatLng([depuis.lat + (vers.lat - depuis.lat) * k, depuis.lon + (vers.lon - depuis.lon) * k]); if (k < 1) anim = requestAnimationFrame(pas); };
+    const pas = t => { const k = Math.min((t - t0) / 1000, 1); carte.cleaneur(depuis.lat + (vers.lat - depuis.lat) * k, depuis.lon + (vers.lon - depuis.lon) * k); if (k < 1) anim = requestAnimationFrame(pas); };
     anim = requestAnimationFrame(pas);
     actuelle = vers;
   };
@@ -144,18 +193,17 @@ export async function blocSuivi(boite, { arrivee, prenom }) {
   return {
     /** Nouvelle position du Cleaneur. route (facultatif) : itinéraire déjà calculé (démo). */
     async placer(p, statut = "EN_ROUTE", routeConnue = null) {
-      if (!cleaneur._map) cleaneur.addTo(carte);
       glisser(p);
       // Itinéraire restant recalculé au plus toutes les 30 s (ou fourni par la démo).
       if (routeConnue) route = routeConnue;
       else if (!route || Date.now() - derniereRoute > 30000) { derniereRoute = Date.now(); route = await itineraire(p, arrivee); }
       const reste = routeConnue ? routeConnue.reste : route;
-      trace.setLatLngs(reste.points); ombre.setLatLngs(reste.points);
+      carte.trajet(reste.points);
       const km = routeConnue ? reste.km : distanceKm(p, arrivee) * (route.km / Math.max(distanceKm(route.points[0] ? { lat: route.points[0][0], lon: route.points[0][1] } : p, arrivee), 0.01));
       const min = routeConnue ? reste.min : Math.max(1, Math.round(route.min * km / Math.max(route.km, 0.01)));
       panneau(min, km, statut);
-      if (!cadre) { cadre = true; carte.invalidateSize(); carte.fitBounds(L.latLngBounds([...reste.points, [p.lat, p.lon], [arrivee.lat, arrivee.lon]]), { paddingTopLeft: [40, 40], paddingBottomRight: [50, 80] }); }
-      else if (!carte.getBounds().pad(-0.1).contains([p.lat, p.lon])) carte.panTo([p.lat, p.lon]);
+      if (!cadre) { cadre = true; carte.redim(); carte.cadrer([...reste.points, [p.lat, p.lon], [arrivee.lat, arrivee.lon]]); }
+      else carte.suivre(p);
     },
     arreter() { cancelAnimationFrame(anim); mini?.close(); document.title = titreAvant; carte.remove(); },
   };

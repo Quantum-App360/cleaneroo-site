@@ -3921,6 +3921,9 @@ const T = [
   // Design system (prompt 4, lot 1).
   ["Connexion perdue. Vérifiez votre réseau avant de continuer.", "Connection lost. Check your network before continuing.", "Connessione persa. Controlla la rete prima di continuare.", "Conexión perdida. Comprueba tu red antes de continuar."],
   ["Connexion rétablie.", "Connection restored.", "Connessione ripristinata.", "Conexión restablecida."],
+  // Carte Cleaneroo (prompt 4, lot 2).
+  ["Fond de carte indisponible pour le moment : les repères restent affichés.", "Base map unavailable for now: the markers are still shown.", "Mappa di base non disponibile al momento: i segnaposto restano visibili.", "Mapa de fondo no disponible por ahora: los marcadores siguen visibles."],
+  ["Vue en relief", "3D view", "Vista in rilievo", "Vista en relieve"],
 ];
 
 const DICO = new Map();

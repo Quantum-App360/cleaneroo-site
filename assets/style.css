@@ -2937,3 +2937,30 @@ body.sans-rappel .entete .rappel-entete { display: none; }   /* jamais pendant l
 .ds-espace { display: inline-block; height: 24px; background: var(--marque); border-radius: 4px; }
 .ds-rayon, .ds-ombre { display: inline-grid; place-items: center; width: 140px; height: 80px; background: var(--surface); border: 1px solid var(--separateur); }
 .ds-ombre { border-radius: var(--rayon); border: 0; }
+
+/* ================================================================================================
+   CARTE CLEANEROO (prompt 4, lot 2) : MapLibre aux couleurs du design system
+   ================================================================================================ */
+.carte-cleaneroo { position: relative; overflow: hidden; background: var(--creux); isolation: isolate; }
+.carte-cleaneroo .maplibregl-ctrl-group { border-radius: 12px; overflow: hidden; background: var(--surface); box-shadow: var(--ombre); border: 1px solid var(--separateur); }
+.carte-cleaneroo .maplibregl-ctrl-group button { width: 36px; height: 36px; }
+.carte-cleaneroo .maplibregl-ctrl-group button + button { border-top: 1px solid var(--separateur); }
+.carte-cleaneroo .maplibregl-ctrl button .maplibregl-ctrl-icon { filter: none; }
+.carte-cleaneur .maplibregl-ctrl button .maplibregl-ctrl-icon { filter: invert(1) hue-rotate(180deg) brightness(1.4); }
+.carte-cleaneroo .ctrl-relief { font: 800 12px var(--police); color: var(--texte); letter-spacing: .02em; }
+.carte-cleaneroo .ctrl-relief[aria-pressed="true"] { color: var(--primaire); }
+.carte-cleaneroo .maplibregl-ctrl-attrib { font-size: 11px; background: color-mix(in srgb, var(--surface) 85%, transparent); color: var(--texte3); border-radius: 10px; }
+.carte-cleaneroo .maplibregl-ctrl-attrib a { color: var(--texte2); }
+.carte-cleaneroo .maplibregl-popup-content { background: var(--surface); color: var(--texte); border-radius: 14px; padding: 12px 34px 12px 14px;
+  box-shadow: var(--ombre-forte); font: 14px/1.45 var(--police); }
+.carte-cleaneroo .maplibregl-popup-close-button { width: 28px; height: 28px; font-size: 18px; color: var(--texte2); border-radius: 0 14px 0 10px; }
+.carte-cleaneroo .maplibregl-popup-anchor-bottom .maplibregl-popup-tip { border-top-color: var(--surface); }
+.carte-cleaneroo .maplibregl-popup-anchor-top .maplibregl-popup-tip { border-bottom-color: var(--surface); }
+.carte-cleaneroo .epingle { width: 32px; height: 42px; cursor: pointer; }
+.carte-cleaneroo .epingle:focus-visible { outline: 3px solid var(--primaire); outline-offset: 2px; border-radius: 50%; }
+.carte-cleaneroo .maplibregl-cooperative-gesture-screen { font: 600 15px var(--police); background: color-mix(in srgb, var(--encre) 55%, transparent); }
+.carte-hors-ligne { position: absolute; left: 12px; right: 12px; bottom: 34px; z-index: 2; margin: 0; padding: 10px 14px; border-radius: 12px;
+  background: var(--surface); color: var(--texte2); font-size: var(--t-s); box-shadow: var(--ombre); text-align: center; }
+.carte-cleaneroo .pin-cleaneur { width: 46px; height: 46px; }
+.carte-cleaneroo .pin-maison { width: 40px; height: 49px; }
+.carte-live.carte-cleaneroo { background: var(--creux); }
