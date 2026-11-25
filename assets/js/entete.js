@@ -104,3 +104,28 @@ export function brancherBurger() {
 rendreEntete(profilMemorise());
 brancherBurger();
 addEventListener("hashchange", marquerActif);
+
+/** Menu replié quand les liens ne tiennent pas dans la largeur (au-dessus de 1280 px, la règle CSS ne suffit pas :
+ *  bascule de mode, « Être rappelé » et textes traduits plus longs). Mesure à chaque rendu et redimensionnement. */
+export function ajusterEntete() {
+  const entete = document.querySelector(".entete"), nav = entete?.querySelector(".nav"), droite = entete?.querySelector(".actions-entete");
+  if (!entete || !nav || !droite) return;
+  entete.classList.remove("compacte", "serre");
+  if (innerWidth <= 1280) return;
+  const deborde = () => {
+    const liens = [...nav.querySelectorAll(":scope > a")].filter(a => a.getBoundingClientRect().width);
+    const fin = Math.max(0, ...liens.map(a => a.getBoundingClientRect().right));
+    const debut = Math.min(...[...droite.children].filter(x => x.getBoundingClientRect().width).map(x => x.getBoundingClientRect().left), droite.getBoundingClientRect().left);
+    return fin > debut - 8;
+  };
+  if (!deborde()) return;
+  entete.classList.add("serre");          // 1er palier : « Être rappelé » en bouton rond, liens resserrés
+  if (!deborde()) return;
+  entete.classList.remove("serre");
+  entete.classList.add("compacte");       // 2e palier : menu replié
+}
+let attenteEntete = 0;
+addEventListener("resize", () => { cancelAnimationFrame(attenteEntete); attenteEntete = requestAnimationFrame(ajusterEntete); });
+document.fonts?.ready.then(ajusterEntete).catch(() => null);
+new MutationObserver(() => { cancelAnimationFrame(attenteEntete); attenteEntete = requestAnimationFrame(ajusterEntete); })
+  .observe(document.querySelector(".entete") || document.body, { childList: true, subtree: true, characterData: true });

@@ -804,7 +804,7 @@ label.champ input:focus, label.champ select:focus, label.champ textarea:focus, i
 @media (max-width: 600px) { .table-comparatif table { min-width: 0; } .table-comparatif th, .table-comparatif td { padding: 10px; font-size: 13.5px; } }
 
 /* ---------------------------------------------------------------- En-tête : menu mis en valeur (6 novembre 2026) */
-.entete .conteneur { width: min(1320px, 100% - 40px); gap: 18px; }
+.entete .conteneur { width: min(1480px, 100% - 40px); gap: 18px; }
 .marque { flex: none; }                       /* le logo ne se fait plus écraser par le menu */
 @media (min-width: 861px) {
   .nav { flex: 1; min-width: 0; justify-content: flex-end; gap: 2px; }
@@ -1131,6 +1131,24 @@ body.sans-defilement { overflow: hidden; }
   .entete.menu-ouvert .nav .nav-compte .puce-compte { justify-content: flex-start; padding: 6px 14px 6px 6px; }
   .entete.menu-ouvert .nav .nav-compte .puce-compte .qui { display: block; }
 }
+
+/* Premier palier quand la place manque : « Être rappelé » en bouton rond (toujours visible), liens resserrés. */
+.entete.serre .rappel-entete { padding: 0; width: 44px; min-height: 44px; justify-content: center; }
+.entete.serre .rappel-entete span { display: none; }
+.entete.serre .nav a { padding: 9px 8px; }
+/* Menu replié aussi au-dessus de 1280 px quand les liens ne tiennent pas (25/11/2026 : liens, bascule de mode et « Être rappelé »
+   se chevauchaient sur grand écran ; textes plus longs en anglais). entete.js ajoute la classe « compacte » après mesure. */
+.entete.compacte .burger { display: grid; order: -1; margin: 0 -6px 0 -10px; }
+.entete.compacte .nav, .entete.compacte .actions-compte { display: none; }
+.entete.compacte .rappel-entete { display: inline-flex; }
+.entete.compacte.menu-ouvert .nav { display: flex; position: fixed; top: 68px; left: 0; right: 0; bottom: 0; margin: 0; flex-direction: column; align-items: stretch; gap: 4px;
+  padding: 14px 16px 24px; background: var(--surface); overflow-y: auto; z-index: 40; }
+.entete.compacte.menu-ouvert .nav a { font-size: 18px; padding: 14px 12px; color: var(--texte); }
+.entete.compacte.menu-ouvert .nav .nav-compte { display: flex; flex-direction: column; align-items: stretch; gap: 10px; margin-top: 12px; padding-top: 16px; border-top: 1px solid var(--separateur); }
+.entete.compacte.menu-ouvert .nav .nav-compte .bouton { min-height: 52px; font-size: 17px; }
+.entete.compacte.menu-ouvert .nav .nav-compte .lien-connexion { text-align: center; border: 1px solid var(--separateur); }
+.entete.compacte.menu-ouvert .nav .nav-compte .puce-compte { justify-content: flex-start; padding: 6px 14px 6px 6px; }
+.entete.compacte.menu-ouvert .nav .nav-compte .puce-compte .qui { display: block; }
 
 /* Bandeau de lancement : discret, dans la couleur de la marque */
 .lancement { background: color-mix(in srgb, var(--marque) 9%, var(--surface)); color: var(--texte2); animation: none; border-bottom: 1px solid var(--separateur); font-size: 13.5px; }
