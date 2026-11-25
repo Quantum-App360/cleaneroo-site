@@ -104,7 +104,7 @@ export async function brancherControle(boite, m, surFin) {
             ${(avantExigee ? ["avant", "apres"] : ["apres"]).map(moment => { const chemin = moment === "avant" ? c.photo_avant : c.photo_apres;
               const bloque = moment === "apres" && (!pret || !toutes);
               return `<label class="photo-piece${chemin ? " prise" : ""}${bloque ? " bloquee" : ""}">
-                ${chemin && photos[chemin] ? `<img src="${esc(photos[chemin])}" alt="">` : icone("photo")}
+                ${chemin && photos[chemin] ? `<img src="${esc(photos[chemin])}" alt="" loading="lazy">` : icone("photo")}
                 <span>${tr(moment === "avant" ? "Photo avant" : "Photo après")}${chemin ? ` · ${tr("reprendre")}` : ""}</span>
                 <input type="file" accept="image/*" capture="environment" data-photo="${moment}" ${bloque ? "disabled" : ""}></label>`; }).join("")}
           </div>

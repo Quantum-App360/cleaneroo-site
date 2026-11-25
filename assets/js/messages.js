@@ -112,7 +112,7 @@ async function pageFil(vue, fil) {
     const traduisible = !m.de_moi && m.texte && !TOUS_RAPIDES.has(m.texte) && m.role !== "support";
     return `<div class="bulle-msg ${m.de_moi ? "moi" : m.role === "support" ? "support" : "autre"}" data-id="${esc(m.id)}">
       ${m.role === "support" && !m.de_moi ? `<small>${tr("Cleaneroo · Support")}</small>` : ""}
-      ${m.photo ? `<img alt="${tr("Photo envoyée")}" data-photo-chemin="${esc(m.photo)}">` : ""}${texte ? `<p>${esc(texte).replace(/\n/g, "<br>")}</p>` : ""}
+      ${m.photo ? `<img alt="${tr("Photo envoyée")}" loading="lazy" data-photo-chemin="${esc(m.photo)}">` : ""}${texte ? `<p>${esc(texte).replace(/\n/g, "<br>")}</p>` : ""}
       ${traductions[m.id] ? `<p class="traduction"><span class="petit">${tr("Traduction")} :</span> ${esc(traductions[m.id])}</p>` : ""}
       <small>${heureSeule(m.cree_le)}${traduisible && !traductions[m.id] ? ` · <button type="button" class="lien-traduire" data-traduire="${esc(m.id)}">${tr("Traduire")}</button>` : ""}</small></div>`;
   };

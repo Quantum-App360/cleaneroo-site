@@ -93,7 +93,7 @@ def traiter_langue(chemin):
     return n
 
 if __name__ == "__main__":
-    fichiers = [f for f in sorted(glob.glob("assets/js/*.js")) if not f.endswith(("langue.js", "icones.js"))] + sys.argv[1:]
+    fichiers = [f for f in sorted(glob.glob("assets/js/*.js")) if not f.endswith(("langue.js", "traductions.js", "icones.js"))] + sys.argv[1:]
     for f in fichiers:
         k = traiter_js(f)
         if k: print(f"{f} : {k}")

@@ -190,7 +190,7 @@ Lien « ‹ Accueil Cleaneroo » dans l'espace Cleaneur et les espaces client (f
 du Cleaneur crédible (2-3 missions sans chevauchement, 6 à 8 h, statuts cohérents, chiffres = somme) ; test automatique ; build/bak45,
 build/lot45.diff, ARCHITECTURE.md.
 
-## Prompt 4 — Refonte totale du produit (EN COURS : plan validé le 24/11 à 20 h 45 ; lots 1 à 8 faits ; suite : lot 9 audit)
+## Prompt 4 — Refonte totale du produit (EN COURS : plan validé le 24/11 à 20 h 45 ; lots 1 à 9 faits, prompt 4 terminé le 25/11)
 Plan validé (Whiteboard « Refonte Cleaneroo — plan du prompt 4 ») : 1 design system · 2 carte signature (MapLibre + OpenFreeMap) ·
 3 espace client · 4 réservation · 5 fiches Cleaneur · 6 espace Cleaneur · 7 notifications, messagerie, réputation · 8 finitions · 9 audit.
 Décisions : réservation hybride (choisir un Cleaneur ou publier à tous, paiement à la réservation) ; Cleaneurs affichés par secteur
@@ -258,6 +258,25 @@ Lot 8 (25/11) finitions, sans changement en base :
 - Micro-interactions utiles seulement : étape en cours de la progression signalée, confirmation de paiement, message qui arrive dans la
   conversation, appui visible sur les puces et cartes ; tout est coupé si l'appareil demande moins d'animations.
 À REPORTER PAR VINCENT : mêmes états (paiement non abouti, annulée, mise à jour du statut) dans les applis.
+Lot 9 (25/11) audit :
+- Sécurité : conseils Supabase relus. 60 fonctions ouvertes aux visiteurs : toutes voulues (suivi par jeton, fiches publiques, codes
+  impossibles à deviner) ou fonctions de déclencheur ; tables sans règle d'accès = accès seulement par fonctions (voulu) ; aucune clé
+  secrète dans le site (seulement la clé publique) ; échappement des textes vérifié. À faire par Michael dans Supabase (Authentication,
+  réglages des mots de passe) : activer la protection contre les mots de passe compromis. Extension pg_net dans le schéma public : sans risque,
+  laissée telle quelle (la déplacer casserait les tâches automatiques).
+- Trou corrigé (base-lot9.sql, accord de Michael, testé) : à la fin de l'exclusivité du Cleaneur demandé, les autres Cleaneurs du secteur
+  n'étaient jamais prévenus. Maintenant prévenus aussitôt (libération) ou dans les 5 minutes (échéance, tâche ouvrir-favoris), jamais deux fois.
+- Performance : traductions sorties de langue.js dans traductions.js, chargé seulement en anglais, italien ou espagnol : 800 Ko de moins
+  à chaque visite en français (page d'accueil : 1,9 Mo → environ 1,1 Mo avant compression). MapLibre seulement sur les pages carte, vidéos
+  non préchargées, photos des conversations et des contrôles chargées à la demande. Piste suivante (non faite, risque de régression) : charger
+  l'espace Cleaneur et l'espace conciergerie à la demande.
+  NOUVEAU POUR LES TRADUCTIONS : les entrées se mettent désormais à la fin de assets/js/traductions.js (avant le « ]; » final).
+- Itinéraires (choix de Michael : OpenRouteService) : fonction serveur « itineraire » déployée (clé cachée, secret ORS_CLE ; garde-fous :
+  France seulement, 300 km au plus, 120 demandes par minute et par adresse). Tant que la clé n'est pas enregistrée : repli temporaire sur
+  le serveur de démonstration OSRM, côté serveur. Le site n'appelle plus aucun service d'itinéraire directement ; sans réponse en 7 s,
+  estimation à vol d'oiseau.
+- Corrigé : bandeau « Les réservations ouvrent très bientôt » non traduit sur les pages ville.
+À REPORTER PAR VINCENT : appeler la fonction « itineraire » au lieu d'OSRM dans les applis.
 
 
 # CLEANEROO — REFONTE TOTALE DU PRODUIT

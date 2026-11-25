@@ -5,7 +5,7 @@
 #   - le bloc de chargement (feuille de style, carte des modules avec ?v=VERSION, script) de index.html, gestion.html, tests.html ;
 #   - les 10 pages ville /menage/<slug>/ (liste VILLES de assets/js/villes.js), /calculateur/, /comparatif/<concurrent>/ ;
 #   - sitemap.xml et robots.txt ;
-#   - les traductions des textes locaux des villes dans assets/js/langue.js (bloc <villes-textes>).
+#   - les traductions des textes locaux des villes dans assets/js/traductions.js (bloc <villes-textes>).
 import io, json, os, re, html
 
 VERSION = "2026112502"
@@ -280,9 +280,9 @@ ecrire("sitemap.xml", '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="ht
                  f"<priority>{'1.0' if p == '/' else '0.8'}</priority></url>\n" for p in plan) + "</urlset>\n")
 ecrire("robots.txt", f"User-agent: *\nAllow: /\nDisallow: /gestion.html\nDisallow: /tests.html\n\nSitemap: {SITE}/sitemap.xml\n")
 
-# ------------------------------------------------------------------ Traductions des textes locaux (langue.js)
+# ------------------------------------------------------------------ Traductions des textes locaux (traductions.js depuis le lot 9)
 def q(x): return json.dumps(x, ensure_ascii=False)
-p = "assets/js/langue.js"; s = lire(p)
+p = "assets/js/traductions.js"; s = lire(p)
 bloc = "  // <villes-textes> (généré par outils/generer_pages.py depuis villes.js)\n" + "".join(
     f"  [{q(v['texte'][0])}, {q(v['texte'][1])}, {q(v['texte'][2])}, {q(v['texte'][3])}],\n" for v in VILLES) + "  // </villes-textes>\n"
 if "// <villes-textes>" in s: s = re.sub(r"  // <villes-textes>.*?// </villes-textes>\n", lambda m: bloc, s, flags=re.S)

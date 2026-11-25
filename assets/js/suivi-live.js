@@ -4,7 +4,7 @@
 import { icone } from "./icones.js";
 import { REGLES, heure } from "./regles.js";
 import { traduire, tr } from "./langue.js";
-import { suivrePosition } from "./donnees.js";
+import { suivrePosition, supabase } from "./donnees.js";
 import { webglDisponible, chargerMaplibre, styleCleaneroo, themeCarte, PALETTES_CARTE } from "./cartes.js";
 
 let leaflet = null;
@@ -92,12 +92,22 @@ export function distanceKm(a, b) {
 }
 
 /** Itinéraire routier : { points: [[lat, lon]…], km, min }. Sans réponse : ligne droite et vitesse moyenne (Regles). */
+// Lot 9 (choix de Michael : OpenRouteService) : le trajet est demandé à la fonction serveur « itineraire » (clé cachée côté serveur,
+// supabase/functions/itineraire). Réponse attendue 6 s au plus, trajets gardés pendant la visite ; sans réponse, estimation à vol d'oiseau.
+const trajets = new Map();
 export async function itineraire(a, b) {
+  const cle = [a.lat, a.lon, b.lat, b.lon].map(x => Number(x).toFixed(3)).join(",");
+  if (trajets.has(cle)) return trajets.get(cle);
   try {
-    const r = await fetch(`https://router.project-osrm.org/route/v1/driving/${a.lon},${a.lat};${b.lon},${b.lat}?overview=full&geometries=geojson`);
-    const route = (await r.json()).routes?.[0];
-    if (route) return { points: route.geometry.coordinates.map(([lon, lat]) => [lat, lon]), km: route.distance / 1000, min: Math.max(1, Math.round(route.duration / 60)) };
-  } catch { /* hors ligne : estimation */ }
+    const attente = new Promise(ok => setTimeout(() => ok({ data: null }), 7000));
+    const { data } = await Promise.race([supabase.functions.invoke("itineraire", { body: { a: { lat: a.lat, lon: a.lon }, b: { lat: b.lat, lon: b.lon } } }), attente]);
+    if (data?.points?.length) {
+      const res = { points: data.points, km: data.km, min: data.min };
+      if (trajets.size > 200) trajets.clear();
+      trajets.set(cle, res);
+      return res;
+    }
+  } catch { /* hors ligne ou service lent : estimation */ }
   const km = distanceKm(a, b);
   return { points: [[a.lat, a.lon], [b.lat, b.lon]], km, min: Math.max(1, Math.round(km / REGLES.VITESSE_MOYENNE_KMH * 60)) };
 }
