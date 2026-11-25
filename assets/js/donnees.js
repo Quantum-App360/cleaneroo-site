@@ -525,6 +525,11 @@ export async function repondrePassage(id, jeton, accepte) {
   if (error) throw error;
   return data;
 }
+/** Réputation publique d'un Cleaneur (avis publiés seulement, base-lot7.sql) ; null si indisponible. */
+export async function reputationCleaneur(id) {
+  const { data, error } = await supabase.rpc("reputation_cleaneur", { p_cleaneur: id });
+  return error ? null : data || null;
+}
 /* Invitation « Cleaneur favori » (25/11, base-favori-invitation.sql) : une fois par client, pour les prestations sans prochain passage. */
 export async function inviterFavori(reference) {
   const { data, error } = await supabase.rpc("inviter_favori", { p_reference: reference });

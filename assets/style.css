@@ -3178,3 +3178,33 @@ body.sans-defilement { overflow: hidden; }
 .invitation-favori > svg, .invitation-favori > .icone { flex: 0 0 auto; width: 22px; height: 22px; }
 .raccourcis-passage { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
 .raccourcis-passage .puce { padding: 6px 12px; border-radius: 999px; border: 1px solid var(--separateur); background: var(--surface); color: var(--texte); font: inherit; font-size: 13px; cursor: pointer; min-height: 36px; }
+
+/* Réputation d'un Cleaneur (lot 7 du prompt 4) : note, répartition, satisfaction, critères, avis récents */
+.reputation { display: grid; gap: 12px; margin: 16px 0 4px; }
+.reputation h3 { margin: 0; }
+.rep-tete { display: grid; grid-template-columns: auto 1fr; gap: 18px; align-items: center; }
+.rep-note { display: grid; justify-items: center; gap: 2px; min-width: 104px; padding: 12px; border-radius: 16px; background: var(--creux); }
+.rep-note b { font-size: 2.2rem; line-height: 1; letter-spacing: -.02em; }
+.etoiles-rep { color: var(--or); letter-spacing: 1px; }
+.rep-barres { display: grid; gap: 5px; }
+.rep-barre { display: grid; grid-template-columns: 34px 1fr 26px; gap: 8px; align-items: center; font-size: 13px; }
+.rep-barre > span:first-child { white-space: nowrap; }
+.rep-piste { height: 8px; border-radius: 99px; background: var(--creux); overflow: hidden; }
+.rep-piste > span { display: block; height: 100%; border-radius: 99px; background: var(--or); transition: width var(--duree-lente, .4s) var(--courbe, ease); }
+.rep-barre .petit { text-align: right; }
+.rep-satisfaction { margin: 0; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.rep-satisfaction .ico { color: var(--succes); width: 18px; height: 18px; }
+.badges-rep { display: flex; gap: 6px; flex-wrap: wrap; margin: 0; }
+.rep-criteres { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 16px; }
+.rep-criteres > div { display: flex; justify-content: space-between; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--separateur); font-size: 14px; }
+.rep-avis { display: grid; gap: 10px; }
+.avis-rep { margin: 0; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--separateur); }
+.avis-rep blockquote { margin: 6px 0; font-style: italic; }
+.avis-rep figcaption { margin: 0; }
+@media (max-width: 520px) { .rep-tete { grid-template-columns: 1fr; } .rep-note { justify-self: start; grid-template-columns: auto auto; align-items: baseline; gap: 4px 10px; } .rep-criteres { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: reduce) { .rep-piste > span { transition: none; } }
+/* Puces de choix (filtres des notifications, messages rapides) */
+.filtres-notifs .puce, .rapides .puce { padding: 6px 14px; border-radius: 999px; border: 1px solid var(--separateur); background: var(--surface); color: var(--texte); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; min-height: 36px; transition: background var(--duree-rapide, .15s), color var(--duree-rapide, .15s); }
+.filtres-notifs .puce:hover, .rapides .puce:hover { border-color: color-mix(in srgb, var(--marque) 45%, transparent); }
+.filtres-notifs .puce.choisie { background: var(--primaire); color: var(--fond); border-color: transparent; }
+.rapides .puce:disabled { opacity: .5; cursor: default; }

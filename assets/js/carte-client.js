@@ -6,7 +6,8 @@
 // La date, l'heure et la fréquence sont reprises telles quelles dans la réservation ; le prix exact se calcule à l'étape suivante.
 import { RUBRIQUES, rubrique, FREQUENCES } from "./catalogue.js";
 import { afficherCarte, chercherAdresse, maPosition, adresseDe } from "./cartes.js";
-import { secteurCouvert, secteursPublics, rejoindreAttente, cleaneursPublics } from "./donnees.js";
+import { secteurCouvert, secteursPublics, rejoindreAttente, cleaneursPublics, reputationCleaneur } from "./donnees.js";
+import { blocReputation } from "./reputation.js";
 import { preremplir, reserverAvecCleaneur } from "./reserver.js";
 import { badgeNiveau } from "./niveaux.js";
 import { blocEtat, afficherToast } from "./commun.js";
@@ -76,6 +77,7 @@ function ficheCleaneur(c, rubriqueId) {
         <div><b>${c.distance_km} km</b><span>${tr("au plus, de chez vous")}</span></div>
       </div>
       <p class="petit muet fiche-verif">${tr("Identité, SIRET, assurance RC Pro et attestation URSSAF vérifiés par Cleaneroo.")} ${tr("Sur Cleaneroo depuis")} ${esc(moisTxt(c.inscrit_le))}.</p>
+      <div data-reputation-fiche><p class="petit muet">${tr("Chargement des avis…")}</p></div>
       <h3>${tr("Prochaines disponibilités")}</h3>
       ${(c.prochains_jours || []).length ? `<p class="jours-cleaneur">${joursTxt(c)}</p><p class="petit muet" style="margin:4px 0 0">${tr("Jours où ce Cleaneur a ouvert des créneaux. Le créneau exact se choisit à la réservation.")}</p>`
         : `<p class="petit muet">${tr("Pas de créneaux publiés pour les 3 prochaines semaines : votre demande lui est proposée, il répond selon son planning.")}</p>`}
@@ -201,6 +203,13 @@ export function brancherCarteClient(vue) {
       if (e.target.closest("[data-reserver-avec]")) { lireCriteres(); reserverAvecCleaneur(etat.rubriqueId, c, champsReservation(etat.rubriqueId)); }
     });
     fiche.querySelector(".fiche-fermer")?.focus();
+    // Réputation détaillée (lot 7) : répartition, critères, satisfaction, avis récents.
+    reputationCleaneur(c.cleaneur_id).catch(() => null).then(rep => {
+      const z = fiche.querySelector("[data-reputation-fiche]");
+      if (!z?.isConnected) return;
+      z.innerHTML = rep ? blocReputation(rep) : `<p class="petit muet">${tr("Les avis ne peuvent pas être affichés pour le moment.")}</p>`;
+      traduire(z);
+    });
   };
 
   const resultat = () => {

@@ -704,7 +704,7 @@ async function afficherPage() {
       : route === "mode-cleaneur" || route === "devenir-cleaneur" ? `<div class="barre-espaces"><div class="conteneur">${boutonMode()}</div></div>` : "";
     traduire(barre);
   }
-  document.body.classList.toggle("sans-rappel", route === "reserver" || route === "estimer");
+  document.body.classList.toggle("sans-rappel", route === "reserver" || route === "estimer" || route === "messages");
   // Pages qui attendent le serveur : animation de chargement pendant l'attente.
   if (route === "messages") { window.scrollTo(0, 0); vue.innerHTML = pageChargement(); traduire(vue); await pageMessages(vue, chemin.split("/").slice(1).join("/")); return; }
   if (route === "notifications") { window.scrollTo(0, 0); vue.innerHTML = pageChargement(); traduire(vue); await pageNotifications(vue, param); return; }

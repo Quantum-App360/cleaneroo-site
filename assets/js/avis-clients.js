@@ -8,6 +8,7 @@ import { dateLongue } from "./regles.js";
 import { tr, traduire } from "./langue.js";
 import { esc } from "./commun.js";
 import { CRITERES } from "./avis.js";
+import { blocReputation, reputationDepuisAvis } from "./reputation.js";
 
 /** « Les avis de vos clients » (double aveugle) : visibles après avoir noté le client, ou 14 jours après l'avis. */
 export async function blocAvisRecus(boite) {
@@ -15,7 +16,9 @@ export async function blocAvisRecus(boite) {
   const { data: liste } = await supabase.rpc("avis_recus");
   if (!boite.isConnected || !liste?.length) { boite.innerHTML = ""; return; }
   const etoiles = n => `<span class="etoiles-avis" aria-label="${n} / 5">${"★".repeat(n)}${"☆".repeat(5 - n)}</span>`;
-  boite.innerHTML = `<h2 class="titre-section">${icone("message")} ${tr("Les avis de vos clients")}</h2>
+  // Lot 7 : synthèse de la réputation (avis publiés seulement), telle que les clients la voient sur la fiche.
+  boite.innerHTML = `${blocReputation(reputationDepuisAvis(liste), { titre: "Votre réputation, telle que les clients la voient", vide: "Aucun avis publié pour l'instant : ils apparaissent ici dès la fin du double aveugle." })}
+    <h2 class="titre-section">${icone("message")} ${tr("Les avis de vos clients")}</h2>
     <p class="petit" style="margin-top:0">${tr("Avis en double aveugle : celui du client s'affiche dès que vous l'avez noté à votre tour, ou 14 jours après son avis.")}</p>
     ${liste.map(a => `<div class="carte avis-recu"><b>${esc(rubrique(a.rubrique_id)?.nom || "")}</b> · ${esc(a.ville)} · ${esc(dateLongue(new Date(a.recu_le)))}
       ${a.revele ? `${a.categories ? CRITERES.map(([id, nom]) => `<div class="critere-recu"><span>${tr(nom)}</span>${etoiles(a.categories[id] || 0)}</div>`).join("")

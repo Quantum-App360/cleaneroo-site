@@ -190,7 +190,7 @@ Lien « ‹ Accueil Cleaneroo » dans l'espace Cleaneur et les espaces client (f
 du Cleaneur crédible (2-3 missions sans chevauchement, 6 à 8 h, statuts cohérents, chiffres = somme) ; test automatique ; build/bak45,
 build/lot45.diff, ARCHITECTURE.md.
 
-## Prompt 4 — Refonte totale du produit (EN COURS : plan validé le 24/11 à 20 h 45 ; lots 1 à 6 faits ; suite : lot 7 notifications, messagerie, réputation)
+## Prompt 4 — Refonte totale du produit (EN COURS : plan validé le 24/11 à 20 h 45 ; lots 1 à 7 faits ; suite : lot 8 finitions)
 Plan validé (Whiteboard « Refonte Cleaneroo — plan du prompt 4 ») : 1 design system · 2 carte signature (MapLibre + OpenFreeMap) ·
 3 espace client · 4 réservation · 5 fiches Cleaneur · 6 espace Cleaneur · 7 notifications, messagerie, réputation · 8 finitions · 9 audit.
 Décisions : réservation hybride (choisir un Cleaneur ou publier à tous, paiement à la réservation) ; Cleaneurs affichés par secteur
@@ -235,6 +235,19 @@ inviter_favori, invitation_favori, mes_invitations_favori, déclencheur favoris_
 appliqué et testé (transaction annulée). Côté client, « Ajouter à mes favoris » mis en avant avec le prénom du Cleaneur.
 « Programmer tout » et le pilote automatique (pilote-auto v3, déployé) proposent d'abord le ménage au dernier Cleaneur du logement s'il est en favori.
 À REPORTER PAR VINCENT : ces trois points dans les applis (même liste de prestations, mêmes fonctions).
+Lot 7 (25/11, accord de Michael pour la base : outils/base-lot7.sql appliqué et testé) :
+- Notifications : filtres (Toutes, Importantes, Prestations, Messages, Paiements, Avis), regroupement par jour, pastille de couleur par type,
+  mentions « Urgent » / « Important », action proposée (Répondre, Voir la prestation), bandeau quand une notification importante arrive.
+  Rappel la veille (tâche rappel-missions, 17 h UTC) au client et au Cleaneur. Icônes Messages et Notifications de l'en-tête rétablies
+  (perdues au retrait des emojis). Plus d'emoji dans les textes de la base.
+- Messagerie : en-tête de la prestation (infos_fil), séparateurs de jour, « Lu », messages rapides selon l'étape (envoyés en français,
+  affichés dans la langue de chacun), « Traduire » sur un message reçu (traduction sur l'appareil si le navigateur le permet, sinon
+  Google Traduction à la demande). Correctif : bulles en conflit avec les bulles décoratives du fond (classe renommée bulle-msg).
+  Correctif de sécurité : la notification « Nouveau message » reprend le texte masqué.
+- Réputation (reputation.js) : note, nombre d'avis vérifiés, répartition 5 → 1, satisfaction (4-5 étoiles), notes par critère, avis récents ;
+  sur la fiche du Cleaneur (reputation_cleaneur) et dans son espace (« Votre réputation, telle que les clients la voient »).
+  Correctif : la note des fiches ne compte que les avis publiés (double aveugle).
+À REPORTER PAR VINCENT : infos_fil, reputation_cleaneur, messages rapides (mêmes textes), filtres des notifications, rappel la veille.
 
 
 # CLEANEROO — REFONTE TOTALE DU PRODUIT
