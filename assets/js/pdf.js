@@ -181,6 +181,28 @@ export async function relevePdf(liste, { titre, qui }) {
   return doc.save();
 }
 
+/* ------------------------------------------------------------------ Relevé de chiffre d'affaires du Cleaneur (prompt 4, lot 6, validé le 25/11)
+   Mois par mois : missions facturées, prestations, pourboires, commission Cleaneroo, net. Utile pour un prêt ou un bail ;
+   ce n'est pas un document officiel (attestation URSSAF, avis d'imposition). */
+export async function releveCaPdf({ annee, mois, qui, siret }) {
+  const titre = `Relevé de chiffre d'affaires ${annee}`;
+  const { doc, page: pg } = await nouveauDoc(titre);
+  enTete(pg, titre, `${qui}${siret ? ` · SIRET ${siret}` : ""} · édité le ${dateFr(new Date())}`);
+  pg.trait(); pg.espace(4);
+  const l = (c, gras = false) => { pg.place(15); const y = pg.y; pg.p.drawText(propre(c[0]), { x: 50, y, size: 9, font: gras ? pg.f.gras : pg.f.normal });
+    pg.droite(c[1], 215, y, { taille: 9, gras }); pg.droite(c[2], 300, y, { taille: 9, gras }); pg.droite(c[3], 380, y, { taille: 9, gras }); pg.droite(c[4], 465, y, { taille: 9, gras }); pg.droite(c[5], 545, y, { taille: 9, gras }); pg.y -= 15; };
+  l(["Mois", "Missions", "Prestations", "Pourboires", "Commission", "Net"], true); pg.trait();
+  const t = { missions: 0, presta: 0, pourboires: 0, commission: 0 };
+  mois.forEach(m => { Object.keys(t).forEach(k => { t[k] += m[k]; });
+    l([m.nom, String(m.missions), eur(m.presta), eur(m.pourboires), eur(m.commission), eur(m.presta + m.pourboires - m.commission)]); });
+  pg.trait(); l(["Total", String(t.missions), eur(t.presta), eur(t.pourboires), eur(t.commission), eur(t.presta + t.pourboires - t.commission)], true);
+  pg.espace(10);
+  pg.texte(`Chiffre d'affaires ${annee} (prestations et pourboires) : ${eur(t.presta + t.pourboires)}.`, { taille: 10 });
+  pg.espace(6);
+  pg.texte("Relevé établi à partir des factures émises sur la plateforme Cleaneroo au nom du Cleaneur. Il ne remplace pas les documents officiels (attestation URSSAF, avis d'imposition, déclarations de chiffre d'affaires).", { taille: 8, couleur: [0.4, 0.5, 0.5] });
+  return doc.save();
+}
+
 /* ------------------------------------------------------------------ Relevé mensuel du propriétaire (24/11/2026) */
 /** Relevé d'un propriétaire (conciergerie) : par logement, nuits occupées, ménages et leur coût, incidents à sa charge, total à refacturer.
  *  r : résultat de releveProprietaire (conciergerie.js), ou l'instantané partagé. Jamais de code d'accès.

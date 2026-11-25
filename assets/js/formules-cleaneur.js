@@ -81,6 +81,7 @@ export function brancherFormulesCleaneur(racine, p = null, recharger = () => {})
       <span class="ligne-calcul"><span>${tr("Gratuit")}</span><b>${euros(g)}</b></span>
       <span class="ligne-calcul${pr > g ? " meilleur" : ""}"><span>${tr("Pro (abonnement déduit)")}</span><b>${euros(pr)}</b></span>
       ${offert ? `<span class="ligne-calcul meilleur"><span>${tr("Pro offert")}</span><b>${euros(revenuCleaneurC(c, "pro", true))}</b></span>` : ""}
+      <span class="petit muet">${tr("hors frais de paiement Stripe, à votre charge")}</span>
       <span class="petit">${pr > g ? `${tr("Pro vous rapporte")} ${euros(pr - g)} ${tr("de plus par mois.")}` : tr("À ce niveau, la formule Gratuit vous convient mieux.")}</span>`;
   };
   ca.oninput = calculer; calculer();

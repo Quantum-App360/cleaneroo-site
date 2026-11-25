@@ -43,7 +43,7 @@ const MESSAGES_ERREUR = {
 
 /** Ce que voit le client selon l'état du paiement. */
 const ETATS = {
-  PAYE: "Payé : le montant est bloqué par Cleaneroo jusqu'à votre validation de la prestation, puis versé au Cleaneur.",
+  PAYE: "Payé : le montant est bloqué chez Stripe jusqu'à votre validation de la prestation, puis versé au Cleaneur.",
   A_PRELEVER: "Carte enregistrée : ce passage sera prélevé automatiquement 3 jours avant, puis bloqué jusqu'à votre validation.",
   LIBERE: "Prestation validée : le paiement a été versé au Cleaneur.",
   REMBOURSE: "Demande annulée : le montant payé vous a été remboursé (5 à 10 jours selon votre banque).",

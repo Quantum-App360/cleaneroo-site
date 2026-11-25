@@ -3137,3 +3137,10 @@ body.sans-rappel .entete .rappel-entete { display: none; }   /* jamais pendant l
 .alerte-planning.conflit { color: var(--erreur); }
 .preferences-cleaneur .champ { margin: 0; }
 .choix-guidage small { display: block; margin-top: 4px; }
+.ligne-compte.indispo { flex-wrap: wrap; }
+.boutons-indispo { display: flex; flex-wrap: wrap; gap: 8px; }
+.boutons-indispo .actif { border-color: var(--alerte); color: var(--alerte); }
+.materiel-mission { margin-top: 8px; }
+.materiel-mission summary { cursor: pointer; min-height: 32px; display: flex; align-items: center; }
+.materiel-mission ul { margin: 4px 0 0; padding-left: 20px; display: grid; gap: 2px; }
+.combler-journee { display: grid; gap: 2px; }

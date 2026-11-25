@@ -84,7 +84,7 @@ function blocChiffreAffaires(c, reglages, prevu) {
       <div class="ca-comparaison">${comparaison || `<span class="petit muet">${tr("Pas encore de comparaison possible.")}</span>`}</div>
       <p class="petit muet" style="margin:4px 0 10px">${c.missions} ${tr(c.missions > 1 ? "missions facturées" : "mission facturée")}${c.missions ? ` · ${tr("moyenne par mission :")} ${euros(Math.round((c.caC) / c.missions))}` : ""} · ${tr("prestations et pourboires, le montant à déclarer")}</p>
       <div class="ligne-activite"><span>${tr("Commission Cleaneroo")}</span><span>−${euros(c.commissionC)}</span></div>
-      <div class="ligne-activite"><span>${tr("Net pour vous, après commission")}</span><b>${euros(c.netC)}</b></div>
+      <div class="ligne-activite"><span>${tr("Net pour vous, après commission")}<small class="petit muet" style="display:block">${tr("hors frais de paiement Stripe, à votre charge")}</small></span><b>${euros(c.netC)}</b></div>
       <div class="ligne-activite"><span>${tr("Cotisations URSSAF estimées")} (${pct(c.tauxPct)})</span><span>−${euros(c.cotisationsC)}</span></div>
       <div class="ligne-activite total"><span>${tr("Reste pour vous")}</span><b>${euros(c.resteC)}</b></div>
       <label class="case-activite"><input type="checkbox" data-reglage="acre" ${reglages.acre ? "checked" : ""}> ${tr("ACRE (1re année, taux réduit)")}</label>
@@ -162,6 +162,7 @@ export async function blocActivite(boite, profil) {
         <div class="actions-activite">
           <button type="button" class="bouton secondaire" data-export ${factures.length || avis.length ? "" : "disabled"}>${tr("Exporter mes missions (tableur)")}</button>
           <button type="button" class="bouton secondaire" data-devis>${tr("Créer un devis")}</button>
+          <button type="button" class="bouton secondaire" data-releve-ca>${tr("Relevé de chiffre d'affaires de l'année (PDF)")}</button>
         </div>
         <div class="devis-activite" hidden></div>
       </div>
@@ -173,6 +174,24 @@ export async function blocActivite(boite, profil) {
     if (obj) obj.onchange = () => { reglages.objectifC = Math.max(0, Math.round(Number(obj.value) || 0)) * 100; garder(reglages); afficher(); };
     boite.querySelector("[data-export]").onclick = () => exporter(factures, avis);
     boite.querySelector("[data-devis]").onclick = () => devis(boite.querySelector(".devis-activite"), profil);
+    boite.querySelector("[data-releve-ca]").onclick = async e => {
+      e.target.disabled = true;
+      try {
+        const an = new Date().getFullYear(), l = lignesCA(factures, avis);
+        const mois = Array.from({ length: new Date().getMonth() + 1 }, (_, i) => {
+          const de = jourIso(new Date(an, i, 1)), a = jourIso(new Date(an, i + 1, 0)), dans = x => x.jour >= de && x.jour <= a;
+          return { nom: new Date(an, i, 1).toLocaleDateString("fr-FR", { month: "long" }), missions: l.filter(x => dans(x) && x.mission).length,
+            presta: l.filter(x => dans(x) && x.mission).reduce((s, x) => s + x.ca, 0), pourboires: l.filter(x => dans(x) && !x.mission && !x.com).reduce((s, x) => s + x.ca, 0),
+            commission: l.filter(dans).reduce((s, x) => s + x.com, 0) };
+        });
+        const { releveCaPdf } = await import("./pdf.js");
+        const octets = await releveCaPdf({ annee: an, mois, qui: [profil?.prenom, profil?.nom].filter(Boolean).join(" ") || "Cleaneur", siret: profil?.siret || "" });
+        const url = URL.createObjectURL(new Blob([octets], { type: "application/pdf" }));
+        const a = Object.assign(document.createElement("a"), { href: url, download: `cleaneroo-chiffre-affaires-${an}.pdf` });
+        document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 4000);
+      } catch { alert(tr("Le relevé n'a pas pu être créé. Réessayez dans quelques minutes.")); }
+      e.target.disabled = false;
+    };
     blocVersements(boite.querySelector("#versements"));
   };
   afficher();

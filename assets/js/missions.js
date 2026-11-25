@@ -27,6 +27,7 @@ import { missionsDisponibles, mesMissions, prendreMission, avancerMission, envoy
   mesAvertissements, avertissementsCleaneurs, avertirCleaneur, leverBannissement,
   confirmerMission, coutAnnulation, annulerMissionCleaneur, mesPenalites, mesDocuments, tableauCleaneur, dispoUrgence } from "./donnees.js";
 import { blocTournee, brancherTournee, blocListeCarte, brancherListeCarte } from "./tournee.js";
+import { versIcs } from "./agenda.js";
 import { boutonGuidage, brancherGuidage, choixGuidage, brancherChoixGuidage } from "./guidage.js";
 import { brancherControle } from "./controle-ecran.js";
 
@@ -166,6 +167,7 @@ function blocJournee(miennes) {
         <span>${rubrique(m.rubrique_id).nom} · ${esc(m.rue ? `${m.rue}, ` : "")}${esc(m.ville)} · ${duree(m.duree_min)}</span><span class="tampon${m.statut === "CONFIRMEE" ? "" : " vert"}">${tr((ETAPE[m.statut] || [])[2] || m.statut)}</span>
         ${conflit ? `<span class="alerte-planning ${conflit}">${icone("alerte")} ${tr(conflit === "conflit" ? "Conflit horaire avec la mission précédente" : "Moins de 30 min pour vous déplacer depuis la mission précédente")}</span>` : ""}</div>`; }).join("")
       : `<p class="petit muet" style="margin:8px 0 0">${tr("Aucune mission sur cette période.")}</p>`}
+    <button type="button" class="lien-bouton exporter-missions" data-exporter-missions>${icone("calendrier")} ${tr("Ajouter mes missions à mon agenda")}</button>
     ${liste.length ? `<p class="petit" style="margin:8px 0 0">${tr("Total estimé :")} <b>${euros(liste.reduce((s, m) => s + (m.estimation_c || 0), 0))}</b> · ${duree(liste.reduce((s, m) => s + (m.duree_min || 0), 0))}</p>` : ""}</div>`;
 }
 /** Refonte du 22/11/2026 : chaque partie dans son onglet — vue « aujourdhui » (urgence, recherche, tuiles), « gains » (versement, niveau,
@@ -194,6 +196,7 @@ export function tableauDeBord(p, docs, miennes, dispo, t, vue = "aujourdhui", re
         ? `${tr("Vous recevez en priorité les missions urgentes jusqu'à")} ${heure(dispoJusqu.getHours(), dispoJusqu.getMinutes())}`
         : `${tr("Recevez en priorité les missions du jour pendant")} ${REGLES.URGENCE_DISPO_H} h`}</p></div>
       <input type="checkbox" class="interrupteur" data-dispo-urgence ${dispoJusqu ? "checked" : ""}></label>
+    <div class="indispo-rapide" data-indispo-rapide></div>
     ${recherche ? `<a class="recherche-mission" href="#missions-disponibles" data-aller="missions-disponibles">${icone("position")}
       <div><b>Rechercher une mission</b><span>${tr("Les plus proches, celles qui comblent vos trous de planning")}</span></div><span aria-hidden="true">›</span></a>` : ""}
 ` : ""}</div>`;
@@ -216,17 +219,83 @@ function brancherTableau(boite, miennes, recharger) {
     cible.scrollIntoView({ behavior: "smooth", block: "start" });
   });
   boite.querySelector("[data-dispo-urgence]")?.addEventListener("change", async e => { await dispoUrgence(e.target.checked).catch(() => null); recharger(); });
+  indispoRapide(boite.querySelector("[data-indispo-rapide]"), miennes, recharger);
   const majJournee = () => {
     const j = boite.querySelector("#ma-journee");
     j.outerHTML = blocJournee(miennes);
     traduire(boite.querySelector("#ma-journee"));
     brancherJournee();
   };
+  // Agenda (validé le 25/11) : fichier .ics de toutes les missions à venir, à l'heure, avec l'adresse ; à refaire après de nouvelles missions.
+  boite._missions = miennes;
+  if (!boite.dataset.exportBranche) boite.dataset.exportBranche = "1", boite.addEventListener("click", e => {
+    if (!e.target.closest("[data-exporter-missions]")) return;
+    const miennes = boite._missions || [];
+    const evts = miennes.filter(m => m.creneau && !["ANNULEE", "TERMINEE"].includes(m.statut) && new Date(m.creneau) > new Date(Date.now() - 864e5)).map(m => {
+      const d = new Date(m.creneau);
+      return { uid: m.reference, debut: d, fin: new Date(d.getTime() + (m.duree_min || 60) * 60000), titre: `${rubrique(m.rubrique_id)?.nom || "Cleaneroo"} · Cleaneroo`,
+        lieu: [m.rue, m.code_postal, m.ville].filter(Boolean).join(" "), note: `${tr("Mission")} ${m.reference}` };
+    });
+    if (!evts.length) { alert(tr("Aucune mission à venir à ajouter.")); return; }
+    const url = URL.createObjectURL(new Blob([versIcs(evts, new Date())], { type: "text/calendar" }));
+    const a = Object.assign(document.createElement("a"), { href: url, download: "cleaneroo-mes-missions.ics" });
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 2000);
+  });
   const brancherJournee = () => {
     boite.querySelectorAll("[data-vue-journee]").forEach(b => b.onclick = () => { vueJournee = b.dataset.vueJournee; decalage = 0; majJournee(); });
     boite.querySelectorAll("[data-decaler]").forEach(b => b.onclick = () => { decalage += Number(b.dataset.decaler); majJournee(); });
   };
   brancherJournee();
+}
+
+/* Combler ma journée (prompt 4, lot 6, validé le 25/11) : missions disponibles le même jour qu'une de mes missions des 7 prochains
+   jours, dans la même ville ou le même code postal, sans chevauchement (30 min de battement). Les meilleures d'abord (score). */
+export function comblerJournee(miennes, dispo, maintenant = new Date()) {
+  const fin = maintenant.getTime() + 7 * 864e5, r = [];
+  const prevues = miennes.filter(m => m.creneau && !["ANNULEE", "TERMINEE"].includes(m.statut) && new Date(m.creneau) > maintenant && new Date(m.creneau).getTime() < fin);
+  const plage = m => { const d = new Date(m.creneau).getTime(); return [d, d + (m.duree_min || 0) * 60000]; };
+  for (const x of dispo) {
+    if (!x.creneau) continue;
+    const [xd, xf] = plage(x);
+    const memeJour = prevues.filter(m => new Date(m.creneau).toDateString() === new Date(x.creneau).toDateString());
+    if (!memeJour.length) continue;
+    if (memeJour.some(m => { const [d, f] = plage(m); return xd < f + 30 * 60000 && xf + 30 * 60000 > d; })) continue;
+    const proche = memeJour.find(m => (m.code_postal && m.code_postal === x.code_postal) || (m.ville && x.ville && m.ville.toLowerCase() === x.ville.toLowerCase()));
+    if (!proche) continue;
+    r.push({ mission: x, voisine: proche, avant: xf <= plage(proche)[0] });
+  }
+  return r.sort((a, b) => (scores.get(b.mission.reference) || 0) - (scores.get(a.mission.reference) || 0)).slice(0, 3);
+}
+
+/* Indisponible en un geste (prompt 4, lot 6, validé le 25/11) : aujourd'hui ou demain devient une période fermée
+   (aucune mission proposée ni notifiée). Les missions déjà confirmées ce jour-là restent dues : on le dit clairement. */
+async function indispoRapide(z, miennes, recharger) {
+  if (!z) return;
+  const { data } = await supabase.from("periodes_fermees").select("*").gt("fin", new Date().toISOString()).order("debut").then(r => r, () => ({ data: [] }));
+  if (!z.isConnected) return;
+  const periodes = data || [];
+  const jours = [0, 1].map(i => { const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() + i); return d; });
+  const ferme = d => periodes.find(p => new Date(p.debut) <= d && new Date(p.fin) > d);
+  const confirmees = d => miennes.filter(m => m.creneau && new Date(m.creneau).toDateString() === d.toDateString() && !["ANNULEE", "TERMINEE"].includes(m.statut));
+  z.innerHTML = `<div class="carte ligne-compte indispo"><div class="corps"><b>${tr("Pas disponible ?")}</b>
+      <p class="petit" style="margin:2px 0 0">${tr("Plus aucune mission ne vous est proposée ni notifiée ce jour-là.")}</p></div>
+    <div class="boutons-indispo">${jours.map((d, i) => { const f = ferme(d);
+      return f ? `<button type="button" class="bouton secondaire petit-bouton actif" data-rouvrir-jour="${esc(f.id)}">${tr(i ? "Demain fermé" : "Aujourd'hui fermé")} · ${tr("Rouvrir")}</button>`
+        : `<button type="button" class="bouton secondaire petit-bouton" data-fermer-jour="${i}">${tr(i ? "Indisponible demain" : "Indisponible aujourd'hui")}</button>`; }).join("")}</div>
+    <p class="petit erreur" data-erreur-indispo style="flex-basis:100%;margin:0"></p></div>`;
+  traduire(z);
+  z.querySelectorAll("[data-rouvrir-jour]").forEach(b => b.onclick = async () => {
+    b.disabled = true; await supabase.from("periodes_fermees").delete().eq("id", b.dataset.rouvrirJour).then(() => null, () => null); recharger();
+  });
+  z.querySelectorAll("[data-fermer-jour]").forEach(b => b.onclick = async () => {
+    const d = jours[Number(b.dataset.fermerJour)], c = confirmees(d);
+    if (c.length && !confirm(`${tr("Vous avez")} ${c.length} ${tr(c.length > 1 ? "missions confirmées ce jour-là : elles restent à assurer. Pour en annuler une, utilisez « Annuler la mission » (pénalité à moins de 24 h). Fermer quand même ce jour aux nouvelles missions ?" : "mission confirmée ce jour-là : elle reste à assurer. Pour l'annuler, utilisez « Annuler la mission » (pénalité à moins de 24 h). Fermer quand même ce jour aux nouvelles missions ?")}`)) return;
+    b.disabled = true;
+    const fin = new Date(d); fin.setDate(fin.getDate() + 1);
+    const { error } = await supabase.from("periodes_fermees").insert({ debut: d.toISOString(), fin: fin.toISOString(), motif: "AUTRE" }).then(r => r, e => ({ error: e }));
+    if (error) { b.disabled = false; z.querySelector("[data-erreur-indispo]").textContent = tr("Le service est momentanément indisponible. Réessayez dans quelques minutes."); return; }
+    recharger();
+  });
 }
 
 /* ------------------------------------------------------------------ Avertissements (2 autorisés, banni au suivant) */
@@ -306,6 +375,26 @@ export function arreterPartage() { if (partage) navigator.geolocation.clearWatch
 
 const quand = m => m.creneau ? `${dateLongue(new Date(m.creneau))} · ${heure(new Date(m.creneau).getHours(), new Date(m.creneau).getMinutes())}` : tr("Date à fixer");
 
+/* Matériel à prévoir (prompt 4, lot 6, validé le 25/11) : liste indicative selon la prestation, à adapter à son organisation
+   (le Cleaneur, indépendant, choisit et apporte son matériel). */
+const MATERIEL_BASE = ["Aspirateur", "Seau et serpillière ou balai plat", "Microfibres (cuisine, salle de bain, vitres : couleurs séparées)", "Produits multi-surfaces, dégraissant, anticalcaire", "Gants et sacs-poubelle"];
+const MATERIEL = {
+  home: MATERIEL_BASE, rental: [...MATERIEL_BASE, "Kit d'accueil si prévu (consommables)", "Sac pour le linge sale"],
+  windows: ["Raclette et mouilleur", "Seau et produit vitres", "Microfibres sèches", "Escabeau ou perche si besoin"],
+  car: ["Aspirateur et embouts", "Microfibres", "Produits intérieur (plastiques, vitres, tissus)", "Seau, shampoing et gants de lavage si lavage extérieur"],
+  textiles: ["Injecteur-extracteur", "Détachant adapté", "Brosse douce", "Aspirateur"],
+  office: MATERIEL_BASE, commerce: MATERIEL_BASE, communal: [...MATERIEL_BASE, "Panneau « sol glissant »"],
+  kitchen: ["Dégraissant alimentaire", "Désinfectant contact alimentaire", "Grattoir et éponges", "Gants et tablier"],
+  construction: ["Aspirateur eau et poussière", "Grattoir à lame", "Décapant pour traces de plâtre et peinture", "Microfibres", "Gants et masque"],
+};
+function blocMateriel(m) {
+  const l = MATERIEL[m.rubrique_id];
+  if (!l) return "";
+  return `<details class="materiel-mission"><summary class="petit"><b>${icone("valise")} ${tr("Matériel à prévoir")}</b></summary>
+    <ul class="petit">${l.map(x => `<li>${tr(x)}</li>`).join("")}</ul>
+    <p class="petit muet" style="margin:4px 0 0">${tr("Liste indicative selon la prestation : adaptez-la à votre organisation et aux demandes du client.")}</p></details>`;
+}
+
 function carteMission(m) {
   const r = rubrique(m.rubrique_id), [bouton, , etat] = ETAPE[m.statut] || [];
   return `<div class="carte mission" data-mission="${esc(m.reference)}">
@@ -327,6 +416,7 @@ function carteMission(m) {
     ${m.statut !== "CONFIRMEE" ? friseMission(m) : ""}
     ${blocAcces(m)}
     ${blocGuideMission(m)}
+    ${["CONFIRMEE", "EN_ROUTE"].includes(m.statut) ? blocMateriel(m) : ""}
     ${m.statut === "EN_ROUTE" ? `<p class="petit partage-actif" style="margin:8px 0 0">${icone("position")} Position partagée avec le client pendant le trajet</p>` : ""}
     ${["SUR_PLACE", "EN_COURS"].includes(m.statut) ? `<div class="controle-mission" data-controle="${esc(m.reference)}"></div>` : ""}
     ${m.statut === "SUR_PLACE" ? blocAccesImpossible(m) : ""}
@@ -506,6 +596,7 @@ export async function brancherMissions(vue, p) {
   // « Ma tournée » (23/11/2026) : les missions du jour sur la carte, dans l'ordre, avec l'itinéraire et le départ conseillé.
   const etapesJour = duJour.map(m => ({ titre: rubrique(m.rubrique_id)?.nom || m.rubrique_id, debut: m.creneau ? new Date(m.creneau) : null,
     adresse: `${m.rue || ""}, ${m.code_postal || ""} ${m.ville || ""}`.replace(/^[,\s]+/, "").trim(), rue: m.rue, cp: m.code_postal, ville: m.ville }));
+  const combler = p.employeur_id ? [] : comblerJournee(miennes, dispo);
   // Prompt 4, lot 6 : hiérarchie Urgent · Aujourd'hui · À venir · Performance dans l'onglet « Aujourd'hui ».
   const urgent = [];
   if (geo !== "granted") urgent.push(`<div class="carte teintee geoloc"><b>${icone("position")} Géolocalisation</b>
@@ -539,6 +630,13 @@ export async function brancherMissions(vue, p) {
     ${!duJour.length ? `<div class="carte vide-jour"><b>${tr("Aucune mission aujourd'hui")}</b><p class="petit" style="margin:4px 0 0">${tr(plusTard.length ? "Votre prochaine mission est ci-dessous, dans « À venir »." : "Les missions commencent dès l'ouverture des réservations. Elles s'afficheront ici, dans l'ordre de la journée.")}</p></div>` : ""}
     </section>
     <section class="niveau-tdb" aria-labelledby="titre-a-venir"><h2 class="titre-niveau" id="titre-a-venir">${tr("À venir")}</h2>
+    ${combler.length ? `<div class="carte combler-journee"><b>${icone("calendrier")} ${tr("Combler votre journée")}</b>
+      <p class="petit muet" style="margin:2px 0 6px">${tr("Missions disponibles près de vos missions prévues, sans chevauchement.")}</p>
+      ${combler.map(c => `<a class="ligne-a-venir" href="#missions-disponibles" data-aller="missions-disponibles">
+        <span class="quand-a-venir"><b>${esc(dateCourte(new Date(c.mission.creneau)))}</b><span>${heure(new Date(c.mission.creneau).getHours(), new Date(c.mission.creneau).getMinutes())}</span></span>
+        <span class="corps">${icone(rubrique(c.mission.rubrique_id)?.icone || "termine")} <span><b>${esc(rubrique(c.mission.rubrique_id)?.nom || "")} · ${c.mission.sur_devis ? tr("Sur devis") : euros(c.mission.estimation_c)}</b>
+          <span class="petit">${tr(c.avant ? "Avant votre mission de" : "Après votre mission de")} ${heure(new Date(c.voisine.creneau).getHours(), new Date(c.voisine.creneau).getMinutes())} · ${esc(c.mission.ville || "")}</span></span></span>
+        <span aria-hidden="true">›</span></a>`).join("")}</div>` : ""}
     ${plusTard.length ? `<div class="carte liste-a-venir">${plusTard.slice(0, 3).map(m => `<a class="ligne-a-venir" href="#mes-missions-a-venir" data-segment-aller="a_venir">
         <span class="quand-a-venir"><b>${m.creneau ? esc(dateCourte(new Date(m.creneau))) : tr("Date flexible")}</b>${m.creneau ? `<span>${heure(new Date(m.creneau).getHours(), new Date(m.creneau).getMinutes())}</span>` : ""}</span>
         <span class="corps">${icone(rubrique(m.rubrique_id)?.icone || "termine")} <span><b>${esc(rubrique(m.rubrique_id)?.nom || "")}</b><span class="petit">${esc(m.ville || "")} · ${duree(m.duree_min)} · ${m.sur_devis ? tr("Sur devis") : euros(m.estimation_c)}</span></span></span>

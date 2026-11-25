@@ -66,8 +66,11 @@ export function versIcs(evenements, horodatage) {
   const stamp = horodatage.toISOString().replace(/[-:]/g, "").replace(/\.\d+/, "");
   const lignes = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Cleaneroo//Agenda Pro//FR", "CALSCALE:GREGORIAN", "METHOD:PUBLISH", "X-WR-CALNAME:Cleaneroo"];
   evenements.forEach(e => {
+    // Événement à l'heure (missions du Cleaneur) si debut et fin sont des dates complètes ; sinon journée entière.
+    const utc = d => d.toISOString().replace(/[-:]/g, "").replace(/\.\d+/, "");
+    const horaire = e.debut instanceof Date && e.fin instanceof Date;
     lignes.push("BEGIN:VEVENT", `UID:${e.uid}@cleaneroo.fr`, `DTSTAMP:${stamp}`,
-      `DTSTART;VALUE=DATE:${compact(e.debut)}`, `DTEND;VALUE=DATE:${compact(e.fin)}`, `SUMMARY:${echapper(e.titre)}`);
+      horaire ? `DTSTART:${utc(e.debut)}` : `DTSTART;VALUE=DATE:${compact(e.debut)}`, horaire ? `DTEND:${utc(e.fin)}` : `DTEND;VALUE=DATE:${compact(e.fin)}`, `SUMMARY:${echapper(e.titre)}`);
     if (e.lieu) lignes.push(`LOCATION:${echapper(e.lieu)}`);
     if (e.note) lignes.push(`DESCRIPTION:${echapper(e.note)}`);
     lignes.push("END:VEVENT");
