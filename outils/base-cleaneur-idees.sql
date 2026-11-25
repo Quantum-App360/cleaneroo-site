@@ -1,5 +1,5 @@
 -- Idées validées par Michael le 25/11/2026 pour l'espace Cleaneur (prompt 4, lot 6), partie base de données.
--- À APPLIQUER SEULEMENT APRÈS SON ACCORD. Même logique à reporter dans les applis (Vincent).
+-- Appliqué le 25/11/2026 à 19 h 36 avec l'accord de Michael. Même logique à reporter dans les applis (Vincent).
 --
 -- 1. Proposer le prochain passage : après une mission, le Cleaneur propose au client une date et une heure ; le client est prévenu
 --    et réserve en un geste (réservation normale, payée, proposée d'abord à ce Cleaneur), ou refuse.
