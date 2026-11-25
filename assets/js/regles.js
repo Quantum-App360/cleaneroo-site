@@ -258,9 +258,20 @@ export const REGLES = {
   NIVEAUX_CLEANEUR: [["Cleaneur", 0], ["Confirmé", 10], ["Expert", 30], ["Élite", 60]],
   SURVEILLANCE_S: 30,            // nouvelles missions (Cleaneur) et prises en charge (client) : vérifiées toutes les 30 s, avec un son
   // Choix du Cleaneur et secteur (16 novembre 2026) : copie de Regles.kt
-  FAVORI_EXCLUSIVITE_H: 12,      // « Mon Cleaneur favori » : lui seul voit la demande pendant 12 h, puis elle s'ouvre aux candidatures
+  FAVORI_EXCLUSIVITE_H: 12,      // « Mon Cleaneur favori » : exclusivité maximale (prestation dans plus de 7 jours)
+  // Exclusivité du Cleaneur demandé (25/11/2026, validé par Michael) : 2 h si la prestation a lieu dans moins de 48 h, 6 h dans
+  // moins de 7 jours, 12 h au-delà ; libérée aussitôt s'il n'est pas disponible. Même règle que delai_favori (base-cleaneur-choisi.sql).
+  FAVORI_PALIERS_H: [[48, 2], [168, 6]],
   MISSIONS_SECTEUR_MIN: 3,       // moins de 3 missions disponibles dans le périmètre : conseil d'agrandir le secteur
 };
+
+/** Durée d'exclusivité du Cleaneur demandé (heures) pour une prestation à cette date (null : date flexible → 12 h). */
+export function delaiFavoriH(creneau, depuis = new Date()) {
+  if (!creneau) return REGLES.FAVORI_EXCLUSIVITE_H;
+  const h = (new Date(creneau) - depuis) / 3600e3;
+  const p = REGLES.FAVORI_PALIERS_H.find(([max]) => h < max);
+  return p ? p[1] : REGLES.FAVORI_EXCLUSIVITE_H;
+}
 
 /**
  * Conseil de secteur (16 novembre 2026, copie de ReglesMetier.conseilSecteur) : distances (km) des missions disponibles et périmètre actuel.

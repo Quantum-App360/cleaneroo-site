@@ -6,11 +6,12 @@
 // La date, l'heure et la fréquence sont reprises telles quelles dans la réservation ; le prix exact se calcule à l'étape suivante.
 import { RUBRIQUES, rubrique, FREQUENCES } from "./catalogue.js";
 import { afficherCarte, chercherAdresse, maPosition, adresseDe } from "./cartes.js";
-import { secteurCouvert, secteursPublics, rejoindreAttente } from "./donnees.js";
-import { preremplir } from "./reserver.js";
+import { secteurCouvert, secteursPublics, rejoindreAttente, cleaneursPublics } from "./donnees.js";
+import { preremplir, reserverAvecCleaneur } from "./reserver.js";
+import { badgeNiveau } from "./niveaux.js";
 import { blocEtat, afficherToast } from "./commun.js";
 import { icone } from "./icones.js";
-import { reservationsFermees, REGLES } from "./regles.js";
+import { reservationsFermees, REGLES, dateCourte } from "./regles.js";
 import { tr, traduire, LOCALE } from "./langue.js";
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -40,6 +41,52 @@ const etatVierge = () => ({ rubriqueId: "home", adresse: null, jour: "", heure: 
 export const champPrestation = (choisie, toutes = false) => `<label class="champ"><span>Prestation</span><select name="rubrique">
     ${toutes ? `<option value=""${choisie ? "" : " selected"}>Toutes les prestations</option>` : ""}
     ${PRESTATIONS_RECHERCHE().map(r => `<option value="${r.id}"${r.id === choisie ? " selected" : ""}>${esc(r.nom)}</option>`).join("")}</select></label>`;
+
+/* ------------------------------------------------------------------ Fiches Cleaneur (prompt 4, lot 5)
+   Seulement ce qu'une fiche publique montre (fonction cleaneurs_publics) : prénom et initiale, note et avis, prestations réalisées,
+   niveau, Pro, prestations, prochains jours disponibles, mois d'inscription, distance arrondie. Jamais d'adresse ni de position. */
+const nomCleaneur = c => `${c.prenom || ""}${c.initiale ? ` ${c.initiale}.` : ""}`.trim();
+const noteTxt = c => (c.note ? `★ ${String(c.note).replace(".", ",")} <span class="muet">(${c.nb_avis} ${tr("avis")})</span>` : `<span class="cleaneur-nouveau">${tr("Nouveau sur Cleaneroo")}</span>`);
+const distanceTxt = c => `${tr("à moins de")} ${c.distance_km} km`;
+const moisTxt = d => new Date(d + "T12:00").toLocaleDateString(LOCALE, { month: "long", year: "numeric" });
+const joursTxt = c => (c.prochains_jours || []).slice(0, 4).map(j => `<span class="puce-jour">${esc(dateCourte(new Date(j + "T12:00")))}</span>`).join("");
+
+/** Carte courte d'un Cleaneur dans la liste des résultats. */
+export const carteCleaneur = c => `<button type="button" class="carte-cleaneur-mini" data-fiche="${esc(c.cleaneur_id)}" aria-haspopup="dialog">
+    <span class="avatar-cleaneur" aria-hidden="true">${esc((c.prenom || "?").charAt(0).toUpperCase())}</span>
+    <span class="corps"><b>${esc(nomCleaneur(c))}${c.pro ? ` <span class="badge marque">Pro</span>` : ""}</b>
+      <span class="petit">${noteTxt(c)} · ${c.realisees} ${tr(c.realisees > 1 ? "prestations" : "prestation")} · ${distanceTxt(c)}</span>
+      ${(c.prochains_jours || []).length ? `<span class="jours-cleaneur">${joursTxt(c)}</span>` : ""}</span>
+    <span class="aller" aria-hidden="true">›</span></button>`;
+
+/** Fiche complète, en fenêtre : confiance, disponibilités, prestations, puis « Réserver avec … ». */
+function ficheCleaneur(c, rubriqueId) {
+  const r = rubrique(rubriqueId);
+  const presta = (c.prestations || []).map(id => rubrique(id)).filter(Boolean);
+  return `<div class="fiche-cleaneur" role="dialog" aria-modal="true" aria-labelledby="titre-fiche">
+    <div class="fiche-fond" data-fermer-fiche></div>
+    <article class="fiche-corps carte">
+      <button type="button" class="lien-bouton fiche-fermer" data-fermer-fiche>${tr("Fermer")}</button>
+      <header class="fiche-tete"><span class="avatar-cleaneur grand" aria-hidden="true">${esc((c.prenom || "?").charAt(0).toUpperCase())}</span>
+        <div><h2 id="titre-fiche">${esc(nomCleaneur(c))}</h2>
+          <p class="fiche-badges">${c.pro ? `<span class="badge marque">${tr("Cleaneur Pro")}</span>` : ""}${badgeNiveau(c.niveau)}<span class="badge succes">${icone("garantie")} ${tr("Dossier vérifié")}</span></p></div></header>
+      <div class="fiche-chiffres">
+        <div><b>${c.note ? String(c.note).replace(".", ",") : "–"}</b><span>${c.note ? `${c.nb_avis} ${tr("avis")}` : tr("Pas encore d'avis")}</span></div>
+        <div><b>${c.realisees}</b><span>${tr(c.realisees > 1 ? "prestations réalisées" : "prestation réalisée")}</span></div>
+        <div><b>${c.distance_km} km</b><span>${tr("au plus, de chez vous")}</span></div>
+      </div>
+      <p class="petit muet fiche-verif">${tr("Identité, SIRET, assurance RC Pro et attestation URSSAF vérifiés par Cleaneroo.")} ${tr("Sur Cleaneroo depuis")} ${esc(moisTxt(c.inscrit_le))}.</p>
+      <h3>${tr("Prochaines disponibilités")}</h3>
+      ${(c.prochains_jours || []).length ? `<p class="jours-cleaneur">${joursTxt(c)}</p><p class="petit muet" style="margin:4px 0 0">${tr("Jours où ce Cleaneur a ouvert des créneaux. Le créneau exact se choisit à la réservation.")}</p>`
+        : `<p class="petit muet">${tr("Pas de créneaux publiés pour les 3 prochaines semaines : votre demande lui est proposée, il répond selon son planning.")}</p>`}
+      <h3>${tr("Prestations proposées")}</h3>
+      <ul class="fiche-prestas">${presta.map(x => `<li class="${x.id === rubriqueId ? "choisie" : ""}">${icone(x.icone)} ${esc(x.nom)}</li>`).join("")}</ul>
+      <div class="fiche-action">
+        <button type="button" class="bouton plein" data-reserver-avec="${esc(c.cleaneur_id)}">${tr(reservationsFermees() ? "Estimer avec" : "Réserver avec")} ${esc(c.prenom || "")}</button>
+        <p class="petit muet">${esc(r.nom)} · ${tr("La demande lui est proposée d'abord : il est seul à la voir pendant 2 h à 12 h selon la date de la prestation. S'il n'est pas disponible, elle s'ouvre aussitôt aux autres Cleaneurs vérifiés.")}</p>
+      </div>
+    </article></div>`;
+}
 
 export function pageCarteClient() {
   const e = { ...etatVierge(), ...(lire() || {}) };
@@ -84,7 +131,7 @@ export function brancherCarteClient(vue) {
   if (!racine) return;
   const form = racine.querySelector("[data-recherche]"), boite = racine.querySelector("[data-boite]"), zone = racine.querySelector("[data-resultat]");
   const corps = racine.querySelector(".carte-client-corps");
-  const etat = { ...etatVierge(), ...(lire() || {}), dispo: null, secteurs: null, attente: {}, ouvert: "" };
+  const etat = { ...etatVierge(), ...(lire() || {}), dispo: null, secteurs: null, attente: {}, ouvert: "", cleaneurs: {} };
   let jeton = 0, jetonSecteurs = 0, carte = null;
   const sauver = () => ecrire({ rubriqueId: etat.rubriqueId, adresse: etat.adresse, jour: etat.jour, heure: etat.heure, frequence: etat.frequence, vue: etat.vue });
 
@@ -115,7 +162,45 @@ export function brancherCarteClient(vue) {
       : n < 0 ? `<button type="button" class="lien-bouton" data-reessayer>${tr("Réessayer")}</button>` : "";
     return `<article class="carte resultat-presta${principale ? " principale" : ""}${n > 0 ? " dispo" : ""}">
         <div class="resultat-tete">${icone(r.icone, { tuile: true })}<div class="corps"><h3>${esc(r.nom)}</h3><p class="petit muet">${esc(r.sousTitre || "")}</p></div></div>
-        <div class="resultat-pied">${statut}${action}</div>${formulaire}</article>`;
+        <div class="resultat-pied">${statut}${action}</div>${formulaire}${principale && n > 0 ? blocCleaneurs(r.id) : ""}</article>`;
+  };
+
+  /** Cleaneurs de la prestation choisie, sous sa carte : « ou choisissez votre Cleaneur ». */
+  const blocCleaneurs = id => {
+    const l = etat.cleaneurs[id];
+    if (l === undefined) { chargerCleaneurs(id); return `<div class="cleaneurs-resultat"><div class="squelette squelette-ligne"></div></div>`; }
+    if (l === "chargement") return `<div class="cleaneurs-resultat"><div class="squelette squelette-ligne"></div></div>`;
+    if (!l || !l.length) return "";
+    return `<div class="cleaneurs-resultat"><p class="titre-cleaneurs">${tr("Ou choisissez votre Cleaneur")}</p>${l.slice(0, 6).map(carteCleaneur).join("")}
+      ${l.length > 6 ? `<p class="petit muet">+${l.length - 6} ${tr("autres Cleaneurs vérifiés dans votre secteur")}</p>` : ""}</div>`;
+  };
+  const chargerCleaneurs = async id => {
+    if (!etat.adresse) return;
+    etat.cleaneurs[id] = "chargement";
+    const cle = `${etat.adresse.lat}|${etat.adresse.lon}`;
+    const l = await cleaneursPublics(id, etat.adresse.lat, etat.adresse.lon).catch(() => null);
+    if (!etat.adresse || `${etat.adresse.lat}|${etat.adresse.lon}` !== cle) return;
+    etat.cleaneurs[id] = l || [];
+    resultat();
+  };
+  const ouvrirFiche = cid => {
+    const c = Object.values(etat.cleaneurs).flat().find(x => x && x.cleaneur_id === cid);
+    if (!c) return;
+    const declencheur = document.activeElement;
+    const f = document.createElement("div");
+    f.innerHTML = ficheCleaneur(c, etat.rubriqueId);
+    const fiche = f.firstElementChild;
+    document.body.append(fiche);
+    traduire(fiche);
+    const fermer = () => { fiche.remove(); document.removeEventListener("keydown", echap); declencheur?.focus?.(); };
+    const echap = e => { if (e.key === "Escape") fermer(); };
+    document.addEventListener("keydown", echap);
+    window.addEventListener("hashchange", fermer, { once: true });
+    fiche.addEventListener("click", e => {
+      if (e.target.closest("[data-fermer-fiche]")) return fermer();
+      if (e.target.closest("[data-reserver-avec]")) { lireCriteres(); reserverAvecCleaneur(etat.rubriqueId, c, champsReservation(etat.rubriqueId)); }
+    });
+    fiche.querySelector(".fiche-fermer")?.focus();
   };
 
   const resultat = () => {
@@ -175,7 +260,7 @@ export function brancherCarteClient(vue) {
     etat.adresse = { lat: a.lat, lon: a.lon, texte, rue: a.rue || "", codePostal: a.codePostal || "", ville: a.ville || "",
       libelle: [a.rue, [a.codePostal, a.ville].filter(Boolean).join(" ")].filter(Boolean).join(", ") };
     if (!form.adresse.value.trim()) form.adresse.value = etat.adresse.libelle;
-    etat.attente = {}; etat.ouvert = "";
+    etat.attente = {}; etat.ouvert = ""; etat.cleaneurs = {};
     sauver(); dessiner();
     await verifier();
   };
@@ -194,16 +279,17 @@ export function brancherCarteClient(vue) {
     if (v === "carte") requestAnimationFrame(() => { try { (carte?.carte || carte)?.resize?.(); (carte?.carte || carte)?.invalidateSize?.(); carte?.recadrer?.(); } catch { /* rien */ } });
   };
 
-  const reserver = id => {
-    const r = rubrique(id), a = etat.adresse;
-    if (!r || !a) return;
-    lireCriteres();
-    const reg = formuleReguliere(r);
-    preremplir({ rubriqueId: id, champs: {
-      rue: a.rue || "", codePostal: a.codePostal || "", ville: a.ville || "", lat: a.lat, lon: a.lon,
+  /** Adresse, date, heure et fréquence de la recherche, repris dans la réservation. */
+  const champsReservation = id => {
+    const r = rubrique(id), a = etat.adresse, reg = formuleReguliere(r);
+    return { rue: a.rue || "", codePostal: a.codePostal || "", ville: a.ville || "", lat: a.lat, lon: a.lon,
       jour: etat.jour || "", heure: etat.jour && etat.heure >= 0 ? etat.heure : -1,
-      ...(reg && etat.frequence !== "unique" ? { formuleId: reg.id, frequence: etat.frequence } : {}),
-    } });
+      ...(reg && etat.frequence !== "unique" ? { formuleId: reg.id, frequence: etat.frequence } : {}) };
+  };
+  const reserver = id => {
+    if (!rubrique(id) || !etat.adresse) return;
+    lireCriteres();
+    preremplir({ rubriqueId: id, champs: champsReservation(id) });
     location.hash = `#/reserver/${id}`;
   };
 
@@ -236,6 +322,8 @@ export function brancherCarteClient(vue) {
   });
   racine.querySelectorAll("[data-vue]").forEach(b => b.addEventListener("click", () => basculer(b.dataset.vue)));
   zone.addEventListener("click", e => {
+    const fiche = e.target.closest("[data-fiche]");
+    if (fiche) return ouvrirFiche(fiche.dataset.fiche);
     const t = e.target.closest("[data-reserver], [data-ouvrir], [data-reessayer]");
     if (!t) return;
     if (t.dataset.reserver) reserver(t.dataset.reserver);

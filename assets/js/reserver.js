@@ -7,7 +7,7 @@ import { PARTIES, partie, partiePour, PARTIE_DE_L_ESPACE, rubriquesProposees, li
 import { calculer, entreeEstimation, SALISSURE, disponibilite, meilleurPack, tachesChiffrees, formuleDe, niveauLocation, passagesPlanifies, datesPassages,
   etapesDe, consommablesDe, menageTientEntreVoyageurs, frequenceDe, minutesEquipements, prixIndicatifEquipement, heuresEvenement, litsDe, litsTailles,
   tachesPourOccasion, niveauOccasion } from "./estimation.js";
-import { REGLES, euros, duree, heure, dateCourte, dateLongue, reservationsFermees, MESSAGE_LANCEMENT, photosAvantObligatoires } from "./regles.js";
+import { REGLES, euros, duree, heure, dateCourte, dateLongue, reservationsFermees, MESSAGE_LANCEMENT, photosAvantObligatoires, delaiFavoriH } from "./regles.js";
 import { envoyerDemande, secteurCouvert, rejoindreAttente, enregistrerBien, synchroniserBiens, marquerDonneesInvite } from "./donnees.js";
 import { etapesPhotoDe, etapesPersoDe } from "./etapes-bien.js";
 import { maPosition, adresseDe, chercherAdresse, afficherCarte } from "./cartes.js";
@@ -128,6 +128,12 @@ const CLE_FAVORI_VOULU = "cleaneroo-favori-voulu";
 export function reserverAvecFavori(cleaneurId) {
   try { localStorage.setItem(CLE_FAVORI_VOULU, JSON.stringify(cleaneurId)); localStorage.removeItem(CLE_BROUILLON); } catch { /* rien */ }
   if (location.hash === "#/reserver") dispatchEvent(new HashChangeEvent("hashchange")); else location.hash = "#/reserver";
+}
+/** « Réserver avec ce Cleaneur » depuis sa fiche (lot 5) : prestation et lieu repris, demande proposée d'abord à lui. */
+export function reserverAvecCleaneur(rubriqueId, cleaneur, champs = {}) {
+  const choisi = { cleaneur_id: cleaneur.cleaneur_id, prenom: cleaneur.prenom, initiale: cleaneur.initiale || "", note: cleaneur.note ?? null, nb_avis: cleaneur.nb_avis || 0, fiche: true };
+  preremplir({ rubriqueId, champs: { ...champs, choixCleaneur: "favori", cleaneurFavori: choisi.cleaneur_id, cleaneurChoisi: choisi } });
+  if (location.hash === `#/reserver/${rubriqueId}`) dispatchEvent(new HashChangeEvent("hashchange")); else location.hash = `#/reserver/${rubriqueId}`;
 }
 const avecFavoriVoulu = br => { const id = lire(CLE_FAVORI_VOULU, null); return id ? { ...br, choixCleaneur: "favori", cleaneurFavori: id } : br; };
 
@@ -1030,8 +1036,8 @@ function valeursRecap(est) {
   const logement = b.logementId ? logements().find(l => l.id === b.logementId) : null;
   const lieu = logement ? nomLogement(logement) : [b.rue, b.ville].filter(x => String(x || "").trim()).join(", ");
   const c = b.choixCleaneur || "candidatures";
-  const fav = c === "favori" ? favoris.find(x => x.cleaneur_id === b.cleaneurFavori) : null;
-  const cleaneur = fav ? `${fav.prenom}${fav.initiale ? ` ${fav.initiale}.` : ""} ${tr("(favori)")}` : c === "directe" ? tr("Attribué automatiquement") : tr("Vous choisissez parmi les candidats");
+  const fav = c === "favori" ? demandables().find(x => x.cleaneur_id === b.cleaneurFavori) : null;
+  const cleaneur = fav ? `${fav.prenom}${fav.initiale ? ` ${fav.initiale}.` : ""} ${tr(fav.fiche ? "(demandé)" : "(favori)")}` : c === "directe" ? tr("Attribué automatiquement") : tr("Vous choisissez parmi les candidats");
   const n = Number.isFinite(b.lat) ? verifierCouverture() : null;
   return { r, f, prix, dureeTxt, quand, lieu, cleaneur, n };
 }
@@ -1110,7 +1116,9 @@ async function chargerParrainage() {
 }
 /* Choix du Cleaneur (16 novembre 2026) : attribué automatiquement, validé par le client, ou demandé à un Cleaneur favori. */
 const directePossible = est => !b.flexible && !est.devisObligatoire;
-const favoriChoisi = () => favoris.find(f => f.cleaneur_id === b.cleaneurFavori);
+/** Cleaneurs qu'on peut demander : le carnet de favoris, plus celui choisi sur sa fiche (lot 5). */
+const demandables = () => [...favoris, ...(b?.cleaneurChoisi && !favoris.some(f => f.cleaneur_id === b.cleaneurChoisi.cleaneur_id) ? [b.cleaneurChoisi] : [])];
+const favoriChoisi = () => demandables().find(f => f.cleaneur_id === b.cleaneurFavori);
 /** Choix réellement envoyé : sans favori valable ni réservation directe possible, ce sont les candidatures. */
 function choixEnvoye() {
   if (b.choixCleaneur === "favori") return favoriChoisi() ? "favori" : "candidatures";
@@ -1118,19 +1126,23 @@ function choixEnvoye() {
   return "candidatures";
 }
 function blocChoixCleaneur(est) {
-  const c = b.choixCleaneur === "favori" ? (favoris.length ? "favori" : "candidatures") : b.choixCleaneur === "directe" && !directePossible(est) ? "candidatures" : b.choixCleaneur || "candidatures";
+  const liste = demandables();
+  const c = b.choixCleaneur === "favori" ? (liste.length ? "favori" : "candidatures") : b.choixCleaneur === "directe" && !directePossible(est) ? "candidatures" : b.choixCleaneur || "candidatures";
   const etoiles = f => f.note ? `★ ${String(f.note).replace(".", ",")} · ` : "";
+  const h = delaiFavoriH(debutChoisi());
+  const surFiche = !!b.cleaneurChoisi;
+  const detailListe = f => f.fiche ? (f.nb_avis ? `${etoiles(f)}${f.nb_avis} ${tr(f.nb_avis > 1 ? "avis" : "avis")}` : tr("Choisi sur sa fiche")) : `${etoiles(f)}${f.ensemble} ${tr(f.ensemble > 1 ? "prestations ensemble" : "prestation ensemble")}`;
   return `${directePossible(est) ? `<button type="button" class="option ${c === "directe" ? "choisi" : ""}" data-champ="choixCleaneur" data-valeur="directe">Cleaneur attribué automatiquement
       <span class="detail">Le premier Cleaneur vérifié qui accepte au prix estimé obtient la mission. Le plus rapide, sans rien à faire.</span></button>` : ""}
     <button type="button" class="option ${c === "candidatures" ? "choisi" : ""}" data-champ="choixCleaneur" data-valeur="candidatures">Je valide mon Cleaneur
       <span class="detail">Les Cleaneurs se proposent avec leur horaire et leur prix. Vous êtes prévenu à chaque candidature et vous choisissez.</span></button>
-    ${favoris.length ? `<button type="button" class="option ${c === "favori" ? "choisi" : ""}" data-champ="choixCleaneur" data-valeur="favori">Mon Cleaneur favori
-      <span class="detail">La demande est proposée d'abord à votre favori, seul à la voir pendant ${REGLES.FAVORI_EXCLUSIVITE_H} h. Sans réponse, elle s'ouvre aux autres Cleaneurs et vous validez.</span></button>
-    ${c === "favori" ? `<div class="favoris-choix">${favoris.map(f => `<button type="button" class="favori-carte ${f.cleaneur_id === b.cleaneurFavori ? "choisi" : ""}" data-favori-choisi="${esc(f.cleaneur_id)}">
+    ${liste.length ? `<button type="button" class="option ${c === "favori" ? "choisi" : ""}" data-champ="choixCleaneur" data-valeur="favori">${tr(surFiche ? "Le Cleaneur que j'ai choisi" : "Mon Cleaneur favori")}
+      <span class="detail">${tr("La demande lui est proposée d'abord : il est seul à la voir pendant")} ${h} h. ${tr("S'il n'est pas disponible ou sans réponse, elle s'ouvre aux autres Cleaneurs et vous validez.")}</span></button>
+    ${c === "favori" ? `<div class="favoris-choix">${liste.map(f => `<button type="button" class="favori-carte ${f.cleaneur_id === b.cleaneurFavori ? "choisi" : ""}" data-favori-choisi="${esc(f.cleaneur_id)}">
         <span class="avatar-favori">${esc((f.prenom || "?").charAt(0).toUpperCase())}</span><span><b>${esc(f.prenom)} ${esc(f.initiale ? f.initiale + "." : "")}</b>
-        <small>${etoiles(f)}${f.ensemble} ${tr(f.ensemble > 1 ? "prestations ensemble" : "prestation ensemble")}</small></span></button>`).join("")}</div>
-      ${favoriChoisi() ? "" : `<p class="petit" style="color:var(--alerte)">Choisissez le Cleaneur favori à qui proposer la demande.</p>`}` : ""}`
-    : `<p class="petit">Ajoutez un Cleaneur à vos favoris après une prestation : vous pourrez ensuite le demander directement.</p>`}
+        <small>${detailListe(f)}</small></span></button>`).join("")}</div>
+      ${favoriChoisi() ? "" : `<p class="petit" style="color:var(--alerte)">Choisissez le Cleaneur à qui proposer la demande.</p>`}` : ""}`
+    : `<p class="petit">Ajoutez un Cleaneur à vos favoris après une prestation, ou choisissez-le sur sa fiche depuis la recherche : vous pourrez ensuite le demander directement.</p>`}
     `;
 }
 
@@ -1230,7 +1242,7 @@ document.addEventListener("click", async e => {
     return maj({ logementId: "", modifierLogement: true, rue: "", codePostal: "", ville: "", accueil: "", tiersNom: "", tiersTel: "", boiteEmplacement: "", code: "", lat: null, lon: null, port: "", place: "", accesPonton: "" });
   }
   if (ds.favoriChoisi) return maj({ choixCleaneur: "favori", cleaneurFavori: ds.favoriChoisi });
-  if (ds.champ === "choixCleaneur" && ds.valeur === "favori") return maj({ choixCleaneur: "favori", cleaneurFavori: favoriChoisi() ? b.cleaneurFavori : favoris[0]?.cleaneur_id || "" });
+  if (ds.champ === "choixCleaneur" && ds.valeur === "favori") return maj({ choixCleaneur: "favori", cleaneurFavori: favoriChoisi() ? b.cleaneurFavori : demandables()[0]?.cleaneur_id || "" });
   if (ds.logementDepart !== undefined) { b = { ...(b || { etape: 1, espace: "personnel" }), logementDepart: ds.logementDepart }; sauver(); return rendre(); }
   if (ds.rubrique) {
     const dep = logementDepart();

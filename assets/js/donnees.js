@@ -480,6 +480,28 @@ export async function secteursPublics(rubriqueId) {
   const { data, error } = await supabase.rpc("secteurs_publics", { p_rubrique: rubriqueId || null });
   return error ? null : data || [];
 }
+/* Fiches Cleaneur et Cleaneur demandé (lot 5, base-cleaneur-choisi.sql). */
+/** Cleaneurs validés qui couvrent l'adresse pour cette prestation (fiche publique uniquement), ou null si le service ne répond pas. */
+export async function cleaneursPublics(rubriqueId, lat, lon) {
+  const { data, error } = await supabase.rpc("cleaneurs_publics", { p_rubrique: rubriqueId, p_lat: lat, p_lon: lon });
+  return error ? null : data || [];
+}
+/** Proposer la demande à tous maintenant (client) ou « Je ne suis pas disponible » (Cleaneur demandé). */
+export async function libererFavori(reference, jeton = null) {
+  const { data, error } = await supabase.rpc("liberer_favori", { p_reference: reference, p_jeton: jeton });
+  if (error) throw error;
+  return data;
+}
+/** Cleaneur à qui la demande est proposée en premier, et jusqu'à quand ; null s'il n'y en a pas (ou plus). */
+export async function favoriDeDemande(reference, jeton) {
+  const { data, error } = await supabase.rpc("favori_de_demande", { p_reference: reference, p_jeton: jeton });
+  return error ? null : (data || [])[0] || null;
+}
+/** Demandes réservées au Cleaneur connecté pendant leur exclusivité. */
+export async function mesDemandesPersonnelles() {
+  const { data, error } = await supabase.rpc("mes_demandes_personnelles");
+  return error ? [] : data || [];
+}
 /** Inscrit le client sur la liste d'attente de son secteur ; il est prévenu dès qu'un Cleaneur qualifié s'y installe. */
 export async function rejoindreAttente(a) {
   const { error } = await supabase.rpc("rejoindre_attente", { p_rubrique: a.rubriqueId, p_code_postal: a.codePostal || "", p_ville: a.ville,

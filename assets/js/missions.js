@@ -4,7 +4,7 @@
 import { rubrique } from "./catalogue.js";
 import { REGLES, euros, dateLongue, heure, duree, finOffreLancement, indemniteAccesC, dateVersement, conseilSecteur, lienWhatsAppSupport } from "./regles.js";
 import { monParrainage, lienInviterClient } from "./parrainage.js";
-import { supabase, majProfil } from "./donnees.js";
+import { supabase, majProfil, mesDemandesPersonnelles, libererFavori } from "./donnees.js";
 import { positionAdresse, distanceKm } from "./suivi-live.js";
 import { blocNoterClients, remplirNotesClients, blocAvisRecus } from "./avis-clients.js";
 import { blocFormations } from "./formations.js";
@@ -21,7 +21,7 @@ import { blocCreneaux, scoresMissions, distances } from "./creneaux.js";
 import { preparationCleaneur } from "./espaces.js";
 import { icone } from "./icones.js";
 import { remplirChezQui } from "./vitrine.js";
-import { traduire, tr } from "./langue.js";
+import { traduire, tr, LOCALE } from "./langue.js";
 import { missionsDisponibles, mesMissions, prendreMission, avancerMission, envoyerPosition, lienPhotoDemande,
   selfieDuJour, deposerSelfie, quitterLogement, selfiesAVerifier, deciderSelfie, lienSelfie, lienDocument,
   mesAvertissements, avertissementsCleaneurs, avertirCleaneur, leverBannissement,
@@ -351,10 +351,16 @@ function carteDisponible(m) {
       <p class="muet" style="margin:2px 0 0">${quand(m)} · ${duree(m.duree_min)}${m.nombre_cleaneurs === 2 ? " · 2 Cleaneurs" : ""}</p>
       <div data-chez-qui="${esc(m.reference)}"></div>
       <p class="petit" style="margin:2px 0 0">${esc(m.code_postal)} ${esc(m.ville)}${scores.has(m.reference) ? ` · <b style="color:var(--primaire)">${tr("Compatibilité")} ${Math.min(100, scores.get(m.reference))}/100</b>` : ""}</p><p class="petit" data-note-client="${esc(m.reference)}" style="margin:2px 0 0"></p><p class="erreur" data-erreur-prendre style="margin:4px 0 0"></p></div>
-    ${m.choix_cleaneur === "directe" ? `<button type="button" class="bouton" data-prendre="${esc(m.reference)}">Prendre la mission</button>`
+    ${personnelles.has(m.reference) ? `<div class="demande-perso"><span class="tampon vert">${icone("cleaneurs")} ${tr("Le client vous a demandé")}</span>
+        <span class="petit">${tr("Réservée pour vous jusqu'à")} ${new Date(personnelles.get(m.reference)).toLocaleTimeString(LOCALE, { hour: "2-digit", minute: "2-digit" })}</span>
+        <div class="boutons-ligne"><button type="button" class="bouton" data-prendre="${esc(m.reference)}">${tr("Prendre la mission")}</button>
+        <button type="button" class="bouton secondaire" data-pas-dispo="${esc(m.reference)}">${tr("Je ne suis pas disponible")}</button></div></div>`
+      : m.choix_cleaneur === "directe" ? `<button type="button" class="bouton" data-prendre="${esc(m.reference)}">Prendre la mission</button>`
       : formulaireProposition(m, mesPropositions.find(x => x.reference === m.reference), distances.get(m.reference) ?? null)}</div>`;
 }
 let mesPropositions = [];
+/** Demandes où le client m'a demandé personnellement (référence → fin de l'exclusivité). */
+let personnelles = new Map();
 let scores = new Map();
 
 const vide = (t, plus = "") => `<div class="vide-compte"><p class="muet">${t}</p>${plus ? `<p class="petit">${plus}</p>` : ""}</div>`;
@@ -466,6 +472,7 @@ export async function brancherMissions(vue, p) {
   const [miennes, dispo, geo, selfie, avert] = await Promise.all([mesMissions().catch(() => []), missionsDisponibles().catch(() => []), etatGeoloc(),
     selfieDuJour().catch(() => "aucun"), p.role === "admin" ? null : mesAvertissements().catch(() => null)]);
   mesPropositions = await supabase.rpc("mes_propositions").then(r => r.data || []).catch(() => []);
+  personnelles = new Map((await mesDemandesPersonnelles().catch(() => [])).map(x => [x.reference, x.jusqu]));
   const [penalites, docs, tableau] = await Promise.all([p.role === "admin" ? null : mesPenalites().catch(() => null),
     mesDocuments().catch(() => []), tableauCleaneur().catch(() => null)]);
   if (!document.body.contains(boite)) return;
@@ -597,6 +604,12 @@ ${p.employeur_id ? "" : `    <h2 class="titre-section" id="missions-disponibles"
   // Trajet en cours (page rouverte) : la position repart toute seule.
   const enRoute = miennes.find(m => m.statut === "EN_ROUTE");
   if (enRoute && geo === "granted") partagerPosition(enRoute.reference); else if (!enRoute) arreterPartage();
+  // Demandé personnellement mais pas disponible : la demande s'ouvre tout de suite aux autres Cleaneurs, le client est prévenu.
+  boite.querySelectorAll("[data-pas-dispo]").forEach(b => b.onclick = async () => {
+    if (!confirm(tr("Vous n'êtes pas disponible ? La demande sera proposée tout de suite aux autres Cleaneurs, et le client sera prévenu."))) return;
+    b.disabled = true;
+    try { await libererFavori(b.dataset.pasDispo); recharger(); } catch { b.disabled = false; }
+  });
   boite.querySelectorAll("[data-prendre]").forEach(b => b.onclick = async () => {
     b.disabled = true;
     const r = await prendreMission(b.dataset.prendre).catch(() => "erreur");

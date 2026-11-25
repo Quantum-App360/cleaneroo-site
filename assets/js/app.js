@@ -1,17 +1,17 @@
 // Navigation du site et pages simples. Le parcours de réservation est dans reserver.js.
 import { champCodeParrain, memoriserCodeParrain } from "./parrainage.js";
 import { RUBRIQUES, RACCOURCIS_VITRINE, rubrique, TYPES_LIEU, pastille } from "./catalogue.js";
-import { traduire, traduireCatalogue, selecteurLangue, tr, langue } from "./langue.js";
+import { traduire, traduireCatalogue, selecteurLangue, tr, langue, LOCALE } from "./langue.js";
 import { barreOnglets } from "./espaces.js";
 import { modeCleaneur, fixerMode, boutonMode, brancherBascule, blocChoixCleaneur } from "./mode.js";
-import { euros, duree, dateLongue, dateHeure, heure, reservationsFermees, MESSAGE_LANCEMENT, REGLES, offreConciergerieOuverte } from "./regles.js";
+import { euros, duree, dateLongue, dateHeure, heure, reservationsFermees, MESSAGE_LANCEMENT, REGLES, offreConciergerieOuverte, dateCourte } from "./regles.js";
 
 // Langue : catalogue traduit avant tout affichage.
 traduireCatalogue(RUBRIQUES, TYPES_LIEU);
 import { ouvrirReservation, ouvrirSimulateur, modeles, logements, nomLogement, brouillonExemple } from "./reserver.js";
 import { calculer, entreeEstimation } from "./estimation.js";
 import "./tarifs.js";   // dernière version des tarifs gardée sur l'appareil, appliquée avant le premier affichage
-import { supabase, suivre, annuler, memoriser, inscrire, chargerOuverture } from "./donnees.js";
+import { supabase, suivre, annuler, memoriser, inscrire, chargerOuverture, favoriDeDemande, libererFavori } from "./donnees.js";
 import { blocRetardClient, blocRemplacementClient } from "./retards.js";
 import { guideVideo } from "./guide-video.js";
 import { blocApercuTournee, brancherApercuTournee } from "./tournee.js";
@@ -37,7 +37,7 @@ import { icone, teinte, ICONES_RUBRIQUES, ICONES_INTERFACE } from "./icones.js";
 import { pageTableau, arreterTableau } from "./tableau.js";
 import { compteRenduPieces } from "./controle-ecran.js";
 import { blocFormulesCleaneur, brancherFormulesCleaneur } from "./formules-cleaneur.js";
-import { blocEtapes, blocParcours, brancherParcours, surveillerConnexion, bandeGaranties, logosPaiement, blocJustePrix, blocAvantApres, brancherAvantApres, sectionAvisPublics, remplirAvisPublics, installerRappel, encartAideRappel, bandeauLancement, pageChargement, decorTableau, surveillerFormulaire, envoiRobot, CONTIENT_LIEN } from "./commun.js";
+import { blocEtapes, blocParcours, brancherParcours, surveillerConnexion, bandeGaranties, logosPaiement, blocJustePrix, blocAvantApres, brancherAvantApres, sectionAvisPublics, remplirAvisPublics, installerRappel, encartAideRappel, bandeauLancement, pageChargement, decorTableau, surveillerFormulaire, envoiRobot, CONTIENT_LIEN, afficherToast } from "./commun.js";
 import "./fond-anime.js";
 import "./oeil.js";
 import "./choix-prestation.js";   // fenêtre animée « Réserver une prestation »   // œil pour afficher le mot de passe
@@ -548,6 +548,7 @@ async function pageDemande(ref, jeton) {
     <div class="note" style="margin-bottom:14px">${etat}</div>
     ${!d.sur_devis && d.statut !== "ANNULEE" ? `<div id="paiement-client"></div>` : ""}
     ${["PUBLIEE", "CONFIRMEE"].includes(d.statut) ? `<div id="remplacement-client"></div>` : ""}
+    ${d.statut === "PUBLIEE" && d.choix_cleaneur === "favori" ? `<div id="favori-demande"></div>` : ""}
     ${d.statut === "PUBLIEE" && d.choix_cleaneur !== "directe" ? `<div id="propositions-client"></div>` : ""}
     ${["CONFIRMEE", "EN_ROUTE"].includes(d.statut) ? `<div id="retard-client"></div>` : ""}
     ${d.statut === "EN_ROUTE" ? `<div id="presence-client"></div>` : ""}
@@ -564,7 +565,7 @@ async function pageDemande(ref, jeton) {
         const total = d.estimation_c + frais - remise;
         return `<p style="margin:6px 0 0"><b>Prix :</b> ${euros(d.estimation_c)}${frais ? ` · ${tr("frais de service")} ${euros(frais)}` : ""}${remise ? ` · ${tr("remise")} −${euros(remise)}` : ""}</p>
           <p style="margin:6px 0 0"><b>${tr("Total à payer")} :</b> ${euros(total)}${d.credit_impot_c ? ` · ${euros(total - d.credit_impot_c)} ${tr("après crédit d'impôt, si éligible")}` : ""}</p>`; })()}
-      <p style="margin:6px 0 0"><b>Choix du Cleaneur :</b> ${d.choix_cleaneur === "directe" ? "réservation directe" : "parmi les candidatures"}</p>
+      <p style="margin:6px 0 0"><b>Choix du Cleaneur :</b> ${d.choix_cleaneur === "directe" ? "réservation directe" : d.choix_cleaneur === "favori" ? "proposée d'abord au Cleaneur que vous avez demandé" : "parmi les candidatures"}</p>
     </div>
     <div class="carte teintee" style="margin-bottom:12px"><b>Votre lien de suivi</b>
       <p class="petit" style="margin:4px 0 8px">Gardez-le : il permet de suivre et d'annuler votre demande depuis n'importe quel appareil.</p>
@@ -583,6 +584,27 @@ async function pageDemande(ref, jeton) {
     ${["EN_COURS", "A_VALIDER", "TERMINEE", "ANNULEE"].includes(d.statut) ? `<div id="compte-rendu-pieces"></div>` : ""}
   </div></section>`;
 }
+
+/* Cleaneur demandé (lot 5) : la demande lui est proposée seul jusqu'à une heure donnée ; le client peut la proposer à tous tout de suite. */
+async function blocFavoriDemande(boite, ref, jeton) {
+  if (!boite) return;
+  const f = await favoriDeDemande(ref, jeton);
+  if (!boite.isConnected) return;
+  if (!f) { boite.innerHTML = ""; return; }
+  const jusqu = new Date(f.jusqu);
+  boite.innerHTML = `<div class="carte teintee favori-demande" style="margin-bottom:14px">
+      <b>${icone("cleaneurs")} ${tr("Proposée d'abord à")} ${esc(f.prenom)}${f.initiale ? ` ${esc(f.initiale)}.` : ""}</b>
+      <p class="petit" style="margin:4px 0 10px">${tr("Seul à la voir jusqu'à")} ${heureMinute(jusqu)}${jusqu.toDateString() === new Date().toDateString() ? "" : ` (${esc(dateCourte(jusqu))})`}.
+        ${tr("S'il n'est pas disponible, elle s'ouvre aussitôt aux autres Cleaneurs vérifiés.")}</p>
+      <button type="button" class="bouton secondaire" data-liberer-favori>${tr("Proposer à tous maintenant")}</button></div>`;
+  boite.querySelector("[data-liberer-favori]").onclick = async e => {
+    if (!confirm(tr("Proposer la demande à tous les Cleaneurs vérifiés de votre secteur dès maintenant ?"))) return;
+    e.target.disabled = true;
+    try { await libererFavori(ref, jeton); afficherToast("Votre demande est proposée à tous les Cleaneurs vérifiés de votre secteur."); boite.innerHTML = ""; }
+    catch { e.target.disabled = false; afficherToast("Le service est momentanément indisponible. Réessayez dans quelques minutes.", "erreur"); }
+  };
+}
+const heureMinute = d => d.toLocaleTimeString(LOCALE, { hour: "2-digit", minute: "2-digit" });
 
 /* ------------------------------------------------------------------ Démonstration du suivi en direct (aucune vraie mission avant l'ouverture) */
 const DEMO_TRAJET = { depart: { lat: 43.4364, lon: 6.7366 }, arrivee: { lat: 43.4232, lon: 6.7700 }, prenom: "Louise", dureeS: 60 };
@@ -712,6 +734,7 @@ async function afficherPage() {
     blocRemplacementClient(document.getElementById("remplacement-client"), decodeURIComponent(ref || ""), decodeURIComponent(jeton || ""));
     blocConsommablesClient(document.getElementById("consommables-client"), decodeURIComponent(ref || ""), decodeURIComponent(jeton || ""));
     blocPropositionsClient(document.getElementById("propositions-client"), decodeURIComponent(ref || ""), decodeURIComponent(jeton || ""));
+    blocFavoriDemande(document.getElementById("favori-demande"), decodeURIComponent(ref || ""), decodeURIComponent(jeton || ""));
     blocRetardClient(document.getElementById("retard-client"), decodeURIComponent(ref || ""), decodeURIComponent(jeton || ""));
     const presence = document.getElementById("presence-client");
     if (presence) supabase.rpc("presence_a_confirmer", { p_reference: decodeURIComponent(ref || ""), p_jeton: decodeURIComponent(jeton || "") }).then(({ data }) => {
