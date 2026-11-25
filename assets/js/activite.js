@@ -3,9 +3,9 @@
 // plafond de la micro-entreprise, rappel de déclaration, export tableur et créateur de devis (page imprimable en PDF).
 // Calculs dans regles.js (calculActivite, copie dans ReglesMetier.kt). Même écran dans l'appli (Activite.kt).
 import { icone } from "./icones.js";
-import { supabase } from "./donnees.js";
+import { supabase, mesMissions } from "./donnees.js";
 import { mesFactures } from "./factures.js";
-import { euros, REGLES, calculActivite, netPortefeuille, dateVersement, dateLongue } from "./regles.js";
+import { euros, REGLES, netPortefeuille, dateVersement, dateLongue } from "./regles.js";
 import { tr, traduire, LOCALE } from "./langue.js";
 import { esc } from "./commun.js";
 
@@ -14,39 +14,101 @@ const lireReglages = () => { try { return JSON.parse(localStorage.getItem(CLE)) 
 const garder = r => { try { localStorage.setItem(CLE, JSON.stringify(r)); } catch { /* rien */ } };
 const pct = n => String(n).replace(".", ",") + " %";
 
-/* Revenus (prompt 4, lot 6) : encaissé aujourd'hui, cette semaine, ce mois-ci et cette année (prestations facturées + pourboires),
-   missions facturées, moyenne par mission et évolution sur 6 mois. Mêmes sources que « Mon activité » (factures, avis). */
+/* Chiffre d'affaires (prompt 4, lot 6, validé par Michael le 25/11) : en tête de l'onglet Gains, au mois ou à l'année.
+   CA brut = prestations facturées + pourboires (le montant à déclarer à l'URSSAF) ; commission Cleaneroo ; net versé ;
+   cotisations estimées (mêmes taux que calculActivite) ; reste. Comparaison à la même date de la période précédente,
+   graphique (semaines du mois, ou 12 mois brut / net), prévisionnel des missions confirmées, objectif du mois,
+   montant à déclarer avec sa date limite, plafond de la micro-entreprise (alerte à 80 %). */
 const jourIso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-export function revenus({ factures = [], pourboires = [], maintenant = new Date() }) {
-  const lignes = [...factures.filter(f => f.type === "prestation").map(f => ({ jour: String(f.date_emission).slice(0, 10), c: f.total_ttc_c || 0, mission: 1 })),
-    ...pourboires.map(x => ({ jour: String(x.cree_le).slice(0, 10), c: x.pourboire_c || 0, mission: 0 }))];
-  const auj = jourIso(maintenant);
-  const lundi = new Date(maintenant); lundi.setHours(12, 0, 0, 0); lundi.setDate(lundi.getDate() - ((lundi.getDay() + 6) % 7));
-  const debutSemaine = jourIso(lundi), mois = auj.slice(0, 7), an = auj.slice(0, 4);
-  const somme = f => lignes.filter(f).reduce((s, l) => s + l.c, 0);
-  const duMois = lignes.filter(l => l.jour.slice(0, 7) === mois), missionsMois = duMois.reduce((s, l) => s + l.mission, 0);
-  const prestaMois = duMois.filter(l => l.mission).reduce((s, l) => s + l.c, 0);
-  const historique = Array.from({ length: 6 }, (_, i) => {
-    const d = new Date(maintenant.getFullYear(), maintenant.getMonth() - 5 + i, 1), cle = jourIso(d).slice(0, 7);
-    return { cle, mois: d, c: lignes.filter(l => l.jour.slice(0, 7) === cle).reduce((s, l) => s + l.c, 0) };
-  });
-  return { jourC: somme(l => l.jour === auj), semaineC: somme(l => l.jour >= debutSemaine && l.jour <= auj), moisC: somme(l => l.jour.slice(0, 7) === mois),
-    anneeC: somme(l => l.jour.slice(0, 4) === an), missionsMois, moyenneC: missionsMois ? Math.round(prestaMois / missionsMois) : 0, historique };
+/** Lignes datées : CA (prestations, pourboires) et commissions. */
+function lignesCA(factures, pourboires) {
+  return [...factures.filter(f => f.type === "prestation").map(f => ({ jour: String(f.date_emission).slice(0, 10), ca: f.total_ttc_c || 0, com: 0, mission: 1 })),
+    ...factures.filter(f => f.type === "commission").map(f => ({ jour: String(f.date_emission).slice(0, 10), ca: 0, com: f.total_ttc_c || 0, mission: 0 })),
+    ...pourboires.map(x => ({ jour: String(x.cree_le).slice(0, 10), ca: x.pourboire_c || 0, com: 0, mission: 0 }))];
 }
-function blocRevenus(r) {
-  const max = Math.max(1, ...r.historique.map(h => h.c));
-  const tuile = (libelle, c) => `<div class="tuile-revenu"><span>${tr(libelle)}</span><b>${euros(c)}</b></div>`;
-  return `<div class="carte revenus-cleaneur">
-      <b>${tr("Mes revenus encaissés")}</b>
-      <div class="tuiles-revenus">${tuile("Aujourd'hui", r.jourC)}${tuile("Cette semaine", r.semaineC)}${tuile("Ce mois-ci", r.moisC)}${tuile("Cette année", r.anneeC)}</div>
-      <p class="petit" style="margin:8px 0 0">${r.missionsMois} ${tr(r.missionsMois > 1 ? "missions facturées ce mois-ci" : "mission facturée ce mois-ci")}${r.missionsMois ? ` · ${tr("moyenne par mission :")} <b>${euros(r.moyenneC)}</b>` : ""}</p>
-      <figure class="graphe-revenus" aria-label="${tr("Évolution sur 6 mois")}">
-        <figcaption class="petit muet">${tr("Évolution sur 6 mois")}</figcaption>
-        <div class="barres">${r.historique.map((h, i) => `<div class="barre${i === r.historique.length - 1 ? " actuelle" : ""}" title="${esc(euros(h.c))}">
-          <span class="valeur">${h.c ? esc(euros(h.c).replace(/,00\s?€/, " €")) : ""}</span><span class="colonne"><i style="height:${Math.max(h.c ? 4 : 0, Math.round(h.c / max * 100))}%"></i></span>
-          <span class="mois">${esc(h.mois.toLocaleDateString(LOCALE, { month: "short" }))}</span></div>`).join("")}</div>
-      </figure>
-      ${r.anneeC ? "" : `<p class="petit muet" style="margin:6px 0 0">${tr("Vos revenus apparaîtront ici après vos premières missions validées.")}</p>`}
+const somme = (l, de, a) => l.filter(x => x.jour >= de && x.jour <= a).reduce((s, x) => ({ ca: s.ca + x.ca, com: s.com + x.com, missions: s.missions + x.mission }), { ca: 0, com: 0, missions: 0 });
+/** Chiffre d'affaires de la période (mois ou année) jusqu'à aujourd'hui, et la même durée de la période précédente. */
+export function chiffreAffaires({ factures = [], pourboires = [], periode = "mois", acre = false, liberatoire = false, maintenant = new Date() }) {
+  const l = lignesCA(factures, pourboires), auj = jourIso(maintenant);
+  const an = maintenant.getFullYear(), m = maintenant.getMonth(), j = maintenant.getDate();
+  const debut = periode === "mois" ? jourIso(new Date(an, m, 1)) : `${an}-01-01`;
+  const avantDebut = periode === "mois" ? jourIso(new Date(an, m - 1, 1)) : `${an - 1}-01-01`;
+  const avantFin = periode === "mois" ? jourIso(new Date(an, m - 1, Math.min(j, new Date(an, m, 0).getDate()))) : jourIso(new Date(an - 1, m, j));
+  const ici = somme(l, debut, auj), avant = somme(l, avantDebut, avantFin);
+  const tauxPct = Math.round(((acre ? REGLES.URSSAF_ACRE_PCT : REGLES.URSSAF_SERVICES_PCT) + (liberatoire ? REGLES.VERSEMENT_LIBERATOIRE_PCT : 0)) * 10) / 10;
+  const cotisations = Math.round(ici.ca * tauxPct / 100);
+  const graphe = periode === "mois"
+    ? Array.from({ length: 5 }, (_, i) => { const d = 1 + i * 7, f = Math.min(d + 6, new Date(an, m + 1, 0).getDate());
+        return d > new Date(an, m + 1, 0).getDate() ? null : { libelle: `${d}-${f}`, ...somme(l, jourIso(new Date(an, m, d)), jourIso(new Date(an, m, f))), futur: d > j }; }).filter(Boolean)
+    : Array.from({ length: 12 }, (_, i) => ({ mois: new Date(an, i, 1), ...somme(l, jourIso(new Date(an, i, 1)), jourIso(new Date(an, i + 1, 0))), futur: i > m }));
+  const caAnnee = somme(l, `${an}-01-01`, auj).ca;
+  return { caC: ici.ca, commissionC: ici.com, netC: ici.ca - ici.com, cotisationsC: cotisations, resteC: Math.max(0, ici.ca - ici.com - cotisations), tauxPct,
+    missions: ici.missions, avantC: avant.ca, evolutionPct: avant.ca ? Math.round((ici.ca - avant.ca) * 100 / avant.ca) : null, graphe,
+    caAnneeC: caAnnee, plafondPct: Math.min(100, Math.round(100 * caAnnee / REGLES.PLAFOND_MICRO_SERVICES_C)) };
+}
+/** Montant à déclarer à l'URSSAF : période précédente (mois ou trimestre) et date limite (fin du mois suivant). */
+export function aDeclarer({ factures = [], pourboires = [], rythme = "mois", maintenant = new Date() }) {
+  const l = lignesCA(factures, pourboires), an = maintenant.getFullYear(), m = maintenant.getMonth();
+  let debut, fin, libelle;
+  if (rythme === "trimestre") {
+    const t = Math.floor(m / 3), td = new Date(an, (t - 1) * 3, 1);
+    debut = td; fin = new Date(td.getFullYear(), td.getMonth() + 3, 0);
+    libelle = `T${Math.floor(td.getMonth() / 3) + 1} ${td.getFullYear()}`;
+  } else {
+    debut = new Date(an, m - 1, 1); fin = new Date(an, m, 0);
+    libelle = debut.toLocaleDateString(LOCALE, { month: "long", year: "numeric" });
+  }
+  return { libelle, caC: somme(l, jourIso(debut), jourIso(fin)).ca, limite: new Date(fin.getFullYear(), fin.getMonth() + 2, 0) };
+}
+/** CA prévu en fin de période : missions confirmées (pas encore terminées) d'ici la fin du mois ou de l'année. */
+export function previsionnel(missions, periode = "mois", maintenant = new Date()) {
+  const fin = periode === "mois" ? new Date(maintenant.getFullYear(), maintenant.getMonth() + 1, 1) : new Date(maintenant.getFullYear() + 1, 0, 1);
+  const l = (missions || []).filter(x => x.creneau && ["CONFIRMEE", "EN_ROUTE", "SUR_PLACE", "EN_COURS", "A_VALIDER"].includes(x.statut)
+    && new Date(x.creneau) >= new Date(maintenant.getFullYear(), maintenant.getMonth(), maintenant.getDate()) && new Date(x.creneau) < fin);
+  return { nombre: l.length, c: l.reduce((s, x) => s + (x.estimation_c || 0), 0) };
+}
+const nomMois = (d, f = "long") => d.toLocaleDateString(LOCALE, { month: f });
+function blocChiffreAffaires(c, reglages, prevu) {
+  const mois = reglages.periode === "mois", maintenant = new Date();
+  const titrePeriode = mois ? nomMois(maintenant) : String(maintenant.getFullYear());
+  const max = Math.max(1, ...c.graphe.map(g => g.ca));
+  const objectif = mois ? reglages.objectifC || 0 : 0;
+  const prevuTotal = c.caC + prevu.c;
+  const comparaison = c.evolutionPct === null ? "" : `<span class="evolution ${c.evolutionPct >= 0 ? "hausse" : "baisse"}">${c.evolutionPct >= 0 ? "+" : ""}${c.evolutionPct} %</span>
+      <span class="petit muet">${tr(mois ? "par rapport au mois dernier à la même date" : "par rapport à l'an dernier à la même date")} (${euros(c.avantC)})</span>`;
+  return `<div class="choix-periode" role="tablist">${[["mois", "Mois"], ["annee", "Année"]].map(([v, t]) =>
+      `<button type="button" role="tab" aria-selected="${reglages.periode === v}" data-periode="${v}">${tr(t)}</button>`).join("")}</div>
+    <div class="carte ca-principal">
+      <span class="ca-libelle">${tr("Chiffre d'affaires brut")} · ${esc(titrePeriode)}</span>
+      <b class="ca-montant">${euros(c.caC)}</b>
+      <div class="ca-comparaison">${comparaison || `<span class="petit muet">${tr("Pas encore de comparaison possible.")}</span>`}</div>
+      <p class="petit muet" style="margin:4px 0 10px">${c.missions} ${tr(c.missions > 1 ? "missions facturées" : "mission facturée")}${c.missions ? ` · ${tr("moyenne par mission :")} ${euros(Math.round((c.caC) / c.missions))}` : ""} · ${tr("prestations et pourboires, le montant à déclarer")}</p>
+      <div class="ligne-activite"><span>${tr("Commission Cleaneroo")}</span><span>−${euros(c.commissionC)}</span></div>
+      <div class="ligne-activite"><span>${tr("Net versé par Cleaneroo")}</span><b>${euros(c.netC)}</b></div>
+      <div class="ligne-activite"><span>${tr("Cotisations URSSAF estimées")} (${pct(c.tauxPct)})</span><span>−${euros(c.cotisationsC)}</span></div>
+      <div class="ligne-activite total"><span>${tr("Reste pour vous")}</span><b>${euros(c.resteC)}</b></div>
+      <label class="case-activite"><input type="checkbox" data-reglage="acre" ${reglages.acre ? "checked" : ""}> ${tr("ACRE (1re année, taux réduit)")}</label>
+      <label class="case-activite"><input type="checkbox" data-reglage="liberatoire" ${reglages.liberatoire ? "checked" : ""}> ${tr("Versement libératoire de l'impôt")} (+${pct(REGLES.VERSEMENT_LIBERATOIRE_PCT)})</label>
+      <p class="petit">${tr("Taux 2026 des prestations de services (dont le nettoyage) :")} ${pct(REGLES.URSSAF_SERVICES_PCT)}, ${tr("ou")} ${pct(REGLES.URSSAF_ACRE_PCT)} ${tr("avec l'ACRE. Estimation indicative, hors contribution à la formation professionnelle.")}</p>
+    </div>
+    <div class="carte">
+      <b>${tr(mois ? "Semaine par semaine" : "Mois par mois")}</b>${mois ? "" : `<span class="legende-ca"><i class="brut"></i>${tr("Brut")} <i class="net"></i>${tr("Net versé")}</span>`}
+      <div class="barres-ca ${mois ? "semaines" : "annee"}" role="img" aria-label="${esc(tr(mois ? "Chiffre d'affaires semaine par semaine" : "Chiffre d'affaires mois par mois"))}">
+        ${c.graphe.map(g => `<div class="barre-ca${g.futur ? " futur" : ""}" title="${esc(`${g.libelle || nomMois(g.mois)} : ${euros(g.ca)}`)}">
+          <span class="valeur">${g.ca ? esc(euros(g.ca).replace(/,00\s?€/, " €")) : ""}</span>
+          <span class="colonnes"><i class="brut" style="height:${Math.round(g.ca / max * 100)}%"></i>${mois ? "" : `<i class="net" style="height:${Math.round(Math.max(0, g.ca - g.com) / max * 100)}%"></i>`}</span>
+          <span class="lib-barre">${esc(g.libelle || nomMois(g.mois, "short"))}</span></div>`).join("")}</div>
+    </div>
+    <div class="carte">
+      <b>${tr("Prévisionnel")}</b>
+      ${prevu.nombre ? `<p style="margin:6px 0 0">${tr("Avec vos")} ${prevu.nombre} ${tr(prevu.nombre > 1 ? "missions confirmées" : "mission confirmée")}, ${tr(mois ? "votre chiffre d'affaires du mois serait de" : "votre chiffre d'affaires de l'année serait de")} <b>${euros(prevuTotal)}</b>.</p>
+        <p class="petit muet" style="margin:2px 0 0">${tr("Si toutes sont réalisées et validées.")}</p>`
+        : `<p class="petit muet" style="margin:6px 0 0">${tr(mois ? "Aucune autre mission confirmée d'ici la fin du mois." : "Aucune autre mission confirmée d'ici la fin de l'année.")}</p>`}
+      ${mois ? `<div class="objectif-ca">
+        <label class="champ"><span>${tr("Mon objectif du mois (facultatif)")}</span><input type="number" min="0" step="50" inputmode="numeric" data-objectif value="${objectif ? Math.round(objectif / 100) : ""}" placeholder="1500"></label>
+        ${objectif ? `<div class="jauge-activite objectif"><i style="width:${Math.min(100, Math.round(c.caC * 100 / objectif))}%"></i><i class="prevu" style="width:${Math.min(100, Math.round(prevuTotal * 100 / objectif))}%"></i></div>
+          <p class="petit" style="margin:6px 0 0">${euros(c.caC)} ${tr("sur")} ${euros(objectif)} (${Math.round(c.caC * 100 / objectif)} %)${prevu.nombre ? ` · ${tr("prévu :")} ${Math.round(prevuTotal * 100 / objectif)} %` : ""}</p>` : ""}
+      </div>` : ""}
     </div>`;
 }
 
@@ -61,32 +123,28 @@ export async function blocActivite(boite, profil) {
   if (!boite.isConnected) return;
   const reglages = { periode: "mois", acre: false, liberatoire: false, ...lireReglages() };
   const portefeuille = (await supabase.rpc("mon_portefeuille")).data || {};
+  const missions = await mesMissions().catch(() => []);
   const afficher = () => {
-    const a = calculActivite({ factures, pourboires: avis, ...reglages });
-    boite.innerHTML = `<h2 class="titre-section">${icone("document")} ${tr("Mon activité")}</h2>
-      ${blocRevenus(revenus({ factures, pourboires: avis }))}
-      <div class="choix-periode" role="tablist">${[["mois", "Ce mois-ci"], ["annee", "Cette année"]].map(([v, t]) =>
-        `<button type="button" role="tab" aria-selected="${reglages.periode === v}" data-periode="${v}">${tr(t)}</button>`).join("")}</div>
+    const c = chiffreAffaires({ factures, pourboires: avis, ...reglages });
+    const decl = aDeclarer({ factures, pourboires: avis, rythme: reglages.rythme || "mois" });
+    const prevu = previsionnel(missions, reglages.periode);
+    boite.innerHTML = `<h2 class="titre-section">${icone("paiement")} ${tr("Mon chiffre d'affaires")}</h2>
+      ${blocChiffreAffaires(c, reglages, prevu)}
       <div class="carte">
-        <b>${tr(reglages.periode === "mois" ? "Chiffre d'affaires du mois" : "Chiffre d'affaires de l'année")}</b>
-        <div class="ligne-activite"><span>${tr("Encaissé (prestations et pourboires)")}</span><b>${euros(a.caC)}</b></div>
-        <div class="ligne-activite"><span>${tr("Commission Cleaneroo")}</span><span>−${euros(a.commissionC)}</span></div>
-        <div class="ligne-activite"><span>${tr("Cotisations URSSAF estimées")} (${pct(a.tauxPct)})</span><span>−${euros(a.cotisationsC)}</span></div>
-        <div class="ligne-activite total"><span>${tr("Reste estimé")}</span><b>${euros(a.resteC)}</b></div>
-        <label class="case-activite"><input type="checkbox" data-reglage="acre" ${reglages.acre ? "checked" : ""}> ${tr("ACRE (1re année, taux réduit)")}</label>
-        <label class="case-activite"><input type="checkbox" data-reglage="liberatoire" ${reglages.liberatoire ? "checked" : ""}> ${tr("Versement libératoire de l'impôt")} (+${pct(REGLES.VERSEMENT_LIBERATOIRE_PCT)})</label>
-        <p class="petit">${tr("Taux 2026 des prestations de services (dont le nettoyage) :")} ${pct(REGLES.URSSAF_SERVICES_PCT)}, ${tr("ou")} ${pct(REGLES.URSSAF_ACRE_PCT)} ${tr("avec l'ACRE. Estimation indicative, hors contribution à la formation professionnelle.")}</p>
+        <b>${tr("À déclarer à l'URSSAF")}</b>
+        <label class="champ" style="margin:8px 0 0"><span>${tr("Je déclare")}</span><select data-rythme>
+          <option value="mois"${(reglages.rythme || "mois") === "mois" ? " selected" : ""}>${tr("chaque mois")}</option>
+          <option value="trimestre"${reglages.rythme === "trimestre" ? " selected" : ""}>${tr("chaque trimestre")}</option></select></label>
+        <p style="margin:10px 0 0">${tr("Chiffre d'affaires de")} ${esc(decl.libelle)} : <b>${euros(decl.caC)}</b></p>
+        <p class="petit" style="margin:2px 0 10px">${tr("À déclarer avant le")} <b>${esc(dateLongue(decl.limite))}</b>, ${tr("même s'il est nul.")}</p>
+        <a class="bouton secondaire" href="https://autoentrepreneur.urssaf.fr" target="_blank" rel="noopener">autoentrepreneur.urssaf.fr ↗</a>
       </div>
       <div class="carte">
         <b>${tr("Plafond de la micro-entreprise")}</b>
-        <div class="jauge-activite ${a.plafondPct >= 90 ? "alerte" : ""}"><i style="width:${a.plafondPct}%"></i></div>
-        <p class="petit" style="margin:6px 0 0">${euros(a.caAnneeC)} ${tr("sur")} ${euros(REGLES.PLAFOND_MICRO_SERVICES_C)} ${tr("cette année")} (${a.plafondPct} %)</p>
+        <div class="jauge-activite ${c.plafondPct >= 80 ? "alerte" : ""}"><i style="width:${c.plafondPct}%"></i></div>
+        <p class="petit" style="margin:6px 0 0">${euros(c.caAnneeC)} ${tr("sur")} ${euros(REGLES.PLAFOND_MICRO_SERVICES_C)} ${tr("cette année")} (${c.plafondPct} %)</p>
+        ${c.plafondPct >= 80 ? `<p class="petit" style="margin:6px 0 0;color:var(--alerte);font-weight:700">${icone("alerte")} ${tr("Vous approchez du plafond : parlez-en à un expert-comptable avant de le dépasser.")}</p>` : ""}
         <p class="petit">${tr("Au-delà du plafond des prestations de services, vous sortez du régime micro. Surveillez-le en fin d'année.")}</p>
-      </div>
-      <div class="carte">
-        <b>${tr("Déclaration URSSAF")}</b>
-        <p class="petit">${tr("Déclarez votre chiffre d'affaires chaque mois ou chaque trimestre, même s'il est nul :")} <b>${euros(a.caC)}</b> ${tr(reglages.periode === "mois" ? "ce mois-ci selon Cleaneroo." : "cette année selon Cleaneroo.")}</p>
-        <a class="bouton secondaire" href="https://autoentrepreneur.urssaf.fr" target="_blank" rel="noopener">autoentrepreneur.urssaf.fr ↗</a>
       </div>
       <div class="carte">
         <b>${icone("paiement")} ${tr("Portefeuille de l'année")}</b>
@@ -109,7 +167,10 @@ export async function blocActivite(boite, profil) {
       </div>
       <p class="petit">${tr("Outil d'aide à la gestion : il ne remplace pas votre déclaration officielle ni l'avis d'un expert-comptable.")}</p>`;
     boite.querySelectorAll("[data-periode]").forEach(b => b.onclick = () => { reglages.periode = b.dataset.periode; garder(reglages); afficher(); });
-    boite.querySelectorAll("[data-reglage]").forEach(c => c.onchange = () => { reglages[c.dataset.reglage] = c.checked; garder(reglages); afficher(); });
+    boite.querySelectorAll("[data-reglage]").forEach(x => x.onchange = () => { reglages[x.dataset.reglage] = x.checked; garder(reglages); afficher(); });
+    boite.querySelector("[data-rythme]").onchange = e => { reglages.rythme = e.target.value; garder(reglages); afficher(); };
+    const obj = boite.querySelector("[data-objectif]");
+    if (obj) obj.onchange = () => { reglages.objectifC = Math.max(0, Math.round(Number(obj.value) || 0)) * 100; garder(reglages); afficher(); };
     boite.querySelector("[data-export]").onclick = () => exporter(factures, avis);
     boite.querySelector("[data-devis]").onclick = () => devis(boite.querySelector(".devis-activite"), profil);
     blocVersements(boite.querySelector("#versements"));
@@ -238,6 +299,34 @@ function styles() {
     .graphe-revenus .valeur{font-size:11px;font-weight:700;color:var(--texte2);white-space:nowrap}
     .graphe-revenus .mois{font-size:12px;color:var(--texte3);text-transform:capitalize}
     @media (max-width:560px){.tuiles-revenus{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    .ca-principal{display:grid;gap:2px}
+    .ligne-activite>*:last-child{white-space:nowrap}
+    .ca-libelle{font-weight:700;color:var(--texte2);text-transform:none}
+    .ca-montant{font-size:clamp(34px,5vw,44px);font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1.1;color:var(--primaire)}
+    .ca-comparaison{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+    .evolution{padding:2px 9px;border-radius:999px;font-size:13px;font-weight:800}
+    .evolution.hausse{background:color-mix(in srgb,var(--succes) 16%,var(--surface));color:var(--succes)}
+    .evolution.baisse{background:color-mix(in srgb,var(--alerte) 16%,var(--surface));color:var(--alerte)}
+    .legende-ca{float:right;display:inline-flex;gap:6px;align-items:center;font-size:12px;color:var(--texte2)}
+    .legende-ca i{display:inline-block;width:10px;height:10px;border-radius:3px}
+    .legende-ca .brut,.barres-ca .brut{background:color-mix(in srgb,var(--turquoise) 55%,var(--surface))}
+    .legende-ca .net,.barres-ca .net{background:linear-gradient(180deg,#04BEE5,#0DC88D)}
+    .barres-ca{display:grid;gap:6px;align-items:end;height:170px;margin-top:12px}
+    .barres-ca.semaines{grid-template-columns:repeat(5,1fr)}
+    .barres-ca.annee{grid-template-columns:repeat(12,1fr)}
+    .barre-ca{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;gap:4px;min-width:0}
+    .barre-ca .colonnes{flex:1;width:100%;display:flex;align-items:flex-end;justify-content:center;gap:2px}
+    .barre-ca .colonnes i{display:block;flex:1;max-width:26px;border-radius:6px 6px 2px 2px}
+    .barres-ca.semaines .colonnes i{max-width:48px}
+    .barre-ca.futur{opacity:.45}
+    .barre-ca .valeur{font-size:10.5px;font-weight:700;color:var(--texte2);white-space:nowrap}
+    .barres-ca.annee .valeur{display:none}
+    .barre-ca .lib-barre{font-size:11.5px;color:var(--texte3);text-transform:capitalize;white-space:nowrap}
+    .objectif-ca{margin-top:12px}
+    .objectif-ca .champ{margin:0;max-width:240px}
+    .jauge-activite.objectif{position:relative}
+    .jauge-activite.objectif i.prevu{position:absolute;left:0;top:0;bottom:0;opacity:.3}
+    @media (max-width:560px){.barres-ca.annee{gap:3px}.barres-ca.annee .lib-barre{font-size:10px}}
     .choix-periode{display:inline-flex;gap:4px;background:rgba(31,138,128,.08);border-radius:99px;padding:4px;margin-bottom:10px}
     .choix-periode button{border:none;background:none;font:inherit;font-weight:600;padding:7px 16px;border-radius:99px;cursor:pointer;color:inherit}
     .choix-periode button[aria-selected=true]{background:var(--fond,#fff);box-shadow:0 1px 4px rgba(0,0,0,.12);color:var(--primaire,#1F8A80)}

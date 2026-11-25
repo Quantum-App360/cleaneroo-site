@@ -131,7 +131,7 @@ export async function pageCompte(vue, param) {
       <p class="petit" style="margin:4px 0 10px">Demandes, inscriptions et dossiers des Cleaneurs (documents, validation).</p>
       <a class="bouton secondaire" href="gestion.html">Ouvrir le tableau de bord</a></div>` : ""}
     ${statuts.length > 1 ? barreOnglets(onglet, statuts) : ""}
-    <div class="contenu-onglet">${contenu}${onglet !== "cleaneur" ? `<div id="equipe"></div>` : ""}${onglet === "cleaneur" && cleaneur ? `<div id="mon-activite"></div>` : ""}${onglet !== "cleaneur" || cleaneur ? `<div data-factures="${onglet === "particulier" ? "personnel" : onglet === "entreprise" ? "pro" : onglet}"></div>` : ""}${blocParrainage(parrain, onglet)}</div>
+    <div class="contenu-onglet">${onglet === "cleaneur" && cleaneur ? `<div id="mon-activite"></div><div data-factures="cleaneur"></div>` : ""}${contenu}${onglet !== "cleaneur" ? `<div id="equipe"></div>` : ""}${onglet !== "cleaneur" ? `<div data-factures="${onglet === "particulier" ? "personnel" : onglet === "entreprise" ? "pro" : onglet}"></div>` : ""}${blocParrainage(parrain, onglet)}</div>
     ${manquants.length ? `<details class="carte ajout-espace" id="ajout-espace" style="margin-top:16px"><summary>Ajouter un espace</summary>
       <p class="petit" style="margin:8px 0 10px">Chaque espace reste séparé : vous passez de l'un à l'autre avec les onglets en haut de votre compte.</p>
       ${manquants.map(x => `<button type="button" class="carte ligne-compte" data-ajouter-statut="${x}">${icone(NOMS_STATUTS[x][2], { tuile: true })}
