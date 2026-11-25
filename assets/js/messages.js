@@ -116,7 +116,7 @@ async function pageFil(vue, fil) {
       ${traductions[m.id] ? `<p class="traduction"><span class="petit">${tr("Traduction")} :</span> ${esc(traductions[m.id])}</p>` : ""}
       <small>${heureSeule(m.cree_le)}${traduisible && !traductions[m.id] ? ` · <button type="button" class="lien-traduire" data-traduire="${esc(m.id)}">${tr("Traduire")}</button>` : ""}</small></div>`;
   };
-  let derniers = [];
+  let derniers = [], connus = null;
   const charger = async (forcer = false) => {
     if (!bulles.isConnected) return clearInterval(minuterie);
     const { data } = await supabase.rpc("messages_du_fil", { p_fil: fil });
@@ -137,6 +137,9 @@ async function pageFil(vue, fil) {
       if (!liens[c]) liens[c] = (await supabase.storage.from("messages").createSignedUrl(c, 3600)).data?.signedUrl;
       if (liens[c]) img.src = liens[c]; else img.remove();
     });
+    // Un message qui vient d'arriver (envoyé ou reçu) glisse en place : on voit ce qui est nouveau.
+    if (connus) bulles.querySelectorAll(".bulle-msg[data-id]").forEach(x => { if (!connus.has(x.dataset.id)) x.classList.add("arrivee"); });
+    connus = new Set(data.map(m => m.id));
     bulles.querySelectorAll("[data-traduire]").forEach(b => b.onclick = () => traduireMessage(data.find(m => m.id === b.dataset.traduire)));
     if (bas || forcer) bulles.scrollTop = bulles.scrollHeight;
     // « Lu » sous mon dernier message, s'il est le dernier de la conversation
@@ -206,6 +209,8 @@ function styles() {
     .bulle-msg{max-width:78%;padding:9px 13px;border-radius:16px;background:#EEF3F3;align-self:flex-start}
     .bulle-msg.moi{align-self:flex-end;background:var(--primaire,#1F8A80);color:var(--fond,#fff)}.bulle-msg.support{background:#FFF4D6}
     .bulle-msg p{margin:0;white-space:normal;word-wrap:break-word}.bulle-msg small{display:block;opacity:.7;font-size:.72rem;margin-top:3px}
+    .bulle-msg.arrivee{animation:bulle-arrivee .28s ease-out}@keyframes bulle-arrivee{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+    @media (prefers-reduced-motion:reduce){.bulle-msg.arrivee{animation:none}}
     .bulle-msg img{max-width:100%;border-radius:10px;display:block;margin:2px 0}
     .saisie-message{display:flex;gap:8px;align-items:flex-end;margin-top:10px}
     .saisie-message textarea{flex:1;resize:none;border:1px solid var(--separateur,#ccd);border-radius:14px;padding:10px 12px;font:inherit;min-height:44px;background:var(--surface,#fff);color:inherit}

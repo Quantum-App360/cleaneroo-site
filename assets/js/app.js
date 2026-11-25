@@ -37,7 +37,7 @@ import { icone, teinte, ICONES_RUBRIQUES, ICONES_INTERFACE } from "./icones.js";
 import { pageTableau, arreterTableau } from "./tableau.js";
 import { compteRenduPieces } from "./controle-ecran.js";
 import { blocFormulesCleaneur, brancherFormulesCleaneur } from "./formules-cleaneur.js";
-import { blocEtapes, blocParcours, brancherParcours, surveillerConnexion, bandeGaranties, logosPaiement, blocJustePrix, blocAvantApres, brancherAvantApres, sectionAvisPublics, remplirAvisPublics, installerRappel, encartAideRappel, bandeauLancement, pageChargement, decorTableau, surveillerFormulaire, envoiRobot, CONTIENT_LIEN, afficherToast } from "./commun.js";
+import { blocEtat, blocEtapes, blocParcours, brancherParcours, surveillerConnexion, bandeGaranties, logosPaiement, blocJustePrix, blocAvantApres, brancherAvantApres, sectionAvisPublics, remplirAvisPublics, installerRappel, encartAideRappel, bandeauLancement, pageChargement, decorTableau, surveillerFormulaire, envoiRobot, CONTIENT_LIEN, afficherToast } from "./commun.js";
 import "./fond-anime.js";
 import "./oeil.js";
 import "./choix-prestation.js";   // fenêtre animée « Réserver une prestation »   // œil pour afficher le mot de passe
@@ -544,8 +544,9 @@ async function pageDemande(ref, jeton) {
     <div class="etroit"><p style="margin:0;opacity:.85">Réf. ${esc(d.reference)}</p><h1>${icone(r.icone)} ${r.nom}</h1><div class="trait-corail"></div>
       <span class="etiquette" style="background:rgba(255,255,255,.22)">${libelleStatut(d.statut)}</span></div></section>
   <section class="bloc" style="padding-top:28px"><div class="etroit">
-    <div class="progression">${ETAPES_SUIVI.map((_, i) => `<span class="${d.statut !== "ANNULEE" && i <= idx ? "fait" : ""}"></span>`).join("")}</div>
+    <div class="progression" role="progressbar" aria-label="Avancement" aria-valuemin="0" aria-valuemax="${ETAPES_SUIVI.length}" aria-valuenow="${d.statut === "ANNULEE" ? 0 : idx + 1}">${ETAPES_SUIVI.map((_, i) => `<span class="${d.statut !== "ANNULEE" && i <= idx ? "fait" : ""}${d.statut !== "ANNULEE" && i === idx ? " courant" : ""}"></span>`).join("")}</div>
     <div class="note" style="margin-bottom:14px">${etat}</div>
+    ${d.statut === "ANNULEE" ? `<div class="boutons" style="margin:-4px 0 16px"><a class="bouton" href="#/reserver/${encodeURIComponent(d.rubrique_id)}/rapide">${icone("repeter")} Refaire cette demande</a><a class="bouton secondaire" href="#/aide">Une question ?</a></div>` : ""}
     ${!d.sur_devis && d.statut !== "ANNULEE" ? `<div id="paiement-client"></div>` : ""}
     ${["PUBLIEE", "CONFIRMEE"].includes(d.statut) ? `<div id="remplacement-client"></div>` : ""}
     ${d.statut === "PUBLIEE" && d.choix_cleaneur === "favori" ? `<div id="favori-demande"></div>` : ""}
@@ -784,6 +785,19 @@ async function afficherPage() {
       try { await annuler(ref, jeton); } catch { /* rien */ }
       afficher();
     });
+    // Lot 8 : la page se tient à jour. Quand le statut change (Cleaneur trouvé, en route, terminé…), un message le dit
+    // et la page se met à jour, sans avoir à la recharger.
+    const statutVu = demandeAffichee?.statut, ici = location.hash;
+    if (statutVu && !["TERMINEE", "ANNULEE"].includes(statutVu)) {
+      const veille = setInterval(async () => {
+        if (location.hash !== ici || document.hidden) { if (location.hash !== ici) clearInterval(veille); return; }
+        const n = await suivre(decodeURIComponent(ref || ""), decodeURIComponent(jeton || "")).catch(() => null);
+        if (!n || n.statut === statutVu || location.hash !== ici) return;
+        clearInterval(veille);
+        afficherToast(`${tr("Mise à jour")} : ${tr(libelleStatut(n.statut))}`, "info", 6000);
+        afficher();
+      }, REGLES.SURVEILLANCE_S * 1000);
+    }
     return;
   }
   // Compte connecté (Particulier, Pro, administrateur) : l'accueil devient son tableau de bord vivant (prochaine prestation, « À faire »).
@@ -837,6 +851,18 @@ async function afficher() {
   barre.classList.remove("fini"); void barre.offsetWidth; barre.classList.add("active");
   vue.classList.remove("vue-entree");
   try { await afficherPage(); }
+  catch (e) {
+    // Lot 8 : jamais d'écran vide ou figé. Une page qui n'a pas pu s'afficher le dit et propose de réessayer.
+    console.error(e);
+    if (tour === tourPage) {
+      const hors = navigator.onLine === false;
+      vue.innerHTML = `<section class="bloc"><div class="conteneur etroit">${blocEtat({ icone: "alerte", erreur: true,
+        titre: tr(hors ? "Connexion perdue" : "Cette page n'a pas pu s'afficher"),
+        texte: tr(hors ? "Vérifiez votre réseau, puis réessayez." : "Le service est momentanément indisponible. Réessayez dans quelques minutes."),
+        action: `<button type="button" class="bouton" data-reessayer-page>${tr("Réessayer")}</button><a class="bouton secondaire" href="#/">${tr("Retour à l'accueil")}</a>` })}</div></section>`;
+      vue.querySelector("[data-reessayer-page]").onclick = () => afficher();
+    }
+  }
   finally {
     if (tour === tourPage) {
       barre.classList.add("fini");

@@ -612,8 +612,8 @@ export async function pageMesPrestations(vue, mode = "demandes", sous = null) {
   ]);
   if (!ongletBiens || !CATEGORIES_BIEN.some(c => c[0] === ongletBiens)) ongletBiens = (CATEGORIES_BIEN.find(([c]) => biens.some(l => categorieBien(l) === c)) || CATEGORIES_BIEN[0])[0];
   // Demandes du compte et de cet appareil, sans doublon ; le lien de suivi a besoin du jeton.
-  const toutes = [...compte];
-  locales.forEach(d => { if (!toutes.some(x => x.reference === d.reference)) toutes.push(d); });
+  const toutes = [...(compte || [])];
+  (locales || []).forEach(d => { if (!toutes.some(x => x.reference === d.reference)) toutes.push(d); });
   const quand = d => d.creneau ? new Date(d.creneau).getTime() : new Date(d.cree_le).getTime();
   const parOnglet = Object.fromEntries(ONGLETS_DEMANDES.map(([id]) => [id, toutes.filter(d => ongletDemande(d) === id)
     .sort((a, b) => ["passees", "annulees"].includes(id) ? quand(b) - quand(a) : quand(a) - quand(b))]));

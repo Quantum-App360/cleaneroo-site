@@ -97,7 +97,7 @@ function styles() {
       background:color-mix(in srgb,var(--surface) 92%,transparent);backdrop-filter:blur(8px);border:1px solid var(--separateur);border-radius:16px}
     .sous-onglets::-webkit-scrollbar{display:none}
     .sous-onglets button{flex:1 0 auto;min-height:42px;padding:0 16px;border:0;border-radius:12px;background:none;font:inherit;font-weight:700;font-size:15px;color:var(--texte2);cursor:pointer;white-space:nowrap}
-    .sous-onglets button.choisi{background:var(--primaire);color:#fff;box-shadow:0 4px 12px rgba(20,107,99,.25)}
+    .sous-onglets button.choisi{background:var(--primaire);color:var(--fond);box-shadow:0 4px 12px rgba(20,107,99,.25)}
     ${[...new Set(tous)].map(id => `[data-sous-actif="${id}"] [data-sous]:not([data-sous="${id}"]):not([data-sous="tous"])`).join(",")}{display:none!important}
     @media (max-width:560px){.sous-onglets{top:64px;border-radius:14px}.sous-onglets button{padding:0 12px;font-size:14px}}`;
   document.head.appendChild(s);

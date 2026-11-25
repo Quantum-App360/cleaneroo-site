@@ -239,7 +239,7 @@ const PROFILS = [["particulier", "Particulier"], ["professionnel", "Professionne
 
 /** Bouton qui ouvre la fenêtre « Être rappelé » (ville préremplie si donnée). */
 export const boutonRappel = (classe = "", ville = "") =>
-  `<button type="button" class="bouton ${classe}" data-rappel data-ville="${esc(ville)}">${icone("telephone")}<span>Être rappelé</span></button>`;
+  `<button type="button" class="bouton ${classe}" data-rappel data-ville="${esc(ville)}" aria-label="${tr("Être rappelé")}">${icone("telephone")}<span>Être rappelé</span></button>`;
 
 /** Encart « Besoin d'aide pour choisir ? » (page Prestations, étape 5 de la réservation), prompt du 23/11/2026. */
 export const encartAideRappel = () => `<div class="encart-rappel">${icone("telephone", { tuile: true })}

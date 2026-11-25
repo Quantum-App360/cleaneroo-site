@@ -190,7 +190,7 @@ Lien « ‹ Accueil Cleaneroo » dans l'espace Cleaneur et les espaces client (f
 du Cleaneur crédible (2-3 missions sans chevauchement, 6 à 8 h, statuts cohérents, chiffres = somme) ; test automatique ; build/bak45,
 build/lot45.diff, ARCHITECTURE.md.
 
-## Prompt 4 — Refonte totale du produit (EN COURS : plan validé le 24/11 à 20 h 45 ; lots 1 à 7 faits ; suite : lot 8 finitions)
+## Prompt 4 — Refonte totale du produit (EN COURS : plan validé le 24/11 à 20 h 45 ; lots 1 à 8 faits ; suite : lot 9 audit)
 Plan validé (Whiteboard « Refonte Cleaneroo — plan du prompt 4 ») : 1 design system · 2 carte signature (MapLibre + OpenFreeMap) ·
 3 espace client · 4 réservation · 5 fiches Cleaneur · 6 espace Cleaneur · 7 notifications, messagerie, réputation · 8 finitions · 9 audit.
 Décisions : réservation hybride (choisir un Cleaneur ou publier à tous, paiement à la réservation) ; Cleaneurs affichés par secteur
@@ -248,6 +248,16 @@ Lot 7 (25/11, accord de Michael pour la base : outils/base-lot7.sql appliqué et
   sur la fiche du Cleaneur (reputation_cleaneur) et dans son espace (« Votre réputation, telle que les clients la voient »).
   Correctif : la note des fiches ne compte que les avis publiés (double aveugle).
 À REPORTER PAR VINCENT : infos_fil, reputation_cleaneur, messages rapides (mêmes textes), filtres des notifications, rappel la veille.
+Lot 8 (25/11) finitions, sans changement en base :
+- Audit automatique (outils/audit_accessibilite.py : axe-core WCAG A/AA + débordements, 21 pages × 390/1280 × clair/sombre) : 0 erreur.
+  Corrigé : bouton « Être rappelé » sans nom sur téléphone, onglets actifs illisibles en sombre et en mode Cleaneur (contraste 1,7),
+  textes gris trop pâles en sombre, carte de la tournée mal décrite, volets dépliables trop petits au doigt.
+- États : page qui plante → message clair avec « Réessayer » (plus d'écran vide) ; retour de Stripe sans payer → « Le paiement n'a pas
+  abouti, aucun débit » + « Réessayer le paiement » ; paiement réussi → « Paiement confirmé » ; demande annulée → « Refaire cette demande » ;
+  la page de suivi se met à jour seule quand le statut change (message « Mise à jour : … »). Mes demandes robuste aux données absentes.
+- Micro-interactions utiles seulement : étape en cours de la progression signalée, confirmation de paiement, message qui arrive dans la
+  conversation, appui visible sur les puces et cartes ; tout est coupé si l'appareil demande moins d'animations.
+À REPORTER PAR VINCENT : mêmes états (paiement non abouti, annulée, mise à jour du statut) dans les applis.
 
 
 # CLEANEROO — REFONTE TOTALE DU PRODUIT

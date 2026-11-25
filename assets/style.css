@@ -1933,7 +1933,7 @@ body.avec-decor main, body.avec-decor #vue, body.avec-decor footer { position: r
 .simulateur .prix-simulation { font-size: 40px; line-height: 1.1; font-weight: 800; color: var(--primaire); margin: 4px 0; }
 .simulateur .barre-prix { display: flex; align-items: center; gap: 12px; background: var(--surface); border: 1.5px solid var(--separateur); border-radius: 18px; padding: 8px 8px 8px 16px; box-shadow: 0 8px 24px rgba(12, 47, 51, .10); }
 .simulateur .prix-barre { display: flex; flex-direction: column; line-height: 1.15; text-decoration: none; color: inherit; min-width: 0; }
-.simulateur .prix-barre span { font-size: 12px; color: var(--texte-2, #5b6f70); }
+.simulateur .prix-barre span { font-size: 12px; color: var(--texte2, #5b6f70); }
 .simulateur .prix-barre b { font-size: 22px; font-weight: 800; color: var(--primaire); white-space: nowrap; }
 .simulateur .prix-barre .lien { color: var(--primaire); text-decoration: underline; }
 .simulateur .barre-prix .bouton.plein { flex: 1; min-width: 0; }
@@ -2101,7 +2101,7 @@ body.avec-decor main, body.avec-decor #vue, body.avec-decor footer { position: r
 .guide-video-corps b { display: inline; font-size: 16px; }
 .guide-video-actions { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
 .guide-video-actions .bouton { min-height: 40px; padding: 0 16px; font-size: 14px; }
-.guide-video-actions .lien-bouton { min-height: 40px; color: var(--texte-doux, #5b6b68); font-weight: 500; }
+.guide-video-actions .lien-bouton { min-height: 40px; color: var(--texte2, #5b6b68); font-weight: 500; }
 .guide-video-lien { margin: 0 0 8px; }
 .guide-video-lien .lien-bouton { min-height: 36px; padding: 0; }
 .guide-video-fenetre { position: fixed; inset: 0; z-index: 100000; background: rgba(8, 24, 22, .82); display: grid; place-items: center; padding: 16px; animation: guideApparait .2s ease; }
@@ -2815,7 +2815,7 @@ body.sans-rappel .entete .rappel-entete { display: none; }   /* jamais pendant l
 .avant-apres { max-width: 900px; margin: 0 auto; }
 .aa-onglets { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
 .aa-onglets button { border: 1px solid var(--separateur); background: var(--surface); color: var(--texte); border-radius: 999px; padding: 8px 16px; font-weight: 600; font-size: 14.5px; cursor: pointer; }
-.aa-onglets button[aria-selected="true"] { background: var(--primaire); border-color: var(--primaire); color: #fff; }
+.aa-onglets button[aria-selected="true"] { background: var(--primaire); border-color: var(--primaire); color: var(--fond); }
 .aa-cadre { position: relative; aspect-ratio: 3 / 2; border-radius: var(--rayon-l); overflow: hidden; box-shadow: var(--ombre); user-select: none; background: var(--surface); }
 .aa-cadre img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
 .aa-cadre .aa-apres { clip-path: inset(0 0 0 var(--pos)); }
@@ -3208,3 +3208,20 @@ body.sans-defilement { overflow: hidden; }
 .filtres-notifs .puce:hover, .rapides .puce:hover { border-color: color-mix(in srgb, var(--marque) 45%, transparent); }
 .filtres-notifs .puce.choisie { background: var(--primaire); color: var(--fond); border-color: transparent; }
 .rapides .puce:disabled { opacity: .5; cursor: default; }
+
+/* Lot 8 : micro-interactions utiles (retour visuel, nouveauté, confirmation). Rien ne bouge si le système demande moins d'animations. */
+.progression span { transition: background var(--duree-lente, .4s) var(--courbe, ease); }
+.progression span.courant { position: relative; overflow: hidden; }
+.progression span.courant::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,.65), transparent); transform: translateX(-100%); animation: etape-courante 2.4s ease-in-out 3; }
+@keyframes etape-courante { to { transform: translateX(100%); } }
+.paiement-confirme .tuile-ico { animation: confirme-pop .5s var(--courbe-ressort, cubic-bezier(.34,1.56,.64,1)) both; }
+.paiement-confirme { border-color: color-mix(in srgb, var(--succes) 45%, transparent); }
+@keyframes confirme-pop { from { transform: scale(.6); opacity: 0; } to { transform: none; opacity: 1; } }
+.puce:active, .lien-bouton:active, .carte-cleaneur-mini:active, .notification:active { transform: scale(.98); }
+.puce, .lien-bouton { transition: transform .12s ease, background var(--duree-rapide, .15s), color var(--duree-rapide, .15s); }
+@media (prefers-reduced-motion: reduce) {
+  .progression span.courant::after, .paiement-confirme .tuile-ico { animation: none; }
+  .puce:active, .lien-bouton:active, .carte-cleaneur-mini:active, .notification:active { transform: none; }
+}
+/* Lot 8 : zones tactiles (au moins 40 px de haut) pour les volets dépliables */
+:where(summary) { padding-block: 9px; cursor: pointer; }

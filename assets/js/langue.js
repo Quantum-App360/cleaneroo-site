@@ -4280,6 +4280,18 @@ const T = [
   ["avis vérifié", "verified review", "recensione verificata", "opinión verificada"],
   ["de clients satisfaits", "satisfied clients", "di clienti soddisfatti", "de clientes satisfechos"],
   ["étoiles", "stars", "stelle", "estrellas"],
+  ["Refaire cette demande", "Book this again", "Rifai questa richiesta", "Repetir esta solicitud"],
+  ["Mise à jour", "Update", "Aggiornamento", "Actualización"],
+  ["Paiement confirmé", "Payment confirmed", "Pagamento confermato", "Pago confirmado"],
+  ["Le paiement n'a pas abouti", "The payment did not go through", "Il pagamento non è andato a buon fine", "El pago no se ha completado"],
+  ["Aucun montant n'a été débité. Vous pouvez réessayer avec la même carte ou une autre ; sans paiement, la demande est annulée sans frais.", "Nothing has been charged. You can try again with the same card or another; without payment, the request is cancelled at no cost.", "Nessun importo è stato addebitato. Puoi riprovare con la stessa carta o un'altra; senza pagamento, la richiesta è annullata senza costi.", "No se ha cobrado ningún importe. Puede volver a intentarlo con la misma tarjeta u otra; sin pago, la solicitud se cancela sin gastos."],
+  ["Réessayer le paiement", "Try the payment again", "Riprova il pagamento", "Reintentar el pago"],
+  ["Cette page n'a pas pu s'afficher", "This page could not be displayed", "Impossibile mostrare questa pagina", "No se ha podido mostrar esta página"],
+  ["Connexion perdue", "Connection lost", "Connessione persa", "Conexión perdida"],
+  ["Vérifiez votre réseau, puis réessayez.", "Check your network, then try again.", "Controlla la rete, poi riprova.", "Compruebe su red y vuelva a intentarlo."],
+  ["Retour à l'accueil", "Back to home", "Torna alla home", "Volver al inicio"],
+  ["Carte de ma tournée", "Map of my round", "Mappa del mio giro", "Mapa de mi ruta"],
+  ["Avancement", "Progress", "Avanzamento", "Progreso"],
 ];
 
 const DICO = new Map();

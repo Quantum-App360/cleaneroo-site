@@ -66,9 +66,14 @@ export async function blocPaiement(el, reference, jeton) {
   const test = p.test !== false;
   const bandeau = test ? `<p class="petit" style="margin:8px 0 0"><span class="tampon">${tr("Mode test")}</span> ${tr("Aucun débit réel. Carte d'essai : 4242 4242 4242 4242, date future, n'importe quel code.")}</p>` : "";
   const statut = p.statut;
+  // Lot 8 : retour de Stripe. Paiement abouti → confirmation visible ; page quittée sans payer → on le dit (aucun débit).
+  const cle = `cleaneroo-paiement-lance-${reference}`;
+  let lance = false;
+  try { lance = sessionStorage.getItem(cle) === "1"; if (!p.a_payer || ETATS[statut]) sessionStorage.removeItem(cle); } catch { /* navigation privée */ }
   if (ETATS[statut]) {
-    el.innerHTML = `<div class="carte teintee" style="margin-bottom:14px">${icone("paiement", { tuile: true })}
-      <b>${tr("Paiement")}${p.montant_c ? ` · ${euros(p.montant_c)}` : ""}</b><p class="petit" style="margin:4px 0 0">${tr(ETATS[statut])}</p>${bandeau}</div>`;
+    const confirme = (retour || lance) && statut === "AUTORISE";
+    el.innerHTML = `<div class="carte teintee${confirme ? " paiement-confirme" : ""}" style="margin-bottom:14px">${icone(confirme ? "valide" : "paiement", { tuile: true })}
+      <b>${tr(confirme ? "Paiement confirmé" : "Paiement")}${p.montant_c ? ` · ${euros(p.montant_c)}` : ""}</b><p class="petit" style="margin:4px 0 0">${tr(ETATS[statut])}</p>${bandeau}</div>`;
     traduire(el); return;
   }
   if (!p.a_payer) { el.innerHTML = ""; return; }
@@ -77,19 +82,20 @@ export async function blocPaiement(el, reference, jeton) {
       <p class="petit" style="margin:4px 0 0">${tr(MESSAGES_ERREUR.prelancement)}</p></div>`;
     traduire(el); return;
   }
-  const echec = statut === "ECHEC";
-  el.innerHTML = `<div class="carte" style="margin-bottom:14px;border-color:var(--alerte)">${icone("paiement", { tuile: true })}
-    <b>${tr(echec ? "Prélèvement refusé" : "Paiement à finaliser")}</b>
+  const echec = statut === "ECHEC", interrompu = !echec && (lance || !!retour);
+  el.innerHTML = `<div class="carte" style="margin-bottom:14px;border-color:var(--alerte)">${icone(echec || interrompu ? "alerte" : "paiement", { tuile: true })}
+    <b>${tr(echec ? "Prélèvement refusé" : interrompu ? "Le paiement n'a pas abouti" : "Paiement à finaliser")}</b>
     <p class="petit" style="margin:4px 0 10px">${tr(echec
       ? "Le prélèvement automatique de ce passage a été refusé. Payez maintenant pour le confirmer ; sinon il sera annulé sans frais 24 h avant."
+      : interrompu ? "Aucun montant n'a été débité. Vous pouvez réessayer avec la même carte ou une autre ; sans paiement, la demande est annulée sans frais."
       : "Votre demande est transmise aux Cleaneurs dès le paiement. Paiement 100 % sécurisé sur la page de Stripe : le montant reste bloqué jusqu'à votre validation de la prestation, puis il est versé au Cleaneur. Sans paiement, la demande est annulée sans frais.")}</p>
-    <button type="button" class="bouton plein" id="payer">${tr("Payer ma réservation")}</button>
+    <button type="button" class="bouton plein" id="payer">${tr(interrompu ? "Réessayer le paiement" : "Payer ma réservation")}</button>
     <p class="erreur" id="erreur-paiement" style="margin:8px 0 0"></p>${bandeau}</div>`;
   traduire(el);
   el.querySelector("#payer").onclick = async e => {
     e.target.disabled = true;
     const r = await appeler({ action: "creer", reference, jeton });
-    if (r.url) { location.href = r.url; return; }
+    if (r.url) { try { sessionStorage.setItem(cle, "1"); } catch { /* rien */ } location.href = r.url; return; }
     if (r.erreur === "prix_corrige" || r.erreur === "deja_paye") { setTimeout(() => location.reload(), 4000); }
     e.target.disabled = false;
     el.querySelector("#erreur-paiement").textContent = tr(MESSAGES_ERREUR[r.erreur] || "Le service est momentanément indisponible. Réessayez dans quelques minutes.");

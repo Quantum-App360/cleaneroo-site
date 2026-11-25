@@ -71,7 +71,7 @@ export function blocTournee(etapes) {
   styles();
   return `<div class="tournee">
     <h2 class="titre-section">${icone("position")} ${tr("Ma tournée")}</h2>
-    <div class="carte-tournee" role="img" aria-label="${esc(tr("Ma tournée"))}"></div>
+    <div class="carte-tournee" role="region" aria-label="${esc(tr("Carte de ma tournée"))}"></div>
     <div class="tournee-depart" hidden><div><b data-depart></b><p class="petit" style="margin:2px 0 0" data-depart-detail></p></div></div>
     ${etapes.map((e, i) => `<div class="tournee-etape"><span class="num">${i + 1}</span><div class="corps">
       <b>${e.debut ? esc(heure(e.debut)) + " · " : ""}${esc(tr(e.titre))}</b><span class="petit muet">${esc(e.adresse)}</span>
