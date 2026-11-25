@@ -932,7 +932,12 @@ function verifierCouverture() {
   const cle = `${b.rubriqueId}|${b.lat.toFixed(3)}|${b.lon.toFixed(3)}`;
   if (couverture.cle !== cle) {
     couverture = { cle, n: null }; attente = "";
-    secteurCouvert(b.rubriqueId, b.lat, b.lon).then(n => { if (couverture.cle === cle) { couverture.n = n; if (b?.etape === 5 && racine?.isConnected) rendre(); } }).catch(() => {});
+    secteurCouvert(b.rubriqueId, b.lat, b.lon).then(n => {
+      if (couverture.cle !== cle || !racine?.isConnected) return;
+      couverture.n = n;
+      if (b?.etape === 5) rendre();
+      else if (b?.etape >= 2) majRecap();   // seul le récapitulatif change : la saisie en cours n'est pas interrompue
+    }).catch(() => {});
   }
   return couverture.n;
 }
@@ -1013,8 +1018,80 @@ function notePaiement(est) {
     + (passagesPlanifies(b) > 1 ? `<p class="petit" style="margin:6px 0 0">${icone("calendrier")} ${tr("Entretien régulier : le 1er passage est payé maintenant ; les suivants sont prélevés automatiquement sur la même carte, 3 jours avant chaque passage.")}</p>` : "");
 }
 
+/* ------------------------------------------------------------------ Récapitulatif toujours visible (prompt 4, lot 4)
+   Prix, durée, date et heure, lieu, Cleaneur et disponibilité à l'adresse, du 2e écran jusqu'au paiement : aucune surprise.
+   Grand écran : colonne à droite, qui suit le défilement. Téléphone : une ligne au-dessus des boutons, qui déplie le détail. */
+function valeursRecap(est) {
+  const r = rubrique(b.rubriqueId), f = formuleDe(b);
+  const debut = debutChoisi();
+  const prix = est.devisObligatoire ? tr("Sur devis") : euros(est.fraisServicePct || est.remiseParrainageC || est.cagnotteC ? est.totalAPayerC : est.totalC);
+  const dureeTxt = est.dureeMin ? (est.nombreCleaneurs === 2 ? `2 Cleaneurs × ${duree(est.dureeMin)}` : duree(est.dureeMin)) : "";
+  const quand = b.flexible ? tr("Date flexible") : debut ? `${dateCourte(debut)} · ${heure(debut.getHours())}-${heure(debut.getHours() + 1)}` : b.jour ? `${dateCourte(new Date(b.jour + "T00:00"))} · ${tr("heure à choisir")}` : "";
+  const logement = b.logementId ? logements().find(l => l.id === b.logementId) : null;
+  const lieu = logement ? nomLogement(logement) : [b.rue, b.ville].filter(x => String(x || "").trim()).join(", ");
+  const c = b.choixCleaneur || "candidatures";
+  const fav = c === "favori" ? favoris.find(x => x.cleaneur_id === b.cleaneurFavori) : null;
+  const cleaneur = fav ? `${fav.prenom}${fav.initiale ? ` ${fav.initiale}.` : ""} ${tr("(favori)")}` : c === "directe" ? tr("Attribué automatiquement") : tr("Vous choisissez parmi les candidats");
+  const n = Number.isFinite(b.lat) ? verifierCouverture() : null;
+  return { r, f, prix, dureeTxt, quand, lieu, cleaneur, n };
+}
+function recapitulatif(est) {
+  if (!b || b.etape < 2 || !est) return "";
+  const v = valeursRecap(est);
+  const ligne = (ic, libelle, valeur, manque) => `<li class="${valeur ? "" : "a-choisir"}">${icone(ic)}<span><small>${tr(libelle)}</small><b>${valeur ? esc(valeur) : tr(manque)}</b></span></li>`;
+  return `<aside class="recap-resa carte" aria-label="${tr("Récapitulatif de votre réservation")}">
+      <button type="button" class="recap-fermer lien-bouton" data-fermer-recap>${tr("Fermer")}</button>
+      <div class="recap-tete">${icone(v.r.icone, { tuile: true })}<div><b>${esc(v.r.nom)}</b>${v.f && formulesPour(v.r).length > 1 ? `<span class="petit muet">${esc(v.f.nom)}</span>` : ""}</div></div>
+      <ul class="recap-lignes">
+        ${ligne("horloge", "Durée estimée", v.dureeTxt, "Selon vos réponses")}
+        ${ligne("calendrier", "Date et heure d'arrivée", v.quand, "À choisir à l'étape 4")}
+        ${ligne("position", "Lieu", v.lieu, "À indiquer à l'étape 4")}
+        ${ligne("cleaneurs", "Cleaneur", b.etape >= 5 ? v.cleaneur : "", "À choisir à l'étape 5")}
+      </ul>
+      ${v.n === null ? "" : v.n > 0 ? `<p class="recap-dispo ok">${icone("valide")} ${v.n} ${tr(v.n > 1 ? "Cleaneurs vérifiés couvrent votre secteur." : "Cleaneur vérifié couvre votre secteur.")}</p>`
+        : v.n === 0 ? `<p class="recap-dispo">${icone("alerte")} ${tr("Pas encore de Cleaneur dans votre secteur")}</p>` : ""}
+      <div class="recap-prix"><span>${tr(est.devisObligatoire ? "Prix" : est.fraisServicePct || est.remiseParrainageC || est.cagnotteC ? "Total à payer" : "Total estimé")}</span><b>${v.prix}</b></div>
+      ${est.creditImpotC ? `<p class="petit recap-credit">${tr("soit")} ${euros(est.apresCreditImpotC)} ${tr("après crédit d'impôt, si éligible")}</p>` : ""}
+      <p class="petit muet recap-paiement">${icone("cadenas")} ${tr(est.devisObligatoire ? "Aucun paiement avant le devis." : "Payé à la réservation, versé au Cleaneur seulement après votre validation.")}</p>
+    </aside>`;
+}
+/** Remet à jour le récapitulatif seul (disponibilité connue après coup). */
+function majRecap() {
+  const a = racine?.querySelector(".recap-resa");
+  if (!a || !b) return;
+  a.outerHTML = recapitulatif(estimer(b, debutChoisi()));
+  traduire(racine.querySelector(".recap-resa"));
+  const f = document.querySelector(".feuille-recap .recap-resa");
+  if (f) { f.outerHTML = recapitulatif(estimer(b, debutChoisi())); traduire(document.querySelector(".feuille-recap")); }
+}
+/** Feuille du récapitulatif (téléphone) : posée sur la page entière, fermée par « Fermer », le fond ou Échap. */
+function ouvrirFeuilleRecap() {
+  if (!b || document.querySelector(".feuille-recap")) return;
+  const declencheur = racine.querySelector("[data-voir-recap]");
+  const f = document.createElement("div");
+  f.className = "feuille-recap";
+  f.setAttribute("role", "dialog"); f.setAttribute("aria-modal", "true"); f.setAttribute("aria-label", tr("Récapitulatif de votre réservation"));
+  f.innerHTML = `<div class="feuille-fond" data-fermer-recap></div>${recapitulatif(estimer(b, debutChoisi()))}`;
+  document.body.append(f);
+  traduire(f);
+  declencheur?.setAttribute("aria-expanded", "true");
+  const fermer = () => { f.remove(); document.removeEventListener("keydown", echap); declencheur?.setAttribute("aria-expanded", "false"); declencheur?.focus(); };
+  const echap = e => { if (e.key === "Escape") fermer(); };
+  f.addEventListener("click", e => { if (e.target.closest("[data-fermer-recap]")) fermer(); });
+  document.addEventListener("keydown", echap);
+  window.addEventListener("hashchange", fermer, { once: true });
+  f.querySelector(".recap-fermer")?.focus();
+}
+/** Ligne courte du récapitulatif (téléphone), au-dessus des boutons : touchez-la pour voir le détail. */
+function recapMini() {
+  if (!b || b.etape < 2) return "";
+  const est = estimer(b, debutChoisi()), v = valeursRecap(est);
+  return `<button type="button" class="recap-mini" data-voir-recap aria-expanded="false" aria-label="${tr("Voir le récapitulatif")}"><b>${v.prix}</b>
+    <span>${[v.dureeTxt, v.quand, v.lieu ? v.lieu.split(",").pop().trim() : ""].filter(Boolean).map(esc).join(" · ")}</span>${icone("document")}</button>`;
+}
+
 function actions(ok, message = "", libelle = "Continuer", id = "suivant") {
-  return `<div class="barre-actions">${message ? `<p class="erreur" style="margin:0 0 8px">${message}</p>` : ""}
+  return `<div class="barre-actions">${recapMini()}${message ? `<p class="erreur" style="margin:0 0 8px">${message}</p>` : ""}
     <div style="display:flex;gap:10px">${b.etape > 2 ? `<button type="button" class="bouton secondaire" id="precedent">‹ Retour</button>` : `<button type="button" class="bouton secondaire" id="changer">‹ Prestations</button>`}
     <button type="button" class="bouton plein" id="${id}" ${ok ? "" : "disabled"}>${libelle}</button></div></div>`;
 }
@@ -1095,12 +1172,12 @@ function rendre() {
   const etape = b ? b.etape : 1;
   let est = null;
   if (b && b.rubriqueId && etape > 1) est = estimer(b, debutChoisi());
-  racine.innerHTML = `<section class="bloc" style="padding-top:28px"><div class="etroit">
+  racine.innerHTML = `<section class="bloc" style="padding-top:28px"><div class="${est ? "resa-avec-recap" : "etroit"}"><div class="resa-etape">
     <div class="tete-etape petit">${etape > 1 ? `<button type="button" class="retour-haut" data-retour>‹ Retour</button>` : ""}<span>Étape ${etape} sur 5</span>
-      ${est && !est.devisObligatoire ? `<b style="color:var(--primaire)">${est.fraisServicePct ? `${tr("Total à payer")} ${euros(est.totalAPayerC)}` : `Total estimé ${euros(est.totalC)}`}</b>` : ""}</div>
+      ${est && !est.devisObligatoire ? `<b style="color:var(--primaire)">${est.fraisServicePct || est.remiseParrainageC || est.cagnotteC ? `${tr("Total à payer")} ${euros(est.totalAPayerC)}` : `Total estimé ${euros(est.totalC)}`}</b>` : ""}</div>
     <div class="progression">${[1, 2, 3, 4, 5].map(i => `<span class="${i <= etape ? "fait" : ""}"></span>`).join("")}</div>
     ${[etape1, etape2, etape3, etape4, etape5][etape - 1]()}
-  </div></section>`;
+  </div>${recapitulatif(est)}</div></section>`;
   traduire(racine);
   // Aperçus des photos
   racine.querySelectorAll("#vignettes img").forEach(img => { img.src = URL.createObjectURL(photos[+img.dataset.i]); });
@@ -1131,6 +1208,8 @@ document.addEventListener("click", async e => {
   const t = e.target.closest("button, [data-rubrique]");
   if (!t) return;
   const ds = t.dataset;
+  // Récapitulatif sur téléphone : la ligne au-dessus des boutons ouvre le détail en feuille, au premier plan.
+  if (ds.voirRecap !== undefined) { ouvrirFeuilleRecap(); return; }
   if (ds.retirerPhotoBoite !== undefined) { photoBoite = null; return rendre(); }
   if (ds.geoloc !== undefined) return geolocaliser();
   if (sim && ds.espace) {

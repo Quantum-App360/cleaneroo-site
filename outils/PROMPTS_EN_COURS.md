@@ -190,7 +190,7 @@ Lien « ‹ Accueil Cleaneroo » dans l'espace Cleaneur et les espaces client (f
 du Cleaneur crédible (2-3 missions sans chevauchement, 6 à 8 h, statuts cohérents, chiffres = somme) ; test automatique ; build/bak45,
 build/lot45.diff, ARCHITECTURE.md.
 
-## Prompt 4 — Refonte totale du produit (EN COURS : plan validé le 24/11 à 20 h 45 ; lots 1, 2 et 3 faits ; suite : lot 4 réservation)
+## Prompt 4 — Refonte totale du produit (EN COURS : plan validé le 24/11 à 20 h 45 ; lots 1 à 4 faits ; suite : lot 5 fiches Cleaneur)
 Plan validé (Whiteboard « Refonte Cleaneroo — plan du prompt 4 ») : 1 design system · 2 carte signature (MapLibre + OpenFreeMap) ·
 3 espace client · 4 réservation · 5 fiches Cleaneur · 6 espace Cleaneur · 7 notifications, messagerie, réputation · 8 finitions · 9 audit.
 Décisions : réservation hybride (choisir un Cleaneur ou publier à tous, paiement à la réservation) ; Cleaneurs affichés par secteur
@@ -204,6 +204,10 @@ locale en direct, raccourcis Près de chez moi / Mes prestations / Mes favoris /
 (prestation, lieu, date, heure, fréquence ; résultats liste + carte, côte à côte sur grand écran, bascule sur téléphone ; « Réserver »
 pré-remplit la réservation). Budget non proposé : pas de fourchette de prix inventée, le prix exact vient du calcul. La liste des Cleaneurs
 eux-mêmes (fiches, disponibilités) arrive au lot 5 : il faudra une fonction publique (prénom + initiale, note, prestations, secteur arrondi).
+Lot 4 (25/11) : récapitulatif toujours visible pendant la réservation (étapes 2 à 5) : prestation, durée, date et heure, lieu,
+Cleaneur, disponibilité à l'adresse dès qu'elle est connue, total (même règle que l'étape 5), crédit d'impôt, paiement protégé.
+Colonne à droite sur grand écran ; sur téléphone, ligne au-dessus des boutons qui ouvre une feuille. Ordre des 5 étapes inchangé
+(mêmes étapes que les applis).
 Lot 6 (accord du 25/11) : Waze par coordonnées GPS, un bouton par étape et dans chaque mission, appli de guidage au choix (Waze, Google Maps, Plans).
 Signalé : itineraire() utilise le serveur de démonstration OSRM, pas fait pour la production.
 

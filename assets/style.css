@@ -3032,3 +3032,42 @@ body.sans-rappel .entete .rappel-entete { display: none; }   /* jamais pendant l
   .actions-accueil::-webkit-scrollbar { display: none; }
   .action-accueil { flex: none; scroll-snap-align: start; }
 }
+
+/* Réservation : récapitulatif toujours visible (prompt 4, lot 4) */
+.resa-avec-recap { width: min(1140px, 100% - 32px); margin-inline: auto; display: grid; grid-template-columns: minmax(0, 760px) minmax(280px, 330px); gap: 28px; justify-content: center; align-items: start; }
+.resa-etape { min-width: 0; }
+.recap-resa { position: sticky; top: 90px; display: grid; gap: var(--esp-3); padding: var(--esp-4); border-radius: var(--rayon-xl); box-shadow: var(--ombre-relief, var(--ombre)); margin-top: 52px; }
+.recap-fermer { display: none; }
+.recap-tete { display: flex; gap: var(--esp-3); align-items: center; }
+.recap-tete > div { display: grid; }
+.recap-tete b { font-size: 16px; }
+.recap-lignes { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--esp-3); }
+.recap-lignes li { display: flex; gap: 10px; align-items: flex-start; }
+.recap-lignes li > .ico { flex: none; margin-top: 3px; color: var(--primaire); }
+.recap-lignes small { display: block; font-size: 12px; color: var(--texte3); }
+.recap-lignes b { display: block; font-size: 14px; font-weight: 700; }
+.recap-lignes li.a-choisir b { font-weight: 500; color: var(--texte3); font-style: italic; }
+.recap-dispo { display: flex; gap: 8px; align-items: center; margin: 0; padding: 8px 10px; border-radius: 12px; font-size: 13px; font-weight: 600; background: color-mix(in srgb, var(--alerte) 12%, var(--surface)); color: var(--texte); }
+.recap-dispo.ok { background: color-mix(in srgb, var(--succes) 12%, var(--surface)); }
+.recap-prix { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding-top: var(--esp-3); border-top: 1px solid var(--separateur); }
+.recap-prix span { font-weight: 700; }
+.recap-prix b { font-size: 26px; font-weight: 800; letter-spacing: -.02em; color: var(--primaire); font-variant-numeric: tabular-nums; }
+.recap-credit { margin: -6px 0 0; color: var(--succes); font-weight: 700; text-align: right; }
+.recap-paiement { display: flex; gap: 8px; align-items: flex-start; margin: 0; }
+.recap-paiement .ico { flex: none; margin-top: 2px; }
+.recap-mini { display: none; }
+@media (max-width: 1099px) {
+  .resa-avec-recap { width: min(760px, 100% - 32px); display: block; }
+  .recap-resa { display: none; }
+  .recap-mini { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 48px; margin: 0 0 10px; padding: 8px 14px; border: 1px solid var(--separateur); border-radius: 14px; background: var(--surface); color: var(--texte); box-shadow: var(--ombre); cursor: pointer; text-align: left; font: inherit; }
+  .recap-mini b { font-size: 17px; font-weight: 800; color: var(--primaire); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .recap-mini span { flex: 1; min-width: 0; font-size: 13px; color: var(--texte2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .recap-mini .ico { flex: none; color: var(--primaire); }
+}
+.feuille-recap { position: fixed; inset: 0; z-index: var(--z-fenetre); display: flex; align-items: flex-end; }
+.feuille-fond { position: absolute; inset: 0; background: rgba(8, 38, 42, .42); }
+.feuille-recap .recap-resa { display: grid; position: relative; top: 0; width: 100%; margin: 0; max-height: 82vh; overflow: auto; border-radius: 24px 24px 0 0;
+  box-shadow: 0 -20px 60px rgba(8, 38, 42, .28); padding-bottom: calc(var(--esp-4) + env(safe-area-inset-bottom)); animation: recap-monte var(--duree, .22s) var(--courbe, ease); }
+.feuille-recap .recap-fermer { display: block; justify-self: end; margin: -4px -4px 0 0; }
+@keyframes recap-monte { from { transform: translateY(24px); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .recap-resa { animation: none !important; } }

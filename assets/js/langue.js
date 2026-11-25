@@ -3990,6 +3990,22 @@ const T = [
   ["Invitez, gagnez des crédits", "Invite friends, earn credits", "Invita, guadagna crediti", "Invita y gana créditos"],
   ["couvrent cette adresse pour", "cover this address for", "coprono questo indirizzo per", "cubren esta dirección para"],
   ["couvre cette adresse pour", "covers this address for", "copre questo indirizzo per", "cubre esta dirección para"],
+  // Réservation : récapitulatif toujours visible (prompt 4, lot 4)
+  ["heure à choisir", "time to choose", "ora da scegliere", "hora por elegir"],
+  ["(favori)", "(favourite)", "(preferito)", "(favorito)"],
+  ["Attribué automatiquement", "Assigned automatically", "Assegnato automaticamente", "Asignado automáticamente"],
+  ["Vous choisissez parmi les candidats", "You choose from the applicants", "Scegli tra i candidati", "Eliges entre los candidatos"],
+  ["Selon vos réponses", "Based on your answers", "In base alle tue risposte", "Según tus respuestas"],
+  ["Date et heure d'arrivée", "Arrival date and time", "Data e ora di arrivo", "Fecha y hora de llegada"],
+  ["À choisir à l'étape 4", "To choose at step 4", "Da scegliere al passaggio 4", "Por elegir en el paso 4"],
+  ["À indiquer à l'étape 4", "To enter at step 4", "Da indicare al passaggio 4", "Por indicar en el paso 4"],
+  ["À choisir à l'étape 5", "To choose at step 5", "Da scegliere al passaggio 5", "Por elegir en el paso 5"],
+  ["soit", "i.e.", "ossia", "es decir"],
+  ["Aucun paiement avant le devis.", "No payment before the quote.", "Nessun pagamento prima del preventivo.", "Ningún pago antes del presupuesto."],
+  ["Payé à la réservation, versé au Cleaneur seulement après votre validation.", "Paid when you book, released to the Cleaneur only after your approval.", "Pagato alla prenotazione, versato al Cleaneur solo dopo la tua convalida.", "Pagado al reservar, abonado al Cleaneur solo después de tu validación."],
+  ["Voir le récapitulatif", "View the summary", "Vedi il riepilogo", "Ver el resumen"],
+  ["Récapitulatif de votre réservation", "Summary of your booking", "Riepilogo della tua prenotazione", "Resumen de tu reserva"],
+  ["Lieu", "Place", "Luogo", "Lugar"],
 ];
 
 const DICO = new Map();
