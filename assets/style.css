@@ -1522,7 +1522,7 @@ p.direct i { width: 8px; height: 8px; border-radius: 50%; background: #4FA82E; b
   radial-gradient(620px 420px at 100% 0%, var(--pastel-1), transparent 70%),
   radial-gradient(520px 380px at 0% 20%, var(--pastel-3), transparent 70%); }
 .tableau-entete { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
-.tableau-entete .surtitre { text-transform: capitalize; }
+.tableau-entete .surtitre { text-transform: none; }
 .tableau-entete h1 { font-size: clamp(30px, 4vw, 44px); letter-spacing: -.035em; margin: 4px 0 0; }
 .tableau-entete .bouton { background: linear-gradient(120deg, #2E9C86, #0DC88D 50%, #04BEE5); box-shadow: 0 12px 24px -8px rgba(15, 138, 130, .6); }
 .tableau-grille { display: grid; grid-template-columns: 1.35fr 1fr; gap: 20px; align-items: start; }
@@ -2966,24 +2966,69 @@ body.sans-rappel .entete .rappel-entete { display: none; }   /* jamais pendant l
 .carte-cleaneroo .pin-maison { width: 40px; height: 49px; }
 .carte-live.carte-cleaneroo { background: var(--creux); }
 
-/* Carte client « Cleaneroo près de chez vous » (#/carte, prompt 4, lot 2) */
+/* Recherche client « Cleaneroo près de chez vous » (#/recherche et #/carte, prompt 4, lots 2 et 3) */
 .page-carte { margin-top: -40px; position: relative; display: grid; gap: var(--esp-4); }
-.carte-client-recherche { display: grid; grid-template-columns: minmax(180px, 1fr) minmax(240px, 2fr) auto; gap: var(--esp-3); align-items: end; padding: var(--esp-4); }
-.carte-client-recherche .champ { margin: 0; }
+.carte-client-recherche { padding: var(--esp-4); display: grid; gap: var(--esp-3); }
+.recherche-ligne { display: grid; grid-template-columns: minmax(180px, 1fr) minmax(240px, 2fr) auto; gap: var(--esp-3); align-items: end; }
+.recherche-ligne.secondaire { grid-template-columns: repeat(3, minmax(0, 1fr)); margin: var(--esp-3) 0 var(--esp-2); }
+.recherche-ligne .champ { margin: 0; }
+.recherche-plus summary { cursor: pointer; font-weight: 700; color: var(--primaire); min-height: 32px; display: inline-flex; align-items: center; gap: 6px; }
 .carte-client-actions { display: flex; gap: var(--esp-2); }
 .carte-client-actions .bouton { white-space: nowrap; }
-.carte-client-corps { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(260px, 1fr); gap: var(--esp-4); align-items: start; }
-.carte-client-boite { height: 480px; border-radius: var(--rayon-xl); overflow: hidden; border: 1px solid var(--separateur); background: var(--creux); box-shadow: var(--ombre); }
+.bascule-vue { display: none; }
+.carte-client-corps { display: grid; grid-template-columns: minmax(300px, 1fr) minmax(0, 1.4fr); gap: var(--esp-4); align-items: start; }
+.carte-client-cadre { position: sticky; top: 84px; }
+.carte-client-boite { height: 560px; border-radius: var(--rayon-xl); overflow: hidden; border: 1px solid var(--separateur); background: var(--creux); box-shadow: var(--ombre); }
+.carte-client-resultat { display: grid; gap: var(--esp-3); align-content: start; min-width: 0; }
 .carte-client-resultat .etat { margin: 0; }
-.carte-client-adresse { margin: var(--esp-1) 0 0; font-size: var(--t-xs, 13px); color: var(--texte3); }
-.carte-client-ok h3, .carte-client-attente h3 { margin: var(--esp-2) 0 var(--esp-1); }
-.carte-client-ok .bouton, .carte-client-attente .bouton { margin-top: var(--esp-2); }
-.carte-client-attente form { margin-top: var(--esp-3); }
+.resultat-adresse { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin: 0; color: var(--texte2); font-size: 14px; }
+.titre-resultats { font-size: 15px; margin: var(--esp-2) 0 0; display: flex; align-items: center; gap: 8px; }
+.titre-resultats em { font-style: normal; font-size: 12px; font-weight: 800; padding: 1px 8px; border-radius: 999px; background: var(--creux); color: var(--texte2); }
+.resultat-presta { display: grid; gap: var(--esp-3); padding: var(--esp-4); transition: transform var(--duree, .2s) var(--courbe, ease), box-shadow var(--duree, .2s) var(--courbe, ease); }
+.resultat-presta.principale { border: 1.5px solid var(--turquoise); }
+.resultat-presta.dispo:hover { transform: translateY(-2px); box-shadow: var(--ombre-forte); }
+.resultat-tete { display: flex; gap: var(--esp-3); align-items: center; }
+.resultat-tete h3 { margin: 0; font-size: 16px; }
+.resultat-tete p { margin: 2px 0 0; }
+.resultat-pied { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--esp-2); }
+.attente-ligne .bouton { margin-top: var(--esp-2); }
+.succes-ligne { display: flex; gap: 8px; align-items: flex-start; margin: 0; color: var(--succes); font-weight: 600; font-size: 14px; }
+.pas-encore { border-radius: var(--rayon-l, 18px); }
+.pas-encore summary { cursor: pointer; font-weight: 700; color: var(--texte2); padding: var(--esp-2) 0; }
+.pas-encore[open] { display: grid; gap: var(--esp-3); }
 .carte-client-note { display: flex; gap: var(--esp-2); align-items: center; margin: 0; }
-@media (max-width: 860px) {
-  .carte-client-recherche { grid-template-columns: 1fr; }
+@media (max-width: 960px) {
+  .recherche-ligne, .recherche-ligne.secondaire { grid-template-columns: 1fr; }
   .carte-client-actions .bouton { flex: 1; justify-content: center; }
+  .bascule-vue { display: flex; position: sticky; top: 72px; z-index: 5; box-shadow: var(--ombre); }
   .carte-client-corps { grid-template-columns: 1fr; }
-  .carte-client-boite { height: 340px; }
-  .carte-client-resultat { order: -1; }
+  .carte-client-corps[data-vue-active="liste"] .carte-client-cadre { display: none; }
+  .carte-client-corps[data-vue-active="carte"] .carte-client-resultat { display: none; }
+  .carte-client-cadre { position: static; }
+  .carte-client-boite { height: 62vh; min-height: 360px; }
+}
+
+/* Accueil du compte client : « Que souhaitez-vous faire aujourd'hui ? » (prompt 4, lot 3) */
+.question-accueil { margin: 6px 0 0; font-size: clamp(17px, 1.8vw, 20px); font-weight: 600; color: var(--texte2); }
+.recherche-accueil { display: grid; grid-template-columns: minmax(180px, 1fr) minmax(220px, 1.6fr) auto; gap: var(--esp-3); align-items: end; padding: var(--esp-4); border-radius: var(--rayon-xl); margin-bottom: var(--esp-3); }
+.recherche-accueil .champ { margin: 0; }
+.recherche-accueil [hidden] { display: none !important; }
+.recherche-accueil select + input { margin-top: var(--esp-2); }
+.dispo-locale { grid-column: 1 / -1; display: flex; gap: 8px; align-items: center; margin: 0; color: var(--texte2); min-height: 1.4em; }
+.dispo-locale:empty { display: none; }
+.dispo-locale .ico { flex: none; color: var(--alerte); }
+.dispo-locale.ok .ico { color: var(--succes); }
+.actions-accueil { display: flex; gap: var(--esp-2); flex-wrap: wrap; margin: 0 0 var(--esp-5, 20px); }
+.action-accueil { display: inline-flex; align-items: center; gap: 10px; min-height: 52px; padding: 6px 16px 6px 6px; border-radius: 999px; background: var(--surface); box-shadow: var(--ombre); color: var(--texte); text-decoration: none; font-size: 14.5px;
+  transition: transform var(--duree, .2s) var(--courbe, ease), box-shadow var(--duree, .2s) var(--courbe, ease); }
+.action-accueil .tuile-ico { width: 40px; height: 40px; border-radius: 999px; }
+.action-accueil .tuile-ico .ico { width: 22px; height: 22px; }
+.action-accueil:hover { transform: translateY(-2px); box-shadow: var(--ombre-forte); }
+.action-accueil:focus-visible { outline: none; box-shadow: var(--ombre-focus), var(--ombre); }
+.action-accueil.vive { background: color-mix(in srgb, var(--corail) 14%, var(--surface)); }
+@media (max-width: 760px) {
+  .recherche-accueil { grid-template-columns: 1fr; }
+  .actions-accueil { flex-wrap: nowrap; overflow-x: auto; scroll-snap-type: x mandatory; padding: 4px 2px 12px; scrollbar-width: none; }
+  .actions-accueil::-webkit-scrollbar { display: none; }
+  .action-accueil { flex: none; scroll-snap-align: start; }
 }

@@ -8,8 +8,11 @@ import { agendaParticulier } from "./agenda-particulier.js";
 import { rubrique } from "./catalogue.js";
 import { REGLES, euros, dateLongue, heure } from "./regles.js";
 import { icone } from "./icones.js";
-import { traduire, tr } from "./langue.js";
-import { supabase, session, monProfil, demandesDuCompte, synchroniserBiens, ecouterDemandes } from "./donnees.js";
+import { traduire, tr, LOCALE } from "./langue.js";
+import { supabase, session, monProfil, demandesDuCompte, synchroniserBiens, ecouterDemandes, secteurCouvert } from "./donnees.js";
+import { champPrestation, lancerRecherche } from "./carte-client.js";
+import { chercherAdresse, coordonnees } from "./cartes.js";
+import { afficherToast } from "./commun.js";
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
@@ -103,6 +106,59 @@ export async function carnetFavoris(boite) {
   });
 }
 
+/* ------------------------------------------------------------------ « Que souhaitez-vous faire aujourd'hui ? » (prompt 4, lot 3) */
+/** Prestation proposée d'abord : la dernière réservée, sinon le ménage du logement. */
+function rubriqueConseillee(demandes) {
+  const d = [...demandes].sort((a, b) => new Date(b.cree_le) - new Date(a.cree_le)).find(x => rubrique(x.rubrique_id) && x.rubrique_id !== "special");
+  return d ? d.rubrique_id : "home";
+}
+/** Position d'un bien : enregistrée, sinon retrouvée par son adresse (mémorisée sur l'appareil). */
+async function positionBien(l) {
+  if (Number.isFinite(l.lat) && Number.isFinite(l.lon)) return { lat: l.lat, lon: l.lon };
+  return coordonnees(l.rue || "", l.codePostal || "", l.ville || "").catch(() => null);
+}
+/** Recherche de l'accueil : ouvre la recherche (liste et carte) avec la prestation et le lieu ; disponibilité locale affichée tout de suite. */
+function brancherRechercheAccueil(vue, lieux) {
+  const f = vue.querySelector("[data-recherche-accueil]");
+  if (!f) return;
+  const zone = f.querySelector("[data-dispo-locale]");
+  let jeton = 0;
+  const lieuChoisi = () => (f.lieu && f.lieu.value !== "autre" ? lieux[Number(f.lieu.value)] : null);
+  const dispo = async () => {
+    const moi = ++jeton, l = lieuChoisi(), r = rubrique(f.rubrique.value);
+    if (!l || !r) { zone.textContent = ""; return; }
+    const pos = await positionBien(l);
+    if (moi !== jeton || !pos) { if (moi === jeton) zone.textContent = ""; return; }
+    const n = await secteurCouvert(r.id, pos.lat, pos.lon).catch(() => null);
+    if (moi !== jeton || !f.isConnected) return;
+    zone.innerHTML = n === null ? "" : n > 0
+      ? `${icone("valide")} <span><b>${n} ${tr(n > 1 ? "Cleaneurs vérifiés" : "Cleaneur vérifié")}</b> ${tr(n > 1 ? "couvrent cette adresse pour" : "couvre cette adresse pour")} ${esc(r.nom)}.</span>`
+      : `${icone("alerte")} <span>${tr("Pas encore de Cleaneur à cette adresse pour")} ${esc(r.nom)}. <a href="#/recherche" data-vers-recherche>${tr("Être prévenu")}</a></span>`;
+    zone.classList.toggle("ok", n > 0);
+  };
+  const versRecherche = async () => {
+    const l = lieuChoisi(), id = f.rubrique.value;
+    if (l) {
+      const pos = await positionBien(l);
+      if (!pos) { afficherToast("Adresse introuvable. Précisez la rue ou le code postal.", "erreur"); return; }
+      lancerRecherche({ rubriqueId: id, adresse: { ...pos, rue: l.rue || "", codePostal: l.codePostal || "", ville: l.ville || "",
+        libelle: [l.rue, [l.codePostal, l.ville].filter(Boolean).join(" ")].filter(Boolean).join(", ") } });
+      return;
+    }
+    const q = f.adresse.value.trim();
+    if (q.length < 3) { lancerRecherche({ rubriqueId: id }); return; }
+    const a = await chercherAdresse(q);
+    if (!a) { afficherToast("Adresse introuvable. Précisez la rue ou le code postal.", "erreur"); return; }
+    lancerRecherche({ rubriqueId: id, adresse: { lat: a.lat, lon: a.lon, texte: q, rue: a.rue || "", codePostal: a.codePostal || "", ville: a.ville || "",
+      libelle: [a.rue, [a.codePostal, a.ville].filter(Boolean).join(" ")].filter(Boolean).join(", ") } });
+  };
+  f.addEventListener("submit", e => { e.preventDefault(); versRecherche(); });
+  zone.addEventListener("click", e => { if (e.target.closest("[data-vers-recherche]")) { e.preventDefault(); versRecherche(); } });
+  f.rubrique.addEventListener("change", dispo);
+  f.lieu?.addEventListener("change", () => { f.adresse.hidden = f.lieu.value !== "autre"; if (!f.adresse.hidden) f.adresse.focus(); dispo(); });
+  dispo();
+}
+
 /* ------------------------------------------------------------------ Écran */
 let minuterie = null, arret = null;
 export function arreterTableau() { clearInterval(minuterie); minuterie = null; if (arret) arret(); arret = null; }
@@ -130,13 +186,30 @@ export async function pageTableau(vue) {
   const refaire = demandes.filter(x => x.statut === "TERMINEE" && rubrique(x.rubrique_id) && !x.sur_devis)
     .sort((a, b) => new Date(b.creneau || b.cree_le) - new Date(a.creneau || a.cree_le))
     .filter(x => { const k = `${x.rubrique_id}|${x.rue}|${x.code_postal}`; if (vus.has(k)) return false; vus.add(k); return true; }).slice(0, 3);
+  // Adresses du compte avec leur position (recherche et disponibilité locale) : logements d'abord.
+  const lieux = biens.filter(l => l.ville || l.codePostal).slice(0, 8);
   decorTableau(true);
   vue.innerHTML = `<section class="tableau"><div class="conteneur">
     <div class="tableau-entete">
-      <div><span class="surtitre">${esc(new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" }))}</span>
-        <h1>${tr("Bonjour")} ${esc(profil?.prenom || "")}</h1></div>
-      <a class="bouton" href="#/reserver" data-choisir-prestation>＋ ${tr("Réserver")}</a>
+      <div><span class="surtitre">${esc(new Date().toLocaleDateString(LOCALE, { weekday: "long", day: "numeric", month: "long" }).replace(/^./, c => c.toUpperCase()))}</span>
+        <h1>${tr("Bonjour")} ${esc(profil?.prenom || "")}</h1>
+        <p class="question-accueil">${tr("Que souhaitez-vous faire aujourd'hui ?")}</p></div>
+      <a class="bouton" href="#/reserver" data-choisir-prestation>${icone("ajouter")} ${tr("Réserver")}</a>
     </div>
+    ${pro ? "" : `<form class="carte recherche-accueil" data-recherche-accueil novalidate>
+      ${champPrestation(rubriqueConseillee(demandes))}
+      <label class="champ"><span>${tr("Où ?")}</span>${lieux.length ? `<select name="lieu">${lieux.map((l, i) => `<option value="${i}">${esc(nomLogement(l))}</option>`).join("")}<option value="autre">${tr("Une autre adresse")}</option></select>` : ""}
+        <input name="adresse" type="text" autocomplete="street-address" maxlength="160" placeholder="${tr("Adresse ou ville")}"${lieux.length ? " hidden" : ""}></label>
+      <button type="submit" class="bouton">${tr("Rechercher")}</button>
+      <p class="dispo-locale petit" data-dispo-locale aria-live="polite"></p>
+    </form>
+    <nav class="actions-accueil" aria-label="${tr("Raccourcis")}">
+      ${enDirect ? `<a class="action-accueil vive" href="#/demande/${esc(d.reference)}/${esc(d.jeton)}">${icone("position", { tuile: true })}<b>${tr("Suivre en direct")}</b></a>` : ""}
+      <a class="action-accueil" href="#/recherche">${icone("cleaneurs", { tuile: true })}<b>${tr("Près de chez moi")}</b></a>
+      <a class="action-accueil" href="#/mes-demandes">${icone("calendrier", { tuile: true })}<b>${tr("Mes prestations")}</b></a>
+      <a class="action-accueil" href="#carnet-favoris">${icone("coeur", { tuile: true })}<b>${tr("Mes favoris")}</b></a>
+      <a class="action-accueil" href="#/mes-biens">${icone("logement", { tuile: true })}<b>${tr("Mes biens")}</b></a>
+    </nav>`}
     ${demandes.length ? "" : guideVideo("client", "particulier")}
     ${refaire.length ? `<div class="refaire"><span class="petit muet">${tr("En un geste")} :</span>${refaire.map(x => `<button type="button" class="puce-refaire" data-refaire="${esc(x.reference)}">${icone(rubrique(x.rubrique_id).icone)} ${tr("Refaire")} · ${esc(rubrique(x.rubrique_id).nom)}${x.ville ? ` · ${esc(x.ville)}` : ""}</button>`).join("")}</div>` : ""}
     <div class="tableau-grille">
@@ -160,11 +233,11 @@ export async function pageTableau(vue) {
           : `<div class="tout-va-bien">${icone("valide", { tuile: true })}<p><b>${tr("Tout est à jour")}</b><br><span class="muet">${tr("Rien ne vous attend pour l'instant.")}</span></p></div>`}
       </article>
     </div>
-    <div class="grille-raccourcis tableau-raccourcis">
+    ${pro ? `<div class="grille-raccourcis tableau-raccourcis">
       <a class="carte raccourci" href="#/mes-demandes">${icone("calendrier", { tuile: true })}<b>${tr("Mes prestations")}</b><span class="petit">${tr("En cours, à venir, passées")}</span></a>
       <a class="carte raccourci" href="#/mes-biens">${icone("logement", { tuile: true })}<b>${tr("Mes biens")}</b><span class="petit">${biens.length} ${tr(biens.length > 1 ? "adresses" : "adresse")}</span></a>
       <a class="carte raccourci" href="${pro ? "#/compte/pro" : "#mon-agenda"}">${icone(pro ? "location" : "calendrier", { tuile: true })}<b>${tr(pro ? "Agenda" : "Mon agenda")}</b><span class="petit">${tr(pro ? "Séjours et ménages à programmer" : "Mes prestations jour par jour")}</span></a>
-    </div>
+    </div>` : ""}
     ${biens.length && !pro ? `<h2 class="titre-section">${icone("logement", { tuile: true })}${tr("Mes biens")}</h2>
       <div class="logements-suivi">${biens.slice(0, 6).map(l => `<div class="carte logement-suivi">${icone(iconeBien(l), { tuile: true })}
         <div class="corps"><b>${esc(nomLogement(l))}</b><span class="petit">${esc(l.rue)}, ${esc(l.ville)}</span></div>
@@ -184,6 +257,7 @@ export async function pageTableau(vue) {
   traduire(vue);
   agendaParticulier(vue.querySelector("#agenda-particulier"), { demandes, biens });
   carnetFavoris(vue.querySelector("#carnet-favoris"));
+  brancherRechercheAccueil(vue, lieux);
   vue.querySelectorAll("[data-reserver-ici]").forEach(b => b.onclick = () => reserverPourLogement(b.dataset.reserverIci));
   vue.querySelectorAll("[data-sous-voulu]").forEach(a => a.addEventListener("click", () => { try { localStorage.setItem("cleaneroo-sous-onglet-particulier", a.dataset.sousVoulu); } catch { /* rien */ } }));
   vue.querySelectorAll("[data-refaire]").forEach(b => b.onclick = () => {
