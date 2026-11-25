@@ -457,7 +457,7 @@ async function remplirAgenda(vue, biens, demandes, recharger) {
   const htmlTout = boutonProgrammerTout(planTout);   // vide s'il n'y a rien à programmer ou si les réservations sont fermées
   if (htmlTout) ["#pro-aujourdhui", "#pro-menages"].forEach(sel => { const z = vue.querySelector(sel); if (!z) return;
     z.insertAdjacentHTML("beforebegin", htmlTout); const b = z.previousElementSibling; traduire(b);
-    b.querySelector("[data-programmer-tout]").onclick = () => fenetreProgrammerTout(planTout, { nomBien, recharger }); });
+    b.querySelector("[data-programmer-tout]").onclick = () => fenetreProgrammerTout(planTout, { nomBien, recharger, demandes }); });
   blocRapports(vue.querySelector("#pro-rapports"), { biens, sejours: uniques, demandes, nomBien, societe: vue.querySelector(".entete-pro h2")?.textContent || "" });
   const programmer = b => b.onclick = () => { preremplir({ bienId: b.dataset.programmer, jour: b.dataset.jour, ...horairesDuJour(b.dataset.programmer, b.dataset.jour) }); location.hash = `#/reserver/${rubriqueMenage}`; };
 

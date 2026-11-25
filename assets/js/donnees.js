@@ -525,6 +525,21 @@ export async function repondrePassage(id, jeton, accepte) {
   if (error) throw error;
   return data;
 }
+/* Invitation « Cleaneur favori » (25/11, base-favori-invitation.sql) : une fois par client, pour les prestations sans prochain passage. */
+export async function inviterFavori(reference) {
+  const { data, error } = await supabase.rpc("inviter_favori", { p_reference: reference });
+  if (error) throw error;
+  return data;
+}
+export async function mesInvitationsFavori() {
+  const { data, error } = await supabase.rpc("mes_invitations_favori");
+  return error ? null : data || [];
+}
+/** Côté client connecté : prénom du Cleaneur qui l'a invité à le mettre en favori (null sinon). */
+export async function invitationFavori(reference) {
+  const { data, error } = await supabase.rpc("invitation_favori", { p_reference: reference });
+  return error ? null : data || null;
+}
 export async function alerteSecurite(reference, lat, lon, message) {
   const { data, error } = await supabase.rpc("alerte_securite", { p_reference: reference || "", p_lat: lat, p_lon: lon, p_message: message || "" });
   if (error) throw error;

@@ -4,7 +4,7 @@
 import { rubrique } from "./catalogue.js";
 import { REGLES, euros, dateLongue, dateCourte, heure, duree, finOffreLancement, indemniteAccesC, dateVersement, conseilSecteur, lienWhatsAppSupport } from "./regles.js";
 import { monParrainage, lienInviterClient } from "./parrainage.js";
-import { supabase, majProfil, mesDemandesPersonnelles, libererFavori, proposerProchainPassage, mesPropositionsPassage, alerteSecurite } from "./donnees.js";
+import { supabase, majProfil, mesDemandesPersonnelles, libererFavori, proposerProchainPassage, mesPropositionsPassage, inviterFavori, mesInvitationsFavori, alerteSecurite } from "./donnees.js";
 import { positionAdresse, distanceKm } from "./suivi-live.js";
 import { blocNoterClients, remplirNotesClients, blocAvisRecus } from "./avis-clients.js";
 import { blocFormations } from "./formations.js";
@@ -406,26 +406,35 @@ function blocSecurite(m) {
     <button type="button" class="bouton secondaire" data-alerte-securite="${esc(m.reference)}">${tr("Prévenir le support avec ma position")}</button>
     <p class="petit" data-retour-securite style="margin:6px 0 0"></p></details>`;
 }
-/* Proposer le prochain passage (lot 6, validé le 25/11) : après une mission, une date et une heure proposées au client,
-   qui réserve en un geste (proposer_prochain_passage, base-cleaneur-idees.sql). */
+/* Après une mission (lot 6, validé le 25/11) :
+   - prestations récurrentes (REGLES.RUBRIQUES_PASSAGE) : proposer au client une date et une heure, qu'il réserve en un geste
+     (proposer_prochain_passage, base-cleaneur-idees.sql) ;
+   - les autres (location saisonnière, hôtellerie, déménagement…) suivent leur propre calendrier : le Cleaneur invite plutôt le client
+     à le mettre en favori, une seule fois par client (inviter_favori, base-favori-invitation.sql). */
 const ETAT_PASSAGE = { PROPOSEE: "en attente de la réponse du client", ACCEPTEE: "accepté par le client", REFUSEE: "décliné par le client" };
-function blocProchainsPassages(miennes, propositions) {
+function blocProchainsPassages(miennes, propositions, invitations = []) {
   const limite = Date.now() - 30 * 864e5;
   const recentes = miennes.filter(m => ["A_VALIDER", "TERMINEE"].includes(m.statut) && m.creneau && new Date(m.creneau).getTime() > limite).slice(0, 5);
   if (!recentes.length) return "";
   const demain = new Date(Date.now() + 864e5), iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   const dans = n => { const d = new Date(); d.setDate(d.getDate() + n); return iso(d); };
-  return `<div class="carte prochains-passages"><b>${icone("repeter")} ${tr("Proposer un prochain passage")}</b>
-    <p class="petit muet" style="margin:2px 0 8px">${tr("Le client reçoit votre proposition et réserve en un geste ; la demande vous est proposée en premier.")}</p>
-    ${recentes.map(m => { const p = propositions.find(x => x.reference === m.reference); const h0 = m.creneau ? new Date(m.creneau).getHours() : 9;
-      return `<div class="ligne-passage" data-passage="${esc(m.reference)}"><div><b>${esc(rubrique(m.rubrique_id)?.nom || "")}</b>
+  const recurrente = m => REGLES.RUBRIQUES_PASSAGE.includes(m.rubrique_id);
+  const zonePassage = m => { const p = propositions.find(x => x.reference === m.reference); const h0 = m.creneau ? new Date(m.creneau).getHours() : 9;
+    return p ? `<span class="petit">${tr("Proposé pour le")} ${esc(dateCourte(new Date(p.jour + "T12:00")))} ${tr("à")} ${p.heure} h · ${tr(ETAT_PASSAGE[p.statut] || "")}</span>`
+      : `<details><summary class="lien-bouton">${tr("Proposer une date")}</summary>
+        <div class="raccourcis-passage">${[[7, "Dans 1 semaine"], [14, "Dans 2 semaines"], [28, "Dans 4 semaines"]].map(([n, t]) => `<button type="button" class="puce" data-dans="${dans(n)}">${tr(t)}</button>`).join("")}</div>
+        <div class="grille-2"><label class="champ"><span>${tr("Date")}</span><input type="date" min="${iso(demain)}" value="${dans(14)}" data-jour-passage></label>
+          <label class="champ"><span>${tr("Heure d'arrivée")}</span><select data-heure-passage>${[7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18].map(h => `<option value="${h}"${h === (h0 >= 7 && h0 <= 18 ? h0 : 9) ? " selected" : ""}>${h} h</option>`).join("")}</select></label></div>
+        <button type="button" class="bouton" data-proposer-passage>${tr("Proposer au client")}</button><p class="petit erreur" data-erreur-passage></p></details>`; };
+  const zoneInvitation = m => { const i = invitations.find(x => x.client_reference === m.reference);
+    return i ? `<span class="petit">${i.statut === "ACCEPTEE" ? `${icone("coeur")} ${tr("Vous êtes dans ses favoris")}` : tr("Invitation envoyée : le client choisit de vous ajouter ou non")}</span>`
+      : `<button type="button" class="lien-bouton" data-inviter-favori="${esc(m.reference)}">${icone("coeur")} ${tr("Inviter le client à me mettre en favori")}</button><p class="petit erreur" data-erreur-invitation></p>`; };
+  const titre = recentes.some(recurrente) ? (recentes.every(recurrente) ? "Proposer un prochain passage" : "Proposer un prochain passage ou rester son Cleaneur") : "Rester le Cleaneur de vos clients";
+  return `<div class="carte prochains-passages"><b>${icone("repeter")} ${tr(titre)}</b>
+    <p class="petit muet" style="margin:2px 0 8px">${tr(recentes.some(recurrente) ? "Le client reçoit votre proposition et réserve en un geste ; la demande vous est proposée en premier." : "En favori, vous voyez les prochaines demandes de ce client en premier. Une seule invitation par client.")}</p>
+    ${recentes.map(m => `<div class="ligne-passage" data-passage="${esc(m.reference)}"><div><b>${esc(rubrique(m.rubrique_id)?.nom || "")}</b>
         <span class="petit">${esc(dateCourte(new Date(m.creneau)))} · ${esc(m.ville || "")}${m.prenom ? ` · ${esc(m.prenom)}` : ""}</span></div>
-        ${p ? `<span class="petit">${tr("Proposé pour le")} ${esc(dateCourte(new Date(p.jour + "T12:00")))} ${tr("à")} ${p.heure} h · ${tr(ETAT_PASSAGE[p.statut] || "")}</span>`
-          : `<details><summary class="lien-bouton">${tr("Proposer une date")}</summary>
-            <div class="raccourcis-passage">${[[7, "Dans 1 semaine"], [14, "Dans 2 semaines"], [28, "Dans 4 semaines"]].map(([n, t]) => `<button type="button" class="puce" data-dans="${dans(n)}">${tr(t)}</button>`).join("")}</div>
-            <div class="grille-2"><label class="champ"><span>${tr("Date")}</span><input type="date" min="${iso(demain)}" value="${dans(14)}" data-jour-passage></label>
-              <label class="champ"><span>${tr("Heure d'arrivée")}</span><select data-heure-passage>${[7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18].map(h => `<option value="${h}"${h === (h0 >= 7 && h0 <= 18 ? h0 : 9) ? " selected" : ""}>${h} h</option>`).join("")}</select></label></div>
-            <button type="button" class="bouton" data-proposer-passage>${tr("Proposer au client")}</button><p class="petit erreur" data-erreur-passage></p></details>`}</div>`; }).join("")}</div>`;
+        ${recurrente(m) ? zonePassage(m) : zoneInvitation(m)}</div>`).join("")}</div>`;
 }
 
 function carteMission(m) {
@@ -622,7 +631,8 @@ export async function brancherMissions(vue, p) {
     selfieDuJour().catch(() => "aucun"), p.role === "admin" ? null : mesAvertissements().catch(() => null)]);
   mesPropositions = await supabase.rpc("mes_propositions").then(r => r.data || []).catch(() => []);
   personnelles = new Map((await mesDemandesPersonnelles().catch(() => [])).map(x => [x.reference, x.jusqu]));
-  const propositions = p.employeur_id ? [] : (await mesPropositionsPassage().catch(() => null)) || [];
+  const [propositions, invitations] = p.employeur_id ? [[], []] : await Promise.all([mesPropositionsPassage().catch(() => null).then(x => x || []),
+    mesInvitationsFavori().catch(() => null).then(x => x || [])]);
   const [penalites, docs, tableau] = await Promise.all([p.role === "admin" ? null : mesPenalites().catch(() => null),
     mesDocuments().catch(() => []), tableauCleaneur().catch(() => null)]);
   if (!document.body.contains(boite)) return;
@@ -716,7 +726,7 @@ ${p.employeur_id ? "" : `    <h2 class="titre-section" id="missions-disponibles"
     ${plusTard.length ? plusTard.map(carteMission).join("") : vide("Aucune mission pour l'instant.", p.employeur_id ? "" : "Prenez une mission dans « Disponibles » : elle est à vous dès que vous la prenez.")}
     </div>
     <div data-segment="terminees">
-    ${p.employeur_id ? "" : blocProchainsPassages(miennes, propositions)}
+    ${p.employeur_id ? "" : blocProchainsPassages(miennes, propositions, invitations)}
     <div id="noter-clients"></div>
     <div id="comptes-rendus"></div>
     </div>
@@ -869,6 +879,13 @@ ${p.employeur_id ? "" : `    <h2 class="titre-section" id="missions-disponibles"
       : `${tr("L'alerte n'a pas pu partir : prévenez le support sur WhatsApp.")} <a class="bouton" href="${esc(lien)}" target="_blank" rel="noopener">WhatsApp</a>`;
     b.disabled = false;
   });
+  boite.querySelectorAll("[data-inviter-favori]").forEach(b => b.onclick = async () => {
+    b.disabled = true;
+    const r = await inviterFavori(b.dataset.inviterFavori).catch(() => "erreur");
+    if (["ok", "deja", "deja_favori"].includes(r)) return recharger();
+    b.disabled = false;
+    b.nextElementSibling.textContent = tr(r === "impossible" ? "Ce client n'a pas de compte : il ne peut pas recevoir d'invitation." : "Le service est momentanément indisponible. Réessayez dans quelques minutes.");
+  });
   boite.querySelectorAll("[data-passage]").forEach(z => {
     z.querySelectorAll("[data-dans]").forEach(x => x.onclick = () => { z.querySelector("[data-jour-passage]").value = x.dataset.dans; });
     const bt = z.querySelector("[data-proposer-passage]");
@@ -879,7 +896,7 @@ ${p.employeur_id ? "" : `    <h2 class="titre-section" id="missions-disponibles"
       const r = await proposerProchainPassage(z.dataset.passage, jour, h).catch(() => "erreur");
       if (r === "ok") return recharger();
       bt.disabled = false;
-      err.textContent = tr({ deja: "Une proposition est déjà en attente pour ce client.", date: "Choisissez une date entre demain et dans 3 mois.", impossible: "Ce client n'a pas de compte : il ne peut pas recevoir de proposition." }[r] || "Le service est momentanément indisponible. Réessayez dans quelques minutes.");
+      err.textContent = tr({ deja: "Une proposition est déjà en attente pour ce client.", date: "Choisissez une date entre demain et dans 3 mois.", impossible: "Ce client n'a pas de compte : il ne peut pas recevoir de proposition.", prestation: "Cette prestation suit son propre calendrier : invitez plutôt le client à vous mettre en favori." }[r] || "Le service est momentanément indisponible. Réessayez dans quelques minutes.");
     };
   });
   // Contrôle pièce par pièce : « J'ai terminé » reste grisé tant qu'une pièce n'est pas complète.

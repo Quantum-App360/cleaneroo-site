@@ -262,6 +262,9 @@ export const REGLES = {
   // Exclusivité du Cleaneur demandé (25/11/2026, validé par Michael) : 2 h si la prestation a lieu dans moins de 48 h, 6 h dans
   // moins de 7 jours, 12 h au-delà ; libérée aussitôt s'il n'est pas disponible. Même règle que delai_favori (base-cleaneur-choisi.sql).
   FAVORI_PALIERS_H: [[48, 2], [168, 6]],
+  // Prochain passage proposé par le Cleaneur (25/11/2026, validé par Michael) : seulement les prestations qui reviennent au rythme
+  // choisi par le client. Pas la location saisonnière ni l'hôtellerie (calendrier des réservations). Même liste que proposer_prochain_passage.
+  RUBRIQUES_PASSAGE: ["home", "windows", "office", "commerce", "communal", "car", "outdoor", "pool", "textiles"],
   MISSIONS_SECTEUR_MIN: 3,       // moins de 3 missions disponibles dans le périmètre : conseil d'agrandir le secteur
 };
 

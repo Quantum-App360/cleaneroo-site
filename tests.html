@@ -27,7 +27,7 @@ import { pageQuiSommesNous, encadreSociete, QUI_SOMMES_NOUS } from "./assets/js/
 import { GARANTIES, PAIEMENT_COURT, PAIEMENT_LONG, moyensPaiement, texteAnnulation, contenuAvisPublics, AVIS_MINIMUM, mentionCodePostal, ligneZone } from "./assets/js/commun.js";
 import { ICONES } from "./assets/js/icones.js";
 import { releveProprietaire, listeCourses, texteCourses, dossiersDommages } from "./assets/js/conciergerie.js";
-import { planProgrammerTout, instantParis, avecHoraires, erreurHoraires, departDe, arriveeDe } from "./assets/js/conciergerie.js";
+import { planProgrammerTout, cleaneurDuLogement, instantParis, avecHoraires, erreurHoraires, departDe, arriveeDe } from "./assets/js/conciergerie.js";
 import { photosAvantObligatoires } from "./assets/js/regles.js";
 import { etatOffreConciergerie, offreConciergerieOuverte, fraisServicePct, reservationsOuvertes, fixerOuverture } from "./assets/js/regles.js";
 import { bornesActivite, decalerActivite, jourParis, resumeActivite, evolutionPct } from "./assets/js/activite-societe.js";
@@ -97,6 +97,14 @@ egal("offre conciergerie : 0 % de frais pendant l'offre", fraisServicePct(false,
   egal("programmer tout : prix fixé par la conciergerie", plan.prestationsC, 6000);
   egal("programmer tout : frais de service 8 % sans abonnement", plan.totalC, 6480);
   egal("programmer tout : logement sans ménage précédent à faire à la main", plan.sansModele.length, 1);
+  // Favori d'abord (25/11/2026) : dernier Cleaneur venu dans le logement, seulement s'il est en favori
+  const passes = [{ ...modele, cleaneur_id: "c-ancien", creneau: "2027-01-05T10:00:00Z" }, { ...modele, cleaneur_id: "c-dernier", creneau: "2027-01-20T10:00:00Z" },
+    { ...modele, cleaneur_id: "c-annule", statut: "ANNULEE", creneau: "2027-01-25T10:00:00Z" }];
+  egal("favori d'abord : dernier Cleaneur du logement en favori", cleaneurDuLogement(biens[0], passes, [{ cleaneur_id: "c-dernier" }]), "c-dernier");
+  egal("favori d'abord : dernier Cleaneur pas en favori", cleaneurDuLogement(biens[0], passes, [{ cleaneur_id: "c-ancien" }]), null);
+  egal("favori d'abord : autre logement", cleaneurDuLogement(biens[1], passes, [{ cleaneur_id: "c-dernier" }]), null);
+  egal("prochain passage : pas pour la location saisonnière", REGLES.RUBRIQUES_PASSAGE.includes("rental"), false);
+  egal("prochain passage : ménage du logement", REGLES.RUBRIQUES_PASSAGE.includes("home"), true);
   egal("programmer tout : abonné 0 %", planProgrammerTout({ biens, departs, demandes: [modele], menagePrevu: () => false, abonne: true, aujourdhui: new Date(2027, 1, 1) }).fraisC, 0);
   egal("programmer tout : heure de Paris en hiver", instantParis("2027-02-03", 10), "2027-02-03T09:00:00.000Z");
   egal("programmer tout : heure de Paris en été", instantParis("2027-07-03", 10), "2027-07-03T08:00:00.000Z"); }

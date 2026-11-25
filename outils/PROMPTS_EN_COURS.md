@@ -229,6 +229,12 @@ Contrat Cleaneur 2026-12-b (25/11) : paiement direct sur le compte Stripe du Cle
 À REPORTER PAR VINCENT : tout ce qui précède, et l'envoi de lat / lon avec chaque demande.
 Lot 6 (accord du 25/11) : Waze par coordonnées GPS, un bouton par étape et dans chaque mission, appli de guidage au choix (Waze, Google Maps, Plans) : FAIT.
 Signalé : itineraire() utilise le serveur de démonstration OSRM, pas fait pour la production.
+Favoris (25/11, « oui applique ») : prochain passage seulement pour les prestations récurrentes (REGLES.RUBRIQUES_PASSAGE, contrôlé aussi en base) ;
+pour les autres (location saisonnière comprise), « Inviter le client à me mettre en favori », une fois par client (invitations_favori,
+inviter_favori, invitation_favori, mes_invitations_favori, déclencheur favoris_invitation qui prévient le Cleaneur) : outils/base-favori-invitation.sql,
+appliqué et testé (transaction annulée). Côté client, « Ajouter à mes favoris » mis en avant avec le prénom du Cleaneur.
+« Programmer tout » et le pilote automatique (pilote-auto v3, déployé) proposent d'abord le ménage au dernier Cleaneur du logement s'il est en favori.
+À REPORTER PAR VINCENT : ces trois points dans les applis (même liste de prestations, mêmes fonctions).
 
 
 # CLEANEROO — REFONTE TOTALE DU PRODUIT

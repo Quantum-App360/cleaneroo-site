@@ -2,6 +2,7 @@
 // Pour chaque logement en mode « Automatique » : lit ses calendriers iCal (Airbnb, Booking…), et pour chaque départ de voyageurs
 // des 14 prochains jours sans ménage, programme un ménage sur le modèle du dernier ménage réservé pour ce logement (même prix,
 // mêmes consignes), dans la limite du plafond mensuel fixé par la conciergerie. Plafond atteint : rien n'est programmé, une alerte prévient.
+// Ménage proposé d'abord au dernier Cleaneur du logement s'il est en favori (25/11/2026).
 // Le mode « Automatique » est un accord explicite, logement par logement (aucune dépense sans accord). Notification à chaque ménage programmé.
 // Appel protégé par l'en-tête x-cle-alertes (même clé privée que les autres tâches automatiques, table config_privee).
 import { createClient } from "jsr:@supabase/supabase-js@2";
@@ -65,6 +66,12 @@ Deno.serve(async (req) => {
     const { data: existants } = await admin.from("demandes").select("creneau, estimation_c, statut, details").eq("client_id", b.client_id)
       .eq("details->>logementId", b.id).neq("statut", "ANNULEE");
     const prevus = new Set((existants || []).filter(d => d.creneau).map(d => jourParis(new Date(d.creneau))));
+    // Favori d'abord (25/11/2026, validé par Michael) : le dernier Cleaneur venu dans ce logement, s'il est dans les favoris du client,
+    // reçoit le ménage en premier (exclusivité selon delai_favori), puis tous les Cleaneurs. Même règle que « Programmer tout » sur le site.
+    const { data: dernier } = await admin.from("demandes").select("cleaneur_id").eq("client_id", b.client_id).eq("details->>logementId", b.id)
+      .in("statut", ["A_VALIDER", "TERMINEE"]).not("cleaneur_id", "is", null).order("creneau", { ascending: false, nullsFirst: false }).limit(1).maybeSingle();
+    const { data: fav } = dernier?.cleaneur_id ? await admin.from("favoris").select("cleaneur_id").eq("client_id", b.client_id).eq("cleaneur_id", dernier.cleaneur_id).maybeSingle() : { data: null };
+    const attitre = fav?.cleaneur_id ? { choix_cleaneur: "favori", cleaneur_favori: fav.cleaneur_id } : {};
     for (const j of jours) {
       if (prevus.has(j)) continue;
       const mois = j.slice(0, 7);
@@ -84,7 +91,7 @@ Deno.serve(async (req) => {
         paiement_intent: _pi, paiement_c: _pc, paiement_test: _pt, notes_admin: _n, relance_le: _rl, versement_statut: _vs, versement_c: _vc,
         versement_id: _vi, paiement_journal: _pj, ...copie } = modele;
       const { error } = await admin.from("demandes").insert({ ...copie, reference, creneau: `${j} ${heure}:00:00 Europe/Paris`,
-        remise_parrainage_c: 0, cagnotte_c: 0, equipiers: [], societe_id: null,
+        remise_parrainage_c: 0, cagnotte_c: 0, equipiers: [], societe_id: null, ...attitre,
         ...(prixLibre ? { estimation_c: prix, estimation_initiale_c: prix } : {}),
         details: { ...(modele.details || {}), pilote: true, depuisModele: modele.reference,
           ...(prixLibre ? { prixLibre: true, fraisServiceC: Math.round(prix * Number(modele.details?.fraisServicePctServeur ?? modele.details?.fraisServicePct ?? 8) / 100) } : {}) } });

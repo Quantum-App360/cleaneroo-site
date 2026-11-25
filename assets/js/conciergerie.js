@@ -574,8 +574,20 @@ export const boutonProgrammerTout = plan => plan.lignes.length && !reservationsF
   ? `<div class="programmer-tout"><button type="button" class="bouton plein petit" data-programmer-tout>${icone("calendrier")} ${tr("Programmer tout")} (${plan.lignes.length})</button>
       <span class="petit muet">${tr("Tous les départs sans ménage des 14 prochains jours")} · ${euros(plan.totalC)}</span></div>` : "";
 
+/**
+ * Favori d'abord (25/11/2026, validé par Michael) : le dernier Cleaneur venu dans ce logement, s'il est dans les favoris du client.
+ * Le ménage lui est proposé en premier (exclusivité selon delaiFavoriH), puis à tous. Fonction pure, testée. null sinon.
+ */
+export function cleaneurDuLogement(bien, demandes, favoris) {
+  const ids = new Set((favoris || []).map(f => f.cleaneur_id));
+  const d = (demandes || []).filter(x => x.cleaneur_id && ["A_VALIDER", "TERMINEE"].includes(x.statut) && ["rental", "hospitality"].includes(x.rubrique_id)
+      && (x.details?.logementId === bien.id || memeAdresse(x, bien)))
+    .sort((a, b) => String(b.creneau || b.cree_le || "").localeCompare(String(a.creneau || a.cree_le || "")))[0];
+  return d && ids.has(d.cleaneur_id) ? d.cleaneur_id : null;
+}
+
 /** Fenêtre de confirmation puis programmation. */
-export function fenetreProgrammerTout(plan, { nomBien, recharger }) {
+export function fenetreProgrammerTout(plan, { nomBien, recharger, demandes = [] }) {
   const fond = document.createElement("div");
   fond.className = "fenetre-fond";
   fond.innerHTML = `<div class="fenetre carte" role="dialog" aria-modal="true" aria-labelledby="titre-programmer-tout">
@@ -587,6 +599,7 @@ export function fenetreProgrammerTout(plan, { nomBien, recharger }) {
     <div class="ligne-montant total"><span>${tr("Total")}</span><span>${euros(plan.totalC)}</span></div>
     ${plan.sansModele.length ? `<p class="petit note alerte">${tr("À programmer à la main (aucun ménage précédent pour reprendre les consignes)")} : ${plan.sansModele.map(x => `${esc(nomBien(x.bien))} · ${esc(dateCourte(jourDe(x.jour)))}`).join(", ")}</p>` : ""}
     <p class="petit">${icone("paiement")} ${tr("Le premier ménage est payé maintenant sur la page sécurisée Stripe ; les suivants sont prélevés sur la même carte 3 jours avant chacun. Chaque montant reste bloqué jusqu'à la validation du ménage.")}</p>
+    <p class="petit">${icone("coeur")} ${tr("Si le dernier Cleaneur venu dans un logement est dans vos favoris, le ménage lui est proposé en premier, puis à tous.")}</p>
     <p class="erreur" data-erreur-programmer></p>
     <div class="boutons"><button type="button" class="bouton plein" data-confirmer>${tr("Programmer")} ${plan.lignes.length} ${tr(plan.lignes.length > 1 ? "ménages" : "ménage")} · ${euros(plan.totalC)}</button>
       <button type="button" class="bouton secondaire" data-fermer>${tr("Annuler")}</button></div></div>`;
@@ -598,6 +611,7 @@ export function fenetreProgrammerTout(plan, { nomBien, recharger }) {
     const bouton = e.currentTarget, err = fond.querySelector("[data-erreur-programmer]");
     bouton.disabled = true; err.textContent = tr("Programmation en cours…");
     const groupe = crypto.randomUUID(), faits = [];
+    const favoris = await supabase.rpc("mes_favoris").then(r => r.data || []).catch(() => []);
     for (const x of plan.lignes) {
       const m = x.modele, details = { ...(m.details || {}) };
       ["pilote", "depuisModele", "prixCorrigeLe", "prixNavigateurC", "fraisServicePctServeur", "passages"].forEach(k => delete details[k]);
@@ -605,6 +619,8 @@ export function fenetreProgrammerTout(plan, { nomBien, recharger }) {
         departVoyageursH: x.departH, ...(x.arriveeH != null ? { arriveeSuivanteH: x.arriveeH } : {}) });
       if (x.prixLibre) Object.assign(details, { prixLibre: true });
       const demande = Object.fromEntries(CHAMPS_MODELE.filter(k => m[k] !== undefined).map(k => [k, m[k]]));
+      const attitre = cleaneurDuLogement(x.bien, demandes, favoris);
+      if (attitre) Object.assign(demande, { choix_cleaneur: "favori", cleaneur_favori: attitre });
       try {
         faits.push(await envoyerDemande({ ...demande, details, estimation_c: x.prixC, credit_impot_c: x.creditImpotC, sur_devis: false, flexible: false,
           prelancement: false, creneau: x.creneau, groupe_paiement: groupe, remise_parrainage_c: 0, cagnotte_c: 0 }));

@@ -3172,5 +3172,9 @@ body.sans-defilement { overflow: hidden; }
 .prochains-passages { display: grid; gap: 8px; margin-bottom: 12px; }
 .ligne-passage { display: grid; gap: 6px; padding: 10px 0; border-top: 1px solid var(--separateur); }
 .ligne-passage > div:first-child { display: grid; }
+.ligne-passage [data-inviter-favori] { justify-self: start; text-align: left; }
+.ligne-passage [data-erreur-invitation]:empty { display: none; }
+.invitation-favori { display: flex; gap: 10px; align-items: flex-start; margin: 10px 0 0; padding: 12px; border-radius: 14px; background: var(--creux); border: 1px solid var(--separateur); }
+.invitation-favori > svg, .invitation-favori > .icone { flex: 0 0 auto; width: 22px; height: 22px; }
 .raccourcis-passage { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
 .raccourcis-passage .puce { padding: 6px 12px; border-radius: 999px; border: 1px solid var(--separateur); background: var(--surface); color: var(--texte); font: inherit; font-size: 13px; cursor: pointer; min-height: 36px; }
