@@ -190,7 +190,7 @@ Lien « ‹ Accueil Cleaneroo » dans l'espace Cleaneur et les espaces client (f
 du Cleaneur crédible (2-3 missions sans chevauchement, 6 à 8 h, statuts cohérents, chiffres = somme) ; test automatique ; build/bak45,
 build/lot45.diff, ARCHITECTURE.md.
 
-## Prompt 4 — Refonte totale du produit (EN COURS : plan validé le 24/11 à 20 h 45 ; lots 1 à 5 faits ; suite : lot 6 espace Cleaneur)
+## Prompt 4 — Refonte totale du produit (EN COURS : plan validé le 24/11 à 20 h 45 ; lots 1 à 6 faits ; suite : lot 7 notifications, messagerie, réputation)
 Plan validé (Whiteboard « Refonte Cleaneroo — plan du prompt 4 ») : 1 design system · 2 carte signature (MapLibre + OpenFreeMap) ·
 3 espace client · 4 réservation · 5 fiches Cleaneur · 6 espace Cleaneur · 7 notifications, messagerie, réputation · 8 finitions · 9 audit.
 Décisions : réservation hybride (choisir un Cleaneur ou publier à tous, paiement à la réservation) ; Cleaneurs affichés par secteur
@@ -216,7 +216,13 @@ avis, prestations réalisées, niveau, Pro, prestations, prochains jours ouverts
 Site : « Ou choisissez votre Cleaneur » sous la prestation dans la recherche, fiche en fenêtre, « Réserver avec … », récapitulatif
 « Louise M. (demandé) ». À REPORTER PAR VINCENT dans les applis : mêmes paliers d'exclusivité, bouton « Je ne suis pas disponible »
 (liberer_favori), « Proposer à tous maintenant » côté client, fiches Cleaneur.
-Lot 6 (accord du 25/11) : Waze par coordonnées GPS, un bouton par étape et dans chaque mission, appli de guidage au choix (Waze, Google Maps, Plans).
+Lot 6 (25/11) fait : onglet « Aujourd'hui » du Cleaneur en Urgent (géolocalisation, avertissements, photo du jour, client qui
+l'a demandé, conflits horaires sur 7 jours, dossier) · Aujourd'hui · À venir (3 prochaines) · Performance (missions, note, disponibles,
+dossier) ; planning jour/semaine/mois avec heure de fin, adresse, durée et conflits (chevauchement, moins de 30 min entre deux villes) ;
+revenus (aujourd'hui, semaine, mois, année, moyenne par mission, graphique 6 mois) ; disponibilités en tête du Profil ;
+boutons d'accès « devant le logement » seulement le jour même ; guidage (guidage.js). Correction base : cleaneurs_publics lit
+les créneaux par jour de la semaine (clés 1 à 7) et exclut les périodes fermées.
+Lot 6 (accord du 25/11) : Waze par coordonnées GPS, un bouton par étape et dans chaque mission, appli de guidage au choix (Waze, Google Maps, Plans) : FAIT.
 Signalé : itineraire() utilise le serveur de démonstration OSRM, pas fait pour la production.
 
 

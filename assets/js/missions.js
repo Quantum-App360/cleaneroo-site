@@ -2,7 +2,7 @@
 // automatique), étapes Je pars › Je suis arrivé › Je commence › J'ai terminé, et partage de la position pendant le trajet.
 // Mêmes écrans que l'application (EspacesCompte.kt / ServiceTrajet.kt).
 import { rubrique } from "./catalogue.js";
-import { REGLES, euros, dateLongue, heure, duree, finOffreLancement, indemniteAccesC, dateVersement, conseilSecteur, lienWhatsAppSupport } from "./regles.js";
+import { REGLES, euros, dateLongue, dateCourte, heure, duree, finOffreLancement, indemniteAccesC, dateVersement, conseilSecteur, lienWhatsAppSupport } from "./regles.js";
 import { monParrainage, lienInviterClient } from "./parrainage.js";
 import { supabase, majProfil, mesDemandesPersonnelles, libererFavori } from "./donnees.js";
 import { positionAdresse, distanceKm } from "./suivi-live.js";
@@ -27,6 +27,7 @@ import { missionsDisponibles, mesMissions, prendreMission, avancerMission, envoy
   mesAvertissements, avertissementsCleaneurs, avertirCleaneur, leverBannissement,
   confirmerMission, coutAnnulation, annulerMissionCleaneur, mesPenalites, mesDocuments, tableauCleaneur, dispoUrgence } from "./donnees.js";
 import { blocTournee, brancherTournee, blocListeCarte, brancherListeCarte } from "./tournee.js";
+import { boutonGuidage, brancherGuidage, choixGuidage, brancherChoixGuidage } from "./guidage.js";
 import { brancherControle } from "./controle-ecran.js";
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -116,7 +117,7 @@ export function styles() {
   .ma-journee .segments { margin: 8px 0; }
   .nav-journee { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
   .nav-journee .lien-bouton { font-size: 24px; min-width: 44px; min-height: 40px; }
-  .ligne-journee { display: grid; grid-template-columns: 56px 1fr auto; gap: 8px; align-items: center; padding: 8px 0; border-top: 1px solid var(--separateur); font-size: 14px; }
+  .ligne-journee { display: grid; grid-template-columns: minmax(96px, auto) 1fr auto; gap: 8px; align-items: center; padding: 8px 0; border-top: 1px solid var(--separateur); font-size: 14px; }
   .selfies-admin .paire { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
   .selfies-admin img { width: 120px; height: 120px; object-fit: cover; border-radius: 12px; background: var(--creux); }`;
   document.head.appendChild(st);
@@ -139,14 +140,31 @@ function libellePeriode([d, f]) {
   if (vueJournee === "semaine") { const fin = new Date(f); fin.setDate(fin.getDate() - 1); return `${tr("Semaine du")} ${d.getDate()} ${tr("au")} ${dateLongue(fin)}`; }
   return d.toLocaleDateString(document.documentElement.lang || "fr", { month: "long", year: "numeric" });
 }
+/** Conflits du planning (lot 6) : mission qui commence avant la fin de la précédente, ou moins de 30 min pour se déplacer. */
+export function conflitsPlanning(missions) {
+  const l = missions.filter(m => m.creneau && !["ANNULEE", "TERMINEE"].includes(m.statut)).sort((a, b) => new Date(a.creneau) - new Date(b.creneau));
+  const r = new Map();
+  for (let i = 1; i < l.length; i++) {
+    const finAvant = new Date(l[i - 1].creneau).getTime() + (l[i - 1].duree_min || 0) * 60000, debut = new Date(l[i].creneau).getTime();
+    if (new Date(l[i - 1].creneau).toDateString() !== new Date(l[i].creneau).toDateString()) continue;
+    if (debut < finAvant) r.set(l[i].reference, "conflit");
+    else if (debut - finAvant < 30 * 60000 && (l[i].ville || "") !== (l[i - 1].ville || "") ) r.set(l[i].reference, "serre");
+  }
+  return r;
+}
 function blocJournee(miennes) {
   const [d, f] = periode();
+  const conflits = conflitsPlanning(miennes);
   const liste = miennes.filter(m => m.creneau && new Date(m.creneau) >= d && new Date(m.creneau) < f).sort((a, b) => new Date(a.creneau) - new Date(b.creneau));
   return `<div class="ma-journee" id="ma-journee"><div class="haut-journee"><span class="surtitre">Ma journée</span></div>
     <div class="segments trois">${[["jour", "Jour"], ["semaine", "Semaine"], ["mois", "Mois"]].map(([id, nom]) => `<button type="button" data-vue-journee="${id}" class="${vueJournee === id ? "choisi" : ""}">${nom}</button>`).join("")}</div>
     <div class="nav-journee"><button type="button" class="lien-bouton" data-decaler="-1" aria-label="${esc(tr("Précédent"))}">‹</button><b>${esc(libellePeriode([d, f]))}</b><button type="button" class="lien-bouton" data-decaler="1" aria-label="${esc(tr("Suivant"))}">›</button></div>
-    ${liste.length ? liste.map(m => `<div class="ligne-journee"><b>${heure(new Date(m.creneau).getHours(), new Date(m.creneau).getMinutes())}</b>
-        <span>${rubrique(m.rubrique_id).nom} · ${esc(m.ville)}</span><span class="tampon${m.statut === "CONFIRMEE" ? "" : " vert"}">${tr((ETAPE[m.statut] || [])[2] || m.statut)}</span></div>`).join("")
+    ${liste.length ? liste.map((m, i) => {
+        const debut = new Date(m.creneau), fin = new Date(debut.getTime() + (m.duree_min || 0) * 60000);
+        const conflit = conflits.get(m.reference);
+        return `<div class="ligne-journee${conflit === "conflit" ? " en-conflit" : ""}"><b>${vueJournee === "jour" ? "" : `${esc(dateCourte(debut))} · `}${heure(debut.getHours(), debut.getMinutes())}–${heure(fin.getHours(), fin.getMinutes())}</b>
+        <span>${rubrique(m.rubrique_id).nom} · ${esc(m.rue ? `${m.rue}, ` : "")}${esc(m.ville)} · ${duree(m.duree_min)}</span><span class="tampon${m.statut === "CONFIRMEE" ? "" : " vert"}">${tr((ETAPE[m.statut] || [])[2] || m.statut)}</span>
+        ${conflit ? `<span class="alerte-planning ${conflit}">${icone("alerte")} ${tr(conflit === "conflit" ? "Conflit horaire avec la mission précédente" : "Moins de 30 min pour vous déplacer depuis la mission précédente")}</span>` : ""}</div>`; }).join("")
       : `<p class="petit muet" style="margin:8px 0 0">${tr("Aucune mission sur cette période.")}</p>`}
     ${liste.length ? `<p class="petit" style="margin:8px 0 0">${tr("Total estimé :")} <b>${euros(liste.reduce((s, m) => s + (m.estimation_c || 0), 0))}</b> · ${duree(liste.reduce((s, m) => s + (m.duree_min || 0), 0))}</p>` : ""}</div>`;
 }
@@ -160,7 +178,6 @@ export function tableauDeBord(p, docs, miennes, dispo, t, vue = "aujourdhui", re
   const conforme = p.dossier === "VALIDE";
   const auj = vue === "aujourdhui", gains = vue === "gains";
   return `<div class="tableau-cleaneur">
-    ${auj ? `<p class="petit muet" style="margin:0 0 8px">${esc(dateLongue(new Date()))}</p>` : ""}
     ${gains ? `<p class="petit" style="margin:0 0 8px">${icone("paiement")} ${tr("Prochain versement :")} <b>${esc(dateLongue(dateVersement()))}</b> · ${tr("chaque vendredi, pour les missions validées jusqu'au mercredi minuit.")}</p>
     <span class="badge-niveau">★ ${tr("Niveau")} ${tr(niveauDe(t?.missions_terminees || 0))} · ${tr("commission")} ${commission} %</span>
     <p class="petit" style="margin:4px 0 8px">${icone("equipe")} ${tr("Client fidèle : dès le 3e ménage avec un même client, votre commission passe à")} <b>${t?.formule === "pro" ? 9 : 15} %</b>.</p>
@@ -179,12 +196,16 @@ export function tableauDeBord(p, docs, miennes, dispo, t, vue = "aujourdhui", re
       <input type="checkbox" class="interrupteur" data-dispo-urgence ${dispoJusqu ? "checked" : ""}></label>
     ${recherche ? `<a class="recherche-mission" href="#missions-disponibles" data-aller="missions-disponibles">${icone("position")}
       <div><b>Rechercher une mission</b><span>${tr("Les plus proches, celles qui comblent vos trous de planning")}</span></div><span aria-hidden="true">›</span></a>` : ""}
-    <div class="tuiles-tdb">
-      <a class="tuile-tdb" href="#missions-disponibles" data-aller="missions-disponibles"><b>${dispo.length}</b><span>${tr(dispo.length > 1 ? "missions disponibles" : "mission disponible")}</span></a>
-      <a class="tuile-tdb${conforme ? " ok" : " alerte"}" href="#dossier" data-aller="dossier"><b>${conforme ? "✓" : "!"}</b><span>${tr(conforme ? "Dossier conforme" : "Dossier à compléter")}</span></a>
-    </div>` : ""}</div>`;
+` : ""}</div>`;
 }
 function brancherTableau(boite, miennes, recharger) {
+  // Performance → onglet « Gains » (sous-onglets de l'espace Cleaneur).
+  boite.querySelectorAll("[data-sous-aller]").forEach(a => a.onclick = e => {
+    e.preventDefault();
+    document.querySelector(`.sous-onglets [data-sous-onglet="${a.dataset.sousAller}"]`)?.click();
+    const cible = document.querySelector(a.getAttribute("href"));
+    setTimeout(() => cible?.scrollIntoView({ behavior: "smooth", block: "start" }), 60);
+  });
   boite.querySelectorAll("[data-aller]").forEach(a => a.onclick = e => {
     const cible = document.getElementById(a.dataset.aller);
     if (!cible) return;
@@ -294,7 +315,7 @@ function carteMission(m) {
     <p style="margin:10px 0 0"><b>${esc(m.rue)}, ${esc(m.code_postal)} ${esc(m.ville)}</b></p>
     <p class="petit" style="margin:2px 0 0">${tr("Client :")} ${esc(m.prenom)} · ${m.sur_devis ? tr("Sur devis") : euros(m.estimation_c)}</p>
     <div data-chez-qui="${esc(m.reference)}"></div>
-    ${["CONFIRMEE", "EN_ROUTE", "SUR_PLACE", "EN_COURS"].includes(m.statut) ? `<div class="boutons boutons-acces" style="margin-top:8px">
+    ${["EN_ROUTE", "SUR_PLACE", "EN_COURS"].includes(m.statut) || (m.statut === "CONFIRMEE" && m.creneau && new Date(m.creneau).toDateString() === new Date().toDateString()) ? `<div class="boutons boutons-acces" style="margin-top:8px">
       <button type="button" class="bouton secondaire petit-bouton" data-signaler="devant" data-ref="${esc(m.reference)}">${icone("position")} ${tr("Je suis devant le logement")}</button>
       <button type="button" class="bouton secondaire petit-bouton" data-signaler="acces" data-ref="${esc(m.reference)}">${icone("cle")} ${tr("Je ne trouve pas l'accès")}</button></div>
       <p class="petit muet" style="margin:4px 0 0">${icone("message")} ${tr("Le client est prévenu tout de suite ; échangez avec lui dans la messagerie de la prestation.")}</p>` : ""}
@@ -315,7 +336,7 @@ function carteMission(m) {
     <div class="boutons" style="margin-top:10px">
       ${boutonBon(m.reference)}
       ${bouton ? `<button type="button" class="bouton" data-etape="${esc(m.reference)}">${bouton}</button>` : ""}
-      <a class="bouton secondaire" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${m.rue} ${m.code_postal} ${m.ville}`)}">Itinéraire</a>
+      ${boutonGuidage({ rue: m.rue, cp: m.code_postal, ville: m.ville })}
     </div><p class="erreur" data-erreur-mission style="margin:6px 0 0"></p></div>`;
 }
 
@@ -485,20 +506,56 @@ export async function brancherMissions(vue, p) {
   // « Ma tournée » (23/11/2026) : les missions du jour sur la carte, dans l'ordre, avec l'itinéraire et le départ conseillé.
   const etapesJour = duJour.map(m => ({ titre: rubrique(m.rubrique_id)?.nom || m.rubrique_id, debut: m.creneau ? new Date(m.creneau) : null,
     adresse: `${m.rue || ""}, ${m.code_postal || ""} ${m.ville || ""}`.replace(/^[,\s]+/, "").trim(), rue: m.rue, cp: m.code_postal, ville: m.ville }));
+  // Prompt 4, lot 6 : hiérarchie Urgent · Aujourd'hui · À venir · Performance dans l'onglet « Aujourd'hui ».
+  const urgent = [];
+  if (geo !== "granted") urgent.push(`<div class="carte teintee geoloc"><b>${icone("position")} Géolocalisation</b>
+      <p class="petit" style="margin:4px 0 10px">${geo === "denied" ? "La géolocalisation est bloquée dans votre navigateur : autorisez-la dans les réglages du site (cadenas à gauche de l'adresse)."
+        : "Elle sert à prévenir le client pendant votre trajet et à confirmer votre arrivée. Votre position n'est partagée que pendant le trajet."}</p>
+      ${geo === "prompt" ? `<button type="button" class="bouton" id="autoriser-geoloc">Autoriser la géolocalisation</button>` : ""}</div>`);
+  if (avert && (avert.banni || avert.nombre > 0)) urgent.push(blocAvertissements(avert));
+  if (!avert?.banni && duJour.length && !["VALIDE", "A_VERIFIER"].includes(selfie)) urgent.push(blocSelfie(selfie));
+  for (const [ref, jusqu] of personnelles) {
+    const m = dispo.find(x => x.reference === ref);
+    if (m) urgent.push(`<a class="carte ligne-compte urgent-ligne" href="#missions-disponibles" data-aller="missions-disponibles">${icone("cleaneurs", { tuile: true })}
+      <div class="corps"><b>${tr("Un client vous demande personnellement")}</b><p class="petit" style="margin:2px 0 0">${esc(rubrique(m.rubrique_id)?.nom || "")} · ${esc(m.ville)} · ${tr("répondez avant")} ${new Date(jusqu).toLocaleTimeString(LOCALE, { hour: "2-digit", minute: "2-digit" })}</p></div><span aria-hidden="true">›</span></a>`);
+  }
+  // Conflits horaires dans les 7 prochains jours : à régler avant de partir (décaler avec le client ou annuler à temps).
+  const conflits = conflitsPlanning(miennes), semaine = Date.now() + 7 * 864e5;
+  for (const [ref, type] of conflits) {
+    const m = miennes.find(x => x.reference === ref);
+    if (type !== "conflit" || !m || new Date(m.creneau).getTime() > semaine) continue;
+    urgent.push(`<a class="carte ligne-compte urgent-ligne" href="#mes-missions-a-venir" data-segment-aller="a_venir">${icone("alerte", { tuile: true })}
+      <div class="corps"><b>${tr("Conflit horaire")}</b><p class="petit" style="margin:2px 0 0">${esc(rubrique(m.rubrique_id)?.nom || "")} · ${esc(dateCourte(new Date(m.creneau)))} ${heure(new Date(m.creneau).getHours(), new Date(m.creneau).getMinutes())} · ${tr("commence avant la fin de la mission précédente")}</p></div><span aria-hidden="true">›</span></a>`);
+  }
+  if (p.role !== "admin" && !p.employeur_id && p.dossier !== "VALIDE") urgent.push(`<a class="carte ligne-compte urgent-ligne" href="#dossier" data-aller="dossier">${icone("garantie", { tuile: true })}
+      <div class="corps"><b>${tr("Complétez votre dossier Cleaneur")}</b><p class="petit" style="margin:2px 0 0">${tr("Pièce d'identité, SIRET, assurance et URSSAF.")}</p></div><span aria-hidden="true">›</span></a>`);
   // Refonte du 22/11/2026 : quatre parties rangées dans les onglets Aujourd'hui · Missions (Disponibles, À venir, Terminées) · Gains · Profil.
   boite.innerHTML = `
   <div id="cleaneur-aujourdhui" class="cleaneur-partie">
-    ${geo !== "granted" ? `<div class="carte teintee geoloc"><b>${icone("position")} Géolocalisation</b>
-      <p class="petit" style="margin:4px 0 10px">${geo === "denied" ? "La géolocalisation est bloquée dans votre navigateur : autorisez-la dans les réglages du site (cadenas à gauche de l'adresse)."
-        : "Elle sert à prévenir le client pendant votre trajet et à confirmer votre arrivée. Votre position n'est partagée que pendant le trajet."}</p>
-      ${geo === "prompt" ? `<button type="button" class="bouton" id="autoriser-geoloc">Autoriser la géolocalisation</button>` : ""}</div>` : ""}
-    ${blocAvertissements(avert)}
-    ${avert?.banni || !miennes.length ? "" : blocSelfie(selfie)}
+    ${urgent.length ? `<section class="niveau-tdb urgent" aria-labelledby="titre-urgent"><h2 class="titre-niveau" id="titre-urgent"><i class="pastille-niveau"></i>${tr("Urgent")}</h2>${urgent.join("")}</section>` : ""}
+    <section class="niveau-tdb" aria-labelledby="titre-aujourdhui"><h2 class="titre-niveau" id="titre-aujourdhui">${tr("Aujourd'hui")} <span class="date-niveau">${esc(dateLongue(new Date()))}</span></h2>
     ${p.employeur_id ? "" : tableauDeBord(p, docs, miennes, dispo, tableau, "aujourdhui", !duJour.length)}
-    ${duJour.map((m, i) => (i === 0 ? `<h2 class="titre-section">▶ ${tr("Prochaine action")}</h2>` : i === 1 ? `<h2 class="titre-section">${icone("horloge")} ${tr("Plus tard aujourd'hui")}</h2>` : "") + carteMission(m) + (i === 0 ? `<div id="tournee-jour">${blocTournee(etapesJour)}</div>` : "")).join("")}
-    ${!duJour.length && plusTard.length ? `<a class="carte ligne-compte prochaine-mission" href="#mes-missions-a-venir" data-segment-aller="a_venir">${icone("calendrier")}
-      <div class="corps"><b>${tr("Prochaine mission")}</b><p class="petit" style="margin:2px 0 0">${esc(rubrique(plusTard[0].rubrique_id)?.nom || "")} · ${plusTard[0].creneau ? esc(dateLongue(new Date(plusTard[0].creneau))) : ""} · ${esc(plusTard[0].ville)}</p></div><span aria-hidden="true">›</span></a>` : ""}
-    ${!duJour.length && !plusTard.length ? `<div class="carte vide-jour"><b>${tr("Aucune mission aujourd'hui")}</b><p class="petit" style="margin:4px 0 0">${tr("Les missions commencent dès l'ouverture des réservations. Elles s'afficheront ici, dans l'ordre de la journée.")}</p></div>` : ""}
+    ${duJour.map((m, i) => (i === 0 ? `<h3 class="sous-niveau">${tr("Prochaine action")}</h3>` : i === 1 ? `<h3 class="sous-niveau">${tr("Plus tard aujourd'hui")}</h3>` : "") + carteMission(m) + (i === 0 ? `<div id="tournee-jour">${blocTournee(etapesJour)}</div>` : "")).join("")}
+    ${!duJour.length ? `<div class="carte vide-jour"><b>${tr("Aucune mission aujourd'hui")}</b><p class="petit" style="margin:4px 0 0">${tr(plusTard.length ? "Votre prochaine mission est ci-dessous, dans « À venir »." : "Les missions commencent dès l'ouverture des réservations. Elles s'afficheront ici, dans l'ordre de la journée.")}</p></div>` : ""}
+    </section>
+    <section class="niveau-tdb" aria-labelledby="titre-a-venir"><h2 class="titre-niveau" id="titre-a-venir">${tr("À venir")}</h2>
+    ${plusTard.length ? `<div class="carte liste-a-venir">${plusTard.slice(0, 3).map(m => `<a class="ligne-a-venir" href="#mes-missions-a-venir" data-segment-aller="a_venir">
+        <span class="quand-a-venir"><b>${m.creneau ? esc(dateCourte(new Date(m.creneau))) : tr("Date flexible")}</b>${m.creneau ? `<span>${heure(new Date(m.creneau).getHours(), new Date(m.creneau).getMinutes())}</span>` : ""}</span>
+        <span class="corps">${icone(rubrique(m.rubrique_id)?.icone || "termine")} <span><b>${esc(rubrique(m.rubrique_id)?.nom || "")}</b><span class="petit">${esc(m.ville || "")} · ${duree(m.duree_min)} · ${m.sur_devis ? tr("Sur devis") : euros(m.estimation_c)}</span></span></span>
+        <span aria-hidden="true">›</span></a>`).join("")}
+      ${plusTard.length > 3 ? `<a class="lien-bouton" href="#mes-missions-a-venir" data-segment-aller="a_venir">${tr("Voir mes")} ${plusTard.length} ${tr("missions à venir")} ›</a>` : ""}</div>`
+      : `<p class="petit muet" style="margin:0">${tr("Aucune mission à venir pour l'instant.")}</p>`}
+    </section>
+    ${p.employeur_id ? "" : `<section class="niveau-tdb" aria-labelledby="titre-performance"><h2 class="titre-niveau" id="titre-performance">${tr("Performance")}</h2>
+    <div class="tuiles-tdb performance">
+      <a class="tuile-tdb" href="#cleaneur-gains" data-sous-aller="gains"><b>${tableau?.missions_terminees || 0}</b><span>${tr((tableau?.missions_terminees || 0) > 1 ? "missions réalisées" : "mission réalisée")}</span></a>
+      <a class="tuile-tdb" href="#avis-recus" data-sous-aller="gains"><b>${tableau?.nb_avis ? `★ ${String(tableau.note_moyenne).replace(".", ",")}` : "–"}</b><span>${tableau?.nb_avis ? `${tableau.nb_avis} ${tr("avis")}` : tr("Pas encore d'avis")}</span></a>
+      <a class="tuile-tdb" href="#missions-disponibles" data-aller="missions-disponibles"><b>${dispo.length}</b><span>${tr(dispo.length > 1 ? "missions disponibles" : "mission disponible")}</span></a>
+      <a class="tuile-tdb${p.dossier === "VALIDE" ? " ok" : " alerte"}" href="#dossier" data-aller="dossier"><b>${p.dossier === "VALIDE" ? "✓" : "!"}</b><span>${tr(p.dossier === "VALIDE" ? "Dossier conforme" : "Dossier à compléter")}</span></a>
+    </div>
+    <a class="lien-bouton" href="#cleaneur-gains" data-sous-aller="gains">${tr("Voir mes revenus")} ›</a>
+    ${avert && !avert.banni && !(avert.nombre > 0) ? blocAvertissements(avert) : ""}
+    </section>`}
   </div>
   <div id="cleaneur-missions" class="cleaneur-partie">
     <div class="segments segments-missions">${[...(p.employeur_id ? [] : [["disponibles", `${tr("Disponibles")} (${dispo.length})`]]), ["a_venir", `${tr("À venir")} (${plusTard.length})`], ["terminees", tr("Terminées")]]
@@ -532,11 +589,13 @@ ${p.employeur_id ? "" : `    <h2 class="titre-section" id="missions-disponibles"
   </div>
   <div id="cleaneur-profil" class="cleaneur-partie">
     ${p.employeur_id ? "" : tableauDeBord(p, docs, miennes, dispo, tableau, "profil")}
+    <details class="carte" id="mes-disponibilites" open><summary><b>${icone("calendrier")} ${tr("Mes disponibilités")}</b></summary>
+      <p class="petit muet" style="margin:6px 0 0">${tr("Vos créneaux habituels et vos congés : les clients voient vos prochains jours ouverts sur votre fiche, et les missions qui y tombent passent en tête.")}</p>
+      <div id="creneaux-cleaneur"></div>
+      <div id="periodes-fermees"></div></details>
     <div id="ce-qui-manque"></div>
     <div id="formations-cleaneur"></div>
-    <details class="carte" id="mes-disponibilites"><summary><b>${icone("calendrier")} ${tr("Mes disponibilités")}</b></summary>
-      <div id="periodes-fermees"></div>
-      <div id="creneaux-cleaneur"></div></details>
+    <div class="carte preferences-cleaneur">${choixGuidage()}</div>
     <a class="carte ligne-compte aide-whatsapp" href="${lienWhatsAppSupport("Bonjour Cleaneroo, je suis Cleaneur et j'ai une question : ")}" target="_blank" rel="noopener">${icone("message")}
       <div class="corps"><b>${tr("Une question ? Écrivez-nous sur WhatsApp")}</b><p class="petit" style="margin:2px 0 0">${tr("Le support Cleaneroo vous répond directement.")}</p></div><span aria-hidden="true">›</span></a>
   </div>
@@ -554,6 +613,8 @@ ${p.employeur_id ? "" : `    <h2 class="titre-section" id="missions-disponibles"
   brancherGuidesMissions(boite);
   // Vitrine du client professionnel et « Je suis devant le logement / Je ne trouve pas l'accès » (23/11/2026).
   remplirChezQui(boite);
+  brancherGuidage(boite);
+  brancherChoixGuidage(boite, () => brancherMissions(vue, p));
   boite.querySelectorAll("[data-signaler]").forEach(b => b.onclick = async () => {
     b.disabled = true;
     const { data } = await supabase.rpc("signaler_acces", { p_reference: b.dataset.ref, p_type: b.dataset.signaler }).catch(() => ({ data: null }));

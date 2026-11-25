@@ -3112,3 +3112,28 @@ body.sans-rappel .entete .rappel-entete { display: none; }   /* jamais pendant l
   .fiche-cleaneur { padding: 0; place-items: end stretch; }
   .fiche-corps { width: 100%; max-height: 88vh; border-radius: 24px 24px 0 0; }
 }
+
+/* Espace Cleaneur : hiérarchie du tableau de bord, planning, préférences (prompt 4, lot 6) */
+.niveau-tdb { display: grid; gap: var(--esp-3); margin: 0 0 var(--esp-6, 28px); }
+.titre-niveau { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin: 0; font-size: clamp(20px, 2.2vw, 24px); letter-spacing: -.02em; }
+.titre-niveau .date-niveau { font-size: 14px; font-weight: 600; color: var(--texte2); }
+.niveau-tdb.urgent .titre-niveau { color: var(--erreur); align-items: center; }
+.pastille-niveau { width: 10px; height: 10px; border-radius: 50%; background: var(--erreur); box-shadow: 0 0 0 0 color-mix(in srgb, var(--erreur) 50%, transparent); animation: direct 1.6s infinite; }
+.sous-niveau { margin: var(--esp-2) 0 0; font-size: 15px; color: var(--texte2); font-weight: 700; }
+.urgent-ligne { border-left: 4px solid var(--erreur); }
+.liste-a-venir { display: grid; gap: 2px; padding: 6px 12px; }
+.ligne-a-venir { display: flex; align-items: center; gap: 12px; padding: 10px 2px; color: var(--texte); text-decoration: none; border-bottom: 1px solid var(--separateur); }
+.ligne-a-venir:last-of-type { border-bottom: 0; }
+.ligne-a-venir .quand-a-venir { flex: none; width: 118px; display: grid; }
+.ligne-a-venir .quand-a-venir b, .ligne-a-venir .corps b { color: var(--texte); white-space: nowrap; }
+.ligne-a-venir .quand-a-venir span { font-size: 13px; color: var(--texte2); }
+.ligne-a-venir .corps { flex: 1; min-width: 0; display: flex; gap: 8px; align-items: center; }
+.ligne-a-venir .corps > span { display: grid; min-width: 0; }
+.ligne-a-venir .corps .petit { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tuiles-tdb.performance { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 640px) { .tuiles-tdb.performance { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.ligne-journee.en-conflit { background: color-mix(in srgb, var(--erreur) 8%, transparent); border-radius: 10px; }
+.alerte-planning { grid-column: 1 / -1; display: flex; gap: 6px; align-items: center; font-size: 12.5px; font-weight: 700; color: var(--alerte); }
+.alerte-planning.conflit { color: var(--erreur); }
+.preferences-cleaneur .champ { margin: 0; }
+.choix-guidage small { display: block; margin-top: 4px; }

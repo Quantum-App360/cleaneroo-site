@@ -127,9 +127,14 @@ create or replace function public.cleaneurs_publics(p_rubrique text, p_lat doubl
     coalesce((public.niveau_de(c.id)->>'niveau')::int, 0),
     public.formule_effective(c.id) = 'pro',
     coalesce(c.prestations, '{}'),
+    -- Créneaux habituels par jour de la semaine (« 1 » = lundi … « 7 » = dimanche, base-disponibilites.sql) : les 6 prochains jours
+    -- ouverts sur 3 semaines, hors périodes fermées du Cleaneur. (Corrigé le 25/11 : les clés sont des jours de la semaine, pas des dates.)
     coalesce((select array_agg(j order by j) from (
-       select k::date j from jsonb_each(case when jsonb_typeof(c.disponibilites::jsonb) = 'object' then c.disponibilites::jsonb else '{}'::jsonb end) e(k, v)
-       where k ~ '^\d{4}-\d{2}-\d{2}$' and k::date >= current_date and k::date < current_date + 21 and jsonb_typeof(v) = 'array' and jsonb_array_length(v) > 0
+       select g::date j from generate_series(current_date + 1, current_date + 20, interval '1 day') g
+       where jsonb_typeof(c.disponibilites) = 'object'
+         and jsonb_typeof(c.disponibilites -> extract(isodow from g)::int::text) = 'array'
+         and jsonb_array_length(c.disponibilites -> extract(isodow from g)::int::text) > 0
+         and not exists (select 1 from public.periodes_fermees f where f.cleaneur_id = c.id and g::date between f.debut and f.fin)
        order by 1 limit 6) x), '{}'),
     date_trunc('month', coalesce(c.valide_le, c.cree_le))::date,
     case when c.km < 5 then 5 when c.km < 10 then 10 when c.km < 20 then 20 when c.km < 30 then 30 else 50 end

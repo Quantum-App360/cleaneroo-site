@@ -5,6 +5,7 @@
 // - page « Devenir Cleaneur » : la même tournée sur une journée d'exemple autour de Fréjus.
 // Règle anti-contournement : une mission pas encore prise n'a jamais d'adresse, seulement une zone d'environ 1,5 km.
 import { icone } from "./icones.js";
+import { boutonGuidage, brancherGuidage, nomAppliGuidage } from "./guidage.js";
 import { tr, traduire } from "./langue.js";
 import { esc } from "./commun.js";
 import { afficherCarte, coordonnees } from "./cartes.js";
@@ -46,11 +47,13 @@ function styles() {
   .tournee-depart { display: flex; gap: 10px; align-items: center; padding: 10px 12px; border-radius: 12px; background: rgba(8, 122, 105, .08); margin-bottom: 8px; }
   .tournee-etape { display: flex; gap: 10px; align-items: center; padding: 5px 0; }
   .tournee-etape .num { flex: none; width: 26px; height: 26px; border-radius: 50%; background: #087A69; color: #fff; font-weight: 800; font-size: 13px; display: flex; align-items: center; justify-content: center; }
-  .tournee-etape .corps { min-width: 0; }
+  .tournee-etape .corps { min-width: 0; flex: 1; }
+  .tournee-etape .aller-etape { flex: none; font-size: 13px; font-weight: 700; white-space: nowrap; }
   .tournee-etape .corps b, .tournee-etape .corps span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .tournee-boutons { display: flex; gap: 8px; margin-top: 8px; }
   .tournee-boutons .bouton { flex: 1; text-align: center; }
   .tournee-boutons .bouton.secondaire { flex: .5; }
+  .tournee-etape .aller-etape { min-height: 44px; display: inline-flex; align-items: center; padding: 0 4px; }
   .bascule-dispo { display: flex; gap: 6px; margin: 6px 0 10px; }
   .bascule-dispo button { flex: 1; }
   .vue-carte-dispo [data-dispo]:not(.choisie) { display: none; }
@@ -72,10 +75,11 @@ export function blocTournee(etapes) {
     <div class="tournee-depart" hidden><div><b data-depart></b><p class="petit" style="margin:2px 0 0" data-depart-detail></p></div></div>
     ${etapes.map((e, i) => `<div class="tournee-etape"><span class="num">${i + 1}</span><div class="corps">
       <b>${e.debut ? esc(heure(e.debut)) + " · " : ""}${esc(tr(e.titre))}</b><span class="petit muet">${esc(e.adresse)}</span>
-      <span class="petit muet" data-trajet="${i}"></span></div></div>`).join("")}
+      <span class="petit muet" data-trajet="${i}"></span></div>
+      ${boutonGuidage({ rue: e.rue, cp: e.cp, ville: e.ville, lat: e.lat, lon: e.lon }, { classe: "lien-bouton aller-etape", libelle: nomAppliGuidage() })}</div>`).join("")}
     <div class="tournee-boutons">
-      <a class="bouton" target="_blank" rel="noopener" href="${esc(urlGoogleMaps(etapes.map(e => e.adresse)) || "#")}">${tr(etapes.length > 1 ? "Itinéraire de la tournée" : "Itinéraire")}</a>
-      <a class="bouton secondaire" target="_blank" rel="noopener" href="${esc(urlWaze(etapes[0].adresse) || "#")}">Waze</a>
+      ${etapes.length > 1 ? `<a class="bouton" target="_blank" rel="noopener" href="${esc(urlGoogleMaps(etapes.map(e => e.adresse)) || "#")}">${tr("Itinéraire de la tournée")}</a>` : ""}
+      ${etapes.length === 1 ? boutonGuidage({ rue: etapes[0].rue, cp: etapes[0].cp, ville: etapes[0].ville, lat: etapes[0].lat, lon: etapes[0].lon }, { classe: "bouton", libelle: `${tr("Y aller avec")} ${nomAppliGuidage()}` }) : ""}
     </div></div>`;
 }
 
@@ -85,6 +89,7 @@ export async function brancherTournee(boite, etapes, depart) {
   const positions = [];
   for (const e of etapes) positions.push(Number.isFinite(e.lat) ? { lat: e.lat, lon: e.lon } : await coordonnees(e.rue || "", e.cp || "", e.ville || "").catch(() => null));
   if (!boite.isConnected) return;
+  brancherGuidage(boite);
   const marqueurs = etapes.map((e, i) => positions[i] && { ...positions[i], couleur: VERT, texte: String(i + 1), titre: tr(e.titre),
     popup: `<b>${i + 1}. ${esc(tr(e.titre))}</b>${e.debut ? "<br>" + esc(heure(e.debut)) : ""}<br>${esc(e.adresse)}` }).filter(Boolean);
   if (marqueurs.length) afficherCarte(zone, { marqueurs, zoom: 14, trajet: true, relief: true }).catch(() => zone.remove());

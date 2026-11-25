@@ -6,13 +6,49 @@ import { icone } from "./icones.js";
 import { supabase } from "./donnees.js";
 import { mesFactures } from "./factures.js";
 import { euros, REGLES, calculActivite, netPortefeuille, dateVersement, dateLongue } from "./regles.js";
-import { tr, traduire } from "./langue.js";
+import { tr, traduire, LOCALE } from "./langue.js";
 import { esc } from "./commun.js";
 
 const CLE = "cleaneroo-activite";
 const lireReglages = () => { try { return JSON.parse(localStorage.getItem(CLE)) || {}; } catch { return {}; } };
 const garder = r => { try { localStorage.setItem(CLE, JSON.stringify(r)); } catch { /* rien */ } };
 const pct = n => String(n).replace(".", ",") + " %";
+
+/* Revenus (prompt 4, lot 6) : encaissé aujourd'hui, cette semaine, ce mois-ci et cette année (prestations facturées + pourboires),
+   missions facturées, moyenne par mission et évolution sur 6 mois. Mêmes sources que « Mon activité » (factures, avis). */
+const jourIso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+export function revenus({ factures = [], pourboires = [], maintenant = new Date() }) {
+  const lignes = [...factures.filter(f => f.type === "prestation").map(f => ({ jour: String(f.date_emission).slice(0, 10), c: f.total_ttc_c || 0, mission: 1 })),
+    ...pourboires.map(x => ({ jour: String(x.cree_le).slice(0, 10), c: x.pourboire_c || 0, mission: 0 }))];
+  const auj = jourIso(maintenant);
+  const lundi = new Date(maintenant); lundi.setHours(12, 0, 0, 0); lundi.setDate(lundi.getDate() - ((lundi.getDay() + 6) % 7));
+  const debutSemaine = jourIso(lundi), mois = auj.slice(0, 7), an = auj.slice(0, 4);
+  const somme = f => lignes.filter(f).reduce((s, l) => s + l.c, 0);
+  const duMois = lignes.filter(l => l.jour.slice(0, 7) === mois), missionsMois = duMois.reduce((s, l) => s + l.mission, 0);
+  const prestaMois = duMois.filter(l => l.mission).reduce((s, l) => s + l.c, 0);
+  const historique = Array.from({ length: 6 }, (_, i) => {
+    const d = new Date(maintenant.getFullYear(), maintenant.getMonth() - 5 + i, 1), cle = jourIso(d).slice(0, 7);
+    return { cle, mois: d, c: lignes.filter(l => l.jour.slice(0, 7) === cle).reduce((s, l) => s + l.c, 0) };
+  });
+  return { jourC: somme(l => l.jour === auj), semaineC: somme(l => l.jour >= debutSemaine && l.jour <= auj), moisC: somme(l => l.jour.slice(0, 7) === mois),
+    anneeC: somme(l => l.jour.slice(0, 4) === an), missionsMois, moyenneC: missionsMois ? Math.round(prestaMois / missionsMois) : 0, historique };
+}
+function blocRevenus(r) {
+  const max = Math.max(1, ...r.historique.map(h => h.c));
+  const tuile = (libelle, c) => `<div class="tuile-revenu"><span>${tr(libelle)}</span><b>${euros(c)}</b></div>`;
+  return `<div class="carte revenus-cleaneur">
+      <b>${tr("Mes revenus encaissés")}</b>
+      <div class="tuiles-revenus">${tuile("Aujourd'hui", r.jourC)}${tuile("Cette semaine", r.semaineC)}${tuile("Ce mois-ci", r.moisC)}${tuile("Cette année", r.anneeC)}</div>
+      <p class="petit" style="margin:8px 0 0">${r.missionsMois} ${tr(r.missionsMois > 1 ? "missions facturées ce mois-ci" : "mission facturée ce mois-ci")}${r.missionsMois ? ` · ${tr("moyenne par mission :")} <b>${euros(r.moyenneC)}</b>` : ""}</p>
+      <figure class="graphe-revenus" aria-label="${tr("Évolution sur 6 mois")}">
+        <figcaption class="petit muet">${tr("Évolution sur 6 mois")}</figcaption>
+        <div class="barres">${r.historique.map((h, i) => `<div class="barre${i === r.historique.length - 1 ? " actuelle" : ""}" title="${esc(euros(h.c))}">
+          <span class="valeur">${h.c ? esc(euros(h.c).replace(/,00\s?€/, " €")) : ""}</span><span class="colonne"><i style="height:${Math.max(h.c ? 4 : 0, Math.round(h.c / max * 100))}%"></i></span>
+          <span class="mois">${esc(h.mois.toLocaleDateString(LOCALE, { month: "short" }))}</span></div>`).join("")}</div>
+      </figure>
+      ${r.anneeC ? "" : `<p class="petit muet" style="margin:6px 0 0">${tr("Vos revenus apparaîtront ici après vos premières missions validées.")}</p>`}
+    </div>`;
+}
 
 /** Section « Mon activité » de l'espace Cleaneur. */
 export async function blocActivite(boite, profil) {
@@ -28,6 +64,7 @@ export async function blocActivite(boite, profil) {
   const afficher = () => {
     const a = calculActivite({ factures, pourboires: avis, ...reglages });
     boite.innerHTML = `<h2 class="titre-section">${icone("document")} ${tr("Mon activité")}</h2>
+      ${blocRevenus(revenus({ factures, pourboires: avis }))}
       <div class="choix-periode" role="tablist">${[["mois", "Ce mois-ci"], ["annee", "Cette année"]].map(([v, t]) =>
         `<button type="button" role="tab" aria-selected="${reglages.periode === v}" data-periode="${v}">${tr(t)}</button>`).join("")}</div>
       <div class="carte">
@@ -188,6 +225,19 @@ function styles() {
   const s = document.createElement("style");
   s.id = "styles-activite";
   s.textContent = `
+    .tuiles-revenus{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:10px}
+    .tuile-revenu{display:grid;gap:2px;padding:10px 12px;border-radius:14px;background:var(--creux)}
+    .tuile-revenu span{font-size:12px;color:var(--texte2)}
+    .tuile-revenu b{font-size:18px;font-weight:800;font-variant-numeric:tabular-nums}
+    .graphe-revenus{margin:14px 0 0}
+    .graphe-revenus .barres{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;align-items:end;height:150px;margin-top:6px}
+    .graphe-revenus .barre{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;gap:4px;min-width:0}
+    .graphe-revenus .barre .colonne{flex:1;width:100%;display:flex;align-items:flex-end;justify-content:center}
+    .graphe-revenus .barre i{display:block;width:100%;max-width:44px;border-radius:8px 8px 3px 3px;background:color-mix(in srgb,var(--turquoise) 45%,var(--surface))}
+    .graphe-revenus .barre.actuelle i{background:linear-gradient(180deg,#04BEE5,#0DC88D)}
+    .graphe-revenus .valeur{font-size:11px;font-weight:700;color:var(--texte2);white-space:nowrap}
+    .graphe-revenus .mois{font-size:12px;color:var(--texte3);text-transform:capitalize}
+    @media (max-width:560px){.tuiles-revenus{grid-template-columns:repeat(2,minmax(0,1fr))}}
     .choix-periode{display:inline-flex;gap:4px;background:rgba(31,138,128,.08);border-radius:99px;padding:4px;margin-bottom:10px}
     .choix-periode button{border:none;background:none;font:inherit;font-weight:600;padding:7px 16px;border-radius:99px;cursor:pointer;color:inherit}
     .choix-periode button[aria-selected=true]{background:var(--fond,#fff);box-shadow:0 1px 4px rgba(0,0,0,.12);color:var(--primaire,#1F8A80)}
