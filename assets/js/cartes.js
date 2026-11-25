@@ -207,7 +207,8 @@ const reduit = () => matchMedia?.("(prefers-reduced-motion: reduce)").matches;
  * Affiche une carte dans [boite] : marqueurs [{ lat, lon, couleur, texte, titre, popup, approx (rayon en m, adresse non communiquée), i }],
  * cercle { lat, lon, km } (périmètre), zones [{ lat, lon, km, couleur }] (secteurs approximatifs), marqueur déplaçable (onDeplace(lat, lon)),
  * trajet : trait reliant les épingles dans l'ordre (tournée), onChoix(i) : épingle touchée (i = m.i, sinon son rang),
- * relief : bâtiments en volume et bouton 2D / 3D (grandes cartes seulement), plein : carte d'écran entier (molette, déplacement).
+ * relief : bâtiments en volume et bouton 2D / 3D (grandes cartes seulement), plein : carte d'écran entier (molette, déplacement),
+ * vue { lat, lon, zoom } : cadrage quand il n'y a rien à montrer.
  * Renvoie { remove(), carte } ; même interface que la carte de secours.
  */
 export async function afficherCarte(boite, options = {}) {
@@ -215,12 +216,12 @@ export async function afficherCarte(boite, options = {}) {
   let gl;
   try { gl = await chargerMaplibre(); } catch { return afficherCarteLeaflet(boite, options); }
   if (!boite.isConnected) return null;
-  const { marqueurs = [], cercle = null, zones = [], deplacable = false, onDeplace = null, zoom = 16, plein = false, trajet = false, onChoix = null, relief = false } = options;
+  const { marqueurs = [], cercle = null, zones = [], deplacable = false, onDeplace = null, zoom = 16, plein = false, trajet = false, onChoix = null, relief = false, vue = null } = options;
   if (boite._carte) { boite._carte.remove(); boite._carte = null; }
   const theme = themeCarte(), c = PALETTES_CARTE[theme];
-  boite.classList.add("carte-cleaneroo", `carte-${theme}`);
+  boite.classList.add("carte-cleaneroo", `carte-theme-${theme}`);
   const carte = new gl.Map({
-    container: boite, style: styleCleaneroo(theme, { relief }), center: [6.74, 43.43], zoom: 9, attributionControl: false,
+    container: boite, style: styleCleaneroo(theme, { relief }), center: vue ? [vue.lon, vue.lat] : [6.74, 43.43], zoom: vue?.zoom ?? 9, attributionControl: false,
     cooperativeGestures: !plein, dragRotate: relief, pitchWithRotate: relief, touchPitch: relief, maxPitch: 60, fadeDuration: reduit() ? 0 : 200,
   });
   carte.addControl(new gl.AttributionControl({ compact: true }), "bottom-right");
@@ -285,7 +286,7 @@ const epingle = (L, couleur, texte = "") => L.divIcon({
  * cercle { lat, lon, km } (périmètre), marqueur déplaçable (onDeplace(lat, lon)) pour placer l'entrée du logement.
  * trajet : trait pointillé reliant les épingles dans l'ordre (tournée de la journée). onChoix(i) : épingle touchée (i = m.i, sinon son rang).
  */
-async function afficherCarteLeaflet(boite, { marqueurs = [], cercle = null, deplacable = false, onDeplace = null, zoom = 16, plein = false, trajet = false, onChoix = null } = {}) {
+async function afficherCarteLeaflet(boite, { marqueurs = [], cercle = null, zones = [], vue = null, deplacable = false, onDeplace = null, zoom = 16, plein = false, trajet = false, onChoix = null } = {}) {
   const L = await chargerLeaflet();
   if (!boite.isConnected) return null;
   if (boite._carte) { boite._carte.remove(); boite._carte = null; }
@@ -297,6 +298,10 @@ async function afficherCarteLeaflet(boite, { marqueurs = [], cercle = null, depl
   if (cercle) {
     L.circle([cercle.lat, cercle.lon], { radius: cercle.km * 1000, color: "#1F8A80", weight: 2, fillColor: "#2EC4B6", fillOpacity: 0.16 }).addTo(carte);
     points.push(...[[cercle.lat - cercle.km / 111, cercle.lon], [cercle.lat + cercle.km / 111, cercle.lon]]);
+  }
+  for (const z of zones) {
+    L.circle([z.lat, z.lon], { radius: z.km * 1000, color: z.couleur || "#1F8A80", weight: 1.5, fillColor: z.couleur || "#2EC4B6", fillOpacity: 0.12 }).addTo(carte);
+    points.push([z.lat - z.km / 111, z.lon], [z.lat + z.km / 111, z.lon]);
   }
   if (trajet && marqueurs.length > 1) {
     L.polyline(marqueurs.map(m => [m.lat, m.lon]), { color: "#087A69", weight: 3, opacity: 0.8, dashArray: "6 8" }).addTo(carte);
@@ -312,6 +317,7 @@ async function afficherCarteLeaflet(boite, { marqueurs = [], cercle = null, depl
   }
   if (points.length === 1) carte.setView(points[0], zoom);
   else if (points.length) carte.fitBounds(points, { padding: [34, 34], maxZoom: 15 });
+  else if (vue) carte.setView([vue.lat, vue.lon], vue.zoom ?? 9);
   else carte.setView([43.43, 6.74], 9);   // Var et Alpes-Maritimes
   boite._carte = carte;
   setTimeout(() => carte.invalidateSize(), 60);

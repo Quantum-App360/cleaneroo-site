@@ -190,11 +190,16 @@ Lien « ‹ Accueil Cleaneroo » dans l'espace Cleaneur et les espaces client (f
 du Cleaneur crédible (2-3 missions sans chevauchement, 6 à 8 h, statuts cohérents, chiffres = somme) ; test automatique ; build/bak45,
 build/lot45.diff, ARCHITECTURE.md.
 
-## Prompt 4 — Refonte totale du produit (EN COURS : plan validé le 24/11 à 20 h 45 ; lot 1 design system fait ; suite : lot 2 carte)
+## Prompt 4 — Refonte totale du produit (EN COURS : plan validé le 24/11 à 20 h 45 ; lots 1 et 2 faits ; en attente : accord de Michael pour outils/base-secteurs-publics.sql ; suite : lot 3 espace client)
 Plan validé (Whiteboard « Refonte Cleaneroo — plan du prompt 4 ») : 1 design system · 2 carte signature (MapLibre + OpenFreeMap) ·
 3 espace client · 4 réservation · 5 fiches Cleaneur · 6 espace Cleaneur · 7 notifications, messagerie, réputation · 8 finitions · 9 audit.
 Décisions : réservation hybride (choisir un Cleaneur ou publier à tous, paiement à la réservation) ; Cleaneurs affichés par secteur
 approximatif, jamais d'adresse ni de position exacte. Non-régression : outils/regression.py + outils/compare.py à chaque lot.
+Lot 2 (25/11) : moteur MapLibre 5.24.1 hébergé (assets/vendor/maplibre), style Cleaneroo clair (client) et sombre (Cleaneur), relief 3D
+sur la tournée, suivi en direct, carte.html (paramètre r = relief), repli Leaflet sans WebGL. Page #/carte « Cleaneroo près de chez vous »
+(carte-client.js) : prestation + adresse → disponible (estimer) ou « Être prévenu ». Secteurs publics : fonction secteurs_publics
+(outils/base-secteurs-publics.sql, grille ~5 km) À APPLIQUER après accord ; sans elle, la page vérifie l'adresse mais n'affiche aucun secteur.
+Signalé : itineraire() utilise le serveur de démonstration OSRM, pas fait pour la production.
 
 
 # CLEANEROO — REFONTE TOTALE DU PRODUIT

@@ -1687,6 +1687,7 @@ details.piece.complete .pastille-piece { background: #4FA82E; border-color: #4FA
 .offre-pro .petit { color: rgba(255, 255, 255, .85); }
 .offre-pro .badge-formule { position: static; justify-self: start; background: rgba(255, 255, 255, .2); }
 .offre-pro .tampon { justify-self: start; }
+.formule-cleaneur .badge-formule { top: 18px; left: auto; right: 16px; }
 .cartes-formules { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: stretch; }
 .formule-cleaneur { position: relative; display: flex; flex-direction: column; gap: 4px; padding: 20px 16px 16px; border-radius: 22px; background: var(--surface);
   box-shadow: var(--ombre-relief); border: 2px solid transparent; }
@@ -2946,7 +2947,7 @@ body.sans-rappel .entete .rappel-entete { display: none; }   /* jamais pendant l
 .carte-cleaneroo .maplibregl-ctrl-group button { width: 36px; height: 36px; }
 .carte-cleaneroo .maplibregl-ctrl-group button + button { border-top: 1px solid var(--separateur); }
 .carte-cleaneroo .maplibregl-ctrl button .maplibregl-ctrl-icon { filter: none; }
-.carte-cleaneur .maplibregl-ctrl button .maplibregl-ctrl-icon { filter: invert(1) hue-rotate(180deg) brightness(1.4); }
+.carte-theme-cleaneur .maplibregl-ctrl button .maplibregl-ctrl-icon { filter: invert(1) hue-rotate(180deg) brightness(1.4); }
 .carte-cleaneroo .ctrl-relief { font: 800 12px var(--police); color: var(--texte); letter-spacing: .02em; }
 .carte-cleaneroo .ctrl-relief[aria-pressed="true"] { color: var(--primaire); }
 .carte-cleaneroo .maplibregl-ctrl-attrib { font-size: 11px; background: color-mix(in srgb, var(--surface) 85%, transparent); color: var(--texte3); border-radius: 10px; }
@@ -2964,3 +2965,25 @@ body.sans-rappel .entete .rappel-entete { display: none; }   /* jamais pendant l
 .carte-cleaneroo .pin-cleaneur { width: 46px; height: 46px; }
 .carte-cleaneroo .pin-maison { width: 40px; height: 49px; }
 .carte-live.carte-cleaneroo { background: var(--creux); }
+
+/* Carte client « Cleaneroo près de chez vous » (#/carte, prompt 4, lot 2) */
+.page-carte { margin-top: -40px; position: relative; display: grid; gap: var(--esp-4); }
+.carte-client-recherche { display: grid; grid-template-columns: minmax(180px, 1fr) minmax(240px, 2fr) auto; gap: var(--esp-3); align-items: end; padding: var(--esp-4); }
+.carte-client-recherche .champ { margin: 0; }
+.carte-client-actions { display: flex; gap: var(--esp-2); }
+.carte-client-actions .bouton { white-space: nowrap; }
+.carte-client-corps { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(260px, 1fr); gap: var(--esp-4); align-items: start; }
+.carte-client-boite { height: 480px; border-radius: var(--rayon-xl); overflow: hidden; border: 1px solid var(--separateur); background: var(--creux); box-shadow: var(--ombre); }
+.carte-client-resultat .etat { margin: 0; }
+.carte-client-adresse { margin: var(--esp-1) 0 0; font-size: var(--t-xs, 13px); color: var(--texte3); }
+.carte-client-ok h3, .carte-client-attente h3 { margin: var(--esp-2) 0 var(--esp-1); }
+.carte-client-ok .bouton, .carte-client-attente .bouton { margin-top: var(--esp-2); }
+.carte-client-attente form { margin-top: var(--esp-3); }
+.carte-client-note { display: flex; gap: var(--esp-2); align-items: center; margin: 0; }
+@media (max-width: 860px) {
+  .carte-client-recherche { grid-template-columns: 1fr; }
+  .carte-client-actions .bouton { flex: 1; justify-content: center; }
+  .carte-client-corps { grid-template-columns: 1fr; }
+  .carte-client-boite { height: 340px; }
+  .carte-client-resultat { order: -1; }
+}

@@ -662,6 +662,7 @@ async function afficherPage() {
   if (route === "notifications") { window.scrollTo(0, 0); vue.innerHTML = pageChargement(); traduire(vue); await pageNotifications(vue, param); return; }
   if (route === "compte") { window.scrollTo(0, 0); vue.innerHTML = pageChargement(); traduire(vue); await pageCompte(vue, param); return; }
   if (route === "rejoindre") { window.scrollTo(0, 0); vue.innerHTML = pageChargement(); traduire(vue); const { pageRejoindre } = await import("./societe.js"); const { session: sessionCompte } = await import("./donnees.js"); await pageRejoindre(vue, param, !!(await sessionCompte().catch(() => null))); return; }
+  if (route === "carte") { window.scrollTo(0, 0); const { pageCarteClient, brancherCarteClient } = await import("./carte-client.js"); vue.innerHTML = pageCarteClient(); traduire(vue); brancherCarteClient(vue); return; }
   if (route === "aide") { window.scrollTo(0, 0); vue.innerHTML = pageChargement(); traduire(vue); const { pageAssistant } = await import("./assistant.js"); await pageAssistant(vue, param); return; }
   if (route === "garantie") { window.scrollTo(0, 0); const { pageGarantie } = await import("./garantie.js"); pageGarantie(vue); return; }
   if (route === "importer-biens") { window.scrollTo(0, 0); vue.innerHTML = pageChargement(); traduire(vue); const { pageImportBiens } = await import("./import-biens.js"); await pageImportBiens(vue, param); return; }

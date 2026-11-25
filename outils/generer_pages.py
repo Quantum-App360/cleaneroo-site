@@ -8,7 +8,7 @@
 #   - les traductions des textes locaux des villes dans assets/js/langue.js (bloc <villes-textes>).
 import io, json, os, re, html
 
-VERSION = "2026112402"
+VERSION = "2026112501"
 DATE_PLAN = "2026-11-06"        # date des pages dans sitemap.xml
 SITE = "https://cleaneroo.fr"
 
@@ -135,6 +135,7 @@ def gabarit(chemin, titre, description, corps, attrs="", indexer=True, og_type="
       <nav class="nav" aria-label="Navigation principale">
         <a href="/#/prestations">Prestations</a>
         <a href="/#/estimer">Estimer mon prix</a>
+        <a href="/#/carte">Près de chez vous</a>
         <a href="/#/comment-ca-marche">Comment ça marche</a>
         <a href="/#/qui-sommes-nous">Qui sommes-nous ?</a>
         <a href="/#/devenir-cleaneur">Devenir Cleaneur</a>
@@ -164,6 +165,7 @@ def gabarit(chemin, titre, description, corps, attrs="", indexer=True, og_type="
         <a href="/calculateur/">Calculateur de prix</a>
         <a href="/#/comment-ca-marche">Comment ça marche</a>
         <a href="/#/qui-sommes-nous">Qui sommes-nous ?</a>
+        <a href="/#/carte">Cleaneroo près de chez vous</a>
         <a href="/#/devenir-cleaneur">Devenir Cleaneur</a>
         <a href="/#/confidentialite">Confidentialité</a>
         <a href="/#/conditions">Conditions d'utilisation</a>

@@ -87,7 +87,7 @@ export async function brancherTournee(boite, etapes, depart) {
   if (!boite.isConnected) return;
   const marqueurs = etapes.map((e, i) => positions[i] && { ...positions[i], couleur: VERT, texte: String(i + 1), titre: tr(e.titre),
     popup: `<b>${i + 1}. ${esc(tr(e.titre))}</b>${e.debut ? "<br>" + esc(heure(e.debut)) : ""}<br>${esc(e.adresse)}` }).filter(Boolean);
-  if (marqueurs.length) afficherCarte(zone, { marqueurs, zoom: 14, trajet: true }).catch(() => zone.remove());
+  if (marqueurs.length) afficherCarte(zone, { marqueurs, zoom: 14, trajet: true, relief: true }).catch(() => zone.remove());
   else zone.remove();
   // Départ conseillé (depuis le secteur) et temps de route entre deux étapes.
   positions.forEach((p, i) => {

@@ -474,6 +474,12 @@ export async function secteurCouvert(rubriqueId, lat, lon) {
   const { data, error } = await supabase.rpc("secteur_couvert", { p_rubrique: rubriqueId, p_lat: lat, p_lon: lon });
   return error ? null : data;
 }
+/* Carte client (prompt 4, lot 2) : secteurs couverts par des Cleaneurs validés, arrondis à une grille d'environ 5 km par la base.
+   Jamais d'adresse ni de position exacte. Renvoie [{ lat, lon, rayon_km, cleaneurs }], ou null si la base n'est pas encore à jour. */
+export async function secteursPublics(rubriqueId) {
+  const { data, error } = await supabase.rpc("secteurs_publics", { p_rubrique: rubriqueId || null });
+  return error ? null : data || [];
+}
 /** Inscrit le client sur la liste d'attente de son secteur ; il est prévenu dès qu'un Cleaneur qualifié s'y installe. */
 export async function rejoindreAttente(a) {
   const { error } = await supabase.rpc("rejoindre_attente", { p_rubrique: a.rubriqueId, p_code_postal: a.codePostal || "", p_ville: a.ville,
