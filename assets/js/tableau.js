@@ -242,7 +242,7 @@ export async function pageTableau(vue) {
       <div class="logements-suivi">${biens.slice(0, 6).map(l => `<div class="carte logement-suivi">${icone(iconeBien(l), { tuile: true })}
         <div class="corps"><b>${esc(nomLogement(l))}</b><span class="petit">${esc(l.rue)}, ${esc(l.ville)}</span></div>
         <button type="button" class="bouton petit" data-reserver-ici="${esc(l.id)}">${tr("Réserver")}</button></div>`).join("")}</div>` : ""}
-    ${!pro ? `<h2 class="titre-section" id="mon-agenda">${icone("calendrier", { tuile: true })}${tr("Mon agenda")}</h2>
+    ${!pro && demandes.length ? `<h2 class="titre-section" id="mon-agenda">${icone("calendrier", { tuile: true })}${tr("Mon agenda")}</h2>
       <p class="petit" style="margin-top:0">${tr("Toutes vos prestations demandées, jour par jour. Sélectionnez un jour pour voir le détail.")}</p>
       <div class="carte agenda-carte" id="agenda-particulier"></div>` : ""}
     <div id="carnet-favoris"></div>
