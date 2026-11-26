@@ -614,7 +614,7 @@ export function fenetreProgrammerTout(plan, { nomBien, recharger, demandes = [] 
     const favoris = await supabase.rpc("mes_favoris").then(r => r.data || []).catch(() => []);
     for (const x of plan.lignes) {
       const m = x.modele, details = { ...(m.details || {}) };
-      ["pilote", "depuisModele", "prixCorrigeLe", "prixNavigateurC", "fraisServicePctServeur", "passages"].forEach(k => delete details[k]);
+      ["pilote", "depuisModele", "prixCorrigeLe", "prixNavigateurC", "fraisServicePctServeur", "passages", "creneauPrix", "pass"].forEach(k => delete details[k]);   // creneauPrix : reposé par la base à la création
       Object.assign(details, { logementId: x.bien.id, programmeTout: true, fraisServicePct: x.fraisPct, fraisServiceC: Math.round(x.prixC * x.fraisPct / 100),
         departVoyageursH: x.departH, ...(x.arriveeH != null ? { arriveeSuivanteH: x.arriveeH } : {}) });
       if (x.prixLibre) Object.assign(details, { prixLibre: true });

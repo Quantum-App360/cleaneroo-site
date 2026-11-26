@@ -15,7 +15,7 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 // Prix vérifié par le serveur (refonte du 20 novembre 2026) : les MÊMES fichiers que le site (assets/js/prix-serveur.js,
 // figés sur un commit du dépôt), avec les tarifs publiés depuis l'espace de gestion. Après chaque changement des règles
 // dans assets/js : pousser le site, remplacer le numéro de commit ci-dessous, puis redéployer cette fonction.
-import { calculer, entreeEstimation, appliquerTarifs } from "https://esm.sh/gh/Quantum-App360/cleaneroo-site@6c4d7cd/assets/js/prix-serveur.js?target=deno";
+import { calculer, entreeEstimation, appliquerTarifs } from "https://esm.sh/gh/Quantum-App360/cleaneroo-site@9269ebe/assets/js/prix-serveur.js?target=deno";
 
 /** Passages suivants d'un entretien régulier : prélevés automatiquement ce nombre d'heures avant le passage. */
 const PRELEVEMENT_AVANT_H = 72;

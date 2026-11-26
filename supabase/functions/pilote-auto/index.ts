@@ -121,7 +121,8 @@ Deno.serve(async (req) => {
         remise_parrainage_c: 0, cagnotte_c: 0, equipiers: [], societe_id: null, mission_accompagnee: false, ...attitre,
         plage_fin: finPlageH > depH && finPlageH - depH <= 12 ? iso(finPlageH) : null,
         ...(prixLibre ? { estimation_c: prix, estimation_initiale_c: prix } : {}),
-        details: { ...(modele.details || {}), pilote: true, depuisModele: modele.reference,
+        // creneauPrix et Pass du modèle retirés : la base repose l'heure de prix de ce ménage à sa création.
+        details: { ...(modele.details || {}), creneauPrix: undefined, pass: undefined, pilote: true, depuisModele: modele.reference,
           ...(prixLibre ? { prixLibre: true, fraisServiceC: Math.round(prix * Number(modele.details?.fraisServicePctServeur ?? modele.details?.fraisServicePct ?? 8) / 100) } : {}) } });
       if (error) continue;
       prevus.add(j); bilan.programmes++;

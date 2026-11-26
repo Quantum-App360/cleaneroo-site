@@ -1814,7 +1814,7 @@ async function envoyer() {
       detailsN = { ...details, pass, lignes: estN.lignes, fraisServicePct: estN.fraisServicePct, fraisServiceC: estN.fraisServiceC };
     }
     // Prix calculé à l'heure de début : il ne change pas si le Cleaneur fixe une autre heure dans la plage (fonction paiement).
-    if (d) detailsN = { ...detailsN, creneauPrix: d.toISOString() };
+    detailsN = { ...detailsN, creneauPrix: d ? d.toISOString() : undefined };
     const envoi1 = await envoyerDemande({
       rubrique_id: b.rubriqueId, details: detailsN, estimation_c: estN.totalC, credit_impot_c: estN.creditImpotC, duree_min: estN.dureeMin,
       remise_parrainage_c: n === 0 ? estN.remiseParrainageC : 0, cagnotte_c: n === 0 ? estN.cagnotteC : 0,
