@@ -240,7 +240,7 @@ async function detailDossier(d) {
     </div>`;
   if (d.siret) verifierSiret(d.siret, d.prenom, d.nom).then(v => {
     const c = vue.querySelector("#controle-siret"); if (!c) return;
-    const icones = { verifie: "${icone("valide")}", non_diffusible: "${icone("alerte")}", indisponible: "${icone("horloge")}" };
+    const icones = { verifie: icone("valide"), non_diffusible: icone("alerte"), indisponible: icone("horloge") };
     c.innerHTML = `${icones[v.etat] || icone("alerte")} ${esc(MESSAGES_SIRET[v.etat] || v.etat)}${v.nomOfficiel ? ` · <b>${esc(v.nomOfficiel)}</b>` : ""}`;
   });
   const recharger = async () => { const liste = await dossiersCleaneurs().catch(() => []); const n = liste.find(x => x.id === d.id); n ? detailDossier(n) : listeDossiers(); };
