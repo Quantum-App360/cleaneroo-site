@@ -29,7 +29,7 @@ import {
 } from "./donnees.js";
 import { oublierMesInformations, reserverPourLogement, nomLogement, iconeBien } from "./reserver.js";
 import { tableauDemandes, brancherTableauDemandes } from "./demandes-bureau.js";
-import { rendreEntete, memoriserProfil } from "./entete.js";
+import { rendreEntete, memoriserProfil, accueilDuCompte } from "./entete.js";
 import { ONGLETS, ongletParDefaut, espaceDu, statutsDu, NOMS_ESPACES, barreOnglets, ongletParticulier, ongletPro, ongletEntreprise, ongletHotellerie, brancherRotation, brancherSociete, brancherPro, ongletCleaneur, brancherMissions, demanderGeoloc } from "./espaces.js";
 import { brancherEspaceSociete, brancherActiverSociete, brancherSalarie, utiliserCodeEquipeGarde } from "./societe.js";
 
@@ -58,11 +58,28 @@ const champSecteur = (valeur = "") => `<label class="champ">Secteur d'activité<
   <small class="petit">Nous ne vous proposerons que les prestations utiles à votre activité.</small></label>`;
 const titre = (t, sous = "") => `<h1>${t}</h1><div class="trait-corail"></div>${sous ? `<p class="muet">${sous}</p>` : ""}`;
 
+/* Arrivée après la connexion (26/11/2026, retour de Michael) : le client arrive sur son tableau de bord, ou revient à la page
+   qu'il avait ouverte avant de se connecter (réservation en cours, messages…), et non sur la page d'accueil du site. */
+const CLE_ARRIVEE = "cleaneroo-apres-connexion", CLE_RETOUR = "cleaneroo-retour-connexion";
+const PAGES_DE_RETOUR = /^#\/(reserver|estimer|messages|notifications|favoris|mes-demandes|mes-biens|suivi|tableau)(\/|$)/;
+export function noterRetourConnexion(hash) { try { if (PAGES_DE_RETOUR.test(hash)) sessionStorage.setItem(CLE_RETOUR, hash); else sessionStorage.removeItem(CLE_RETOUR); } catch { /* rien */ } }
+function marquerArrivee() { try { sessionStorage.setItem(CLE_ARRIVEE, "1"); } catch { /* rien */ } }
+/** Page où envoyer le compte qui vient de se connecter (null : rester sur « Mon compte »). Lue une seule fois. */
+function pageArrivee(p) {
+  let arrivee = false, retour = "";
+  try { arrivee = !!sessionStorage.getItem(CLE_ARRIVEE); retour = sessionStorage.getItem(CLE_RETOUR) || ""; sessionStorage.removeItem(CLE_ARRIVEE); sessionStorage.removeItem(CLE_RETOUR); } catch { /* rien */ }
+  if (!arrivee) return null;
+  memoriserProfil(p);
+  const chez = retour || accueilDuCompte(p);
+  return chez && !chez.startsWith("#/compte") && chez !== "#/" ? chez : null;
+}
+
 /** Après le lien de confirmation ou de nouveau mot de passe reçu par e-mail (?vers=compte / ?vers=mdp). */
 export async function retourEmail() {
   const vers = new URLSearchParams(location.search).get("vers");
   if (!vers) return;
   await session(); // lit la connexion contenue dans le lien
+  if (vers === "compte") marquerArrivee();
   history.replaceState(null, "", `${location.pathname}#/compte${vers === "mdp" ? "/mdp" : ""}`);
 }
 
@@ -103,6 +120,8 @@ export async function pageCompte(vue, param) {
   if (!p) { vue.innerHTML = `<section class="bloc"><div class="etroit">${titre("Mon espace")}<p class="erreur">${tr("Le service est momentanément indisponible. Réessayez dans quelques minutes.")}</p></div></section>`; traduire(vue); return; }
   memoriserCoordonnees(p);
   if (await utiliserCodeEquipeGarde()) { location.hash = "#/compte/cleaneur"; return; }
+  const arrivee = pageArrivee(p);
+  if (arrivee) { location.replace(arrivee); return; }
   // Un espace par statut coché (particulier, pro, cleaneur ; cumulables) ; l'administrateur a les trois.
   const admin = p.role === "admin";
   const statuts = admin ? ["particulier", "entreprise", "pro", "hotellerie", "cleaneur"] : statutsDu(p);
@@ -284,7 +303,9 @@ function ecranConnexion(vue, mode, message = "", ok = false, roleDefaut = "clien
       <label class="champ">E-mail<input type="email" name="email" required maxlength="200" autocomplete="username"></label>
       <label class="champ">Mot de passe${creer ? " (10 caractères minimum)" : ""}<input type="password" name="mdp" required minlength="${creer ? 10 : 1}" autocomplete="${creer ? "new-password" : "current-password"}"></label>
       ${creer ? champCodeParrain() : ""}
-      ${creer ? `<label class="case"><input type="checkbox" name="cgu"> <span>J'accepte les <a href="#/conditions">conditions d'utilisation</a> et la <a href="#/confidentialite">politique de confidentialité</a>.</span></label>` : ""}
+      ${creer && inscriptionCleaneur ? `<label class="case"><input type="checkbox" name="cgu"> <span>${tr("J'ai lu le")} <a href="#/conditions-cleaneurs" target="_blank" rel="noopener">${tr("contrat de prestataire")}</a>, ${tr("les")} <a href="#/conditions" target="_blank" rel="noopener">${tr("conditions d'utilisation")}</a> ${tr("et la")} <a href="#/confidentialite" target="_blank" rel="noopener">${tr("politique de confidentialité")}</a>.</span></label>
+        <p class="petit muet" style="margin:-4px 0 10px 30px">${tr("Vous signerez le contrat plus tard, depuis votre dossier.")}</p>`
+        : creer ? `<label class="case"><input type="checkbox" name="cgu"> <span>J'accepte les <a href="#/conditions">conditions d'utilisation</a> et la <a href="#/confidentialite">politique de confidentialité</a>.</span></label>` : ""}
       ${message ? `<p class="${ok ? "note" : "erreur"}" style="margin:10px 0 0">${message}</p>` : ""}
       <p class="erreur" id="erreur-compte" style="margin:10px 0 0"></p>
       <button class="bouton plein" type="submit" style="margin-top:12px">${inscriptionCleaneur ? tr(type === "societe" ? "Pré-inscrire ma société" : "Valider ma pré-inscription") : creer ? (roleDefaut === "salarie" ? tr("Créer mon accès") : VITRINES[roleDefaut] ? `${tr("Créer mon espace")} ${tr(NOMS_STATUTS[roleDefaut][0])}` : "Créer mon compte") : "Se connecter"}</button>
@@ -322,7 +343,7 @@ function ecranConnexion(vue, mode, message = "", ok = false, roleDefaut = "clien
     if (creer) f.querySelector("#erreur-compte").textContent = "";
     if (!creer) {
       const r = await connecter(email, f.mdp.value).catch(() => "erreur");
-      if (r === "ok") { majLienCompte(); return pageCompte(vue); }
+      if (r === "ok") { marquerArrivee(); majLienCompte(); return pageCompte(vue); }
       return ecranConnexion(vue, mode, tr(r === "confirmer" ? "Confirmez d'abord votre e-mail : ouvrez le lien reçu, puis connectez-vous." : r === "incorrect" ? "E-mail ou mot de passe incorrect." : "Le service est momentanément indisponible. Réessayez dans quelques minutes."));
     }
     if (inscriptionCleaneur) return inscrireCleaneur(f, email, erreur, vue, type);
@@ -341,7 +362,7 @@ function ecranConnexion(vue, mode, message = "", ok = false, roleDefaut = "clien
         societe: avecSociete ? f.societe.value.trim() : "", siretSociete: avecSociete ? f.siretSociete.value : "", codeParrain: f.code_parrain.value,
         secteur: statuts.includes("entreprise") ? f.secteur.value : "" });
       oublierCodeParrain();
-      if (r === "connecte") { majLienCompte(); return pageCompte(vue); }
+      if (r === "connecte") { marquerArrivee(); majLienCompte(); return pageCompte(vue); }
       garderInscription({ email, statuts, prenom: f.prenom.value.trim(), nom: f.nom.value.trim(), societe: avecSociete ? f.societe.value.trim() : "",
         siretSociete: avecSociete ? f.siretSociete.value.replace(/\D/g, "") : "" });
       if (r === "existe") return ecranCompteExistant(vue, email, roleDefaut, statuts);
@@ -443,7 +464,7 @@ async function inscrireCleaneur(f, email, erreur, vue, type) {
   if (tel.replace(/\D/g, "").length < 10) return erreur("Indiquez un numéro de téléphone valable.");
   if (soc && !f.engagement.checked) return erreur("Cochez l'engagement de formation de vos salariés pour continuer.");
   if (f.mdp.value.length < 10) return erreur("Le mot de passe doit contenir au moins 10 caractères.");
-  if (!f.cgu.checked) return erreur("Acceptez les conditions d'utilisation pour créer votre compte.");
+  if (!f.cgu.checked) return erreur("Cochez la case : vous avez lu le contrat de prestataire, les conditions d'utilisation et la politique de confidentialité.");
   try {
     demanderGeoloc();   // autorisation de géolocalisation dès l'inscription
     const r = await creerCompte({ email, mdp: f.mdp.value, statuts: ["cleaneur"], prenom: f.prenom.value.trim(), nom: f.nom.value.trim(),
@@ -725,6 +746,7 @@ export async function pageMesPrestations(vue, mode = "demandes", sous = null) {
       return liste.length ? liste.map(l => { const c = ongletBiens; return `<div class="carte ligne-compte bien-particulier">${icone(iconeBien(l), { tuile: true })}
       <div class="corps"><b>${esc(nomDuBien(l))}</b><div class="petit">${c === "bateau" ? esc([l.port, l.place].filter(Boolean).join(", ") || l.ville) : `${esc(l.rue)}, ${esc(l.codePostal)} ${esc(l.ville)}`}${l.immatriculation ? ` · ${esc(l.immatriculation)}` : ""}${c === "logement" ? `${l.surface ? ` · ${l.surface} m²` : ""}${l.chambres ? ` · ${l.chambres} ${tr("ch.")}` : ""}${l.sdb ? ` · ${l.sdb} ${tr("sdb")}` : ""}` : ["loisirs", "bateau"].includes(c) && l.surface ? ` · ${l.surface} m` : ""}
         <div class="actions-bien"><button type="button" class="bouton petit" data-reserver-bien="${esc(l.id)}">${tr("Réserver")}</button>
+          <button type="button" class="bouton secondaire petit" data-besoin-bien="${esc(l.id)}">${icone("instantane")} ${tr("Décrire un besoin")}</button>
           <button type="button" class="lien-bouton" data-modifier-bien="${esc(l.id)}">${tr("Modifier")}</button>
           ${c === "logement" ? `<button type="button" class="lien-bouton" data-badge-bien="${esc(l.id)}">${tr("Badge « Logement contrôlé »")}</button>` : ""}
           <button type="button" class="lien-bouton" style="color:var(--erreur)" data-retirer-bien="${esc(l.id)}">${tr("Retirer")}</button></div><div data-zone-badge></div>${c === "logement" ? editeurTemoins(l) : ""}</div></div></div>`; }).join("")
@@ -817,6 +839,11 @@ export async function pageMesPrestations(vue, mode = "demandes", sous = null) {
     const d = vue.querySelector("#ajout-bien"); d.open = true; d.scrollIntoView({ behavior: "smooth", block: "start" });
   });
   vue.querySelectorAll("[data-reserver-bien]").forEach(b => b.onclick = () => reserverPourLogement(b.dataset.reserverBien));
+  // Cleaneroo AI pour un bien : l'assistant s'ouvre avec ce bien, sa proposition reprend son adresse à la réservation.
+  vue.querySelectorAll("[data-besoin-bien]").forEach(b => b.onclick = () => {
+    const l = biens.find(x => x.id === b.dataset.besoinBien);
+    import("./assistant-ia.js").then(m => m.ouvrirAssistantIA(l ? `${nomLogement(l)} : ` : "", { nouveau: true, bien: l?.id || "" })).catch(() => null);
+  });
   brancherBadges(vue);
   brancherTemoins(vue, biens, () => pageMesPrestations(vue, "biens"));
   vue.querySelectorAll("[data-retirer-bien]").forEach(b => b.onclick = async () => {

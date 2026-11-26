@@ -80,7 +80,7 @@ let onglet = "demandes";
 
 /** Rubriques du back-office : identifiant, nom, icône. */
 const RUBRIQUES_BO = [["ouverture", "Ouverture des réservations", "cle"], ["demandes", "Demandes", "calendrier"], ["inscriptions", "Inscriptions au lancement", "avis"], ["dossiers", "Dossiers Cleaneurs", "cleaneurs"],
-  ["litiges", "Litiges", "garantie"], ["controle", "Contrôle des Cleaneurs", "photo"], ["support", "Support", "telephone"], ["secteurs", "Secteurs à recruter", "position"], ["zones", "Zones et partenaires", "position"], ["risques", "Risques de contournement", "garantie"], ["visites", "Visites", "instantane"], ["tarifs", "Tarifs", "paiement"], ["connexions", "Connexions logiciels", "logement"]];
+  ["litiges", "Litiges", "garantie"], ["controle", "Contrôle des Cleaneurs", "photo"], ["support", "Support", "telephone"], ["secteurs", "Secteurs à recruter", "position"], ["zones", "Zones et partenaires", "position"], ["risques", "Risques de contournement", "garantie"], ["visites", "Visites", "instantane"], ["ia", "Cleaneroo AI", "instantane"], ["tarifs", "Tarifs", "paiement"], ["connexions", "Connexions logiciels", "logement"]];
 let compteurs = {};
 /** Chiffres clés (en tête et pastilles du menu), relus à chaque changement de rubrique. */
 async function chargerCompteurs() {
@@ -428,6 +428,7 @@ async function liste() {
   if (onglet === "controle") return listeControle();
   if (onglet === "tarifs") { const { ecranTarifs } = await import("./gestion-tarifs.js"); return ecranTarifs(vue, titreBO()); }
   if (onglet === "connexions") return listeConnexions();
+  if (onglet === "ia") { const { ecranIA } = await import("./gestion-ia.js"); return ecranIA(vue, titreBO(), brancherOnglets); }
   const { data, error } = await supabase.from("demandes").select("*").order("cree_le", { ascending: false }).limit(300);
   if (error) { vue.innerHTML = `<p class="erreur">${esc(error.message)}</p>`; return; }
   const compte = s => data.filter(d => d.statut === s).length;

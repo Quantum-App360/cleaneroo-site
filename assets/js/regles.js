@@ -197,7 +197,13 @@ export const REGLES = {
   PHOTOS_AVANT_SAUF: ["special"],
   // « Mon activité » du Cleaneur micro-entrepreneur (taux 2026, prestations de services BIC dont le nettoyage) — à revoir chaque année.
   URSSAF_SERVICES_PCT: 21.2,
-  URSSAF_ACRE_PCT: 10.6,
+  // ACRE (décret n° 2026-69 du 6 février 2026) : exonération ramenée de 50 % à 25 % pour les micro-entreprises créées depuis le
+  // 1er juillet 2026, soit 75 % du taux normal (15,9 %) ; celles créées avant gardent 10,6 % jusqu'à la fin de leur période d'ACRE.
+  URSSAF_ACRE_PCT: 15.9,
+  URSSAF_ACRE_AVANT_JUILLET_2026_PCT: 10.6,
+  // Frais de paiement Stripe (cartes standard de l'EEE), à la charge du Cleaneur : tarif à vérifier chaque année sur stripe.com/fr/pricing.
+  FRAIS_STRIPE_PCT: 1.5,
+  FRAIS_STRIPE_FIXE_C: 25,
   VERSEMENT_LIBERATOIRE_PCT: 1.7,
   PLAFOND_MICRO_SERVICES_C: 8360000,   // 83 600 € de chiffre d'affaires par an (prestations de services, 2026-2028)
   DEVIS_VALIDITE_JOURS: 30,
@@ -233,6 +239,10 @@ export const REGLES = {
   // 8 € jusqu'à 30 km, 15 € jusqu'à 50 km, au-delà 0,30 €/km aller-retour, 60 € au plus.
   FRAIS_DEPLACEMENT: { inclusKm: 15, palier1Km: 30, palier1C: 800, palier2Km: 50, palier2C: 1500, parKmC: 30, maxC: 6000 },
   MISSION_TEST_C: 4000,
+  // Lancement des missions (page « Devenir Cleaneur ») : à remplir par Vincent, ex. LANCEMENT_ZONE: "Fréjus et Saint-Raphaël",
+  // LANCEMENT_DATE: "5 janvier 2027". Vides : la page invite seulement à s'inscrire pour être prévenu.
+  LANCEMENT_ZONE: "",
+  LANCEMENT_DATE: "",
   // Supplément pour imprévu (après un signalement à l'arrivée) : curseur de 15 à 60 min, au tarif de la prestation, au plus 25 % du prix,
   // réponse du client sous 15 min (sinon refus). Copie de Regles.kt ; la base fait foi (proposer_supplement).
   SUPPLEMENT_PAS_MIN: 15, SUPPLEMENT_MAX_MIN: 60, SUPPLEMENT_MAX_PCT: 25, SUPPLEMENT_REPONSE_MIN: 15,
@@ -464,11 +474,35 @@ export function calculActivite({ factures = [], pourboires = [], periode = "mois
   const somme = (p, type) => factures.filter(f => f.type === type && dans(f.date_emission, p)).reduce((s, f) => s + f.total_ttc_c, 0);
   const ca = p => somme(p, "prestation") + pourboires.filter(x => dans(x.cree_le, p)).reduce((s, x) => s + (x.pourboire_c || 0), 0);
   const caC = ca(periode), commissionC = somme(periode, "commission");
-  const tauxPct = Math.round(((acre ? REGLES.URSSAF_ACRE_PCT : REGLES.URSSAF_SERVICES_PCT) + (liberatoire ? REGLES.VERSEMENT_LIBERATOIRE_PCT : 0)) * 10) / 10;
+  const tauxPct = tauxCotisationsPct(acre, liberatoire);
   const cotisationsC = Math.round(caC * tauxPct / 100);
   const caAnneeC = ca("annee");
   return { caC, commissionC, tauxPct, cotisationsC, resteC: Math.max(0, caC - commissionC - cotisationsC), caAnneeC,
     plafondPct: Math.min(100, Math.round(100 * caAnneeC / REGLES.PLAFOND_MICRO_SERVICES_C)) };
+}
+
+/** Taux de cotisations URSSAF (%) du Cleaneur micro-entrepreneur. acre : "" (sans ACRE), "depuis" (créée depuis le 1er juillet 2026),
+ *  "avant" (créée avant ; true, l'ancienne case cochée, vaut "avant" pour ne rien changer aux réglages déjà enregistrés). */
+export function tauxCotisationsPct(acre = "", liberatoire = false) {
+  const base = acre === "depuis" ? REGLES.URSSAF_ACRE_PCT : acre === "avant" || acre === true ? REGLES.URSSAF_ACRE_AVANT_JUILLET_2026_PCT : REGLES.URSSAF_SERVICES_PCT;
+  return Math.round((base + (liberatoire ? REGLES.VERSEMENT_LIBERATOIRE_PCT : 0)) * 10) / 10;
+}
+
+/** Frais Stripe d'un paiement (centimes) : pourcentage + part fixe, cartes standard de l'EEE. */
+export const fraisStripeC = prixC => Math.round(prixC * REGLES.FRAIS_STRIPE_PCT / 100) + REGLES.FRAIS_STRIPE_FIXE_C;
+
+/**
+ * Vrai gain du Cleaneur sur une mission (26/11/2026, recrutement) : le Cleaneur déclare à l'URSSAF le prix TOTAL payé par le client,
+ * pas le montant après commission. formule : "gratuit" ou "pro". Fonction pure, sans arrondi caché ; toutes les valeurs en centimes.
+ */
+export function gainCleaneur(prixC, dureeMin, formule = "gratuit") {
+  const commissionPb = formule === "pro" ? REGLES.COMMISSION_PRO_PB : REGLES.COMMISSION_GRATUIT_PB;
+  const verseC = Math.round(prixC * (10000 - commissionPb) / 10000);
+  const stripeC = fraisStripeC(prixC);
+  const cotisationsC = Math.round(prixC * REGLES.URSSAF_SERVICES_PCT / 100);
+  const resteC = verseC - stripeC - cotisationsC;
+  const heures = Math.max(1, dureeMin || 0) / 60;
+  return { prixC, verseC, stripeC, cotisationsC, resteC, horaireAvantC: Math.round(verseC / heures), horaireNetC: Math.round(resteC / heures) };
 }
 
 /** Niveau du Cleaneur (copie de niveau_de en base) : 0 Cleaneur, 1 Confirmé, 2 Expert, 3 Élite. */

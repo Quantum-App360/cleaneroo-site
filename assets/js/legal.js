@@ -59,6 +59,6 @@ const valeurs = () => ({ fraisPart: REGLES.FRAIS_SERVICE_PARTICULIER_PCT, fraisP
   indemnitePct: REGLES.INDEMNITE_PCT, indemniteMin: REGLES.INDEMNITE_MIN_C / 100, indemniteMax: REGLES.INDEMNITE_MAX_C / 100, avoir: REGLES.GARANTIE_REMPLACEMENT_OFFERT_C / 100,
   garantieH: REGLES.GARANTIE_DECLARATION_H, garantie: euros(REGLES.GARANTIE_PLAFOND_C).replace(/,00\s*€$/, " €"), avisJours: REGLES.AVIS_DELAI_JOURS,
   commissionGratuit: REGLES.COMMISSION_GRATUIT_PB / 100, commissionPro: REGLES.COMMISSION_PRO_PB / 100, abonnementPro: euros(REGLES.ABONNEMENT_CLEANEUR_C),
-  mediateur: mediateur(), societe: societe(), directeur: (REGLES.SOCIETE || {}).directeur || societe() });
+  mediateur: mediateur(), societe: societe(), directeur: (REGLES.SOCIETE || {}).directeur || tr("Nommé à l'immatriculation de la société") });
 /** Texte traduit puis valeurs remplies. */
 export const texteLegal = x => tr(x).replace(/\{(\w+)\}/g, (m, k) => String(valeurs()[k] ?? m));

@@ -4,6 +4,15 @@
 
 import { tr } from "./langue.js";
 
+/** Textes de la carte MapLibre dans la langue du site (26/11/2026 : « Use ⌘ + scroll to zoom » s'affichait en anglais). */
+const localeCarte = () => ({
+  "CooperativeGesturesHandler.WindowsHelpText": tr("Utilisez Ctrl + molette pour zoomer"),
+  "CooperativeGesturesHandler.MacHelpText": tr("Utilisez ⌘ + molette pour zoomer"),
+  "CooperativeGesturesHandler.MobileHelpText": tr("Utilisez deux doigts pour déplacer la carte"),
+  "NavigationControl.ZoomIn": tr("Zoomer"), "NavigationControl.ZoomOut": tr("Dézoomer"), "NavigationControl.ResetBearing": tr("Réorienter vers le nord"),
+  "AttributionControl.ToggleAttribution": tr("Afficher ou masquer les crédits"), "FullscreenControl.Enter": tr("Plein écran"), "FullscreenControl.Exit": tr("Quitter le plein écran"),
+});
+
 const LEAFLET = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/";
 const GEO = "https://data.geopf.fr/geocodage";
 let chargement = null;
@@ -223,6 +232,7 @@ export async function afficherCarte(boite, options = {}) {
   const carte = new gl.Map({
     container: boite, style: styleCleaneroo(theme, { relief }), center: vue ? [vue.lon, vue.lat] : [6.74, 43.43], zoom: vue?.zoom ?? 9, attributionControl: false,
     cooperativeGestures: !plein, dragRotate: relief, pitchWithRotate: relief, touchPitch: relief, maxPitch: 60, fadeDuration: reduit() ? 0 : 200,
+    locale: localeCarte(),
   });
   carte.addControl(new gl.AttributionControl({ compact: true }), "bottom-right");
   carte.addControl(new gl.NavigationControl({ showCompass: relief, visualizePitch: relief }), "top-right");

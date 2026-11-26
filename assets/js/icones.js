@@ -146,6 +146,10 @@ const INTERFACE = {
   agrandir: `<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5M9 9 4 4M15 9l5-5M9 15l-5 5M15 15l5 5"/>`,
   telephone: aplat("M6.5 3.5h3l1.5 4-2 1.5a11 11 0 0 0 6 6l1.5-2 4 1.5v3a2 2 0 0 1-2 2A16 16 0 0 1 4.5 5.5a2 2 0 0 1 2-2Z")
     + `<path d="M6.5 3.5h3l1.5 4-2 1.5a11 11 0 0 0 6 6l1.5-2 4 1.5v3a2 2 0 0 1-2 2A16 16 0 0 1 4.5 5.5a2 2 0 0 1 2-2Z"/>`,
+  // Loupe (recherche d'une prestation)
+  recherche: `<circle class="a" cx="10.5" cy="10.5" r="6"/><circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5 5"/>`,
+  // Flèche de partage (partager un lien)
+  partager: `<circle class="a" cx="18" cy="5.5" r="2.5"/><circle class="a" cx="6" cy="12" r="2.5"/><circle class="a" cx="18" cy="18.5" r="2.5"/><circle cx="18" cy="5.5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="18.5" r="2.5"/><path d="m8.2 10.8 7.6-4.1M8.2 13.2l7.6 4.1"/>`,
 };
 
 export const ICONES_RUBRIQUES = Object.keys(RUBRIQUES);

@@ -204,6 +204,12 @@ export async function pageTableau(vue) {
         <p class="question-accueil">${tr("Que souhaitez-vous faire aujourd'hui ?")}</p></div>
       <a class="bouton" href="#/reserver" data-choisir-prestation>${icone("ajouter")} ${tr("Réserver")}</a>
     </div>
+    <form class="carte besoin-tableau" data-besoin-tableau novalidate>
+      <span class="tuile-ia">${icone("instantane")}</span>
+      <label class="besoin-tableau-champ"><b>${tr("De quoi avez-vous besoin ?")}</b>
+        <input name="besoin" type="text" maxlength="400" placeholder="${esc(tr("Ex. : faire nettoyer mon canapé et mes vitres avant samedi"))}"></label>
+      <button type="submit" class="bouton">${tr("Analyser mon besoin")}</button>
+    </form>
     ${pro ? "" : `<form class="carte recherche-accueil" data-recherche-accueil novalidate>
       ${champPrestation(rubriqueConseillee(demandes))}
       <label class="champ"><span>${tr("Où ?")}</span>${lieux.length ? `<select name="lieu">${lieux.map((l, i) => `<option value="${i}">${esc(nomLogement(l))}</option>`).join("")}<option value="autre">${tr("Une autre adresse")}</option></select>` : ""}
@@ -266,6 +272,12 @@ export async function pageTableau(vue) {
   carnetFavoris(vue.querySelector("#carnet-favoris"));
   brancherRechercheAccueil(vue, lieux);
   vue.querySelectorAll("[data-reserver-ici]").forEach(b => b.onclick = () => reserverPourLogement(b.dataset.reserverIci));
+  // Cleaneroo AI depuis le tableau de bord (26/11/2026) : le besoin écrit ici part tout de suite à l'analyse.
+  vue.querySelector("[data-besoin-tableau]")?.addEventListener("submit", e => {
+    e.preventDefault();
+    const texte = e.target.besoin.value.trim();
+    import("./assistant-ia.js").then(m => m.ouvrirAssistantIA(texte, texte.length >= 3 ? { nouveau: true, envoyer: true } : {})).catch(() => null);
+  });
   vue.querySelectorAll("[data-sous-voulu]").forEach(a => a.addEventListener("click", () => { try { localStorage.setItem("cleaneroo-sous-onglet-particulier", a.dataset.sousVoulu); } catch { /* rien */ } }));
   vue.querySelectorAll("[data-refaire]").forEach(b => b.onclick = () => {
     const x = refaire.find(y => y.reference === b.dataset.refaire); if (!x) return;

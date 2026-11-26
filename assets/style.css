@@ -3390,10 +3390,182 @@ a.chiffre-jour:hover { border-color: color-mix(in srgb, var(--primaire) 50%, tra
 .avatar-demande { width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; color: var(--fond); background: linear-gradient(135deg, var(--primaire), var(--turquoise)); flex: none; }
 .somme-demande { display: flex; justify-content: space-between; align-items: baseline; margin: 14px 0; } .somme-demande b { font-size: 22px; color: var(--primaire); }
 .actions-demande { display: grid; gap: 8px; } .actions-demande .bouton { justify-content: center; }
+
+/* ================================================================== Cleaneroo AI « Décrire mon besoin » (26/11/2026) */
+.besoin-ia-heros { display: flex; align-items: center; gap: 14px; margin: 14px 0 4px; flex-wrap: wrap; }
+.besoin-ia-heros .bouton { display: inline-flex; align-items: center; gap: 8px; }
+.besoin-ia-heros p { margin: 0; max-width: 420px; color: var(--texte2); }
+.fenetre-ia { position: fixed; inset: 0; z-index: 90; background: rgba(6, 26, 29, .55); backdrop-filter: blur(4px); display: grid; place-items: center; padding: 24px; }
+.fenetre-ia[hidden] { display: none; }
+.panneau-ia { width: min(620px, 100%); height: min(860px, 100%); background: var(--fond); border-radius: 24px; box-shadow: 0 30px 80px rgba(0,0,0,.3); display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--separateur); }
+.panneau-ia.avec-fiche { width: min(1280px, 100%); }
+.tete-ia { display: flex; align-items: center; gap: 14px; padding: 16px 20px; background: var(--surface); border-bottom: 1px solid var(--separateur); }
+.tete-ia h2 { margin: 0; font-size: 20px; } .tete-ia p { margin: 2px 0 0; }
+.tete-ia > div { flex: 1; min-width: 0; }
+.tuile-ia { width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; background: linear-gradient(135deg, var(--primaire), var(--turquoise)); color: var(--fond); flex: none; }
+.tuile-ia .ico { width: 24px; height: 24px; }
+.fermer-ia { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--separateur); background: var(--surface); color: var(--texte); font-size: 22px; cursor: pointer; flex: none; }
+.corps-ia { flex: 1; display: grid; grid-template-columns: 1fr; min-height: 0; }
+.avec-fiche .corps-ia { grid-template-columns: minmax(360px, 440px) 1fr; }
+.colonne-conversation { display: flex; flex-direction: column; min-height: 0; border-right: 1px solid var(--separateur); }
+.fil-ia { flex: 1; overflow-y: auto; padding: 18px 20px; display: flex; flex-direction: column; gap: 10px; }
+.accueil-ia p { margin: 0 0 8px; }
+.exemples-ia, .choix-rapides { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.puce-exemple { border: 1.5px solid color-mix(in srgb, var(--primaire) 45%, transparent); background: var(--surface); color: var(--primaire); border-radius: 99px; padding: 8px 14px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; text-align: left; }
+.puce-exemple:hover { background: color-mix(in srgb, var(--primaire) 8%, var(--surface)); }
+.bulle-ia { display: flex; gap: 8px; align-items: flex-end; max-width: 92%; }
+.bulle-ia p { margin: 0; padding: 10px 14px; border-radius: 16px; white-space: pre-wrap; line-height: 1.45; }
+.de-ia p { background: var(--surface); border: 1px solid var(--separateur); border-bottom-left-radius: 4px; }
+.du-client { align-self: flex-end; } .du-client p { background: var(--primaire); color: var(--fond); border-bottom-right-radius: 4px; }
+.pastille-ia { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: linear-gradient(135deg, var(--primaire), var(--turquoise)); color: var(--fond); flex: none; }
+.pastille-ia .ico { width: 16px; height: 16px; }
+.questions-ia { display: grid; gap: 10px; margin-left: 36px; }
+.question-ia p { margin: 0; font-weight: 700; }
+.attente-ia { display: flex; align-items: center; gap: 5px; margin-left: 36px; } .attente-ia[hidden] { display: none; }
+.attente-ia .point { width: 7px; height: 7px; border-radius: 50%; background: var(--turquoise); animation: point-ia 1s infinite ease-in-out; }
+.attente-ia .point:nth-child(2) { animation-delay: .15s; } .attente-ia .point:nth-child(3) { animation-delay: .3s; } .attente-ia .petit { margin-left: 6px; }
+@keyframes point-ia { 0%, 80%, 100% { opacity: .3; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-3px); } }
+.saisie-ia { padding: 14px 20px 16px; background: var(--surface); border-top: 1px solid var(--separateur); display: grid; gap: 10px; }
+.saisie-ia textarea { width: 100%; resize: vertical; min-height: 70px; border-radius: 14px; border: 1px solid var(--separateur); background: var(--fond); color: var(--texte); padding: 10px 12px; font: inherit; }
+.actions-saisie { display: flex; gap: 8px; align-items: center; } .actions-saisie [data-envoyer] { margin-left: auto; }
+.actions-saisie .bouton { display: inline-flex; align-items: center; gap: 6px; } .actions-saisie .desactive { opacity: .5; pointer-events: none; }
+[data-dicter].ecoute { border-color: var(--corail); color: var(--corail); }
+.vignettes-ia { display: flex; gap: 8px; } .vignette-ia { position: relative; } .vignette-ia img { width: 64px; height: 64px; object-fit: cover; border-radius: 10px; display: block; }
+.vignette-ia button { position: absolute; top: -6px; right: -6px; width: 22px; height: 22px; border-radius: 50%; border: 0; background: var(--texte); color: var(--fond); cursor: pointer; line-height: 1; }
+.consentement-ia { display: flex; gap: 8px; align-items: flex-start; }
+.validation-ia { margin-left: 36px; }
+.colonne-fiche { overflow-y: auto; padding: 18px 22px 24px; background: color-mix(in srgb, var(--creux) 45%, var(--fond)); }
+.titre-fiche { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; font-size: 20px; }
+.objet-ia { padding: 18px 20px; margin-bottom: 14px; }
+.objet-ia > header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; } .objet-ia > header > div { flex: 1; } .objet-ia h3 { margin: 0; font-size: 18px; } .objet-ia header p { margin: 2px 0 0; }
+.prix-objet { font-size: 22px; color: var(--primaire); white-space: nowrap; }
+.diagnostic-ia { display: grid; gap: 6px; margin: 0 0 10px; font-size: 14px; } .diagnostic-ia > div { display: grid; grid-template-columns: 150px 1fr; gap: 10px; }
+.diagnostic-ia dt { color: var(--texte2); } .diagnostic-ia dd { margin: 0; }
+.source-ia { display: inline-block; font-size: 11.5px; font-weight: 700; padding: 1px 8px; border-radius: 99px; background: var(--creux); color: var(--texte2); }
+.source-ia.photo { background: color-mix(in srgb, var(--turquoise) 16%, transparent); color: var(--primaire); }
+.source-ia.client { background: color-mix(in srgb, #2BB673 16%, transparent); color: #17734A; }
+.source-ia.inconnue { background: color-mix(in srgb, var(--corail) 18%, transparent); color: #A84A27; }
+.elements-ia { margin: 0 0 10px; padding-left: 18px; font-size: 14px; }
+.groupe-options h4, .attendre-ia h4 { margin: 12px 0 6px; font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--texte2); }
+.option-ia { border: 1.5px solid var(--separateur); border-radius: 14px; margin-bottom: 8px; background: var(--surface); }
+.option-ia.cochee { border-color: var(--primaire); background: color-mix(in srgb, var(--primaire) 7%, var(--surface)); }
+.option-ia > label { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; cursor: pointer; }
+.option-ia input { margin-top: 3px; width: 18px; height: 18px; accent-color: var(--primaire); flex: none; }
+.nom-option { flex: 1; } .nom-option small { display: block; color: var(--texte2); margin-top: 2px; }
+.prix-option { font-weight: 800; white-space: nowrap; }
+.note-obligatoire { margin: -4px 14px 10px 44px; }
+.avertissement-ia { margin: 0 14px 12px; padding: 12px 14px; border-radius: 12px; background: color-mix(in srgb, var(--alerte, #E3A955) 14%, var(--surface)); border: 1px solid color-mix(in srgb, var(--alerte, #E3A955) 55%, transparent); }
+.avertissement-ia p { margin: 0 0 10px; } .boutons-avertissement { display: flex; gap: 8px; flex-wrap: wrap; }
+.attendre-ia ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; font-size: 14px; }
+.attendre-ia li { padding-left: 22px; position: relative; } .attendre-ia li::before { content: ""; position: absolute; left: 4px; top: 7px; width: 9px; height: 9px; border-radius: 50%; }
+.attendre-ia li.probable::before { background: #2BB673; } .attendre-ia li.attenue::before { background: var(--alerte, #E3A955); } .attendre-ia li.limite::before { background: var(--texte2); }
+.detail-prix { margin-top: 10px; font-size: 14px; } .detail-prix ul { list-style: none; padding: 0; margin: 8px 0 0; } .detail-prix li { display: flex; justify-content: space-between; gap: 10px; padding: 3px 0; }
+.total-ia { display: flex; justify-content: space-between; align-items: baseline; padding: 14px 18px; border-radius: 16px; background: var(--surface); border: 2px solid var(--primaire); margin: 4px 0 8px; }
+.total-ia b { font-size: 26px; color: var(--primaire); }
+.suite-ia { display: grid; gap: 8px; margin-top: 12px; }
+@media (max-width: 900px) {
+  .fenetre-ia { padding: 0; }
+  .panneau-ia, .panneau-ia.avec-fiche { width: 100%; height: 100%; border-radius: 0; }
+  .avec-fiche .corps-ia { grid-template-columns: 1fr; overflow-y: auto; }
+  .colonne-conversation { border-right: 0; }
+  .diagnostic-ia > div { grid-template-columns: 1fr; gap: 0; }
+}
+@media (prefers-color-scheme: dark) { .source-ia.client { color: #6BE3A8; } .source-ia.inconnue { color: #FFB394; } }
+.puce-exemple.choisie { background: var(--primaire); color: var(--fond); border-color: var(--primaire); }
+/* Mon matériel (Cleaneur) : choix multiples, cases carrées. */
+.grille-materiel { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px; }
+.grille-materiel .option { margin: 0; }
+.grille-materiel .option::before { border-radius: 5px; }
+.brief-ia { margin: 10px 0 0; padding: 10px 14px; border-radius: 14px; border: 1px solid color-mix(in srgb, var(--turquoise) 40%, transparent); background: color-mix(in srgb, var(--turquoise) 6%, transparent); }
+.brief-ia summary { cursor: pointer; display: flex; align-items: center; gap: 6px; } .brief-ia summary .ico { width: 18px; height: 18px; color: var(--turquoise); }
+.brief-ia .diagnostic-ia { margin: 10px 0 0; } .brief-ia .diagnostic-ia > div { grid-template-columns: 160px 1fr; }
+.liste-ia { list-style: none; padding: 0; margin: 8px 0; display: grid; gap: 6px; } .liste-ia li { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; border-bottom: 1px solid var(--separateur); font-size: 14px; } .liste-ia li:last-child { border-bottom: 0; }
 /* Écrans d'inscription (26/11/2026) : adresse déjà inscrite, e-mail à confirmer. */
 .etape-inscription { display: grid; gap: 4px; padding: 22px; max-width: 620px; }
 .etape-inscription .tuile-ia { margin-bottom: 8px; }
 .boutons-inscription { display: grid; gap: 8px; margin-top: 16px; }
 .etape-inscription [hidden] { display: none !important; }
-.etape-inscription .tuile-ia { width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; background: linear-gradient(135deg, var(--primaire), var(--turquoise)); color: var(--fond); }
-.etape-inscription .tuile-ia .ico { width: 24px; height: 24px; }
+
+/* ------------------------------------------------------------------ Centre de réservation (26/11/2026) : étape 1 de « Réserver » */
+.resa-centre { width: min(1120px, 100% - 32px); }
+body.avec-menu .resa-centre { width: min(1180px, 100% - 64px); }
+.centre-ia { margin: 18px 0 6px; padding: 20px 22px; border: 1.5px solid color-mix(in srgb, var(--primaire) 30%, var(--separateur));
+  background: linear-gradient(135deg, color-mix(in srgb, var(--primaire) 7%, var(--surface)), var(--surface) 60%); }
+.centre-ia-tete { display: flex; gap: 14px; align-items: flex-start; }
+.centre-ia-tete > div { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.centre-ia-tete b { font-size: var(--t-l); }
+.centre-ia-saisie { margin-top: 14px; border: 1.5px dashed var(--separateur); border-radius: 18px; padding: 12px; background: var(--surface); display: flex; flex-direction: column; gap: 10px; transition: border-color .15s, background .15s; }
+.centre-ia-saisie.survol { border-color: var(--primaire); background: color-mix(in srgb, var(--primaire) 6%, var(--surface)); }
+.centre-ia-saisie textarea { width: 100%; border: 0; background: transparent; font: inherit; font-size: var(--t-base); resize: vertical; min-height: 72px; color: var(--texte); outline: none; }
+.centre-ia-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.centre-ia-actions [data-analyser-centre] { margin-left: auto; }
+.centre-ia-actions .desactive { opacity: .5; pointer-events: none; }
+.centre-ia .erreur:empty { display: none; }
+.centre-colonnes { display: grid; grid-template-columns: 1fr; gap: 0 24px; }
+@media (min-width: 1100px) { .centre-colonnes:has(> .centre-bloc + .centre-bloc) { grid-template-columns: 1fr 1fr; } }
+
+.liste-en-cours, .liste-refaire { display: flex; flex-direction: column; gap: 10px; }
+.carte.en-cours { display: flex; align-items: center; gap: 14px; padding: 12px 14px; }
+.en-cours-texte { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.en-cours-total { font-weight: 800; color: var(--primaire); }
+.en-cours-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.liste-refaire .carte.prestation.rapide { display: flex; align-items: center; gap: 14px; padding: 12px 14px; }
+.liste-refaire .carte.prestation.rapide > span:nth-child(2) { flex: 1; min-width: 0; }
+.liste-refaire .tampon { margin: 0; }
+.grille-biens-centre { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.bien-centre { padding: 14px 16px; }
+.bien-centre-nom { margin: 0 0 10px; display: flex; align-items: center; gap: 8px; }
+.bien-centre-choix { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.bien-centre-choix .puce-exemple { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; font-size: 13px; }
+.bien-centre-choix .ico { width: 16px; height: 16px; }
+.recherche-prestation { display: flex; align-items: center; gap: 10px; border: 1.5px solid var(--separateur); border-radius: 99px; padding: 10px 16px; background: var(--surface); margin-bottom: 8px; }
+.recherche-prestation:focus-within { border-color: var(--primaire); }
+.recherche-prestation input { flex: 1; border: 0; background: transparent; font: inherit; font-size: var(--t-base); color: var(--texte); outline: none; }
+.recherche-prestation .ico { width: 20px; height: 20px; color: var(--primaire); }
+.titre-famille { margin: 18px 0 10px; font-size: var(--t-s); text-transform: uppercase; letter-spacing: .08em; color: var(--primaire); }
+.grille-centre { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+.grille-centre .carte.prestation h4, .resa-etape .grille-3 .carte.prestation h4 { margin: 10px 0 0; font-size: var(--t-base); }
+.famille-prestations[hidden], .grille-centre [hidden] { display: none !important; }
+.titre-centre { margin: 30px 0 12px; font-size: var(--t-l); }
+.centre-bloc > .titre-centre:first-child { margin-top: 30px; }
+.resa-centre .segments.trois { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+.liste-refaire a.carte.prestation.rapide { flex-direction: row; text-align: left; align-items: center; justify-content: flex-start; min-height: 0; }
+.liste-refaire a.carte.prestation.rapide .tuile-ico { margin: 0; }
+/* Cleaneroo AI sur le tableau de bord (26/11/2026) */
+.besoin-tableau { display: flex; align-items: center; gap: 14px; padding: 14px 18px; margin: 0 0 16px;
+  border: 1.5px solid color-mix(in srgb, var(--primaire) 30%, var(--separateur)); background: linear-gradient(135deg, color-mix(in srgb, var(--primaire) 7%, var(--surface)), var(--surface) 60%); }
+.besoin-tableau-champ { flex: 1; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.besoin-tableau-champ input { border: 1.5px solid var(--separateur); border-radius: 12px; padding: 10px 14px; font: inherit; background: var(--surface); color: var(--texte); }
+.besoin-tableau-champ input:focus { outline: none; border-color: var(--primaire); }
+@media (max-width: 700px) { .besoin-tableau { flex-wrap: wrap; } .besoin-tableau .bouton { width: 100%; } }
+/* Accueil : créer son espace ou se connecter, comme la partie Cleaneur (26/11/2026, demande de Vincent) */
+.compte-heros { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 14px 0 4px; }
+.compte-heros .petit { flex-basis: 100%; margin: 0; color: var(--texte2); }
+.compte-heros .bouton { display: inline-flex; align-items: center; gap: 8px; width: auto; flex: none; margin: 0; }
+@media (max-width: 560px) { .compte-heros .bouton { flex: 1 1 0; justify-content: center; white-space: nowrap; padding-inline: 12px; font-size: 15px; } }
+/* Devenir Cleaneur, recrutement (26/11/2026) */
+.accroche-gain { font-size: var(--t-l); margin: 6px 0 4px; }
+.accroche-gain .lien-bouton { margin-left: 6px; }
+.partage-cleaneur { margin-top: 16px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.partage-cleaneur .bouton { display: inline-flex; align-items: center; gap: 8px; }
+.gain-cleaneur { margin: 18px 0; }
+.table-gain { display: grid; gap: 0; border: 1px solid var(--separateur); border-radius: 14px; overflow: hidden; background: var(--surface); }
+.ligne-gain { display: grid; grid-template-columns: 1.6fr 1fr 1fr; gap: 10px; padding: 9px 14px; border-top: 1px solid var(--separateur); align-items: center; }
+.ligne-gain:first-child { border-top: 0; }
+.ligne-gain span:nth-child(n+2) { text-align: right; font-variant-numeric: tabular-nums; }
+.ligne-gain.entete { background: color-mix(in srgb, var(--primaire) 8%, var(--surface)); font-weight: 800; color: var(--primaire); }
+.ligne-gain.total { background: color-mix(in srgb, var(--menthe) 18%, var(--surface)); }
+.ligne-gain.fort b { color: var(--primaire); }
+@media (max-width: 560px) { .ligne-gain { grid-template-columns: 1.3fr 1fr 1fr; font-size: 14px; padding: 8px 10px; } }
+.regles-clair { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; margin-bottom: 8px; }
+.regle-clair { display: flex; gap: 14px; align-items: flex-start; padding: 14px 16px; }
+.etape-cleaneur { margin-bottom: 10px; display: flex; gap: 8px; }
+.etape-cleaneur > b { color: var(--corail-texte); }
+.bon-a-savoir b { display: block; margin-bottom: 4px; }
+.pret-commencer { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 18px 20px;
+  border: 1.5px solid color-mix(in srgb, var(--primaire) 30%, var(--separateur)); }
+.pret-commencer b { font-size: var(--t-l); }
+.pret-commencer .boutons { margin: 0; display: flex; gap: 10px; flex-wrap: wrap; }
+.lancement-cleaneur { display: flex; gap: 10px; align-items: flex-start; margin: 14px 0; }
+.lancement-cleaneur .ico { flex: none; width: 20px; height: 20px; color: var(--primaire); }
+.resultat-calcul .ligne-apres { display: flex; justify-content: flex-end; gap: 6px; margin: -4px 0 6px; color: var(--texte2); }

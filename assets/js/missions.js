@@ -1,6 +1,7 @@
 // Missions du Cleaneur (onglet Cleaneur de « Mon compte ») : missions disponibles, « Prendre la mission » (rattachement
 // automatique), étapes Je pars › Je suis arrivé › Je commence › J'ai terminé, et partage de la position pendant le trajet.
 // Mêmes écrans que l'application (EspacesCompte.kt / ServiceTrajet.kt).
+import { blocBriefIA } from "./equipements.js";
 import { rubrique } from "./catalogue.js";
 import { REGLES, euros, dateLongue, dateCourte, heure, duree, finOffreLancement, indemniteAccesC, dateVersement, conseilSecteur, lienWhatsAppSupport } from "./regles.js";
 import { monParrainage, lienInviterClient } from "./parrainage.js";
@@ -465,6 +466,7 @@ function carteMission(m) {
       <button type="button" class="bouton secondaire petit-bouton" data-signaler="acces" data-ref="${esc(m.reference)}">${icone("cle")} ${tr(m.rubrique_id === "car" ? "Je ne trouve pas le véhicule" : "Je ne trouve pas l'accès")}</button></div>
       <p class="petit muet" style="margin:4px 0 0">${icone("message")} ${tr("Le client est prévenu tout de suite ; échangez avec lui dans la messagerie de la prestation.")}</p>` : ""}
     ${m.remarque ? `<p class="petit" style="margin:4px 0 0">« ${esc(m.remarque)} »</p>` : ""}
+    ${blocBriefIA(m)}
     ${m.urgence && m.prime_urgence_c ? `<p class="petit" style="margin:6px 0 0;color:var(--succes);font-weight:700">${icone("alerte")} Mission d'urgence : prime de ${euros(m.prime_urgence_c)} comprise</p>` : ""}
     ${m.statut === "CONFIRMEE" ? `<div class="confirmation-mission">${(m.etapes || {}).confirme ? `<span class="tampon vert">✓ Mission confirmée</span>`
       : `<button type="button" class="bouton secondaire" data-confirmer="${esc(m.reference)}">${icone("valide")} Je confirme ma venue</button>`}
@@ -609,7 +611,7 @@ async function blocInviterClient(z) {
   const lien = lienInviterClient(d.code), clients = r.error ? [] : (r.data || []);
   const message = tr("Bonjour, je passe par Cleaneroo pour mes ménages : réservation en 2 minutes, paiement protégé jusqu'à votre validation, facture et attestation automatiques. Créez votre compte avec mon lien :") + " " + lien;
   z.innerHTML = `<div class="carte inviter-client"><b>${icone("equipe")} ${tr("Inviter mon client")}</b>
-    <p class="petit" style="margin:4px 0 8px">${tr("Vous avez déjà vos clients ? Faites-les venir sur Cleaneroo : 0 % de commission pendant 12 mois sur leurs prestations avec vous, puis la moitié. Paiement garanti, factures et attestations faites pour vous, remplaçant si vous êtes absent.")}</p>
+    <p class="petit" style="margin:4px 0 8px">${tr("Vous avez déjà vos clients ? Faites-les venir sur Cleaneroo : 0 % de commission pendant 12 mois sur leurs prestations avec vous, puis la moitié. Paiement sécurisé, factures et attestations faites pour vous, remplaçant si vous êtes absent.")}</p>
     <p class="petit" style="margin:0 0 8px">${tr("Votre code :")} <b class="code">${esc(d.code)}</b></p>
     <div class="boutons-ligne"><a class="bouton" href="https://wa.me/?text=${encodeURIComponent(message)}" target="_blank" rel="noopener">${icone("message")} ${tr("Envoyer par WhatsApp")}</a>
       <a class="bouton secondaire" href="sms:?&body=${encodeURIComponent(message)}">${tr("Par SMS")}</a>
@@ -790,12 +792,14 @@ ${p.employeur_id ? "" : `    <h2 class="titre-section" id="missions-disponibles"
       <div id="periodes-fermees"></div></details>
     <div id="ce-qui-manque"></div>
     <div id="formations-cleaneur"></div>
+    ${p.employeur_id ? "" : `<div id="materiel-cleaneur"></div>`}
     <div class="carte preferences-cleaneur">${choixGuidage()}</div>
     <a class="carte ligne-compte aide-whatsapp" href="${lienWhatsAppSupport("Bonjour Cleaneroo, je suis Cleaneur et j'ai une question : ")}" target="_blank" rel="noopener">${icone("message")}
       <div class="corps"><b>${tr("Une question ? Écrivez-nous sur WhatsApp")}</b><p class="petit" style="margin:2px 0 0">${tr("Le support Cleaneroo vous répond directement.")}</p></div><span aria-hidden="true">›</span></a>
   </div>
 `;
   traduire(boite);
+  import("./equipements.js").then(m => m.blocMonMateriel(boite.querySelector("#materiel-cleaneur"), p)).catch(() => null);
   brancherSegments(boite, p, plusTard.length);
   blocComptesRendus(boite.querySelector("#comptes-rendus"), !!p.employeur_id);
   blocInviterClient(boite.querySelector("#inviter-client"));
@@ -821,7 +825,7 @@ ${p.employeur_id ? "" : `    <h2 class="titre-section" id="missions-disponibles"
   supabase.rpc("missions_incompatibles").then(({ data }) => {
     const z = boite.querySelector("#missions-incompatibles");
     if (!z || !data?.length) return;
-    const RAISONS = { qualification: "Formation exigée par la loi (Certibiocide) : voir comment l'obtenir dans « Formations »", fermee: "Pendant une de vos périodes fermées", assurance: "Activité non couverte par votre RC Pro" };
+    const RAISONS = { qualification: "Formation exigée par la loi (Certibiocide) : voir comment l'obtenir dans « Formations »", fermee: "Pendant une de vos périodes fermées", assurance: "Activité non couverte par votre RC Pro", equipement: "Matériel nécessaire non coché dans « Mon matériel »" };
     z.innerHTML = `<details class="carte" style="margin-top:12px"><summary><b>${tr("Missions incompatibles")} (${data.length})</b></summary>
       <p class="petit">${tr("Ces missions ne vous sont pas notifiées : vous ne pourriez pas les assurer.")}</p>
       ${data.map(x => `<p class="petit" style="margin:6px 0">${esc(rubrique(x.rubrique_id)?.nom || "")} · ${esc(x.ville)}${x.creneau ? " · " + esc(dateLongue(new Date(x.creneau))) : ""}<br><b>${tr(RAISONS[x.raison] || x.raison)}</b></p>`).join("")}</details>`;
@@ -877,7 +881,8 @@ ${p.employeur_id ? "" : `    <h2 class="titre-section" id="missions-disponibles"
       qualification: "Cette prestation exige une formation imposée par la loi (Certibiocide). Voir « Formations » pour savoir comment l'obtenir.",
       fermee: "Cette mission tombe pendant une de vos périodes fermées.",
       candidature: "Le client choisit parmi les propositions : proposez vos conditions.",
-      assurance: "Votre RC Pro ne couvre pas cette activité : mettez-la à jour dans votre dossier." }[r] || "Le service est momentanément indisponible. Réessayez dans quelques minutes.");
+      assurance: "Votre RC Pro ne couvre pas cette activité : mettez-la à jour dans votre dossier.",
+      equipement: "Cette mission demande un matériel que vous n'avez pas coché dans « Mon matériel » (Profil)." }[r] || "Le service est momentanément indisponible. Réessayez dans quelques minutes.");
   });
   // Mode mission plein écran (lot 6, validé le 25/11) : la carte de la mission occupe tout l'écran, gros boutons, minuteur
   // (temps écoulé depuis « Je commence » / durée prévue). Le contrôle continue de fonctionner sans réseau (file-attente.js).

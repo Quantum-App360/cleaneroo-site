@@ -20,7 +20,8 @@ export const MESSAGES_PROPOSITION = {
   dossier: "Votre dossier doit être validé pour proposer.", indisponible: "Cette mission n'est plus disponible.",
   frais: "Les frais de déplacement ne peuvent pas dépasser 60 €.", planning: "Ce créneau chevauche une de vos missions confirmées (30 min de trajet comprises).",
   chevauchement: "Vous avez déjà une proposition en attente sur un créneau qui chevauche celui-ci.",
-  assurance: "Votre RC Pro ne couvre pas cette activité : mettez-la à jour dans votre dossier." };
+  assurance: "Votre RC Pro ne couvre pas cette activité : mettez-la à jour dans votre dossier.",
+  equipement: "Cette mission demande un matériel que vous n'avez pas coché dans « Mon matériel » (Profil)." };
 
 /** Formulaire « Proposer » d'une mission en mode candidatures (Cleaneur). */
 export function formulaireProposition(m, mienne, km = null) {

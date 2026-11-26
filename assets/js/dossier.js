@@ -56,6 +56,12 @@ export function blocContrat(boite, profil, apres = () => {}) {
     ${CONTRAT.map(([t, x], i) => `<p class="petit" style="margin:8px 0 0"><b>${i + 1}. ${tr(t)}.</b> ${esc(texteContrat(x))}</p>`).join("")}
     <div data-zone-contrat></div></details>`;
   traduire(boite);
+  // Société Cleaneroo pas encore immatriculée (REGLES.SOCIETE.siret vide) : le contrat se lit, mais ne se signe pas encore.
+  if (!REGLES.SOCIETE?.siret) {
+    const z = boite.querySelector("[data-zone-contrat]");
+    z.innerHTML = `<p class="note" style="margin-top:12px">${icone("horloge")} ${tr("Signature disponible dès l'immatriculation de la société Cleaneroo. Vous pouvez déjà lire le contrat et poursuivre votre pré-inscription.")}</p>`;
+    traduire(z); return;
+  }
   zoneSignature(boite.querySelector("[data-zone-contrat]"), null, { titre: "Signer le contrat",
     envoyer: async png => (await supabase.rpc("signer_contrat", { p_version: CONTRAT_VERSION, p_signature: png })).data,
     apres: () => { boite.innerHTML = `<p class="petit" style="color:var(--succes)">${icone("valide")} ${tr("Contrat signé.")}</p>`; apres(); } });

@@ -33,15 +33,15 @@ export const VITRINES = {
     documents: "Pièce d'identité, SIRET, assurance RC Pro et attestation URSSAF : vous les envoyez après la pré-inscription, depuis « Mon dossier ».", points: [
     ["position", "Missions près de chez vous", "Choisissez votre secteur, vos prestations et vos disponibilités."],
     ["valide", "Déroulé guidé", "Tâches et photos guidées, signature et compte rendu."],
-    ["paiement", "Paiement après validation", "Versé après validation du client, pourboires compris."],
+    ["paiement", "Paiement après validation", "Versé chaque vendredi pour les missions validées jusqu'au mercredi, pourboires compris."],
     ["avis", "Votre activité", "Chiffre d'affaires, cotisations URSSAF et factures calculés pour vous."],
-    ["garantie", "Formations conseillées", "Guides et vidéos pour progresser : seules les formations exigées par la loi sont obligatoires."]] },
+    ["garantie", "Formations de vos prestations", "Des modules en ligne à valider pour chaque prestation que vous proposez, avant d'en recevoir les missions ; guides et vidéos en plus pour progresser."]] },
   // Société de nettoyage (23/11/2026, retour de Vincent) : sa propre page, jamais la présentation de l'auto-entrepreneur.
   societe: { nom: "Espace Société de nettoyage", accroche: "Référencez votre société de nettoyage : des missions près de chez vous pour vos équipes.", ico: "bureaux", video: "cleaneur",
     documents: "Kbis ou SIRET, assurance RC Pro et attestation URSSAF de la société : vous les envoyez après la pré-inscription, depuis « Mon dossier ».", points: [
     ["cleaneurs", "Vos équipes sur les missions", "Vous attribuez chaque mission à un salarié : photo de vérification du jour, trajet et compte rendu depuis son téléphone."],
     ["calendrier", "Planning de vos salariés", "Toutes les missions de la société et leurs intervenants au même endroit."],
-    ["paiement", "Paiement garanti", "Versé à la société après validation du client, chaque semaine."],
+    ["paiement", "Paiement sécurisé", "Versé à la société chaque vendredi, pour les missions validées jusqu'au mercredi."],
     ["avis", "Factures au nom de la société", "Factures, relevés et chiffre d'affaires calculés pour vous."],
     ["garantie", "Formations de vos salariés", "Vous formez vos salariés ; les prestations réglementées ne vont qu'aux salariés qui ont l'attestation exigée."]] },
 };

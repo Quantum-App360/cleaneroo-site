@@ -22,7 +22,7 @@ type Rubrique = { id: string; nom: string; sousTitre: string; inclus: string; no
   formules: { id: string; nom: string; description: string }[]; typesLieu: { id: string; nom: string }[];
   taches: { id: string; nom: string; groupe: string; types: string[] }[]; packs: { id: string; nom: string; tacheIds: string[] }[] };
 type Element = { id: string; nom: string; formuleId: string; avecTaille: boolean; parM2: boolean };
-let RUB = new Map<string, Rubrique>(), ELEMENTS = new Map<string, Element>(), TAILLES: { id: string; libelle: string }[] = [], chargeLe = 0;
+let RUB = new Map<string, Rubrique>(), ELEMENTS = new Map<string, Element>(), TAILLES: { id: string; libelle: string }[] = [], DERNIERS: { id: string; libelle: string }[] = [], chargeLe = 0;
 /** Catalogue publié, relu toutes les 10 minutes (gardé en mémoire si le site ne répond pas). */
 async function chargerCatalogue() {
   if (RUB.size && Date.now() - chargeLe < 600e3) return;
@@ -32,7 +32,7 @@ async function chargerCatalogue() {
     const c = await r.json();
     RUB = new Map((c.rubriques as Rubrique[]).map(x => [x.id, x]));
     ELEMENTS = new Map((c.elementsTextiles as Element[]).map(e => [e.id, e]));
-    TAILLES = c.taillesCanape; chargeLe = Date.now();
+    TAILLES = c.taillesCanape; DERNIERS = c.derniersNettoyages || []; chargeLe = Date.now();
   } catch (e) { if (!RUB.size) throw e; }
 }
 
@@ -46,7 +46,7 @@ function catalogueTexte() {
     x.taches.length ? `Options : ${x.taches.map(t => `${t.id} (${t.nom}${t.types.length ? ` ; seulement pour ${t.types.join("/")}` : ""})`).join(", ")}` : "",
   ].filter(Boolean).join("\n")).join("\n\n");
   const e = [...ELEMENTS.values()].map(x => `${x.id} (${x.nom}${x.avecTaille ? ", taille à préciser" : ""}${x.parM2 ? ", en m²" : ""})`).join(", ");
-  return `${r}\n\n## Éléments de « textiles » (canapés, matelas, tapis…) : ${e}\nTailles de canapé : ${TAILLES.map(t => `${t.id} (${t.libelle})`).join(", ")}`;
+  return `${r}\n\n## Éléments de « textiles » (canapés, matelas, tapis…) : ${e}\nTailles de canapé : ${TAILLES.map(t => `${t.id} (${t.libelle})`).join(", ")}\nDernier nettoyage en profondeur (logement) : ${DERNIERS.map(d => `${d.id} (${d.libelle})`).join(", ")}`;
 }
 
 function connaissancesTexte(k: { id: string; type: string; donnees: Record<string, unknown> }[]) {
@@ -86,8 +86,9 @@ function schema() {
           formule_id: { type: "string", enum: formules }, type_lieu_id: { type: "string", enum: lieux },
           elements: { type: "array", items: { type: "object", additionalProperties: false, required: ["element_id", "quantite", "taille_id", "surface_m2"],
             properties: { element_id: { type: "string", enum: ["", ...ELEMENTS.keys()] }, quantite: { type: "integer" }, taille_id: { type: "string", enum: ["", ...TAILLES.map(t => t.id)] }, surface_m2: { type: "number" } } } },
-          champs: { type: "object", additionalProperties: false, required: ["surface", "chambres", "sdb", "fenetres", "nombre_vehicules"],
-            properties: { surface: { type: "number" }, chambres: { type: "integer" }, sdb: { type: "integer" }, fenetres: { type: "integer" }, nombre_vehicules: { type: "integer" } } },
+          champs: { type: "object", additionalProperties: false, required: ["surface", "chambres", "sdb", "fenetres", "nombre_vehicules", "dernier_nettoyage"],
+            properties: { surface: { type: "number" }, chambres: { type: "integer" }, sdb: { type: "integer" }, fenetres: { type: "integer" }, nombre_vehicules: { type: "integer" },
+              dernier_nettoyage: { type: "string", enum: ["", ...DERNIERS.map(d => d.id)], description: "Logement, déménagement : date du dernier nettoyage en profondeur (règle le niveau de salissure)." } } },
           options: { type: "array", items: { type: "object", additionalProperties: false, required: ["tache_id", "niveau", "raison"],
             properties: { tache_id: { type: "string", enum: taches }, niveau: { type: "string", enum: ["obligatoire", "recommandee", "facultative"] }, raison: s("Pourquoi, en une phrase, dans la langue du client.") } } },
           resultat: { type: "object", additionalProperties: false, required: ["probable", "attenue", "limite"], properties: { probable: s(), attenue: s(), limite: s() } },
@@ -106,7 +107,7 @@ Méthode :
 1. Identifie chaque objet ou surface à nettoyer, sa matière, ses salissures et son état. Distingue ce que tu VOIS sur une photo (vu_sur_photo) de ce que le client a DIT (confirme_par_client).
 2. Choisis la prestation (rubrique_id) qui correspond précisément à l'OBJET, pas seulement à la matière (un siège de voiture en tissu n'est pas un canapé).
 3. Il manque une information nécessaire au calcul (taille, nombre, surface, type de véhicule…) ou à la sécurité (matière incertaine sensible à l'eau) : etat « questions », 1 à 3 questions courtes avec des choix quand c'est possible. Ne repose jamais une question déjà répondue. Si la demande est assez précise, n'en pose aucune.
-4. Tout est clair : etat « fiche ». Remplis elements (textiles), champs (logement : surface, chambres, sdb ; vitres : fenetres ; véhicules : nombre_vehicules ; 0 si sans objet), formule_id et type_lieu_id quand la prestation en a.
+4. Tout est clair : etat « fiche ». Remplis elements (textiles), champs (logement : surface, chambres, sdb, dernier_nettoyage ; vitres : fenetres ; véhicules : nombre_vehicules ; 0 si sans objet), formule_id et type_lieu_id quand la prestation en a.
 5. Options : uniquement des tache_id de la prestation choisie. « obligatoire » seulement pour une raison de sécurité ou de faisabilité ; « recommandee » si le diagnostic la justifie ; « facultative » sinon. Chaque option a sa raison.
 6. resultat : ce qui partira probablement, ce qui sera atténué, ce qui peut rester. Jamais de garantie de disparition.
 7. Objet hors catalogue, moisissures, matière interdisant tout traitement proposé, ou doute sérieux : etat « validation_humaine » avec la raison ; l'équipe Cleaneroo reprend la demande.

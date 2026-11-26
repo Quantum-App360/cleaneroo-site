@@ -29,14 +29,15 @@ import { pageDesignSystem, brancherDesignSystem } from "./design-system.js";
 import { transitionVitre } from "./vitre.js";
 import { compterPage } from "./compteur.js";
 import { suivreEnDirect, demoSuivi } from "./suivi-live.js";
-import { pageCompte, pageMesPrestations, arreterEcouteDemandes, retourEmail, majLienCompte, afficherAccesCleaneur } from "./compte.js";
-import { marquerActif, profilMemorise, rendreEntete } from "./entete.js";
+import { pageCompte, pageMesPrestations, arreterEcouteDemandes, retourEmail, majLienCompte, afficherAccesCleaneur, noterRetourConnexion } from "./compte.js";
+import { marquerActif, profilMemorise, rendreEntete, accueilDuCompte } from "./entete.js";
 const rendreEnteteMemorise = () => rendreEntete(profilMemorise());
 window.addEventListener("cleaneroo-mode", () => rendreEnteteMemorise());
 import { icone, teinte, ICONES_RUBRIQUES, ICONES_INTERFACE } from "./icones.js";
 import { pageTableau, arreterTableau, pageFavoris } from "./tableau.js";
 import { compteRenduPieces } from "./controle-ecran.js";
 import { blocFormulesCleaneur, brancherFormulesCleaneur } from "./formules-cleaneur.js";
+import { exempleCleaneur, accrocheGain, tableauGain, reglesEnClair, etapesCleaneur, blocLancementCleaneur, pretACommencer, boutonPartagerCleaneur, pageConditionsCleaneurs } from "./devenir-cleaneur.js";
 import { blocEtat, blocEtapes, blocParcours, brancherParcours, surveillerConnexion, bandeGaranties, logosPaiement, blocJustePrix, blocAvantApres, brancherAvantApres, sectionAvisPublics, remplirAvisPublics, installerRappel, encartAideRappel, bandeauLancement, pageChargement, decorTableau, surveillerFormulaire, envoiRobot, CONTIENT_LIEN, afficherToast } from "./commun.js";
 import "./fond-anime.js";
 import "./oeil.js";
@@ -297,6 +298,10 @@ function pageAccueil() {
           <label><span>Débuter ma prestation</span><select name="rubrique" required><option value="" disabled selected>Choisir une prestation</option>${RUBRIQUES.map(r => `<option value="${r.id}">${r.nom}</option>`).join("")}</select></label>
           <button class="bouton" type="submit">Commencer</button>
         </form>
+        <div class="besoin-ia-heros"><button type="button" class="bouton secondaire" data-assistant-ia>${icone("instantane")}<span>Décrire mon besoin</span></button>
+          <p class="petit">Vous ne savez pas quelle prestation choisir ? Décrivez-nous votre besoin, notre assistant intelligent trouvera la solution adaptée.</p></div>
+        ${connecte() ? "" : `<div class="compte-heros"><span class="petit">${tr("Particulier, entreprise, conciergerie ou hôtel :")}</span>
+          <a class="bouton plein" href="#/compte/creer">${icone("ajouter")} ${tr("Créer mon espace")}</a><a class="bouton secondaire" href="#/compte">${tr("Me connecter")}</a></div>`}
         <button type="button" class="lien-rappel-heros" data-rappel>${icone("telephone")}<span>Une question ? <b>Être rappelé gratuitement</b></span></button>
         ${blocRecommander()}
         <ul class="preuves">${REPERES_HEROS.map(([ic, t]) => `<li>${icone(ic)}${t}</li>`).join("")}</ul>
@@ -462,25 +467,19 @@ function blocOffreCleaneurs() {
   return `<h2 class="titre-section">${icone("paiement", { tuile: true })}Deux formules, à vous de choisir</h2>${blocFormulesCleaneur(null)}`;
 }
 
-/** Exemple concret de revenu pour un Cleaneur : un ménage de location de 2 h (prix catalogue), en formule Gratuite et Pro. */
-function exempleRevenu() {
-  const prixC = calculer(entreeEstimation({ ...brouillonExemple("rental", {}) }, false, null)).totalC;
-  const gratuit = Math.round(prixC * (10000 - REGLES.COMMISSION_GRATUIT_PB) / 10000), pro = Math.round(prixC * (10000 - REGLES.COMMISSION_PRO_PB) / 10000);
-  return `<div class="carte teintee" style="margin-bottom:16px"><b>${icone("paiement")} ${tr("Exemple : un ménage de location saisonnière")}</b>
-    <p style="margin:6px 0 0">${tr("Prix de la prestation")} : <b>${euros(prixC)}</b> · ${tr("vous percevez")} <b>${euros(gratuit)}</b> ${tr("en formule Gratuite")}, <b>${euros(pro)}</b> ${tr("en formule Pro")}.</p>
-    <p class="petit" style="margin:4px 0 0">${tr("Pourboires en plus, à 100 % pour vous. Vous déclarez vous-même votre chiffre d'affaires (micro-entreprise).")}</p></div>`;
-}
+/** Page « Devenir Cleaneur » (recrutement, 26/11/2026) : vrai gain (après commission, frais Stripe et cotisations), formules,
+ *  règles du jeu, étapes, un seul parcours d'inscription. Contenu dans devenir-cleaneur.js ; partagée par https://cleaneroo.fr/cleaneur/. */
 function pageDevenir() {
-  const etapes = ["Avoir un statut d'indépendant", "Préparer vos documents (pièce d'identité, SIRET, RC Pro, attestation de vigilance URSSAF)",
-    "Pour la dératisation et la désinsectisation : Certibiocide « nuisibles » obligatoire",
-    "Déposer votre dossier (zone, prestations ; chaque document vérifié avant activation)", "Signer le contrat de prestataire et valider les formations de vos prestations",
-    "Réussir la mission test (rémunérée 40 €, payée par Cleaneroo)",
-    "Choisir vos missions (prix et horaires proposés, libre d'accepter)", "Être payé (validation client → commission prélevée → versement)"];
+  const ex = exempleCleaneur();
   return `<section class="fond-cleaneroo" style="padding:40px 0 90px">${decor([[90, 20, 90], [4, 60, 60]], [])}
-    <div class="conteneur"><h1>Devenir Cleaneur</h1><div class="trait-corail"></div><p>Travaillez à votre rythme, près de chez vous.</p>
-      <div class="etiquettes"><span class="etiquette">Missions proches</span><span class="etiquette">Compte rendu guidé</span><span class="etiquette">Paiement sécurisé</span></div></div></section>
-  <section class="bloc"><div class="etroit">${blocChoixCleaneur()}<div data-acces-cleaneur></div>${guideVideo("cleaneur", "page-devenir")}${blocApercuTournee()}${exempleRevenu()}${blocOffreCleaneurs()}${etapes.map((t, i) => `<div class="carte" style="margin-bottom:10px"><b style="color:var(--corail-texte)">${i + 1}.</b> ${t}</div>`).join("")}
-    <div style="margin-top:18px">${formulaireInscription("cleaneur", true)}</div>
+    <div class="conteneur"><h1>Devenir Cleaneur</h1><div class="trait-corail"></div>
+      <p class="accroche-gain"><b>${accrocheGain(ex)}</b> <button type="button" class="lien-bouton" data-defiler-gain>${tr("Voir le détail")} ›</button></p>
+      <p>Travaillez à votre rythme, près de chez vous.</p>
+      <div class="etiquettes"><span class="etiquette">Missions proches</span><span class="etiquette">Compte rendu guidé</span><span class="etiquette">Paiement sécurisé</span></div>
+      <div class="partage-cleaneur">${boutonPartagerCleaneur()}</div></div></section>
+  <section class="bloc"><div class="etroit">${blocChoixCleaneur()}<div data-acces-cleaneur></div>${blocLancementCleaneur()}${guideVideo("cleaneur", "page-devenir")}${blocApercuTournee()}${tableauGain(ex)}${blocOffreCleaneurs()}
+    ${reglesEnClair()}${etapesCleaneur()}
+    <div style="margin-top:18px">${pretACommencer()}</div>
   </div></section>`;
 }
 
@@ -666,7 +665,7 @@ function pageIcones() {
 
 const ROUTES = {
   "": pageAccueil, "vitrine": pageAccueil, "prestations": pagePrestations, "comment-ca-marche": pageComment, "devenir-cleaneur": pageDevenir, "mode-cleaneur": pageDevenir,
-  "inscription": () => pageInscription(), "confidentialite": pageConfidentialite, "conditions": pageConditions, "mentions-legales": pageMentions,
+  "inscription": () => pageInscription(), "confidentialite": pageConfidentialite, "conditions": pageConditions, "conditions-cleaneurs": pageConditionsCleaneurs, "mentions-legales": pageMentions,
   "gestion-des-avis": pageGestionAvis,
   "qui-sommes-nous": pageQuiSommesNous,
   "icones": pageIcones,
@@ -675,6 +674,7 @@ const ROUTES = {
 
 let arreterSuivi = () => {};
 let espacePrecedent = null;
+let premierAffichage = true, pagePrecedente = "";
 async function afficherPage() {
   clearInterval(minuterieNotifs);
   arreterEcouteDemandes();
@@ -694,10 +694,20 @@ async function afficherPage() {
   brancherBascule();
   if (["devenir-cleaneur", "mode-cleaneur"].includes(route) || (route === "compte" && param === "cleaneur")) { if (!modeCleaneur()) { fixerMode(true); rendreEnteteMemorise(); } }
   else if (["reserver", "estimer", "prestations", "mes-demandes", "mes-biens", "tableau"].includes(route) || (route === "compte" && ["particulier", "entreprise", "pro", "hotellerie"].includes(param))) { if (modeCleaneur()) { fixerMode(false); rendreEnteteMemorise(); } }
+  // Compte connecté qui ouvre cleaneroo.fr (26/11/2026, retour de Michael) : il arrive sur son tableau de bord.
+  // Seulement à l'ouverture du site : le logo et « Retour à l'accueil » mènent toujours à la page d'accueil publique.
+  const ouverture = premierAffichage; premierAffichage = false;
+  if (route === "" && ouverture && profilMemorise() && (await supabase.auth.getSession().catch(() => null))?.data?.session) {
+    const chez = accueilDuCompte(profilMemorise());
+    if (chez !== "#/") { location.replace(chez); return; }
+  }
   if (route === "" && modeCleaneur()) { location.replace("#/mode-cleaneur"); return; }
   if (route === "mode-cleaneur" && (profilMemorise()?.statuts || []).includes("cleaneur")) { location.replace("#/compte/cleaneur"); return; }
   // Liens de démarchage (23/11/2026) : #/devenir-cleaneur/independant et #/devenir-cleaneur/societe ouvrent directement le bon formulaire.
   if (route === "devenir-cleaneur" && ["independant", "societe"].includes(param)) { location.replace(`#/compte/cleaneur/${param}`); return; }
+  // Connexion demandée depuis une page (réservation en cours, messages…) : on y revient une fois connecté.
+  if (route === "compte" && !param && pagePrecedente && !connecte()) noterRetourConnexion(pagePrecedente);
+  pagePrecedente = location.hash;
   compterPage(route, param);
   marquerActif();
   // Barre des espaces sur l'accueil (entre le logo et le bandeau de lancement) : Particulier, Pro, Cleaneur.
@@ -747,6 +757,18 @@ async function afficherPage() {
     traduire(vue);
     window.scrollTo(0, 0);
     // Compte rendu pièce par pièce (photos avant / après, tâches, avis de l'IA) pour le client connecté.
+    // Cleaneroo AI : prestations suivantes de la même proposition, à réserver ensuite.
+    import("./assistant-ia-reservation.js").then(m => {
+      const suite = m.suiteIa();
+      if (!suite.length || !vue.querySelector("section")) return;
+      const z = document.createElement("div");
+      z.className = "conteneur"; z.style.marginTop = "16px";
+      z.innerHTML = `<div class="carte teintee suite-proposition-ia"><b>${icone("instantane")} ${tr("Votre proposition contient encore")} ${suite.length} ${tr(suite.length > 1 ? "prestations" : "prestation")}</b>
+        <p class="petit" style="margin:4px 0 10px">${suite.map(x => esc(x.champs?.diagnosticIa?.libelle || rubrique(x.rubriqueId)?.nom || "")).join(" · ")}</p>
+        <button type="button" class="bouton" data-suite-ia>${tr("Réserver la suivante")}</button></div>`;
+      vue.querySelector("section").prepend(z); traduire(z);
+      z.querySelector("[data-suite-ia]").onclick = () => m.reserverSuivante();
+    }).catch(() => null);
     const rendu = document.getElementById("compte-rendu-pieces");
     if (rendu) compteRenduPieces(rendu, decodeURIComponent(ref || ""));
     // Présence du Cleaneur à confirmer (sa position n'a pas pu confirmer l'arrivée).
@@ -891,6 +913,8 @@ installerRappel();
 surveillerConnexion();
 memoriserCodeParrain();
 window.addEventListener("hashchange", afficher);
+// En-tête du compte affiché tout de suite (profil gardé sur l'appareil) : plus d'en-tête « visiteur » le temps de relire le compte.
+if (profilMemorise()) rendreEnteteMemorise();
 await Promise.all([retourEmail(), chargerOuverture().catch(() => false)]);
 document.getElementById("lancement").innerHTML = bandeauLancement(); traduire(document.getElementById("lancement"));
 // La page s'affiche tout de suite ; le compte est relu ensuite (l'en-tête se met à jour tout seul).
@@ -900,3 +924,11 @@ import("./tarifs.js").then(({ chargerTarifs }) => chargerTarifs(supabase)).then(
 // Le profil vient d'être relu : si l'accueil invitait encore à s'inscrire alors que le compte est connecté, on le redessine.
 majLienCompte().then(() => { if (connecte() && document.querySelector("#vue .appel-2026, #vue .inscription-inspirante")) afficher(); });
 supabase.auth.onAuthStateChange((evt, sess) => { sessionActive = !!sess; });
+
+// Cleaneroo AI (26/11/2026) : tout bouton « Décrire mon besoin » ouvre l'assistant, chargé à la demande.
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-assistant-ia]");
+  if (!b) return;
+  e.preventDefault();
+  import("./assistant-ia.js").then(m => m.ouvrirAssistantIA(b.dataset.assistantIa || "")).catch(() => null);
+});

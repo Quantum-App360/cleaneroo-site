@@ -42,6 +42,17 @@ const LIENS = {
 };
 const NOM_ESPACE = { particulier: "Espace Particulier", entreprise: "Espace Entreprise", pro: "Espace Conciergerie", hotellerie: "Espace Hôtels et campings", cleaneur: "Espace Cleaneur", admin: "Administration" };
 
+/** Page d'accueil de chaque espace : son tableau de bord (logo, arrivée après connexion, cleaneroo.fr ouvert par un compte connecté). */
+const ACCUEIL_ESPACE = { visiteur: "#/", particulier: "#/tableau", entreprise: "#/compte/entreprise", pro: "#/compte/pro", hotellerie: "#/compte/hotellerie", cleaneur: "#/compte/cleaneur", admin: "#/tableau" };
+/** Espace affiché pour ce profil, selon le mode Cleaneur / client. */
+function typeAffiche(p, type = typeEspace(p), cleaneur = modeCleaneur()) {
+  if (type === "cleaneur" && !cleaneur) return (p?.statuts || []).find(x => ["particulier", "entreprise", "pro", "hotellerie"].includes(x)) || "particulier";
+  if (cleaneur && type !== "visiteur" && type !== "admin") return "cleaneur";
+  return type;
+}
+/** Tableau de bord du compte (26/11/2026, retour de Michael : après la connexion, le client arrive chez lui, pas sur l'accueil du site). */
+export const accueilDuCompte = p => ACCUEIL_ESPACE[typeAffiche(p)] || "#/";
+
 /** Remplit la navigation et les actions de l'en-tête pour ce profil (null = visiteur). */
 export function rendreEntete(p) {
   const nav = document.querySelector(".entete .nav"), actions = document.querySelector(".entete .actions-compte");
@@ -52,8 +63,7 @@ export function rendreEntete(p) {
   try { if (!localStorage.getItem("cleaneroo-mode") && type === "cleaneur") fixerMode(true); } catch { /* rien */ }
   const cleaneur = modeCleaneur();
   document.body.classList.toggle("mode-cleaneur", cleaneur);
-  if (type === "cleaneur" && !cleaneur) type = (p?.statuts || []).find(x => ["particulier", "entreprise", "pro", "hotellerie"].includes(x)) || "particulier";
-  else if (cleaneur && type !== "visiteur" && type !== "admin") type = "cleaneur";
+  type = typeAffiche(p, type, cleaneur);
   const lien = ([href, nom]) => `<a href="${href.startsWith("#") ? b + href : (b ? "/" : "") + href}">${nom}</a>`;
   const initiale = (p?.prenom || "?").trim().charAt(0).toUpperCase() || "?";
   const html = type === "visiteur"
@@ -68,7 +78,7 @@ export function rendreEntete(p) {
   const autres = type === "admin" || type === "visiteur" ? [] : (p.statuts || []).filter(x => x !== type && NOM_ESPACE[x]).map(x => [`#/compte/${x}`, NOM_ESPACE[x]]);
   nav.innerHTML = [...LIENS[type === "visiteur" && cleaneur ? "visiteurCleaneur" : type], ...autres].map(lien).join("") + `<div class="nav-compte">${html}</div>`;
   // Logo : une fois connecté, il ramène à son espace (et non à la page d'accueil du site, toujours accessible depuis « Mon suivi »).
-  const accueil = { visiteur: "#/", particulier: "#/tableau", entreprise: "#/compte/entreprise", pro: "#/compte/pro", hotellerie: "#/compte/hotellerie", cleaneur: "#/compte/cleaneur", admin: "#/tableau" }[type] || "#/";
+  const accueil = ACCUEIL_ESPACE[type] || "#/";
   document.querySelectorAll(".entete .marque").forEach(m => { m.setAttribute("href", b + accueil); m.setAttribute("aria-label", type === "visiteur" ? "Cleaneroo, accueil" : tr("Mon espace")); });
   document.body.dataset.espace = type;
   document.body.classList.toggle("acces-cleaneur", type === "cleaneur" && cleaneur);

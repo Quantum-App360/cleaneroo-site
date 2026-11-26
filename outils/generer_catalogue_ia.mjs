@@ -20,6 +20,7 @@ const donnees = {
   taillesCanape: C.TAILLES_CANAPE.map(t => ({ id: t.id, libelle: t.libelle })),
   typesLogement: (C.TYPES_LOGEMENT || []).map(t => ({ id: t.id, nom: t.nom })),
   tachesATraiter: C.TACHES_A_TRAITER,
+  derniersNettoyages: C.DERNIERS_NETTOYAGES.map(d => ({ id: d.id, libelle: d.libelle })),
 };
 writeFileSync(new URL("../assets/catalogue-ia.json", import.meta.url), JSON.stringify(sans(donnees)));
 console.log(rubriques.length, "prestations,", donnees.elementsTextiles.length, "éléments textiles");

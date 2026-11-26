@@ -15,7 +15,7 @@ export function formulesCleaneur() {
     ["gratuit", "Gratuit", tr("0 € par mois"), pct(REGLES.COMMISSION_GRATUIT_PB), [
       "Aucun abonnement, aucun engagement",
       "Idéal pour démarrer ou pour quelques missions par mois",
-      "Paiement sécurisé et assurance comme en Pro",
+      "Paiement sécurisé et outils identiques à la formule Pro",
     ], [
       `Commission plus élevée : ${pct(REGLES.COMMISSION_GRATUIT_PB)} sur chaque mission`,
       "Missions des particuliers seulement",
@@ -77,17 +77,21 @@ export function brancherFormulesCleaneur(racine, p = null, recharger = () => {})
   const calculer = () => {
     const c = Number(ca.value) * 100;
     const g = revenuCleaneurC(c, "gratuit"), pr = revenuCleaneurC(c, "pro", false);
+    // Le Cleaneur déclare à l'URSSAF le prix total des missions : les cotisations se calculent sur le chiffre d'affaires, pas sur le versé.
+    const cot = Math.round(c * REGLES.URSSAF_SERVICES_PCT / 100);
+    const apres = v => `<span class="ligne-apres petit">${tr("après cotisations URSSAF :")} <b>${euros(v - cot)}</b></span>`;
     sortie.innerHTML = `<span>${tr("Pour")} <b>${euros(c)}</b> ${tr("de missions par mois, vous percevez :")}</span>
-      <span class="ligne-calcul"><span>${tr("Gratuit")}</span><b>${euros(g)}</b></span>
-      <span class="ligne-calcul${pr > g ? " meilleur" : ""}"><span>${tr("Pro (abonnement déduit)")}</span><b>${euros(pr)}</b></span>
-      ${offert ? `<span class="ligne-calcul meilleur"><span>${tr("Pro offert")}</span><b>${euros(revenuCleaneurC(c, "pro", true))}</b></span>` : ""}
-      <span class="petit muet">${tr("hors frais de paiement Stripe, à votre charge")}</span>
+      <span class="ligne-calcul"><span>${tr("Gratuit")}</span><b>${euros(g)}</b></span>${apres(g)}
+      <span class="ligne-calcul${pr > g ? " meilleur" : ""}"><span>${tr("Pro (abonnement déduit)")}</span><b>${euros(pr)}</b></span>${apres(pr)}
+      ${offert ? `<span class="ligne-calcul meilleur"><span>${tr("Pro offert")}</span><b>${euros(revenuCleaneurC(c, "pro", true))}</b></span>${apres(revenuCleaneurC(c, "pro", true))}` : ""}
+      <span class="petit muet">${tr("Cotisations estimées à")} ${String(REGLES.URSSAF_SERVICES_PCT).replace(".", ",")} % ${tr("du chiffre d'affaires (micro-entreprise, sans ACRE). Montants avant frais de paiement Stripe : environ")} ${String(REGLES.FRAIS_STRIPE_PCT).replace(".", ",")} % + ${euros(REGLES.FRAIS_STRIPE_FIXE_C)} ${tr("par mission")}.</span>
       <span class="petit">${pr > g ? `${tr("Pro vous rapporte")} ${euros(pr - g)} ${tr("de plus par mois.")}` : tr("À ce niveau, la formule Gratuit vous convient mieux.")}</span>`;
   };
   ca.oninput = calculer; calculer();
   bloc.querySelectorAll("[data-choisir-formule]").forEach(b => b.onclick = async () => {
     const f = b.dataset.choisirFormule;
-    if (!confirm(tr(f === "pro" ? "Passer à la formule Pro ? Commission de 12 % et toutes les missions ; l'abonnement sera prélevé à l'ouverture des paiements en ligne." : "Passer à la formule Gratuit ? Commission de 20 % et missions des particuliers seulement."))) return;
+    if (!confirm(f === "pro" ? `${tr("Passer à la formule Pro ?")} ${tr("Commission de")} ${pct(REGLES.COMMISSION_PRO_PB)} ${tr("et toutes les missions ; l'abonnement sera prélevé à l'ouverture des paiements en ligne.")}`
+      : `${tr("Passer à la formule Gratuit ?")} ${tr("Commission de")} ${pct(REGLES.COMMISSION_GRATUIT_PB)} ${tr("et missions des particuliers seulement.")}`)) return;
     b.disabled = true;
     const { data, error } = await supabase.rpc("choisir_formule", { f });
     if (error || data !== "ok") { b.disabled = false; bloc.querySelector("[data-erreur-formule]").textContent = tr("Le service est momentanément indisponible. Réessayez dans quelques minutes."); return; }

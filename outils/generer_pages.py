@@ -8,7 +8,7 @@
 #   - les traductions des textes locaux des villes dans assets/js/traductions.js (bloc <villes-textes>).
 import io, json, os, re, html
 
-VERSION = "2026112605"
+VERSION = "2026112606"
 DATE_PLAN = "2026-11-06"        # date des pages dans sitemap.xml
 SITE = "https://cleaneroo.fr"
 
@@ -169,6 +169,7 @@ def gabarit(chemin, titre, description, corps, attrs="", indexer=True, og_type="
         <a href="/#/devenir-cleaneur">Devenir Cleaneur</a>
         <a href="/#/confidentialite">Confidentialité</a>
         <a href="/#/conditions">Conditions d'utilisation</a>
+        <a href="/#/conditions-cleaneurs">Contrat de prestataire</a>
         <a href="/#/mentions-legales">Mentions légales</a>
         <a href="/#/gestion-des-avis">Comment nous gérons les avis</a>
         <a href="mailto:contact@cleaneroo.fr">contact@cleaneroo.fr</a>
@@ -240,6 +241,36 @@ corps = """  <section class="fond-cleaneroo heros-page">
   </div></section>"""
 ecrire("calculateur/index.html", gabarit("/calculateur/", "Combien coûte votre ménage ? Calculateur de prix · Cleaneroo",
     "Calculez le prix de votre ménage, de votre location saisonnière, de vos vitres ou de votre canapé : prix immédiat, crédit d'impôt selon éligibilité, paiement sécurisé à la réservation.", corps))
+
+# ------------------------------------------------------------------ Page Cleaneur /cleaneur/ (recrutement, 26/11/2026)
+# Le lien partagé sur WhatsApp ou par SMS doit montrer l'aperçu des Cleaneurs, pas celui des clients. La page est une copie de index.html
+# avec ses propres balises (title, description, og:*) ; à l'ouverture, elle devient « /#/devenir-cleaneur » : même module, aucun texte en double.
+# Les chiffres de l'aperçu viennent de regles.js et du moteur de prix (node outils/chiffres_cleaneur.mjs), jamais écrits à la main.
+import subprocess as _sp
+try:
+    ch = json.loads(_sp.run(["node", "outils/chiffres_cleaneur.mjs"], check=True, capture_output=True, text=True).stdout)
+except Exception as x:
+    raise SystemExit(f"Chiffres de la page Cleaneur non calculés : {x}")
+titre_c = f"Devenir Cleaneur · Jusqu'à {ch['horaireAvant']}/h avant cotisations · Cleaneroo"
+desc_c = (f"Missions de ménage près de chez vous, en autoentrepreneur. Libre d'accepter, sans minimum ni exclusivité. "
+          f"Mission test payée {ch['missionTest']}" + (f", {ch['moisPro']} mois de formule Pro offerts." if ch["offreOuverte"] else "."))
+# Offre de lancement terminée : la page doit être régénérée (VERSION + ce script) pour que l'aperçu ne la promette plus.
+src = lire("index.html")
+remplacements = [
+    (r"<title>.*?</title>", f"<title>{e(titre_c)}</title>"),
+    (r'<meta name="description" content="[^"]*">', f'<meta name="description" content="{e(desc_c)}">'),
+    (r'<meta property="og:title" content="[^"]*">', f'<meta property="og:title" content="{e(titre_c)}">'),
+    (r'<meta property="og:description" content="[^"]*">', f'<meta property="og:description" content="{e(desc_c)}">'),
+    (r'<meta property="og:image" content="[^"]*">', f'<meta property="og:image" content="{SITE}/assets/img/partage-cleaneur.jpg">\n  <meta property="og:image:width" content="1200">\n  <meta property="og:image:height" content="630">'),
+    (r'<meta property="og:url" content="[^"]*">', f'<meta property="og:url" content="{SITE}/cleaneur/">'),
+    (r'<link rel="canonical" href="[^"]*">', f'<link rel="canonical" href="{SITE}/cleaneur/">'),
+]
+for motif, par in remplacements:
+    assert re.search(motif, src), motif
+    src = re.sub(motif, lambda m, par=par: par, src, count=1)
+src = src.replace("<head>\n", '<head>\n  <base href="/">\n  <script>history.replaceState(null, "", "/" + (location.hash || "#/devenir-cleaneur"));</script>\n', 1)
+ecrire("cleaneur/index.html", src)
+plan.append("/cleaneur/")
 
 # ------------------------------------------------------------------ Comparatifs (faits vérifiables uniquement : cases concurrent à remplir après contrôle)
 for c in CONCURRENTS:

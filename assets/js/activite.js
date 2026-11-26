@@ -5,7 +5,7 @@
 import { icone } from "./icones.js";
 import { supabase, mesMissions } from "./donnees.js";
 import { mesFactures } from "./factures.js";
-import { euros, REGLES, netPortefeuille, dateVersement, dateLongue } from "./regles.js";
+import { euros, REGLES, netPortefeuille, dateVersement, dateLongue, tauxCotisationsPct } from "./regles.js";
 import { tr, traduire, LOCALE } from "./langue.js";
 import { esc } from "./commun.js";
 
@@ -35,7 +35,7 @@ export function chiffreAffaires({ factures = [], pourboires = [], periode = "moi
   const avantDebut = periode === "mois" ? jourIso(new Date(an, m - 1, 1)) : `${an - 1}-01-01`;
   const avantFin = periode === "mois" ? jourIso(new Date(an, m - 1, Math.min(j, new Date(an, m, 0).getDate()))) : jourIso(new Date(an - 1, m, j));
   const ici = somme(l, debut, auj), avant = somme(l, avantDebut, avantFin);
-  const tauxPct = Math.round(((acre ? REGLES.URSSAF_ACRE_PCT : REGLES.URSSAF_SERVICES_PCT) + (liberatoire ? REGLES.VERSEMENT_LIBERATOIRE_PCT : 0)) * 10) / 10;
+  const tauxPct = tauxCotisationsPct(acre, liberatoire);
   const cotisations = Math.round(ici.ca * tauxPct / 100);
   const graphe = periode === "mois"
     ? Array.from({ length: 5 }, (_, i) => { const d = 1 + i * 7, f = Math.min(d + 6, new Date(an, m + 1, 0).getDate());
@@ -84,12 +84,15 @@ function blocChiffreAffaires(c, reglages, prevu) {
       <div class="ca-comparaison">${comparaison || `<span class="petit muet">${tr("Pas encore de comparaison possible.")}</span>`}</div>
       <p class="petit muet" style="margin:4px 0 10px">${c.missions} ${tr(c.missions > 1 ? "missions facturées" : "mission facturée")}${c.missions ? ` · ${tr("moyenne par mission :")} ${euros(Math.round((c.caC) / c.missions))}` : ""} · ${tr("prestations et pourboires, le montant à déclarer")}</p>
       <div class="ligne-activite"><span>${tr("Commission Cleaneroo")}</span><span>−${euros(c.commissionC)}</span></div>
-      <div class="ligne-activite"><span>${tr("Net pour vous, après commission")}<small class="petit muet" style="display:block">${tr("hors frais de paiement Stripe, à votre charge")}</small></span><b>${euros(c.netC)}</b></div>
+      <div class="ligne-activite"><span>${tr("Net pour vous, après commission")}<small class="petit muet" style="display:block">${tr("avant frais de paiement Stripe, à votre charge : environ")} ${pct(REGLES.FRAIS_STRIPE_PCT)} + ${euros(REGLES.FRAIS_STRIPE_FIXE_C)} ${tr("par mission")}</small></span><b>${euros(c.netC)}</b></div>
       <div class="ligne-activite"><span>${tr("Cotisations URSSAF estimées")} (${pct(c.tauxPct)})</span><span>−${euros(c.cotisationsC)}</span></div>
       <div class="ligne-activite total"><span>${tr("Reste pour vous")}</span><b>${euros(c.resteC)}</b></div>
-      <label class="case-activite"><input type="checkbox" data-reglage="acre" ${reglages.acre ? "checked" : ""}> ${tr("ACRE (1re année, taux réduit)")}</label>
+      <label class="champ" style="margin:10px 0 4px"><span>${tr("ACRE")}</span><select data-acre>
+        ${[["", "Sans ACRE"], ["depuis", "ACRE, entreprise créée depuis le 1er juillet 2026"], ["avant", "ACRE, entreprise créée avant le 1er juillet 2026"]].map(([v, t]) => {
+          const choisi = (reglages.acre === true ? "avant" : reglages.acre || "") === v;
+          return `<option value="${v}"${choisi ? " selected" : ""}>${tr(t)}${v ? ` (${pct(v === "depuis" ? REGLES.URSSAF_ACRE_PCT : REGLES.URSSAF_ACRE_AVANT_JUILLET_2026_PCT)})` : ""}</option>`; }).join("")}</select></label>
       <label class="case-activite"><input type="checkbox" data-reglage="liberatoire" ${reglages.liberatoire ? "checked" : ""}> ${tr("Versement libératoire de l'impôt")} (+${pct(REGLES.VERSEMENT_LIBERATOIRE_PCT)})</label>
-      <p class="petit">${tr("Taux 2026 des prestations de services (dont le nettoyage) :")} ${pct(REGLES.URSSAF_SERVICES_PCT)}, ${tr("ou")} ${pct(REGLES.URSSAF_ACRE_PCT)} ${tr("avec l'ACRE. Estimation indicative, hors contribution à la formation professionnelle.")}</p>
+      <p class="petit">${tr("Taux 2026 des prestations de services (dont le nettoyage) :")} ${pct(REGLES.URSSAF_SERVICES_PCT)}. ${tr("Avec l'ACRE :")} ${pct(REGLES.URSSAF_ACRE_PCT)} ${tr("pour une entreprise créée depuis le 1er juillet 2026 (exonération de 25 %),")} ${pct(REGLES.URSSAF_ACRE_AVANT_JUILLET_2026_PCT)} ${tr("pour une entreprise créée avant, jusqu'à la fin de sa période d'ACRE. Estimation indicative, hors contribution à la formation professionnelle.")}</p>
     </div>
     <div class="carte">
       <b>${tr(mois ? "Semaine par semaine" : "Mois par mois")}</b>${mois ? "" : `<span class="legende-ca"><i class="brut"></i>${tr("Brut")} <i class="net"></i>${tr("Net après commission")}</span>`}
@@ -169,6 +172,7 @@ export async function blocActivite(boite, profil) {
       <p class="petit">${tr("Outil d'aide à la gestion : il ne remplace pas votre déclaration officielle ni l'avis d'un expert-comptable.")}</p>`;
     boite.querySelectorAll("[data-periode]").forEach(b => b.onclick = () => { reglages.periode = b.dataset.periode; garder(reglages); afficher(); });
     boite.querySelectorAll("[data-reglage]").forEach(x => x.onchange = () => { reglages[x.dataset.reglage] = x.checked; garder(reglages); afficher(); });
+    boite.querySelector("[data-acre]")?.addEventListener("change", e => { reglages.acre = e.target.value; garder(reglages); afficher(); });
     boite.querySelector("[data-rythme]").onchange = e => { reglages.rythme = e.target.value; garder(reglages); afficher(); };
     const obj = boite.querySelector("[data-objectif]");
     if (obj) obj.onchange = () => { reglages.objectifC = Math.max(0, Math.round(Number(obj.value) || 0)) * 100; garder(reglages); afficher(); };

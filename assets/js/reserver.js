@@ -32,7 +32,7 @@ export const profil = () => lire(CLE_PROFIL, null);
 export const logements = () => lire(CLE_LOGEMENTS, []);
 /** Dernières commandes, la plus récente d'abord : [{ rubriqueId, quand, logementId, ... }]. */
 export const modeles = () => Object.values(lire(CLE_MODELES, {})).sort((a, b) => b.quand - a.quand);
-export function oublierMesInformations() { [CLE_PROFIL, CLE_LOGEMENTS, CLE_MODELES, CLE_BROUILLON].forEach(k => { try { localStorage.removeItem(k); } catch { /* rien */ } }); }
+export function oublierMesInformations() { [CLE_PROFIL, CLE_LOGEMENTS, CLE_MODELES, CLE_BROUILLON, "cleaneroo-brouillons"].forEach(k => { try { localStorage.removeItem(k); } catch { /* rien */ } }); }
 const CHAMPS_LOGEMENT = ["rue", "codePostal", "ville", "accueil", "tiersNom", "tiersTel", "boiteEmplacement"];
 const PRIVES = ["prenom", "nom", "email", "telephone", "code", "jour", "heure", "cgv", "etape", "sansPhotos", "flexible", ...CHAMPS_LOGEMENT];
 /** Libellé court d'une adresse enregistrée : « Appartement · Fréjus ». */
@@ -196,6 +196,15 @@ function estimer(br, debut) {
     lignes: [{ libelle: tr("Ménage de location · prix fixé pour ce logement"), montantC: prix }],
     creditImpotC: 0, fraisServiceC: frais, remiseParrainageC: remise, cagnotteC: cagnotte, totalAPayerC: aPayer, apresCreditImpotC: aPayer };
 }
+/** Cleaneroo AI (26/11/2026) : brouillon de réservation construit comme celui du parcours (mêmes valeurs de départ),
+ *  complété par les choix de la fiche ; et son estimation par le MÊME calcul que l'écran de réservation (sans date choisie). */
+export function brouillonPour(rubriqueId, champs = {}, espace = "personnel") {
+  return { ...nouveauBrouillon(rubriqueId, espace), ...champs, etape: 2 };
+}
+export const estimerBrouillon = br => estimer(br, null);
+/** Montant affiché « Total à payer », comme le récapitulatif de la réservation. */
+export const totalAffiche = est => est.devisObligatoire ? null : (est.fraisServicePct || est.remiseParrainageC || est.cagnotteC ? est.totalAPayerC : est.totalC);
+
 /** Prix conseillé Cleaneroo (grille) d'un ménage de location pour ce logement, en centimes. */
 export function prixConseilleBien(l) {
   const br = avecLogement(vierge("rental", "conciergerie", rubrique("rental"), TYPES_LIEU.rental), l);
@@ -206,6 +215,9 @@ export const messagePlancher = (prixC, conseilC) => conseilC && prixC < conseilC
   ? tr("Sous 80 % du prix conseillé : seuls les Cleaneurs que vous avez invités verront ce ménage.") : "";
 
 let b = null;            // brouillon en cours
+let photosFournies = []; // photos transmises par Cleaneroo AI, reprises à l'ouverture de la réservation
+/** Cleaneroo AI : photos du client (Blob JPEG) jointes à la prochaine réservation ouverte. */
+export function fournirPhotos(blobs) { photosFournies = blobs.map((x, i) => new File([x], `photo-${i + 1}.jpg`, { type: "image/jpeg" })); }
 let photos = [];         // fichiers choisis (non sauvegardés dans le brouillon)
 let vuesPrises = {};     // étape 3 : vue → fichier (une photo par vue)
 let photoBoite = null;   // photo de la boîte à clés (accueil « Boîte à clés »), non sauvegardée dans le brouillon
@@ -241,7 +253,7 @@ export function reserverPourLogement(id) {
   if (location.hash === "#/reserver") dispatchEvent(new HashChangeEvent("hashchange")); else location.hash = "#/reserver";
 }
 
-function sauver() { try { localStorage.setItem(sim ? CLE_SIMULATION : CLE_BROUILLON, JSON.stringify(b)); } catch { /* rien */ } }
+function sauver() { try { localStorage.setItem(sim ? CLE_SIMULATION : CLE_BROUILLON, JSON.stringify(b)); } catch { /* rien */ } if (!sim) garderBrouillon(b); }
 /* Simulateur « Estimer mon prix » (12 novembre 2026) : toutes les prestations dans un menu, les questions qui font le prix,
    le prix détaillé mis à jour à chaque choix. Sans compte ni connexion : tout est calculé dans le navigateur.
    « Réserver avec ces choix » reprend la simulation à l'étape 2 de la réservation. Même écran dans l'appli (Simulateur.kt). */
@@ -296,12 +308,37 @@ function rendreSimulation() {
 }
 function charger() { try { return JSON.parse(localStorage.getItem(CLE_BROUILLON) || "null"); } catch { return null; } }
 
+/* Demandes en cours (26/11/2026, retour de Michael) : une réservation commencée par prestation est gardée sur l'appareil.
+   « Réserver » ouvre toujours le choix de la prestation ; les demandes commencées y sont proposées (Reprendre, Supprimer). */
+const CLE_BROUILLONS = "cleaneroo-brouillons";
+const brouillons = () => lire(CLE_BROUILLONS, {});
+function garderBrouillon(br) {
+  if (!br?.rubriqueId || !rubrique(br.rubriqueId) || !(br.etape >= 2)) return;
+  try { localStorage.setItem(CLE_BROUILLONS, JSON.stringify({ ...brouillons(), [br.rubriqueId]: { ...br, majLe: Date.now() } })); } catch { /* rien */ }
+}
+function oublierBrouillon(rubriqueId) {
+  const l = brouillons(); delete l[rubriqueId];
+  try { localStorage.setItem(CLE_BROUILLONS, JSON.stringify(l)); if (charger()?.rubriqueId === rubriqueId) localStorage.removeItem(CLE_BROUILLON); } catch { /* rien */ }
+}
+/** Demandes commencées, la plus récente d'abord, avec leur total (même calcul que l'écran de réservation). */
+function demandesEnCours() {
+  return Object.values(brouillons()).filter(x => rubrique(x.rubriqueId)).sort((a, z) => (z.majLe || 0) - (a.majLe || 0)).map(x => {
+    let total = null;
+    try { const est = estimer(x, null); total = est.devisObligatoire ? null : (est.fraisServicePct || est.remiseParrainageC || est.cagnotteC ? est.totalAPayerC : est.totalC); } catch { /* brouillon ancien */ }
+    return { br: x, total };
+  });
+}
+
 export function ouvrirReservation(conteneur, rubriqueId, option = "") {
   racine = conteneur; sim = false;
   const ancien = charger();
+  garderBrouillon(ancien);   // demande commencée avant le 26/11/2026 : elle rejoint « Vos demandes en cours »
   const rapide = option === "rapide";
-  if (rubriqueId && rubrique(rubriqueId)) b = !rapide && ancien && ancien.rubriqueId === rubriqueId ? ancien : nouveauBrouillon(rubriqueId, ancien?.espace, rapide);
-  else b = ancien && (ancien.etape > 1 || ancien.logementDepart !== undefined) ? ancien : null;
+  const garde = ancien && ancien.rubriqueId === rubriqueId ? ancien : brouillons()[rubriqueId];
+  if (rubriqueId && rubrique(rubriqueId)) b = !rapide && garde ? garde : nouveauBrouillon(rubriqueId, ancien?.espace, rapide);
+  // « Réserver » sans prestation : toujours le choix de la prestation (la demande commencée est proposée, pas imposée).
+  else b = ancien && ancien.etape === 1 && ancien.logementDepart ? { espace: ancien.espace || "personnel", etape: 1, logementDepart: ancien.logementDepart }
+    : ancien ? { espace: ancien.espace || "personnel", etape: 1 } : null;
   if (b?.rubriqueId) b = { ...b, espace: partiePour(b.rubriqueId, partieImposee() || b.espace) };
   // Conciergerie abonnée : 0 % de frais de service (profil mémorisé par l'en-tête).
   if (b) b = { ...b, abonnePro: !!profilMemorise()?.abonnePro };
@@ -319,8 +356,14 @@ export function ouvrirReservation(conteneur, rubriqueId, option = "") {
       // Horaires du séjour (24/11/2026) : départ tardif et arrivée anticipée réglés séjour par séjour.
       ...(Number.isFinite(pr.departH) ? { departVoyageursH: pr.departH } : {}), ...(Number.isFinite(pr.arriveeH) ? { arriveeSuivanteH: pr.arriveeH } : {}) };
   }
-  if (pr?.champs && pr.rubriqueId === rubriqueId && rubrique(rubriqueId)) b = { ...nouveauBrouillon(rubriqueId, ancien?.espace || "personnel"), ...pr.champs, etape: 2 };
-  photos = [];
+  if (pr?.champs && pr.rubriqueId === rubriqueId && rubrique(rubriqueId)) {
+    b = { ...nouveauBrouillon(rubriqueId, ancien?.espace || "personnel"), ...pr.champs, etape: Math.min(4, Math.max(2, pr.etape || 2)) };
+    // Besoin décrit depuis « Mes biens » : l'adresse et l'accès de ce bien sont repris (s'il convient à la prestation proposée).
+    const l = pr.champs.bienIa ? logements().find(x => x.id === pr.champs.bienIa) : null;
+    if (l && bienCompatible(rubriqueId, l)) b = avecLogement(b, l);
+    delete b.bienIa;
+  }
+  photos = photosFournies.splice(0);
   vuesPrises = {};
   photoBoite = null;
   // Historique : une entrée par étape, pour que la touche retour du téléphone revienne à l'étape précédente.
@@ -387,21 +430,165 @@ function etape1() {
   const proposees = rubriquesProposees(pid, bienChoisi, profilMemorise()?.secteur);   // Entreprise : selon son secteur d'activité
   const pourQui = imposee
     ? `<p class="pour-qui-fixe">${icone({ personnel: "logement", conciergerie: "location", professionnel: "bureaux" }[p.id], { tuile: true })}<span><b>${p.nom}</b><span class="petit">${p.detail}</span></span></p>`
-    : `${titre("Pour qui ?")}
+    : `<div class="centre-bloc">${bienChoisi ? titre("Pour qui ?") : `<h3 class="titre-centre">${tr("Pour qui ?")}</h3>`}
     <div class="segments trois">${PARTIES.map(x => `<button type="button" data-espace="${x.id}" class="${p.id === x.id ? "choisi" : ""}">${x.nom}</button>`).join("")}</div>
-    <p class="petit" style="margin:6px 0 0">${p.detail}</p>`;
+    <p class="petit" style="margin:6px 0 0">${p.detail}</p></div>`;
   const derniers = modeles().filter(m => proposees.includes(m.rubriqueId) && rubrique(m.rubriqueId));
-  return `<h1>Que souhaitez-vous nettoyer ?</h1><p class="muet">Choisissez votre prestation : le prix s'affiche dès que vous décrivez votre besoin.</p>
+  // Centre de réservation (26/11/2026, retour de Michael) : l'assistant, les demandes en cours, « À refaire », vos biens, puis tout le catalogue.
+  const centre = !bienChoisi;
+  const enCours = centre ? demandesEnCours().filter(x => proposees.includes(x.br.rubriqueId)) : [];
+  return `<h1>Que souhaitez-vous nettoyer ?</h1><p class="muet">Décrivez votre besoin à notre assistant, reprenez une demande, ou choisissez directement une prestation : le prix s'affiche dès que vous décrivez votre besoin.</p>
     ${choixLogement}
     ${pourQui}
-    ${derniers.length ? titre("Comme la dernière fois") + `<div class="grille-2">${derniers.slice(0, 4).map(m => {
-      const r = rubrique(m.rubriqueId), l = logements().find(x => x.id === m.logementId);
-      return `<a class="carte prestation rapide" href="#/reserver/${m.rubriqueId}/rapide">${icone(r.icone, { tuile: true })}<h3>${r.nom}</h3>
-        <p class="muet" style="margin:4px 0 0">${l ? esc(nomLogement(l)) : ""}</p><span class="tampon vert">Recommander en 3 clics ›</span></a>`; }).join("")}</div>` : ""}
-    ${titre("Votre prestation")}
-    ${logEnr ? `<p class="petit" style="margin:-4px 0 12px">${tr(categorieBien(bienChoisi) === "logement" ? "Prestations adaptées à ce logement." : "Prestations adaptées à ce bien.")}</p>` : ""}
-    <div class="grille-3">${RUBRIQUES.filter(r => proposees.includes(r.id)).map(r => `<button type="button" class="carte prestation" data-rubrique="${r.id}" style="text-align:left">
-      ${icone(r.icone, { tuile: true })}<h3>${r.nom}</h3><p class="muet" style="margin:4px 0 0">${r.sousTitre}</p><span class="tampon">${pastille(r)}</span></button>`).join("")}</div>`;
+    ${centre ? blocAssistantCentre() : ""}
+    ${enCours.length || (centre && derniers.length) ? `<div class="centre-colonnes">${enCours.length ? blocEnCours(enCours) : ""}${centre && derniers.length ? blocRefaire(derniers) : ""}</div>` : ""}
+    ${!centre && derniers.length ? blocRefaire(derniers) : ""}
+    ${centre ? blocMesBiensCentre(pid) : ""}
+    ${centre ? `<div class="centre-bloc">${titreCentre("Toutes nos prestations")}${catalogueCentre(proposees, centre)}</div>`
+      : `${titre("Votre prestation")}${logEnr ? `<p class="petit" style="margin:-4px 0 12px">${tr(categorieBien(bienChoisi) === "logement" ? "Prestations adaptées à ce logement." : "Prestations adaptées à ce bien.")}</p>` : ""}${catalogueCentre(proposees, centre)}`}`;
+}
+
+/** « Reprendre » : la demande commencée s'ouvre à l'étape où elle avait été laissée. */
+function reprendreBrouillon(rubriqueId) {
+  const br = brouillons()[rubriqueId];
+  if (!br) return rendre();
+  try { localStorage.setItem(CLE_BROUILLON, JSON.stringify(br)); } catch { /* rien */ }
+  const cible = `#/reserver/${rubriqueId}`;
+  if (location.hash === cible) ouvrirReservation(racine, rubriqueId); else location.hash = cible;
+}
+/** Le besoin écrit (et les photos) sur la page part à l'assistant : la fenêtre s'ouvre avec l'analyse lancée. */
+async function analyserCentre() {
+  const err = racine.querySelector("[data-erreur-centre]");
+  const texte = (racine.querySelector("[data-texte-centre]")?.value || "").trim();
+  if (texte.length < 3) { if (err) err.textContent = tr("Décrivez votre besoin en quelques mots."); return; }
+  if (photosCentre.length && !accordCentre) { if (err) err.textContent = tr("Cochez l'accord pour l'analyse des photos, ou retirez-les."); return; }
+  const m = await import("./assistant-ia.js");
+  m.ouvrirAssistantIA(texte, { nouveau: true, envoyer: true, photos: photosCentre.slice(), consentement: accordCentre });
+  texteCentre = ""; photosCentre = []; accordCentre = false;
+  rendre();
+}
+async function ajouterPhotosCentre(fichiers) {
+  const images = [...fichiers].filter(f => /^image\//.test(f.type)).slice(0, PHOTOS_CENTRE - photosCentre.length);
+  if (!images.length) return;
+  photosCentre.push(...images); rendre();
+}
+function brancherCentre() {
+  const z = racine.querySelector("[data-texte-centre]");
+  z?.addEventListener("input", () => { texteCentre = z.value; });
+  z?.addEventListener("keydown", e => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); analyserCentre(); } });
+  racine.querySelector("[data-photos-centre]")?.addEventListener("change", e => ajouterPhotosCentre(e.target.files));
+  racine.querySelector("[data-accord-centre]")?.addEventListener("change", e => { accordCentre = e.target.checked; });
+  racine.querySelectorAll("[data-photo-centre]").forEach(img => { const f = photosCentre[+img.dataset.photoCentre]; if (f) img.src = URL.createObjectURL(f); });
+  // Ordinateur : les photos se glissent directement dans la zone.
+  const depot = racine.querySelector("[data-depot-ia]");
+  if (depot) {
+    ["dragenter", "dragover"].forEach(t => depot.addEventListener(t, e => { e.preventDefault(); depot.classList.add("survol"); }));
+    ["dragleave", "drop"].forEach(t => depot.addEventListener(t, () => depot.classList.remove("survol")));
+    depot.addEventListener("drop", e => { e.preventDefault(); ajouterPhotosCentre(e.dataTransfer?.files || []); });
+  }
+  // Recherche dans le catalogue : filtre les cartes sans redessiner la page.
+  const champ = racine.querySelector("[data-recherche-prestation]");
+  champ?.addEventListener("input", () => {
+    const mots = sansAccents(champ.value).split(/\s+/).filter(Boolean);
+    let visibles = 0;
+    racine.querySelectorAll("[data-famille]").forEach(f => {
+      let n = 0;
+      f.querySelectorAll("[data-mots]").forEach(c => { const ok = mots.every(m => c.dataset.mots.includes(m)); c.hidden = !ok; if (ok) n++; });
+      f.hidden = !n; visibles += n;
+    });
+    racine.querySelector("[data-aucune-prestation]").hidden = visibles > 0;
+  });
+}
+
+/* ------------------------------------------------------------------ Centre de réservation (étape 1) */
+let texteCentre = "", photosCentre = [], accordCentre = false;
+/** Titre d'une partie du centre (sans numéro : ce ne sont pas des étapes à suivre dans l'ordre). */
+const titreCentre = t => `<h3 class="titre-centre">${t}</h3>`;
+const PHOTOS_CENTRE = 4;
+/** Cleaneroo AI en tête : le besoin se décrit directement sur la page (texte et photos), l'assistant s'ouvre avec l'analyse lancée. */
+function blocAssistantCentre() {
+  let reprise = false;
+  try { reprise = (JSON.parse(localStorage.getItem("cleaneroo-assistant-ia") || "null")?.conversation || []).length > 0; } catch { /* rien */ }
+  return `<div class="centre-ia carte">
+    <div class="centre-ia-tete"><span class="tuile-ia">${icone("instantane")}</span><div><b>${tr("Décrivez votre besoin, notre assistant prépare votre réservation")}</b>
+      <span class="petit muet">${tr("Avec vos mots, même sans connaître le nom de la prestation. Avec des photos, l'analyse est plus précise. Les prix restent ceux de Cleaneroo.")}</span></div>
+      ${reprise ? `<button type="button" class="lien-bouton" data-reprendre-ia>${tr("Reprendre ma proposition en cours")}</button>` : ""}</div>
+    <div class="centre-ia-saisie" data-depot-ia>
+      <textarea data-texte-centre rows="3" maxlength="2000" placeholder="${esc(tr("Ex. : mon canapé d'angle en tissu a des taches de café et des poils de chat…"))}" aria-label="${esc(tr("Décrivez votre besoin"))}">${esc(texteCentre)}</textarea>
+      ${photosCentre.length ? `<div class="vignettes-ia">${photosCentre.map((f, i) => `<span class="vignette-ia"><img data-photo-centre="${i}" alt=""><button type="button" data-retirer-centre="${i}" aria-label="${esc(tr("Retirer la photo"))}">×</button></span>`).join("")}</div>
+        <label class="consentement-ia"><input type="checkbox" data-accord-centre ${accordCentre ? "checked" : ""}> <span class="petit">${tr("J'accepte que mes photos soient analysées par l'assistant pour préparer ma proposition. Elles ne sont conservées qu'avec ma réservation.")}</span></label>` : ""}
+      <div class="centre-ia-actions">
+        <label class="bouton secondaire petit${photosCentre.length >= PHOTOS_CENTRE ? " desactive" : ""}">${icone("photo")} ${tr("Ajouter des photos")}<input type="file" accept="image/*" multiple hidden data-photos-centre ${photosCentre.length >= PHOTOS_CENTRE ? "disabled" : ""}></label>
+        <span class="petit muet depot-indication">${tr("ou glissez-les ici")}</span>
+        <button type="button" class="bouton" data-analyser-centre>${icone("instantane")} ${tr("Analyser mon besoin")}</button>
+      </div>
+      <p class="erreur" data-erreur-centre></p>
+    </div>
+    <div class="exemples-ia">${["Mon canapé en tissu a plusieurs taches", "Les sièges de ma voiture sont très sales", "Je viens de récupérer une maison à nettoyer entièrement", "Je souhaite faire nettoyer un matelas"].map(x => `<button type="button" class="puce-exemple" data-exemple-centre="${esc(tr(x))}">${tr(x)}</button>`).join("")}</div>
+  </div>`;
+}
+/** « il y a 3 heures », dans la langue du site. */
+const depuisQuand = t => {
+  if (!t) return "";
+  const min = Math.max(1, Math.round((Date.now() - t) / 60000));
+  const rtf = new Intl.RelativeTimeFormat(langue || "fr", { numeric: "auto" });
+  return min < 60 ? rtf.format(-min, "minute") : min < 1440 ? rtf.format(-Math.round(min / 60), "hour") : rtf.format(-Math.round(min / 1440), "day");
+};
+function blocEnCours(liste) {
+  return `<div class="centre-bloc">${titreCentre("Vos demandes en cours")}<div class="liste-en-cours">${liste.slice(0, 4).map(({ br, total }) => {
+    const r = rubrique(br.rubriqueId), l = br.logementId ? logements().find(x => x.id === br.logementId) : null;
+    return `<div class="carte en-cours">${icone(r.icone, { tuile: true })}<div class="en-cours-texte"><b>${tr(r.nom)}</b>
+      <span class="petit muet">${tr("Étape")} ${br.etape} ${tr("sur 5")}${l ? ` · ${esc(nomLogement(l))}` : br.ville ? ` · ${esc(br.ville)}` : ""} · ${depuisQuand(br.majLe)}</span>
+      ${total != null ? `<span class="en-cours-total">${euros(total)}</span>` : `<span class="petit">${tr("Sur devis")}</span>`}</div>
+      <div class="en-cours-actions"><button type="button" class="bouton petit" data-reprendre="${br.rubriqueId}">${tr("Reprendre")}</button>
+        <button type="button" class="lien-bouton" data-supprimer-brouillon="${br.rubriqueId}">${tr("Supprimer")}</button></div></div>`;
+  }).join("")}</div></div>`;
+}
+function blocRefaire(derniers) {
+  return `<div class="centre-bloc">${titreCentre("À refaire")}<div class="liste-refaire">${derniers.slice(0, 4).map(m => {
+    const r = rubrique(m.rubriqueId), l = logements().find(x => x.id === m.logementId);
+    return `<a class="carte prestation rapide" href="#/reserver/${m.rubriqueId}/rapide">${icone(r.icone, { tuile: true })}<span><b>${tr(r.nom)}</b>
+      <span class="petit muet" style="display:block">${l ? esc(nomLogement(l)) : tr("Mêmes réglages que la dernière fois")}</span></span><span class="tampon vert">${tr("Refaire")} ›</span></a>`; }).join("")}</div></div>`;
+}
+/** Vos biens enregistrés : pour chacun, ses prestations les plus courantes en un clic. */
+function blocMesBiensCentre(pid) {
+  const biens = logements().slice(0, 4);
+  if (!biens.length) return "";
+  return `<div class="centre-bloc">${titreCentre("Pour vos biens")}<div class="grille-biens-centre">${biens.map(l => {
+    const rubs = rubriquesProposees(pid, l, profilMemorise()?.secteur).slice(0, 3);
+    return `<div class="carte bien-centre"><p class="bien-centre-nom">${icone(iconeBien(l))} <b>${esc(nomLogement(l))}</b></p>
+      <div class="bien-centre-choix">${rubs.map(id => `<button type="button" class="puce-exemple" data-rubrique="${id}" data-pour-bien="${esc(l.id)}">${icone(rubrique(id).icone)} ${tr(rubrique(id).nom)}</button>`).join("")}
+      <button type="button" class="lien-bouton" data-logement-depart="${esc(l.id)}">${tr("Toutes ses prestations")} ›</button></div></div>`;
+  }).join("")}</div></div>`;
+}
+/** Familles du catalogue (affichage seulement : les prestations et leurs prix ne changent pas). */
+const FAMILLES = [["Maison et logement", ["home", "rental", "moving", "textiles", "windows", "kitchen"]],
+  ["Véhicules et loisirs", ["car", "leisure", "boat"]], ["Extérieurs", ["outdoor", "pool"]],
+  ["Professionnels et locaux", ["office", "commerce", "communal", "hospitality"]], ["Interventions spécifiques", ["construction", "event", "special"]]];
+/** Mots du quotidien → prestation, pour la recherche (« matelas » trouve Canapés et textiles). */
+const MOTS_CLES = { textiles: "canape sofa fauteuil matelas tapis moquette rideau tissu mattress carpet divano materasso tappeto sofa colchon alfombra",
+  car: "voiture auto siege interieur car voiture vehicule coche auto macchina", windows: "fenetre vitre baie vitrine window finestra ventana",
+  home: "menage maison appartement logement house cleaning casa pulizia limpieza", rental: "airbnb booking location saisonniere voyageurs gite",
+  moving: "demenagement etat des lieux depart moving trasloco mudanza", kitchen: "cuisine four hotte frigo kitchen cucina cocina",
+  outdoor: "terrasse jardin allee garage balcon terrace", pool: "piscine pool piscina", boat: "bateau voilier pont boat barca barco",
+  leisure: "camping car van caravane camper", office: "bureau cabinet agence office ufficio oficina", commerce: "magasin boutique entrepot shop",
+  communal: "immeuble copropriete escalier hall", construction: "chantier travaux renovation poussiere", event: "fete mariage soiree evenement party",
+  special: "desinfection nuisibles punaises deces sinistre", hospitality: "hotel camping mobil-home chalet" };
+const sansAccents = t => String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+function carteRubrique(r) {
+  const mots = sansAccents([r.nom, tr(r.nom), r.sousTitre, tr(r.sousTitre), MOTS_CLES[r.id] || ""].join(" "));
+  return `<button type="button" class="carte prestation" data-rubrique="${r.id}" data-mots="${esc(mots)}" style="text-align:left">
+    ${icone(r.icone, { tuile: true })}<h4>${r.nom}</h4><p class="muet" style="margin:4px 0 0">${r.sousTitre}</p><span class="tampon">${pastille(r)}</span></button>`;
+}
+function catalogueCentre(proposees, centre) {
+  const liste = RUBRIQUES.filter(r => proposees.includes(r.id));
+  if (!centre || liste.length < 7) return `<div class="grille-3">${liste.map(carteRubrique).join("")}</div>`;
+  const familles = FAMILLES.map(([nom, ids]) => [nom, liste.filter(r => ids.includes(r.id))]).filter(([, l]) => l.length);
+  const rangees = liste.filter(r => !FAMILLES.some(([, ids]) => ids.includes(r.id)));
+  if (rangees.length) familles.push(["Autres prestations", rangees]);
+  return `<label class="recherche-prestation">${icone("recherche")}<input type="search" data-recherche-prestation placeholder="${esc(tr("Rechercher : canapé, vitres, voiture, Airbnb…"))}" aria-label="${esc(tr("Rechercher une prestation"))}"></label>
+    <p class="petit muet" data-aucune-prestation hidden>${tr("Aucune prestation ne correspond. Décrivez votre besoin à l'assistant ci-dessus : il trouvera la bonne prestation.")}</p>
+    ${familles.map(([nom, l]) => `<div class="famille-prestations" data-famille><h4 class="titre-famille">${tr(nom)}</h4><div class="grille-centre">${l.map(carteRubrique).join("")}</div></div>`).join("")}`;
 }
 
 function etape2() {
@@ -1285,7 +1472,7 @@ function rendreSansReentree() {
   const etape = b ? b.etape : 1;
   let est = null;
   if (b && b.rubriqueId && etape > 1) est = estimer(b, debutChoisi());
-  racine.innerHTML = `<section class="bloc" style="padding-top:28px"><div class="${est ? "resa-avec-recap" : "etroit"}"><div class="resa-etape">
+  racine.innerHTML = `<section class="bloc" style="padding-top:28px"><div class="${est ? "resa-avec-recap" : etape === 1 ? "etroit resa-centre" : "etroit"}"><div class="resa-etape">
     <div class="tete-etape petit">${etape > 1 ? `<button type="button" class="retour-haut" data-retour>‹ Retour</button>` : ""}<span>Étape ${etape} sur 5</span>
       ${est && !est.devisObligatoire ? `<b style="color:var(--primaire)">${est.fraisServicePct || est.remiseParrainageC || est.cagnotteC ? `${tr("Total à payer")} ${euros(est.totalAPayerC)}` : `Total estimé ${euros(est.totalC)}`}</b>` : ""}</div>
     <div class="progression">${[1, 2, 3, 4, 5].map(i => `<span class="${i <= etape ? "fait" : ""}"></span>`).join("")}</div>
@@ -1293,6 +1480,7 @@ function rendreSansReentree() {
   </div>${recapitulatif(est)}</div></section>`;
   traduire(racine);
   rangerEnCartes(racine.querySelector(".resa-etape"));
+  if (etape === 1) brancherCentre();
   // Aperçus des photos
   racine.querySelectorAll("#vignettes img").forEach(img => { img.src = URL.createObjectURL(photos[+img.dataset.i]); });
   racine.querySelectorAll("[data-apercu-boite]").forEach(img => { if (photoBoite) img.src = URL.createObjectURL(photoBoite); });
@@ -1351,9 +1539,19 @@ document.addEventListener("click", async e => {
   if (ds.favoriChoisi) return maj({ choixCleaneur: "favori", cleaneurFavori: ds.favoriChoisi });
   if (ds.champ === "choixCleaneur" && ds.valeur === "favori") return maj({ choixCleaneur: "favori", cleaneurFavori: favoriChoisi() ? b.cleaneurFavori : demandables()[0]?.cleaneur_id || "" });
   if (ds.logementDepart !== undefined) { b = { ...(b || { etape: 1, espace: "personnel" }), logementDepart: ds.logementDepart }; sauver(); return rendre(); }
+  if (ds.reprendre) return reprendreBrouillon(ds.reprendre);
+  if (ds.supprimerBrouillon) { oublierBrouillon(ds.supprimerBrouillon); if (b?.rubriqueId === ds.supprimerBrouillon) b = { espace: b.espace || "personnel", etape: 1 }; return rendre(); }
+  if (ds.reprendreIa !== undefined) return import("./assistant-ia.js").then(m => m.ouvrirAssistantIA());
+  if (ds.exempleCentre) { texteCentre = ds.exempleCentre; const z = racine.querySelector("[data-texte-centre]"); if (z) { z.value = texteCentre; z.focus(); } return; }
+  if (ds.retirerCentre !== undefined) { photosCentre.splice(+ds.retirerCentre, 1); return rendre(); }
+  if (ds.analyserCentre !== undefined) return analyserCentre();
   if (ds.rubrique) {
-    const dep = logementDepart();
-    const nb = b?.rubriqueId === ds.rubrique && b.espace === partieCourante() ? { ...b, etape: 2 } : nouveauBrouillon(ds.rubrique, partieCourante());
+    const dep = ds.pourBien || logementDepart();
+    const garde = brouillons()[ds.rubrique];
+    const nb = b?.rubriqueId === ds.rubrique && b.espace === partieCourante() ? { ...b, etape: 2 }
+      : !ds.pourBien && garde && garde.espace === partieCourante() ? { ...garde, etape: 2 } : nouveauBrouillon(ds.rubrique, partieCourante());
+    // L'adresse suit la prestation choisie : un rechargement de la page rouvre cette réservation, et non le choix des prestations.
+    if (!location.hash.startsWith(`#/reserver/${ds.rubrique}`)) history.replaceState(history.state, "", `#/reserver/${ds.rubrique}`);
     // Bien venu de « Mes biens » ; sinon le brouillon a déjà le dernier bien compatible (choix à l'étape 2).
     b = dep ? avecLogementDepart(nb, dep) : nb;
     sauver(); noterEtape(); rendre(); return window.scrollTo(0, 0);
@@ -1528,9 +1726,13 @@ async function envoyer() {
     }
     const { reference, jeton } = premiere;
     const aPayer = !est.devisObligatoire;
+    // Réservation préparée par Cleaneroo AI : l'analyse est rattachée à la demande, avec les options retirées et l'avertissement lu.
+    if (b.diagnosticIa?.analyseId) await supabase.rpc("lier_analyse_ia", { p_analyse: b.diagnosticIa.analyseId, p_reference: reference, p_jeton: jeton,
+      p_options_retirees: b.diagnosticIa.retirees || [] }).then(() => null, () => null);
     const tel = b.telephone.trim();
     if (tel) session().then(x => x ? monProfil() : null).then(p => { if (p && !p.telephone) majProfil({ telephone: tel }); }).catch(() => null);
     memoriserCommande(b);
+    oublierBrouillon(b.rubriqueId);
     try { localStorage.removeItem(CLE_BROUILLON); localStorage.removeItem(CLE_FAVORI_VOULU); } catch { /* rien */ }
     envoi = false; b = null; photos = []; photoBoite = null; infosParrain = null;
     // Paiement tout de suite sur la page sécurisée Stripe ; sinon (service indisponible), le suivi propose « Payer ma réservation ».

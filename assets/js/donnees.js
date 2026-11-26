@@ -218,7 +218,7 @@ const retour = vers => `${location.origin}${location.pathname}?vers=${vers}`;
    seul compte (13 novembre 2026). Si un autre compte se connecte sur le même appareil, elles sont effacées ; à la déconnexion aussi. */
 const CLE_PROPRIETAIRE = "cleaneroo-donnees-de";
 const CLES_PERSONNELLES = ["cleaneroo-logements", "cleaneroo-profil", "cleaneroo-modeles", "cleaneroo-brouillon", "cleaneroo-mes-demandes",
-  "cleaneroo-prerempli", "cleaneroo-simulation", "cleaneroo-agenda"];
+  "cleaneroo-prerempli", "cleaneroo-simulation", "cleaneroo-agenda", "cleaneroo-assistant-ia", "cleaneroo-ia-suite"];
 export function oublierDonneesLocales() {
   [...CLES_PERSONNELLES, CLE_PROPRIETAIRE].forEach(k => { try { localStorage.removeItem(k); sessionStorage.removeItem(k); } catch { /* navigation privée */ } });
 }
