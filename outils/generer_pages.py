@@ -289,3 +289,7 @@ if "// <villes-textes>" in s: s = re.sub(r"  // <villes-textes>.*?// </villes-te
 else: s = s.replace("  // <rubriques-textes> (généré)", bloc + "  // <rubriques-textes> (généré)", 1)
 ecrire(p, s)
 print(f"Version {VERSION} · {len(VILLES)} villes · {len(CONCURRENTS)} comparatifs · {len(plan)} adresses dans sitemap.xml")
+
+# ------------------------------------------------------------------ Catalogue lu par Cleaneroo AI (assets/catalogue-ia.json, 26/11/2026)
+import subprocess
+subprocess.run(["node", "outils/generer_catalogue_ia.mjs"], check=True)
