@@ -5,7 +5,7 @@ import { PARTIES, partie, partiePour, PARTIE_DE_L_ESPACE, rubriquesProposees, li
   FREQUENCES, JOURS_SEMAINE, DERNIERS_NETTOYAGES, packsPour, remisePack,
   TACHES_A_TRAITER, TYPES_CHANTIER, photosPlusTardPossibles, equipementsPour, DELAIS_URGENCE, TYPES_IMMEUBLE, surfaceEffective, SELECTION_CONSEILLEE_VEHICULE, LIEUX_VEHICULE, FREQUENCES_VEHICULE, RUBRIQUES_LOGEMENT, vuesPhotos, vuesCompletes, PIECES_LOCATION, ETAPES_LOCATION, PACK_ETAPES_CONSEILLE, ETAPES_DEPART, prixEtapeLocationC, repetitionsEtape, CONSOMMABLES_LOCATION, PACK_CONSOMMABLES_CONSEILLE, PRIX_FORMULES, FORMULE_STANDARD_VEHICULE } from "./catalogue.js";
 import { calculer, entreeEstimation, SALISSURE, disponibilite, meilleurPack, tachesChiffrees, formuleDe, niveauLocation, passagesPlanifies, datesPassages,
-  etapesDe, etapesChoisiesDe, etapesIncluses, consommablesDe, menageTientEntreVoyageurs, frequenceDe, minutesEquipements, prixIndicatifEquipement, heuresEvenement, litsDe, litsTailles, prixDrapsC, prixLingeC,
+  etapesDe, etapesChoisiesDe, etapesIncluses, consommablesDe, menageTientEntreVoyageurs, frequenceDe, minutesEquipements, prixIndicatifEquipement, heuresEvenement, litsDe, litsTailles, prixDrapsC, prixLingeC, heuresProposees, fenetreArriveeH,
   tachesPourOccasion, niveauOccasion } from "./estimation.js";
 import { REGLES, euros, duree, heure, dateCourte, dateLongue, reservationsFermees, MESSAGE_LANCEMENT, photosAvantObligatoires, delaiFavoriH, palierPass } from "./regles.js";
 import { envoyerDemande, secteurCouvert, rejoindreAttente, enregistrerBien, synchroniserBiens, marquerDonneesInvite } from "./donnees.js";
@@ -1116,7 +1116,7 @@ const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")
 function debutChoisi() {
   if (!b.jour || b.heure < 0 || b.flexible) return null;
   const [a, m, j] = b.jour.split("-").map(Number);
-  return new Date(a, m - 1, j, b.heure, 0, 0);
+  return new Date(a, m - 1, j, Math.floor(b.heure), Math.round((b.heure % 1) * 60), 0);
 }
 
 let changerLogement = false;   // étape 4 : liste des logements dépliée pour en changer
@@ -1150,24 +1150,24 @@ function blocOuVehicule() {
       <p class="petit" style="margin:0">Ces informations ne sont transmises au Cleaneur qu'une fois la mission confirmée.</p></div>`;
 }
 
+/** Heure décimale affichée (10.5 → « 10 h 30 »). */
+const heureDec = h => heure(Math.floor(h), Math.round((h % 1) * 60));
 function etape4() {
   const maintenant = new Date();
   const location = b.rubriqueId === "rental";
-  // Mêmes heures que le planning de l'appli : 7 h-11 h et 13 h-18 h (jusqu'à 23 h pour les événements).
-  const grille = [7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23];
-  let heures = location ? [b.departVoyageursH ?? REGLES.DEPART_VOYAGEURS_DEFAUT_H] : grille.slice(0, 11);
-  // Événements : créneaux selon la formule (fini avant le début, ou à partir de la fin)
-  if (b.rubriqueId === "event") heures = heuresEvenement(b, calculer(entreeEstimation(b, b.espace === "personnel", null)).dureeMin, grille);
-  const tient = !location || menageTientEntreVoyageurs(b, calculer(entreeEstimation(b, b.espace === "personnel", null)).dureeMin);
+  // Créneaux toutes les 30 minutes, selon la prestation (26/11/2026) ; location saisonnière : entre le départ et l'arrivée des voyageurs.
+  const dureeEst = calculer(entreeEstimation(b, b.espace === "personnel", null)).dureeMin;
+  const heures = heuresProposees(b, dureeEst);
+  const tient = !location || menageTientEntreVoyageurs(b, dureeEst);
   const jourDate = b.jour ? new Date(b.jour + "T00:00") : null;
   const creneaux = jourDate ? heures.map(h => {
-    const c = new Date(jourDate); c.setHours(h);
+    const c = new Date(jourDate); c.setHours(Math.floor(h), Math.round((h % 1) * 60));
     const dispo = disponibilite(maintenant, c);
     return `<button type="button" data-heure="${h}" class="${b.heure === h ? "choisi" : ""} ${{ MALIN: "malin", FORTE_DEMANDE: "forte", PEU: "peu" }[dispo] || ""}" ${dispo === "INDISPONIBLE" ? "disabled" : ""}
-      title="${{ MALIN: "Créneau malin −10 %", FORTE_DEMANDE: "Forte demande", PEU: "Peu de Cleaneurs" }[dispo] || ""}">${heure(h)}</button>`;
+      title="${{ MALIN: "Créneau malin −10 %", FORTE_DEMANDE: "Forte demande", PEU: "Peu de Cleaneurs" }[dispo] || ""}">${heureDec(h)}</button>`;
   }).join("") : "";
   const adresseOk = b.rue.trim().length >= 3 && /^[0-9]{5}$/.test(b.codePostal) && b.ville.trim();
-  const creneauOk = b.flexible || (b.jour && b.heure >= 0 && (!location || b.heure === (b.departVoyageursH ?? REGLES.DEPART_VOYAGEURS_DEFAUT_H)));
+  const creneauOk = b.flexible || (b.jour && b.heure >= 0 && heures.includes(b.heure));
   const vehicule = b.rubriqueId === "car";
   const vehiculeOk = !vehicule || ((b.vehRepere || "").trim() && (b.vehModele || "").trim() && (b.vehImmat || "").trim());
   const manque = !adresseOk ? "Vérifiez l'adresse pour continuer."
@@ -1193,8 +1193,8 @@ function etape4() {
     ${b.flexible ? "" : `<div class="jours" style="margin-top:12px">${joursProposes().map(d => `<button type="button" data-jour="${iso(d)}" class="${b.jour === iso(d) ? "choisi" : ""}">${dateCourte(d)}</button>`).join("")}</div>
       ${jourDate ? `<div class="creneaux" style="margin-top:12px">${creneaux}</div>
         <div class="legende-creneaux petit"><span class="dispo">Disponible</span><span class="malin">Créneau malin −10 %</span><span class="forte">Forte demande</span><span class="peu">Peu de Cleaneurs</span></div>` : `<p class="petit">Choisissez un jour.</p>`}
-      ${jourDate && b.heure >= 0 ? `<div class="note" style="margin-top:10px">Arrivée entre ${heure(b.heure)} et ${heure(b.heure + 1)} · ${dateLongue(jourDate)}</div>`
-        + (disponibilite(maintenant, new Date(jourDate.getFullYear(), jourDate.getMonth(), jourDate.getDate(), b.heure)) === "PEU" ? `<div class="note alerte" style="margin-top:8px">Peu de Cleaneurs sur ce créneau : prévoyez une solution de repli.</div>` : "") : ""}
+      ${jourDate && b.heure >= 0 ? `<div class="note" style="margin-top:10px">Arrivée entre ${heureDec(b.heure)} et ${heureDec(b.heure + fenetreArriveeH(b))} · ${dateLongue(jourDate)}</div>`
+        + (disponibilite(maintenant, new Date(jourDate.getFullYear(), jourDate.getMonth(), jourDate.getDate(), Math.floor(b.heure), Math.round((b.heure % 1) * 60))) === "PEU" ? `<div class="note alerte" style="margin-top:8px">Peu de Cleaneurs sur ce créneau : prévoyez une solution de repli.</div>` : "") : ""}
       <p class="petit">Réservation au moins 24 h à l'avance. Pour une urgence, la nuit ou un événement : horaire particulier (bientôt).</p>`}`}
     ${location ? `<div class="note ${tient ? "" : "alerte"}" style="margin-top:10px">Départ des voyageurs à ${b.departVoyageursH ?? 10} h · fin avant ${b.arriveeSuivanteH ?? 16} h</div>`
       + (tient ? "" : `<div class="note alerte" style="margin-top:8px">Le ménage ne tient pas entre le départ et l'arrivée suivante : avancez le départ ou retardez l'arrivée.</div>`) : ""}

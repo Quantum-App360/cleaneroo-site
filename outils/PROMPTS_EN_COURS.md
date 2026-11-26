@@ -1223,3 +1223,9 @@ Ordre : A base de connaissances + fonction serveur · B conversation et fiche ·
 - Base (outils/base-premiere-mission-accompagnee.sql) : demandes.mission_accompagnee (posé par déclencheur quand le Cleaneur reçoit la mission), test_autorise(d), cleaneur_actif() (une mission à la fois), prendre_mission / proposer renvoient « mission_test », emettre_factures 0 % de commission, avis ≥ 4/5 → compte activé automatiquement ; sinon decider_mission_test (gestion).
 - Contrat 2026-12-d (article « Première mission accompagnée ») ; contrat_version_actuelle() = 2026-12-d.
 - Textes à reprendre dans les applis : « Réussir votre première mission accompagnée (… 100 % du prix, sans commission) », plus aucun « 40 € payés par Cleaneroo ».
+
+## Créneaux toutes les 30 minutes, selon la prestation (26/11/2026, Michael et Vincent) — à reporter dans les applis
+- heuresProposees(b, dureeMin) dans estimation.js ; réglages REGLES.CRENEAU_PAS_MIN (30), CRENEAUX_PRESTA, FENETRE_ARRIVEE_*.
+- Location saisonnière : du départ des voyageurs jusqu'au dernier début qui finit avant l'arrivée suivante, fenêtre d'arrivée de 30 min comprise.
+- Ménage et autres : 7 h-11 h 30 et 13 h-18 h 30, fini avant 20 h ; bureaux, commerces, parties communes : 6 h-20 h 30, fini avant 22 h ; extérieurs et piscine : 8 h-17 h 30, fini avant 19 h ; événements : comme avant, à la demi-heure.
+- L'heure du brouillon devient décimale (10.5 = 10 h 30). Prix inchangés (créneau malin et forte demande : mêmes plages).

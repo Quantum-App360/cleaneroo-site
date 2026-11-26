@@ -252,7 +252,17 @@ export const REGLES = {
   // réponse du client sous 15 min (sinon refus). Copie de Regles.kt ; la base fait foi (proposer_supplement).
   SUPPLEMENT_PAS_MIN: 15, SUPPLEMENT_MAX_MIN: 60, SUPPLEMENT_MAX_PCT: 25, SUPPLEMENT_REPONSE_MIN: 15,
   // Créneaux disponibles du Cleaneur (grille) et score de recommandation des missions (repris de Vincent).
-  CRENEAUX_DEBUT_H: 6, CRENEAUX_FIN_H: 22,   // première mission accompagnée avant l'activation (base-premiere-mission-accompagnee.sql)
+  CRENEAUX_DEBUT_H: 6, CRENEAUX_FIN_H: 22,
+  // Créneaux proposés au client (26/11/2026, Michael et Vincent) : toutes les 30 minutes, selon la prestation.
+  // plages : heures de début possibles [de, à[ ; finMax : le travail doit être fini avant cette heure (sinon le créneau n'est pas proposé).
+  // Location saisonnière : entre le départ des voyageurs et l'arrivée suivante (voir heuresProposees, estimation.js).
+  CRENEAU_PAS_MIN: 30,
+  FENETRE_ARRIVEE_MIN: 60, FENETRE_ARRIVEE_LOCATION_MIN: 30,   // marge d'arrivée du Cleaneur ; location : même une arrivée en fin de fenêtre finit avant les voyageurs
+  CRENEAUX_PRESTA: {
+    defaut: { plages: [[7, 12], [13, 19]], finMax: 20 },
+    office: { plages: [[6, 21]], finMax: 22 }, commerce: { plages: [[6, 21]], finMax: 22 }, communal: { plages: [[6, 21]], finMax: 22 },
+    outdoor: { plages: [[8, 18]], finMax: 19 }, pool: { plages: [[8, 18]], finMax: 19 },
+  },
   RETARD_TOLERE_MIN: 30,   // retard annoncé toléré ; au-delà, le client peut annuler sans frais (base-retards.sql)
   VITESSE_MOYENNE_KMH: 35,
   MARGE_TRAJET_MIN: 10,

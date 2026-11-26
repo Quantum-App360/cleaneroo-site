@@ -347,6 +347,26 @@ export const prixDrapsC = b => {
   return b.drapsLieu === "laverie" ? t.un * p.un + t.deux * p.deux + t.king * p.king + REGLES.LAVERIE_TRAJET_C : t.total * REGLES.DRAPS_SUR_PLACE_PAR_LIT_C;
 };
 /** Le ménage tient-il entre le départ des voyageurs et l'arrivée suivante ? */
+/** Fenêtre d'arrivée du Cleaneur, en heures (30 min en location saisonnière, 1 h sinon). */
+export const fenetreArriveeH = b => (b.rubriqueId === "rental" ? REGLES.FENETRE_ARRIVEE_LOCATION_MIN : REGLES.FENETRE_ARRIVEE_MIN) / 60;
+/** Heures de début proposées (26/11/2026) : toutes les 30 minutes, selon la prestation (REGLES.CRENEAUX_PRESTA), en heures décimales
+ *  (10.5 = 10 h 30). Location saisonnière : du départ des voyageurs jusqu'au dernier début qui finit avant l'arrivée suivante.
+ *  Événements : avant le début (fini à temps) ou à partir de la fin, selon la formule. */
+export function heuresProposees(b, dureeMin = 0) {
+  const pas = REGLES.CRENEAU_PAS_MIN / 60, d = (dureeMin || 0) / 60;
+  const serie = (de, a) => { const l = []; for (let h = de; h < a - 1e-9; h += pas) l.push(Math.round(h * 100) / 100); return l; };
+  if (b.rubriqueId === "rental") {
+    const depart = b.departVoyageursH ?? REGLES.DEPART_VOYAGEURS_DEFAUT_H, arrivee = b.arriveeSuivanteH ?? REGLES.ARRIVEE_SUIVANTE_DEFAUT_H;
+    const marge = REGLES.FENETRE_ARRIVEE_LOCATION_MIN / 60;
+    const l = serie(depart, arrivee).filter(h => h + marge + d <= arrivee + 1e-9);
+    return l.length ? l : [depart];
+  }
+  if (b.rubriqueId === "event") return heuresEvenement(b, dureeMin, serie(7, 24));
+  const r = REGLES.CRENEAUX_PRESTA[b.rubriqueId] || REGLES.CRENEAUX_PRESTA.defaut;
+  const toutes = r.plages.flatMap(([de, a]) => serie(de, a));
+  const ok = toutes.filter(h => h + d <= r.finMax + 1e-9);
+  return ok.length ? ok : toutes.slice(0, 1);
+}
 export const menageTientEntreVoyageurs = (b, dureeMin) => (b.departVoyageursH ?? 10) * 60 + dureeMin <= (b.arriveeSuivanteH ?? 16) * 60;
 
 /** Construit l'entrée de l'estimateur à partir d'un brouillon (entreeEstimation de Reservation.kt). */
