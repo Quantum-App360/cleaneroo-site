@@ -1154,3 +1154,9 @@ Et les deux doivent former un seul écosystème cohérent.
   - demandes-bureau.js (nouveau) : Mes prestations en tableau + panneau de détail (prénom du Cleaneur via infos_fil ; étapes cochées selon le statut, sans date inventée ; actions : Ouvrir le suivi, Écrire au Cleaneur).
   - 25 nouvelles traductions.
 - À REPORTER PAR VINCENT (applis) : mêmes règles visuelles (onglet actif plein, rond à cocher, bouton secondaire en contour, rubriques en cartes numérotées) ; le menu latéral et le tableau sont propres au site sur ordinateur.
+
+## Cleaneroo AI « Décrire mon besoin » (cahier des charges du 26/11, version complète validée par Michael)
+Ordre : A base de connaissances + fonction serveur · B conversation et fiche · C passage vers réservation/paiement existants · D équipements + brief Cleaneur · E vérification sur place (supplément existant) · F tableau de pilotage + amélioration · G tests (15 + égalité des prix) et documentation.
+- Prix : l'IA ne donne que des identifiants du catalogue ; prix = estimation.js (comme la réservation) ; serveur paiement revérifie. Vérifié le 26/11 : le serveur de paiement (prix-serveur.js figé au commit 87ecf7d) et le site actuel donnent les mêmes prix sur 1 080 cas tirés au hasard (0 écart).
+- Lot A (fait, 26/11) : tables connaissances_ia (63 entrées de départ) et analyses_ia, fonction lier_analyse_ia (accord de Michael) ; fonction serveur besoin-ia déployée (Claude, schéma imposé, identifiants revérifiés, objets hors catalogue et moisissures → validation humaine, 20 analyses/h et 60/j par visiteur) ; catalogue publié pour l'IA : assets/catalogue-ia.json (généré par outils/generer_catalogue_ia.mjs, lancé par generer_pages.py). Fichiers : outils/base-assistant-ia.sql, outils/base-assistant-ia-contenu.sql, outils/connaissances-ia-initiales.json.
+- À vérifier : secret ANTHROPIC_API_KEY présent dans Supabase (jamais encore utilisé en production).
