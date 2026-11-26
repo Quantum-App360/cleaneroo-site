@@ -3247,3 +3247,61 @@ body.sans-defilement { overflow: hidden; }
 .preuve-cles { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 8px; }
 .preuve-cles label.en-cours { opacity: .55; pointer-events: none; }
 #carnet-favoris { scroll-margin-top: 130px; }
+
+/* ================================================================== Menu latéral et règles communes des espaces (26/11/2026)
+   Le site est pensé ordinateur d'abord (les applis servent le téléphone). Trois niveaux bien distincts :
+   le menu à gauche pour se déplacer, les onglets et les cartes pour s'organiser, les boutons pour agir. */
+.menu-lateral { display: none; }
+@media (min-width: 1100px) {
+  body.avec-menu { --largeur-menu: 260px; }
+  .menu-lateral:not([hidden]) { display: flex; flex-direction: column; gap: 6px; position: fixed; left: 0; top: 64px; bottom: 0; width: var(--largeur-menu); z-index: 25;
+    background: var(--surface); border-right: 1px solid var(--separateur); padding: 22px 14px 16px; box-shadow: 6px 0 24px rgba(8,38,42,.05); overflow-y: auto; }
+  body.avec-menu #vue, body.avec-menu .pied, body.avec-menu #lancement, body.avec-menu #barre-espaces { margin-left: var(--largeur-menu); }
+  /* Le menu remplace les liens du haut, les pastilles de raccourcis et le bouton « Être rappelé » de l'en-tête. */
+  body.avec-menu .entete .nav > a, body.avec-menu .rappel-entete, body.avec-menu .actions-accueil, body.avec-menu .actions-compte > .bouton-entete { display: none !important; }
+  body.avec-menu .sous-onglets:has([data-sous-onglet="aujourdhui"]) { display: none !important; }
+  body.avec-menu .etroit { width: min(1040px, 100% - 64px); }
+}
+.menu-lateral-titre { margin: 0 10px 10px; font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--turquoise); }
+.menu-lateral nav { display: flex; flex-direction: column; gap: 4px; }
+.menu-lateral a, .menu-lateral-bas button { display: flex; align-items: center; gap: 12px; padding: 11px 12px; border-radius: 12px; color: var(--texte); text-decoration: none;
+  font: inherit; font-weight: 600; font-size: 15px; background: none; border: 0; width: 100%; cursor: pointer; text-align: left; transition: background .15s, color .15s; }
+.menu-lateral .ico { width: 20px; height: 20px; color: var(--texte2); flex: none; }
+.menu-lateral a:hover, .menu-lateral-bas button:hover { background: color-mix(in srgb, var(--primaire) 8%, transparent); }
+.menu-lateral a:focus-visible, .menu-lateral-bas button:focus-visible { outline: none; box-shadow: var(--ombre-focus); }
+.menu-lateral a { color: var(--texte) !important; }
+.menu-lateral a.actif { background: var(--primaire); color: var(--fond) !important; box-shadow: 0 6px 16px color-mix(in srgb, var(--primaire) 28%, transparent); }
+.menu-lateral a.actif .ico { color: var(--fond); }
+.menu-compteur { margin-left: auto; min-width: 22px; height: 22px; padding: 0 6px; display: grid; place-items: center; border-radius: 99px; background: var(--corail); color: #fff; font-size: 12px; position: static !important; }
+.menu-compteur[hidden] { display: none; }
+.menu-lateral-bas { margin-top: auto; border-top: 1px solid var(--separateur); padding-top: 12px; }
+
+/* Onglets : l'onglet actif est plein, couleur de marque, sur une barre blanche détachée. */
+.onglets-compte { background: var(--surface); border: 1px solid var(--separateur); box-shadow: 0 6px 20px rgba(8,38,42,.07); }
+.onglets-compte a.actif { background: var(--primaire); color: var(--fond); box-shadow: 0 6px 16px color-mix(in srgb, var(--primaire) 30%, transparent); }
+.onglets-compte a:not(.actif):hover { background: color-mix(in srgb, var(--primaire) 8%, transparent); }
+
+/* Rubriques du parcours de réservation : une carte numérotée par question. */
+.rubrique-carte { background: var(--surface); border: 1px solid var(--separateur); border-radius: 20px; padding: 20px 22px 22px; margin: 0 0 16px; box-shadow: 0 6px 22px rgba(8,38,42,.06); }
+.rubrique-carte > h3, .resa-etape .rubrique-carte > h3 { display: flex; align-items: center; gap: 12px; margin: 0 0 4px; font-size: 19px; }
+.rubrique-carte > h3::before { content: attr(data-n); flex: none; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--primaire), var(--turquoise)); color: var(--fond); font-size: 14px; font-weight: 800; }
+.rubrique-carte > h3 + * { margin-top: 14px; }
+.rubrique-carte > :last-child { margin-bottom: 0; }
+.rubrique-carte .choix button, .rubrique-carte .option { background: color-mix(in srgb, var(--creux) 60%, var(--surface)); }
+
+/* Choix : un rond à cocher, la sélection est encadrée en bleu plein. */
+.choix button, .option { position: relative; padding-left: 48px; border: 1.5px solid var(--separateur); }
+.choix button::before, .option::before { content: ""; position: absolute; left: 16px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; border-radius: 50%;
+  border: 2px solid color-mix(in srgb, var(--texte2) 60%, transparent); background: var(--surface); box-sizing: border-box; transition: border-width .15s, border-color .15s; }
+.choix button.choisi, .option.choisi, .rubrique-carte .choix button.choisi, .rubrique-carte .option.choisi { border: 2px solid var(--primaire); background: color-mix(in srgb, var(--primaire) 11%, var(--surface)); }
+.choix button.choisi::before, .option.choisi::before { border: 5px solid var(--primaire); }
+
+/* Barre d'actions de la réservation : posée sur une bande, séparée du contenu. */
+.barre-actions { background: color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter: blur(10px); border: 1px solid var(--separateur); border-radius: 22px; padding: 12px; box-shadow: 0 -6px 24px rgba(8,38,42,.08); }
+
+/* Boutons, toujours dans le même ordre : plein (dégradé) pour l'action principale, contour pour la secondaire, lien pour revenir. */
+.bouton.secondaire { background: transparent; border: 2px solid var(--primaire); color: var(--primaire); font-weight: 700; }
+.bouton.secondaire:hover { background: color-mix(in srgb, var(--primaire) 8%, transparent); border-color: var(--primaire); color: var(--primaire); }
+.retour-haut { background: none !important; box-shadow: none !important; border: 0 !important; padding-left: 0 !important; color: var(--primaire); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+.page-favoris #carnet-favoris > .titre-section { display: none; }

@@ -66,6 +66,7 @@ export function installerSousOnglets(vue, espace) {
     actif = id; c.dataset.sousActif = id;
     barre.querySelectorAll("button").forEach(b => { const oui = b.dataset.sousOnglet === id; b.classList.toggle("choisi", oui); b.setAttribute("aria-pressed", String(oui)); });
     try { localStorage.setItem(CLE(espace), id); } catch { /* rien */ }
+    dispatchEvent(new CustomEvent("cleaneroo:sous-onglet", { detail: { espace, id } }));
     if (defiler) barre.scrollIntoView({ behavior: "smooth", block: "start" });
   };
   barre.onclick = e => { const b = e.target.closest("[data-sous-onglet]"); if (b) choisir(b.dataset.sousOnglet, true); };

@@ -5,6 +5,7 @@ import { tr, traduire } from "./langue.js";
 import { majCloche } from "./notifications.js";
 import { icone } from "./icones.js";
 import { modeCleaneur, fixerMode, boutonMode } from "./mode.js";
+import { rendreMenuLateral } from "./menu-lateral.js";
 
 const CLE = "cleaneroo-moi";
 /** Pages fixes (villes, calculateur…) : les liens repartent vers l'accueil du site. */
@@ -72,12 +73,15 @@ export function rendreEntete(p) {
   document.body.dataset.espace = type;
   document.body.classList.toggle("acces-cleaneur", type === "cleaneur" && cleaneur);
   traduire(nav); traduire(actions);
+  espaceCourant = type;
   marquerActif();
   if (type !== "visiteur") majCloche().catch(() => null);
 }
 
-/** Lien de la page en cours mis en valeur. */
+let espaceCourant = "visiteur";
+/** Lien de la page en cours mis en valeur (en-tête et menu latéral). */
 export function marquerActif() {
+  rendreMenuLateral(espaceCourant, NOM_ESPACE[espaceCourant]);
   const ici = location.hash.split("/").slice(0, 3).join("/") || "#/";
   document.querySelectorAll(".entete .nav a").forEach(a => {
     const h = a.getAttribute("href").replace(/^\//, "");

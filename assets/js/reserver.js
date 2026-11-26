@@ -1179,6 +1179,22 @@ function actions(ok, message = "", libelle = "Continuer", id = "suivant") {
     <button type="button" class="bouton plein" id="${id}" ${ok ? "" : "disabled"}>${libelle}</button></div></div>`;
 }
 
+/** Chaque question de l'étape (un titre h3 et ce qui le suit) devient une carte numérotée (26/11/2026) : on voit où commence
+ *  et où finit chaque rubrique. Les éléments sont déplacés tels quels : leurs écouteurs restent branchés. */
+export function rangerEnCartes(etape) {
+  if (!etape) return;
+  let n = 0;
+  [...etape.querySelectorAll(":scope > h3")].forEach(h => {
+    const carte = document.createElement("div");
+    carte.className = "rubrique-carte";
+    h.dataset.n = String(++n);
+    h.before(carte);
+    const bloc = [];
+    for (let x = h; x && (x === h || !(x.tagName === "H3" || x.classList.contains("barre-actions") || x.classList.contains("rubrique-carte"))); x = x.nextElementSibling) bloc.push(x);
+    bloc.forEach(x => carte.appendChild(x));
+  });
+}
+
 /* ------------------------------------------------------------------ Rendu et événements */
 /* Parrainage : remise de bienvenue et cagnotte du compte connecté (la base revérifie tout à l'envoi). */
 let infosParrain = null;
@@ -1276,6 +1292,7 @@ function rendreSansReentree() {
     ${[etape1, etape2, etape3, etape4, etape5][etape - 1]()}
   </div>${recapitulatif(est)}</div></section>`;
   traduire(racine);
+  rangerEnCartes(racine.querySelector(".resa-etape"));
   // Aperçus des photos
   racine.querySelectorAll("#vignettes img").forEach(img => { img.src = URL.createObjectURL(photos[+img.dataset.i]); });
   racine.querySelectorAll("[data-apercu-boite]").forEach(img => { if (photoBoite) img.src = URL.createObjectURL(photoBoite); });

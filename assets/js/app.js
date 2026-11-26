@@ -34,7 +34,7 @@ import { marquerActif, profilMemorise, rendreEntete } from "./entete.js";
 const rendreEnteteMemorise = () => rendreEntete(profilMemorise());
 window.addEventListener("cleaneroo-mode", () => rendreEnteteMemorise());
 import { icone, teinte, ICONES_RUBRIQUES, ICONES_INTERFACE } from "./icones.js";
-import { pageTableau, arreterTableau } from "./tableau.js";
+import { pageTableau, arreterTableau, pageFavoris } from "./tableau.js";
 import { compteRenduPieces } from "./controle-ecran.js";
 import { blocFormulesCleaneur, brancherFormulesCleaneur } from "./formules-cleaneur.js";
 import { blocEtat, blocEtapes, blocParcours, brancherParcours, surveillerConnexion, bandeGaranties, logosPaiement, blocJustePrix, blocAvantApres, brancherAvantApres, sectionAvisPublics, remplirAvisPublics, installerRappel, encartAideRappel, bandeauLancement, pageChargement, decorTableau, surveillerFormulaire, envoiRobot, CONTIENT_LIEN, afficherToast } from "./commun.js";
@@ -802,6 +802,11 @@ async function afficherPage() {
   }
   // Compte connecté (Particulier, Pro, administrateur) : l'accueil devient son tableau de bord vivant (prochaine prestation, « À faire »).
   // Tableau de bord vivant du compte (prochaine prestation, « À faire ») ; cleaneroo.fr ouvre toujours la page d'accueil.
+  if (route === "favoris") {
+    window.scrollTo(0, 0); vue.innerHTML = pageChargement(); traduire(vue);
+    if (!(await supabase.auth.getSession().catch(() => null))?.data?.session) { location.hash = "#/compte"; return; }
+    await pageFavoris(vue); return;
+  }
   if (route === "tableau" && !document.body.classList.contains("acces-cleaneur")) {
     if (await pageTableau(vue)) { window.scrollTo(0, 0); return; }
   }
