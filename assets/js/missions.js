@@ -4,7 +4,7 @@
 import { rubrique } from "./catalogue.js";
 import { REGLES, euros, dateLongue, dateCourte, heure, duree, finOffreLancement, indemniteAccesC, dateVersement, conseilSecteur, lienWhatsAppSupport } from "./regles.js";
 import { monParrainage, lienInviterClient } from "./parrainage.js";
-import { supabase, majProfil, mesDemandesPersonnelles, libererFavori, proposerProchainPassage, mesPropositionsPassage, inviterFavori, mesInvitationsFavori, alerteSecurite } from "./donnees.js";
+import { supabase, reduirePhoto, majProfil, mesDemandesPersonnelles, libererFavori, proposerProchainPassage, mesPropositionsPassage, inviterFavori, mesInvitationsFavori, alerteSecurite } from "./donnees.js";
 import { positionAdresse, distanceKm } from "./suivi-live.js";
 import { blocNoterClients, remplirNotesClients, blocAvisRecus } from "./avis-clients.js";
 import { blocFormations } from "./formations.js";
@@ -447,8 +447,8 @@ function carteMission(m) {
     <p class="petit" style="margin:2px 0 0">${tr("Client :")} ${esc(m.prenom)} · ${m.sur_devis ? tr("Sur devis") : euros(m.estimation_c)}</p>
     <div data-chez-qui="${esc(m.reference)}"></div>
     ${["EN_ROUTE", "SUR_PLACE", "EN_COURS"].includes(m.statut) || (m.statut === "CONFIRMEE" && m.creneau && new Date(m.creneau).toDateString() === new Date().toDateString()) ? `<div class="boutons boutons-acces" style="margin-top:8px">
-      <button type="button" class="bouton secondaire petit-bouton" data-signaler="devant" data-ref="${esc(m.reference)}">${icone("position")} ${tr("Je suis devant le logement")}</button>
-      <button type="button" class="bouton secondaire petit-bouton" data-signaler="acces" data-ref="${esc(m.reference)}">${icone("cle")} ${tr("Je ne trouve pas l'accès")}</button></div>
+      <button type="button" class="bouton secondaire petit-bouton" data-signaler="devant" data-ref="${esc(m.reference)}">${icone("position")} ${tr(m.rubrique_id === "car" ? "Je suis devant le véhicule" : "Je suis devant le logement")}</button>
+      <button type="button" class="bouton secondaire petit-bouton" data-signaler="acces" data-ref="${esc(m.reference)}">${icone("cle")} ${tr(m.rubrique_id === "car" ? "Je ne trouve pas le véhicule" : "Je ne trouve pas l'accès")}</button></div>
       <p class="petit muet" style="margin:4px 0 0">${icone("message")} ${tr("Le client est prévenu tout de suite ; échangez avec lui dans la messagerie de la prestation.")}</p>` : ""}
     ${m.remarque ? `<p class="petit" style="margin:4px 0 0">« ${esc(m.remarque)} »</p>` : ""}
     ${m.urgence && m.prime_urgence_c ? `<p class="petit" style="margin:6px 0 0;color:var(--succes);font-weight:700">${icone("alerte")} Mission d'urgence : prime de ${euros(m.prime_urgence_c)} comprise</p>` : ""}
@@ -473,7 +473,7 @@ function carteMission(m) {
     <div class="boutons" style="margin-top:10px">
       ${boutonBon(m.reference)}
       ${bouton ? `<button type="button" class="bouton" data-etape="${esc(m.reference)}">${bouton}</button>` : ""}
-      ${boutonGuidage({ rue: m.rue, cp: m.code_postal, ville: m.ville })}
+      ${boutonGuidage({ rue: m.rue, cp: m.code_postal, ville: m.ville, ...(Number.isFinite(m.acces?.vehicule?.lat) ? { lat: m.acces.vehicule.lat, lon: m.acces.vehicule.lon } : {}) })}
     </div><p class="erreur" data-erreur-mission style="margin:6px 0 0"></p></div>`;
 }
 
@@ -490,6 +490,7 @@ function blocAccesImpossible(m) {
 
 /** Accès au logement (transmis une fois la mission confirmée) : boîte à clés avec sa photo, personne sur place, accès autonome. */
 function blocAcces(m) {
+  if (m.rubrique_id === "car") return blocAccesVehicule(m);
   const a = m.acces || {};
   const ligne = (titre, texte) => `<p class="petit" style="margin:2px 0 0"><b>${titre}</b> ${esc(texte)}</p>`;
   let corps = "";
@@ -499,6 +500,33 @@ function blocAcces(m) {
   else if (m.accueil === "AUTONOME") corps = ligne(tr("Accès autonome :"), a.code || "");
   else corps = `<p class="petit" style="margin:2px 0 0">${tr("Le client sera présent.")}</p>`;
   return `<div class="acces-mission">${icone("cle")}<div>${corps}</div></div>`;
+}
+
+/* Véhicules (26/11/2026) : où trouver la voiture, remise et restitution des clés, preuve « Clés reçues » / « Clés rendues »
+   avec photo du tableau de bord (noter_cles, outils/base-cles-vehicule.sql). */
+const LIB_REMISE = { MAIN: "En main propre par le client", PERSONNE: "Par la personne désignée", ACCUEIL: "À l'accueil de l'entreprise", BOITE: "Dans la boîte à clés", SANS: "Sans clés : extérieur seulement" };
+const LIB_RESTITUTION = { MEME: "Au même endroit que la remise", MAIN: "En main propre (prévenez le client 10 min avant la fin)", ACCUEIL: "À l'accueil de l'entreprise", BOITE: "Dans la boîte à clés" };
+export const clesAttendues = m => m.rubrique_id === "car" && (m.acces?.cles || "") !== "SANS" && !!m.acces?.cles;
+function blocAccesVehicule(m) {
+  const a = m.acces || {}, v = a.vehicule || {}, e = m.etapes || {};
+  const ligne = (titre, texte) => texte ? `<p class="petit" style="margin:2px 0 0"><b>${tr(titre)}</b> ${esc(texte)}</p>` : "";
+  const heureDe = x => { if (!x?.le) return ""; const d = new Date(x.le); return `${d.getHours()} h ${String(d.getMinutes()).padStart(2, "0")}`; };
+  const cles = a.cles ? ligne("Remise des clés :", tr(LIB_REMISE[a.cles] || "")) + (a.cles === "BOITE" ? ligne("Boîte à clés :", a.emplacement) + ligne("Code :", a.code) : "")
+      + (["PERSONNE", "ACCUEIL"].includes(a.cles) ? ligne(a.cles === "ACCUEIL" ? "Accueil :" : "Remise par :", a.nom) : "")
+      + (a.restitution ? ligne("Restitution :", tr(LIB_RESTITUTION[a.restitution] || "")) + ligne("Lieu :", a.restitutionLieu)
+        + (a.restitution === "BOITE" && a.cles !== "BOITE" ? ligne("Boîte à clés :", a.emplacement) + ligne("Code :", a.code) : "") : "")
+      + (a.photo ? `<img class="photo-boite-mission" alt="${esc(tr("Boîte à clés"))}" data-photo-boite="${esc(a.photo)}">` : "")
+    : `<p class="petit" style="margin:2px 0 0">${tr("Clés et consignes transmises une fois la mission confirmée.")}</p>`;
+  const surPlace = ["SUR_PLACE", "EN_COURS"].includes(m.statut);
+  const preuve = clesAttendues(m) && (surPlace || e.cles_recues) ? `<div class="preuve-cles">
+      ${e.cles_recues ? `<span class="tampon vert">${icone("valide")} ${tr("Clés reçues")} ${heureDe(e.cles_recues)}</span>`
+        : surPlace ? `<label class="bouton secondaire petit-bouton">${icone("photo")} ${tr("Clés reçues")}<input type="file" accept="image/*" capture="environment" hidden data-cles="recues" data-ref="${esc(m.reference)}"></label>` : ""}
+      ${e.cles_rendues ? `<span class="tampon vert">${icone("valide")} ${tr("Clés rendues")} ${heureDe(e.cles_rendues)}</span>`
+        : e.cles_recues && surPlace ? `<label class="bouton secondaire petit-bouton">${icone("photo")} ${tr("Clés rendues")}<input type="file" accept="image/*" capture="environment" hidden data-cles="rendues" data-ref="${esc(m.reference)}"></label>` : ""}
+      ${surPlace && !e.cles_rendues ? `<p class="petit muet" style="margin:4px 0 0;flex-basis:100%">${tr("Photographiez le tableau de bord (kilométrage et carburant) : elle prouve que le véhicule n'a pas roulé. Le client est prévenu.")}</p>` : ""}</div>` : "";
+  return `<div class="acces-mission">${icone("vehicule")}<div>
+      ${ligne("Véhicule :", [v.modele, v.immat].filter(Boolean).join(" · "))}${ligne("Repère :", v.repere)}${ligne("Accès au parking :", v.accesParking)}
+      ${cles}${preuve}</div></div>`;
 }
 
 function carteDisponible(m) {
@@ -905,6 +933,22 @@ ${p.employeur_id ? "" : `    <h2 class="titre-section" id="missions-disponibles"
     const fin = c.closest(".carte").querySelector(`[data-etape="${CSS.escape(m.reference)}"]`);
     brancherControle(c, m, complet => { if (fin && m.statut === "EN_COURS") { fin.disabled = !complet; fin.title = complet ? "" : tr("Terminez le contrôle de chaque pièce."); } });
   });
+  // Véhicules : « Clés reçues » / « Clés rendues » avec photo du tableau de bord (noter_cles).
+  boite.querySelectorAll("[data-cles]").forEach(inp => inp.onchange = async () => {
+    const f = inp.files[0], ref = inp.dataset.ref, moment = inp.dataset.cles, err = inp.closest(".carte").querySelector("[data-erreur-mission]");
+    if (!f) return;
+    inp.closest("label").classList.add("en-cours");
+    let chemin = "";
+    try {
+      chemin = `${ref}/cles-${moment}-${Date.now()}.jpg`;
+      const { error } = await supabase.storage.from("photos-controles").upload(chemin, await reduirePhoto(f, 1280, 0.7), { contentType: "image/jpeg" });
+      if (error) chemin = "";
+    } catch { chemin = ""; }
+    if (!chemin) { inp.closest("label").classList.remove("en-cours"); err.textContent = tr("La photo n'a pas pu être envoyée. Réessayez."); return; }
+    const r = await supabase.rpc("noter_cles", { p_reference: ref, p_moment: moment, p_photo: chemin }).then(x => x.data).catch(() => null);
+    if (r !== "ok" && r !== "deja") { inp.closest("label").classList.remove("en-cours"); err.textContent = tr("Le service est momentanément indisponible. Réessayez dans quelques minutes."); return; }
+    recharger();
+  });
   // Plan d'urgence : confirmer sa venue ; annuler (la pénalité et l'avertissement sont annoncés avant).
   boite.querySelectorAll("[data-confirmer]").forEach(b => b.onclick = async () => {
     b.disabled = true;
@@ -963,6 +1007,10 @@ ${p.employeur_id ? "" : `    <h2 class="titre-section" id="missions-disponibles"
         };
         return;
       }
+    }
+    if (suivant === "A_VALIDER" && clesAttendues(m) && !(m.etapes || {}).cles_rendues) {
+      err.textContent = tr("Rendez d'abord les clés au client avec « Clés rendues » (photo du tableau de bord), puis terminez.");
+      return;
     }
     b.disabled = true;
     const r = await avancerMission(ref, suivant).catch(() => "erreur");

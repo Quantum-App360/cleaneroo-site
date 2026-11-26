@@ -56,7 +56,7 @@ function memoriserCommande(b) {
   const cat = choisi ? categorieBien(choisi) : categorieDeRubrique(b.rubriqueId, b.espace);
   const ancien = choisi || (ADRESSES.includes(cat) ? liste.find(l => categorieBien(l) === cat && meme(l)) : null);
   const description = cat === "local" ? { categorie: "local" } : cat === "logement" ? { typeLogementId: b.typeLogementId, surface: b.surface, chambres: b.chambres, sdb: b.sdb, niveaux: b.niveaux }
-    : { categorie: cat, typeLieuId: b.typeLieuId, ...(cat === "vehicule" ? {} : { surface: b.surface }),
+    : { categorie: cat, typeLieuId: b.typeLieuId, ...(cat === "vehicule" ? { immatriculation: String(b.vehImmat || "").trim().toUpperCase(), modele: String(b.vehModele || "").trim() } : { surface: b.surface }),
         ...(cat === "bateau" ? { port: String(b.port || "").trim(), place: String(b.place || "").trim(), accesPonton: String(b.accesPonton || "").trim() } : {}) };
   const log = { ...(ancien || {}), id: ancien?.id || "l" + Date.now(), ...description,
     ...Object.fromEntries(CHAMPS_LOGEMENT.map(k => [k, String(b[k] ?? "").trim()])),
@@ -85,6 +85,7 @@ function avecLogement(br, l) {
     return { ...br, ...Object.fromEntries(CHAMPS_LOGEMENT.map(k => [k, l[k] || ""])), logementId: l.id, code: "", guide: [], modifierLogement: false,
       ...(types.includes(l.typeLieuId) ? { typeLieuId: l.typeLieuId } : {}), ...(Number(l.surface) > 0 && cat !== "vehicule" ? { surface: Number(l.surface) } : {}),
       ...(cat === "bateau" ? { port: l.port || "", place: l.place || "", accesPonton: l.accesPonton || "" } : {}),
+      ...(cat === "vehicule" ? { vehImmat: l.immatriculation || br.vehImmat || "", vehModele: br.vehModele || l.modele || "" } : {}),
       lat: Number.isFinite(l.lat) ? l.lat : null, lon: Number.isFinite(l.lon) ? l.lon : null };
   }
   // Description du logement reprise (ménage, location, déménagement) quand elle est connue : elle n'est plus redemandée.
@@ -417,7 +418,7 @@ function etape2() {
     : !chantierOk ? "Cochez « Les artisans auront quitté les lieux » pour continuer."
     : !panierOk ? "Ajoutez chaque élément au panier."
     : !joursOk ? "Choisissez au moins deux jours de passage."
-    : !tachesOk ? "Choisissez au moins une tâche." : "Précisez l'accueil du Cleaneur pour continuer.");
+    : !tachesOk ? "Choisissez au moins une tâche." : b.rubriqueId === "car" ? "Précisez la remise et la restitution des clés pour continuer." : "Précisez l'accueil du Cleaneur pour continuer.");
 }
 
 /** Étape 2 : les biens enregistrés de la catégorie de la prestation (« Mes bateaux »…), et « + Nouveau ». */
@@ -585,22 +586,72 @@ function questionnaire(enTete = true) {
 /** Téléphone : au moins 10 chiffres (Validation.telephoneValide dans l'appli). */
 const telephoneValide = t => (t || "").replace(/\D/g, "").length >= 10;
 function accueilValide(b) {
+  if (b.rubriqueId === "car") return clesValides(b);
   return !!b.accueil && ({ TIERS: b.tiersNom.trim() && telephoneValide(b.tiersTel), BOITE: b.boiteEmplacement.trim() && b.code.trim(), AUTONOME: b.code.trim(), PRESENT: true }[b.accueil]);
+}
+
+/* Véhicules (26/11/2026, validé par Michael) : pas d'« accueil » mais la remise ET la restitution des clés, selon le lieu choisi.
+   Mêmes codes en base (PRESENT, TIERS, BOITE, AUTONOME) ; « Sans clés » seulement si toutes les tâches sont extérieures
+   (l'intérieur et le compartiment moteur demandent les clés). À reporter dans les applis (Vincent). */
+export const TACHES_SANS_CLES = new Set(["lavage_main", "vitres_ext", "jantes", "decontamination", "bas_caisse", "cire", "optiques", "polissage"]);
+export const exterieurSeul = b => (b.taches || []).length > 0 && b.taches.every(t => TACHES_SANS_CLES.has(t));
+const CODE_CLES = { MAIN: "PRESENT", PERSONNE: "TIERS", ACCUEIL: "TIERS", BOITE: "BOITE", SANS: "AUTONOME" };
+const DEPUIS_CODE = { PRESENT: "MAIN", TIERS: "PERSONNE", BOITE: "BOITE", AUTONOME: "SANS" };
+/** Choix de remise des clés proposés (fonction pure, testée). */
+export function optionsCles(b) {
+  return [["MAIN", "Je remets les clés en main propre"], ["PERSONNE", "Une autre personne remet les clés"],
+    ...(b.lieuVehicule === "travail" ? [["ACCUEIL", "Clés à l'accueil de l'entreprise"]] : []),
+    ["BOITE", "Clés dans une boîte à clés"], ...(exterieurSeul(b) ? [["SANS", "Sans clés : extérieur seulement"]] : [])];
+}
+const remiseCles = b => { const r = b.remiseCles || DEPUIS_CODE[b.accueil] || ""; return optionsCles(b).some(([k]) => k === r) ? r : ""; };
+const RESTITUTIONS = [["MEME", "Au même endroit que la remise"], ["MAIN", "En main propre"], ["ACCUEIL", "À l'accueil de l'entreprise"], ["BOITE", "Dans la boîte à clés"]];
+function clesValides(b) {
+  const r = remiseCles(b);
+  if (!r) return false;
+  const ok = { MAIN: true, PERSONNE: b.tiersNom.trim() && telephoneValide(b.tiersTel), ACCUEIL: b.tiersNom.trim(), BOITE: b.boiteEmplacement.trim() && b.code.trim(), SANS: true }[r];
+  const rest = r === "SANS" || !b.restitution || b.restitution === "MEME" || b.restitution === "MAIN"
+    || (b.restitution === "ACCUEIL" && (r === "ACCUEIL" || (b.accueilRestitution || "").trim()))
+    || (b.restitution === "BOITE" && (r === "BOITE" || ((b.boiteEmplacement || "").trim() && (b.code || "").trim())));
+  return !!ok && !!rest;
+}
+function photoBoiteHtml() {
+  return `<div class="photo-boite"><p class="titre-photo-boite">Photo de la boîte à clés <span class="petit">(facultatif)</span></p>
+        ${photoBoite ? `<img class="apercu-boite" alt="Boîte à clés" data-apercu-boite>` : ""}
+        <div class="boutons-photo"><label class="bouton secondaire" style="cursor:pointer">${icone("photo")} ${photoBoite ? "Reprendre la photo" : "Prendre une photo"}<input type="file" id="photo-boite-appareil" accept="image/*" capture="environment" hidden></label>
+          <label class="bouton secondaire" style="cursor:pointer">Galerie<input type="file" id="photo-boite-galerie" accept="image/*" hidden></label>
+          ${photoBoite ? `<button type="button" class="lien-bouton" data-retirer-photo-boite>Retirer</button>` : ""}</div>
+        <p class="petit">Elle aide le Cleaneur à trouver la boîte du premier coup.</p></div>`;
+}
+function blocCles() {
+  const r = remiseCles(b), rest = b.restitution || "MEME";
+  let champs = "";
+  if (r === "MAIN") champs = `<p class="petit" style="margin:0">Vous remettez les clés à l'arrivée du Cleaneur. Il vous prévient 10 minutes avant la fin pour vous les rendre.</p>`;
+  if (r === "PERSONNE") champs = champTexte("Prénom et nom", "tiersNom", b.tiersNom, "text", 'maxlength="80"') + champTexte("Téléphone", "tiersTel", b.tiersTel, "tel", 'maxlength="20"')
+    + (b.tiersTel && !telephoneValide(b.tiersTel) ? `<p class="erreur" style="margin:0">Au moins 10 chiffres.</p>` : "");
+  if (r === "ACCUEIL") champs = champTexte("Entreprise et accueil (bâtiment, étage)", "tiersNom", b.tiersNom, "text", 'maxlength="80" placeholder="Ex. : Société Martin, accueil du bâtiment B"')
+    + champTexte("Téléphone de l'accueil (facultatif)", "tiersTel", b.tiersTel, "tel", 'maxlength="20"');
+  if (r === "BOITE") champs = champTexte("Emplacement de la boîte", "boiteEmplacement", b.boiteEmplacement, "text", 'maxlength="120"') + champTexte("Code", "code", b.code, "text", 'maxlength="30" autocomplete="off"') + photoBoiteHtml();
+  if (r === "SANS") champs = `<p class="petit" style="margin:0">Vos tâches sont toutes extérieures : le Cleaneur n'a pas besoin des clés. Le véhicule reste fermé.</p>`;
+  const restOptions = RESTITUTIONS.filter(([k]) => k === "MEME" || k === "MAIN" || k === "BOITE" || (k === "ACCUEIL" && b.lieuVehicule === "travail"));
+  let restChamps = "";
+  if (rest === "ACCUEIL" && r !== "ACCUEIL") restChamps = champTexte("Accueil (bâtiment, étage)", "accueilRestitution", b.accueilRestitution || "", "text", 'maxlength="80"');
+  if (rest === "BOITE" && r !== "BOITE") restChamps = champTexte("Emplacement de la boîte", "boiteEmplacement", b.boiteEmplacement, "text", 'maxlength="120"') + champTexte("Code", "code", b.code, "text", 'maxlength="30" autocomplete="off"');
+  if (rest === "MAIN" && r !== "MAIN") restChamps = `<p class="petit" style="margin:0">Le Cleaneur vous prévient 10 minutes avant la fin pour vous rendre les clés.</p>`;
+  return titre("Remise des clés") + choix(optionsCles(b), r, "remiseCles")
+    + (champs ? `<div class="carte" style="margin-top:10px">${champs}</div>` : "")
+    + (r && r !== "SANS" ? titre("Restitution des clés") + choix(restOptions, rest, "restitution") + (restChamps ? `<div class="carte" style="margin-top:10px">${restChamps}</div>` : "") : "")
+    + `<p class="petit">Les clés, codes et consignes ne sont transmis au Cleaneur qu'une fois la mission confirmée. Il confirme dans l'appli quand il reçoit puis rend les clés.</p>`;
 }
 /** « Accueil du Cleaneur » : mêmes choix, champs et textes que l'appli (fin de l'étape 2). */
 function blocAccueil() {
+  if (b.rubriqueId === "car") return blocCles();
   const interdit = accueilAutonomeInterdit(b.rubriqueId, b.typeLieuId);
   const options = Object.entries(ACCUEIL).filter(([k]) => (b.rubriqueId === "special" ? k === "PRESENT" : !interdit || ["PRESENT", "TIERS"].includes(k)));
   let acces = "";
   if (b.accueil === "TIERS") acces = champTexte("Prénom et nom", "tiersNom", b.tiersNom, "text", 'maxlength="80"') + champTexte("Téléphone", "tiersTel", b.tiersTel, "tel", 'maxlength="20"')
     + (b.tiersTel && !telephoneValide(b.tiersTel) ? `<p class="erreur" style="margin:0">Au moins 10 chiffres.</p>` : "");
   if (b.accueil === "BOITE") acces = champTexte("Emplacement de la boîte", "boiteEmplacement", b.boiteEmplacement, "text", 'maxlength="120"') + champTexte("Code", "code", b.code, "text", 'maxlength="30" autocomplete="off"')
-    + `<div class="photo-boite"><p class="titre-photo-boite">Photo de la boîte à clés <span class="petit">(facultatif)</span></p>
-        ${photoBoite ? `<img class="apercu-boite" alt="Boîte à clés" data-apercu-boite>` : ""}
-        <div class="boutons-photo"><label class="bouton secondaire" style="cursor:pointer">${icone("photo")} ${photoBoite ? "Reprendre la photo" : "Prendre une photo"}<input type="file" id="photo-boite-appareil" accept="image/*" capture="environment" hidden></label>
-          <label class="bouton secondaire" style="cursor:pointer">Galerie<input type="file" id="photo-boite-galerie" accept="image/*" hidden></label>
-          ${photoBoite ? `<button type="button" class="lien-bouton" data-retirer-photo-boite>Retirer</button>` : ""}</div>
-        <p class="petit">Elle aide le Cleaneur à trouver la boîte du premier coup.</p></div>`
+    + photoBoiteHtml()
     + `<p class="petit">Le code et la photo ne sont transmis au Cleaneur qu'une fois la mission confirmée.</p>`;
   if (b.accueil === "AUTONOME") acces = champTexte("Consignes et code d'arrivée", "code", b.code, "text", 'maxlength="120" autocomplete="off"');
   return titre("Accueil du Cleaneur")
@@ -884,6 +935,28 @@ function logementChoisiEtape4() {
     <button type="button" class="lien-bouton" data-changer-logement>${tr("Changer")}</button></div>`;
 }
 
+/** Accès protégé d'un véhicule (colonne acces : visible du Cleaneur une fois la mission confirmée). Fonction pure, testée. */
+export function accesVehicule(b) {
+  const r = remiseCles(b), rest = r === "SANS" ? "" : (b.restitution || "MEME");
+  const arrondi = x => Number.isFinite(x) ? Math.round(x * 1e6) / 1e6 : null;
+  return {
+    cles: r, accueilEntreprise: r === "ACCUEIL" || undefined,
+    restitution: rest || undefined,
+    restitutionLieu: rest === "ACCUEIL" && r !== "ACCUEIL" ? (b.accueilRestitution || "").trim() : undefined,
+    vehicule: { repere: (b.vehRepere || "").trim(), modele: (b.vehModele || "").trim(), immat: (b.vehImmat || "").trim().toUpperCase(),
+      accesParking: (b.vehAccesParking || "").trim() || undefined, lat: arrondi(b.vehLat), lon: arrondi(b.vehLon) },
+  };
+}
+/** Véhicules (26/11/2026) : où trouver la voiture. Transmis au Cleaneur une fois la mission confirmée. */
+function blocOuVehicule() {
+  return titre("Où trouver le véhicule") + `<div class="carte">
+      ${champTexte("Repère précis", "vehRepere", b.vehRepere || "", "text", 'maxlength="120" placeholder="Ex. : parking sous-sol, niveau -2, place 47"')}
+      ${["parking", "travail"].includes(b.lieuVehicule) ? champTexte("Accès au parking (code du portail, badge, interphone)", "vehAccesParking", b.vehAccesParking || "", "text", 'maxlength="120" autocomplete="off"') : ""}
+      <div class="grille-2">${champTexte("Marque, modèle et couleur", "vehModele", b.vehModele || "", "text", 'maxlength="80" placeholder="Ex. : Peugeot 208 grise"')}
+        ${champTexte("Immatriculation", "vehImmat", b.vehImmat || "", "text", 'maxlength="20" autocapitalize="characters" placeholder="AB-123-CD"')}</div>
+      <p class="petit" style="margin:0">Ces informations ne sont transmises au Cleaneur qu'une fois la mission confirmée.</p></div>`;
+}
+
 function etape4() {
   const maintenant = new Date();
   const location = b.rubriqueId === "rental";
@@ -902,7 +975,10 @@ function etape4() {
   }).join("") : "";
   const adresseOk = b.rue.trim().length >= 3 && /^[0-9]{5}$/.test(b.codePostal) && b.ville.trim();
   const creneauOk = b.flexible || (b.jour && b.heure >= 0 && (!location || b.heure === (b.departVoyageursH ?? REGLES.DEPART_VOYAGEURS_DEFAUT_H)));
+  const vehicule = b.rubriqueId === "car";
+  const vehiculeOk = !vehicule || ((b.vehRepere || "").trim() && (b.vehModele || "").trim() && (b.vehImmat || "").trim());
   const manque = !adresseOk ? "Vérifiez l'adresse pour continuer."
+    : !vehiculeOk ? "Indiquez où trouver le véhicule (repère, modèle et couleur, immatriculation)."
     : !tient ? "Le ménage ne tient pas entre le départ et l'arrivée suivante : avancez le départ ou retardez l'arrivée." : !creneauOk ? "Choisissez un créneau." : "";
   return `<h2>Adresse et créneau</h2>
     ${logementChoisiEtape4()}
@@ -915,8 +991,9 @@ function etape4() {
       ${champTexte("Rue", "rue", b.rue, "text", 'autocomplete="street-address" maxlength="200"')}
       <div class="grille-2">${champTexte("Code postal", "codePostal", b.codePostal, "text", 'inputmode="numeric" maxlength="5" autocomplete="postal-code"')}${champTexte("Ville", "ville", b.ville, "text", 'autocomplete="address-level2" maxlength="100"')}</div>
       <p class="petit">Elle sert au calcul du déplacement et à l'arrivée du Cleaneur.</p></div>
-    ${Number.isFinite(b.lat) ? `<div class="carte-adresse" id="carte-adresse" role="img" aria-label="Carte de l'adresse"></div>
-      <p class="petit" style="margin:6px 0 0">${b.logementId ? "Position enregistrée du logement." : "Déplacez le repère sur l'entrée du logement si besoin."}</p>` : ""}
+    ${Number.isFinite(b.lat) ? `<div class="carte-adresse" id="carte-adresse" role="img" aria-label="${vehicule ? "Carte : position du véhicule" : "Carte de l'adresse"}"></div>
+      <p class="petit" style="margin:6px 0 0">${vehicule ? "Déplacez le repère exactement sur la place du véhicule." : b.logementId ? "Position enregistrée du logement." : "Déplacez le repère sur l'entrée du logement si besoin."}</p>` : ""}
+    ${vehicule ? blocOuVehicule() : ""}
     ${/^[0-9]{5}$/.test(b.codePostal) ? `<div class="note" style="margin-top:10px"><span>${mentionCodePostal(b.codePostal)}</span></div>` : ""}
     ${titre("Sélectionnez un créneau dans le planning")}${`
     <div class="carte">${caseCocher("Je suis flexible", "flexible", b.flexible, "Vous recevez des candidatures sur 7 jours")}</div>
@@ -1170,7 +1247,15 @@ function signalerPrix() {
   prixPrecedent = c;
 }
 
+// Pas de rendu imbriqué (26/11/2026) : remplacer la page retire le champ en cours de saisie, ce qui déclenche son « change »,
+// lequel redemandait un rendu pendant le premier (erreur « The node to be removed is no longer a child »). Il est repoussé juste après.
+let enRendu = false;
 function rendre() {
+  if (enRendu) { queueMicrotask(rendre); return; }
+  enRendu = true;
+  try { rendreSansReentree(); } finally { enRendu = false; }
+}
+function rendreSansReentree() {
   queueMicrotask(signalerPrix);
   // Anciens brouillons « Grand ménage » du logement : ménage ponctuel au niveau Premium (le grand ménage, depuis le 18/11/2026).
   if (b && b.rubriqueId === "home" && b.formuleId === "grand") {
@@ -1196,7 +1281,12 @@ function rendre() {
   racine.querySelectorAll("[data-apercu-boite]").forEach(img => { if (photoBoite) img.src = URL.createObjectURL(photoBoite); });
   // Étape 4 : carte de l'adresse (repère déplaçable pour une nouvelle adresse) ; adresse saisie placée sur la carte.
   const boiteCarte = racine.querySelector("#carte-adresse");
-  if (boiteCarte && Number.isFinite(b.lat)) afficherCarte(boiteCarte, {
+  if (boiteCarte && Number.isFinite(b.lat) && b.rubriqueId === "car") afficherCarte(boiteCarte, {
+    marqueurs: [{ lat: Number.isFinite(b.vehLat) ? b.vehLat : b.lat, lon: Number.isFinite(b.vehLon) ? b.vehLon : b.lon, couleur: "#1F8A80" }], deplacable: true, zoom: 18,
+    vue: { lat: Number.isFinite(b.vehLat) ? b.vehLat : b.lat, lon: Number.isFinite(b.vehLon) ? b.vehLon : b.lon, zoom: 17 },
+    onDeplace: (lat, lon) => { b = { ...b, vehLat: lat, vehLon: lon }; sauver(); },   // sans redessiner : la carte garde son état
+  }).catch(() => {});
+  else if (boiteCarte && Number.isFinite(b.lat)) afficherCarte(boiteCarte, {
     marqueurs: [{ lat: b.lat, lon: b.lon, couleur: "#1F8A80" }], deplacable: !b.logementId,
     onDeplace: async (lat, lon) => {
       const a = await adresseDe(lat, lon);
@@ -1257,6 +1347,7 @@ document.addEventListener("click", async e => {
     if (ds.champ === "engagementMois") v = +v;
     if (ds.champ === "typeLogementId") { const tl = TYPES_LOGEMENT.find(x => x.id === v); return maj({ typeLogementId: v, surface: tl.surface, chambres: tl.chambres, sdb: tl.sdb, niveaux: tl.niveaux }); }
     if (ds.champ === "accueil" && v === b.accueil) return;
+    if (ds.champ === "remiseCles") return maj({ remiseCles: v, accueil: CODE_CLES[v] });
     // L'occasion REMPLACE le niveau (tâches de pack) par celui qu'elle indique ; les options personnelles restent (22/11/2026).
     if (ds.champ === "occasion") return maj({ occasion: v, taches: tachesPourOccasion(b, v) });
     // Le dernier nettoyage présélectionne l'état de saleté.
@@ -1326,7 +1417,9 @@ document.addEventListener("change", e => {
   if (!racine || !racine.contains(e.target)) return;
   const ds = e.target.dataset;
   if (sim && e.target.id === "sim-rubrique") { b = { ...nouveauBrouillon(e.target.value, b.espace), etape: 2, codePostal: b.codePostal || "" }; sauver(); return rendre(); }
-  if (ds.texte) { b = { ...b, [ds.texte]: e.target.value }; sauver(); return rendre(); }  // (logementId gardé : seule la saisie d'une nouvelle adresse le vide)
+  // (logementId gardé : seule la saisie d'une nouvelle adresse le vide). Rendu repoussé d'un instant et curseur rendu au champ
+  // où l'on vient de cliquer (26/11/2026 : en passant d'un champ au suivant, le nouveau champ perdait le focus et la saisie).
+  if (ds.texte) { b = { ...b, [ds.texte]: e.target.value }; sauver(); clearTimeout(window.__rendreTimer); window.__rendreTimer = setTimeout(rendreEnGardantLeCurseur, 0); return; }
   if (ds.case === "lavageDraps") { const t = litsTailles(b); return maj({ lavageDraps: e.target.checked, lits1: t.un, lits2: t.deux || (t.total ? 0 : litsDe(b)), litsKing: t.king }); }
   if (ds.case) return maj({ [ds.case]: e.target.checked });
   if (ds.tache) return maj({ taches: e.target.checked ? [...b.taches, ds.tache] : b.taches.filter(x => x !== ds.tache) });
@@ -1366,12 +1459,13 @@ document.addEventListener("input", e => {
   if (["rue", "codePostal", "ville"].includes(e.target.dataset.texte) && !b.logementId) b = { ...b, lat: null, lon: null };
   sauver();
   const bouton = racine.querySelector("#suivant, #envoyer");
-  if (bouton && b.etape >= 2) { clearTimeout(window.__rendreTimer); window.__rendreTimer = setTimeout(() => {
-    const actif = document.activeElement?.dataset?.texte, pos = document.activeElement?.selectionStart;
-    rendre();
-    if (actif) { const el = racine.querySelector(`[data-texte="${actif}"]`); if (el) { el.focus(); try { el.setSelectionRange(pos, pos); } catch { /* email */ } } }
-  }, 500); }
+  if (bouton && b.etape >= 2) { clearTimeout(window.__rendreTimer); window.__rendreTimer = setTimeout(rendreEnGardantLeCurseur, 500); }
 });
+function rendreEnGardantLeCurseur() {
+  const actif = document.activeElement?.dataset?.texte, pos = document.activeElement?.selectionStart;
+  rendre();
+  if (actif) { const el = racine.querySelector(`[data-texte="${actif}"]`); if (el) { el.focus(); try { el.setSelectionRange(pos, pos); } catch { /* email */ } } }
+}
 
 let totalPassages = 0;   // nombre de passages de l'envoi en cours (message en cas d'échec partiel)
 async function envoyer() {
@@ -1381,7 +1475,9 @@ async function envoyer() {
   envoi = true; rendre();
   try {
     const acces = { TIERS: { nom: b.tiersNom, telephone: b.tiersTel }, BOITE: { emplacement: b.boiteEmplacement, code: b.code }, AUTONOME: { code: b.code } }[b.accueil] || {};
-    const details = { ...b }; ["prenom", "nom", "email", "telephone", "rue", "codePostal", "ville", "code", "tiersNom", "tiersTel", "boiteEmplacement", "cgv", "etape", "passagesEnvoyes", "groupePaiement"].forEach(k => delete details[k]);
+    if (b.rubriqueId === "car") Object.assign(acces, accesVehicule(b));
+    const details = { ...b }; ["prenom", "nom", "email", "telephone", "rue", "codePostal", "ville", "code", "tiersNom", "tiersTel", "boiteEmplacement", "cgv", "etape", "passagesEnvoyes", "groupePaiement",
+      "vehRepere", "vehAccesParking", "vehModele", "vehImmat", "vehLat", "vehLon", "accueilRestitution"].forEach(k => delete details[k]);
     details.lignes = est.lignes;
     details.photosAvantExigees = photosAvantObligatoires(b.rubriqueId) || !!b.photosAvantExigees;   // prompt 2, partie 6
     details.langue = langue;
@@ -1408,7 +1504,7 @@ async function envoyer() {
       remarque: (dates.length > 1 ? `Passage ${n + 1}/${dates.length}. ` : "")
         + (photosPlusTardPossibles(b.rubriqueId) && b.sansPhotos && !vuesCompletes(b, Object.keys(vuesPrises)) ? "Photos de l'état actuel à prendre à l'arrivée. " : "")
         + (b.rubriqueId === "boat" && (b.port || b.place) ? `Port : ${[b.port, b.place].filter(Boolean).join(", ")}${b.accesPonton ? ` · accès : ${b.accesPonton}` : ""}. ` : "") + b.remarque.trim(),
-    }, n === 0 ? photos : [], b.accueil === "BOITE" ? photoBoite : null);
+    }, n === 0 ? photos : [], b.accueil === "BOITE" || (b.rubriqueId === "car" && b.restitution === "BOITE") ? photoBoite : null);
     premiere = premiere || envoi1;
     b = { ...b, passagesEnvoyes: [...(b.passagesEnvoyes || []), { n, reference: envoi1.reference, jeton: envoi1.jeton }] };
     sauver();

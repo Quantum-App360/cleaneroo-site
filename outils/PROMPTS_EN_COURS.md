@@ -278,6 +278,20 @@ Lot 9 (25/11) audit :
 - Corrigé : bandeau « Les réservations ouvrent très bientôt » non traduit sur les pages ville.
 À REPORTER PAR VINCENT : appeler la fonction « itineraire » au lieu d'OSRM dans les applis.
 
+## Retours de Michael du 26/11 (captures, traités un par un)
+1. Tableau de bord (gestion.html) vide : erreur de syntaxe dans gestion.js depuis le retrait des emojis. Corrigé et en ligne (version 2026112601).
+2. Véhicules : « Accueil du Cleaneur » incohérent pour une voiture. Fait (validé par Michael, base outils/base-cles-vehicule.sql appliquée et testée) :
+   - Étape 2 « Remise des clés » selon le lieu : en main propre, une autre personne, accueil de l'entreprise (lieu de travail seulement),
+     boîte à clés, « Sans clés : extérieur seulement » (seulement si toutes les tâches sont extérieures) ; puis « Restitution des clés ».
+     Mêmes codes en base (PRESENT, TIERS, BOITE, AUTONOME) ; détails dans demandes.acces (cles, restitution, vehicule).
+   - Étape 4 « Où trouver le véhicule » : repère sur la carte (déplaçable sur la place), repère écrit, accès au parking, marque/modèle/couleur,
+     immatriculation (préremplie depuis Mes biens) ; transmis au Cleaneur une fois la mission confirmée.
+   - Cleaneur : bloc véhicule dans la mission, « Clés reçues » puis « Clés rendues » avec photo du tableau de bord (noter_cles), client
+     prévenu ; « J'ai terminé » refusé tant que les clés ne sont pas rendues ; « Je suis devant le véhicule » / « Je ne trouve pas le véhicule ».
+   - Corrigé au passage (toutes prestations) : en passant d'un champ texte au suivant, la page se redessinait et le nouveau champ perdait
+     la saisie ; erreur « node to be removed » au redessin.
+   À REPORTER PAR VINCENT : les mêmes écrans et libellés dans les applis, noter_cles, acces.vehicule.
+
 
 # CLEANEROO — REFONTE TOTALE DU PRODUIT
 

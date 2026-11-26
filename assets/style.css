@@ -3243,3 +3243,6 @@ body.sans-defilement { overflow: hidden; }
 }
 /* Lot 8 : zones tactiles (au moins 40 px de haut) pour les volets dépliables */
 :where(summary) { padding-block: 9px; cursor: pointer; }
+/* Véhicules : preuve de remise et de restitution des clés (26/11/2026) */
+.preuve-cles { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 8px; }
+.preuve-cles label.en-cours { opacity: .55; pointer-events: none; }
