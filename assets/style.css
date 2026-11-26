@@ -3305,3 +3305,35 @@ body.sans-defilement { overflow: hidden; }
 .bouton.secondaire:hover { background: color-mix(in srgb, var(--primaire) 8%, transparent); border-color: var(--primaire); color: var(--primaire); }
 .retour-haut { background: none !important; box-shadow: none !important; border: 0 !important; padding-left: 0 !important; color: var(--primaire); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
 .page-favoris #carnet-favoris > .titre-section { display: none; }
+
+/* « Aujourd'hui » du Cleaneur en poste de pilotage (26/11/2026) : chiffres du jour, la journée à gauche, la tournée et la suite à droite. */
+.chiffres-jour { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin: 6px 0 22px; }
+.chiffre-jour { display: block; background: var(--surface); border: 1px solid var(--separateur); border-radius: 18px; padding: 15px 18px; box-shadow: var(--ombre); color: var(--texte); text-decoration: none; }
+a.chiffre-jour:hover { border-color: color-mix(in srgb, var(--primaire) 50%, transparent); }
+.chiffre-jour .titre-chiffre { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--texte2); }
+.chiffre-jour .titre-chiffre .ico { width: 18px; height: 18px; color: var(--turquoise); }
+.chiffre-jour b { display: block; font-size: 28px; line-height: 1.15; margin-top: 6px; }
+.chiffre-jour small { color: var(--texte2); font-size: 13px; }
+.pilotage-bloc { padding: 18px 20px; margin-bottom: 16px; }
+.pilotage-bloc .titre-niveau, .pilotage-bloc .tournee > .titre-section { margin-top: 0; }
+@media (min-width: 1100px) {
+  body.avec-menu .large-compte { max-width: 1040px; }
+  body.avec-menu .large-compte:has(.contenu-onglet[data-sous-actif="aujourdhui"]) { max-width: none; width: min(1280px, 100% - 64px); }
+  .pilotage-colonnes { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(340px, 1fr); gap: 20px; align-items: start; }
+  .pilotage-cote { position: sticky; top: 84px; }
+  .pilotage-cote .carte-tournee { height: 280px; }
+  /* Urgences : des bandeaux compacts en haut, et non plus des cartes au milieu du reste. */
+  .pilotage .niveau-tdb.urgent { display: grid; gap: 8px; margin-bottom: 6px; }
+  .pilotage .niveau-tdb.urgent > .titre-niveau { display: none; }
+  .pilotage .niveau-tdb.urgent > .carte { margin: 0; padding: 12px 16px; border: 1px solid color-mix(in srgb, var(--corail) 55%, transparent); background: color-mix(in srgb, var(--corail) 9%, var(--surface)); }
+  .pilotage .niveau-tdb.urgent > .geoloc { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 4px 14px; }
+  .pilotage .niveau-tdb.urgent > .geoloc p { margin: 0 !important; }
+  .pilotage .niveau-tdb.urgent .tuile-ico { width: 40px; height: 40px; }
+}
+@media (min-width: 1100px) {
+  /* En-tête de l'espace plus compact sur ordinateur : le contenu utile remonte. */
+  body.avec-menu .bloc:has(> .large-compte) { padding-top: 30px; }
+  body.avec-menu .large-compte > h1 { font-size: clamp(30px, 2.6vw, 38px); margin: 2px 0 0; }
+  body.avec-menu .large-compte > .trait-corail { display: none; }
+  body.avec-menu .large-compte > p:has(.tampon) { margin: 6px 0 0; }
+}

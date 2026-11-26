@@ -172,6 +172,20 @@ function blocJournee(miennes) {
 }
 /** Refonte du 22/11/2026 : chaque partie dans son onglet — vue « aujourdhui » (urgence, recherche, tuiles), « gains » (versement, niveau,
  *  avis, offre) ou « profil » (profil à compléter). Même découpage dans l'appli (TableauDeBordCleaneur). */
+/** Chiffres du jour en tête de « Aujourd'hui » (26/11/2026) : uniquement des données réelles du compte. */
+export function chiffresDuJour(p, duJour, dispo, t) {
+  const prochaine = duJour.find(m => m.creneau);
+  const d = prochaine ? new Date(prochaine.creneau) : null;
+  const tuile = (ico, titre, valeur, detail, lien = "", attrs = "") => `<${lien ? `a href="${lien}" ${attrs}` : "div"} class="chiffre-jour">
+    <span class="titre-chiffre">${icone(ico)}${tr(titre)}</span><b>${valeur}</b><small${ico === "horloge" ? " data-depart-kpi" : ""}>${detail}</small></${lien ? "a" : "div"}>`;
+  return `<div class="chiffres-jour">
+    ${tuile("calendrier", "Missions aujourd'hui", String(duJour.length), duJour.length ? `${tr("dont")} ${duJour.filter(m => ["EN_ROUTE", "SUR_PLACE", "EN_COURS"].includes(m.statut)).length} ${tr("en cours")}` : tr("Aucune mission prévue"))}
+    ${tuile("horloge", "Prochaine mission", d ? heure(d.getHours(), d.getMinutes()) : "–", d ? esc(tr(rubrique(prochaine.rubrique_id)?.nom || "")) : tr("Rien de prévu aujourd'hui"))}
+    ${p.employeur_id ? "" : tuile("position", "Missions disponibles", String(dispo.length), tr("autour de votre secteur"), "#missions-disponibles", 'data-aller="missions-disponibles"')}
+    ${tuile("avis", "Ma note", t?.nb_avis ? String(t.note_moyenne).replace(".", ",") : "–", t?.nb_avis ? `${t.nb_avis} ${tr("avis")}` : tr("Pas encore d'avis"), "#avis-recus", 'data-sous-aller="gains"')}
+  </div>`;
+}
+
 export function tableauDeBord(p, docs, miennes, dispo, t, vue = "aujourdhui", recherche = true) {
   const etapes = preparationCleaneur(p, docs), faites = etapes.filter(e => e[1]).length, prochaine = etapes.find(e => !e[1]);
   const commission = (t?.formule === "pro" ? REGLES.COMMISSION_PRO_PB : REGLES.COMMISSION_GRATUIT_PB) / 100;
@@ -702,38 +716,40 @@ export async function brancherMissions(vue, p) {
   const pleinEcran = document.querySelector("body > .mission-plein-ecran")?.dataset.mission || "";
   document.querySelectorAll("body > .mission-plein-ecran").forEach(x => { x._repere?.remove(); x.remove(); });
   boite.innerHTML = `
-  <div id="cleaneur-aujourdhui" class="cleaneur-partie">
+  <div id="cleaneur-aujourdhui" class="cleaneur-partie pilotage">
     ${urgent.length ? `<section class="niveau-tdb urgent" aria-labelledby="titre-urgent"><h2 class="titre-niveau" id="titre-urgent"><i class="pastille-niveau"></i>${tr("Urgent")}</h2>${urgent.join("")}</section>` : ""}
-    <section class="niveau-tdb" aria-labelledby="titre-aujourdhui"><h2 class="titre-niveau" id="titre-aujourdhui">${tr("Aujourd'hui")} <span class="date-niveau">${esc(dateLongue(new Date()))}</span></h2>
+    ${chiffresDuJour(p, duJour, dispo, tableau)}
+    <div class="pilotage-colonnes"><div class="pilotage-principal">
+    <section class="niveau-tdb" aria-labelledby="titre-aujourdhui"><h2 class="titre-niveau" id="titre-aujourdhui">${tr("Ma journée")} <span class="date-niveau">${esc(dateLongue(new Date()))}</span></h2>
     ${p.employeur_id ? "" : tableauDeBord(p, docs, miennes, dispo, tableau, "aujourdhui", !duJour.length)}
-    ${duJour.map((m, i) => (i === 0 ? `<h3 class="sous-niveau">${tr("Prochaine action")}</h3>` : i === 1 ? `<h3 class="sous-niveau">${tr("Plus tard aujourd'hui")}</h3>` : "") + carteMission(m) + (i === 0 ? `<div id="tournee-jour">${blocTournee(etapesJour)}</div>` : "")).join("")}
-    ${!duJour.length ? `<div class="carte vide-jour"><b>${tr("Aucune mission aujourd'hui")}</b><p class="petit" style="margin:4px 0 0">${tr(plusTard.length ? "Votre prochaine mission est ci-dessous, dans « À venir »." : "Les missions commencent dès l'ouverture des réservations. Elles s'afficheront ici, dans l'ordre de la journée.")}</p></div>` : ""}
-    </section>
-    <section class="niveau-tdb" aria-labelledby="titre-a-venir"><h2 class="titre-niveau" id="titre-a-venir">${tr("À venir")}</h2>
-    ${combler.length ? `<div class="carte combler-journee"><b>${icone("calendrier")} ${tr("Combler votre journée")}</b>
+    ${duJour.map((m, i) => (i === 0 ? `<h3 class="sous-niveau">${tr("Prochaine action")}</h3>` : i === 1 ? `<h3 class="sous-niveau">${tr("Plus tard aujourd'hui")}</h3>` : "") + carteMission(m)).join("")}
+    ${!duJour.length ? `<div class="carte vide-jour"><b>${tr("Aucune mission aujourd'hui")}</b><p class="petit" style="margin:4px 0 0">${tr(plusTard.length ? "Votre prochaine mission est dans « À venir »." : "Les missions commencent dès l'ouverture des réservations. Elles s'afficheront ici, dans l'ordre de la journée.")}</p></div>` : ""}
+    </section></div><div class="pilotage-cote">
+    ${duJour.length ? `<div id="tournee-jour" class="carte pilotage-bloc">${blocTournee(etapesJour)}</div>` : ""}
+    <section class="niveau-tdb carte pilotage-bloc" aria-labelledby="titre-a-venir"><h2 class="titre-niveau" id="titre-a-venir">${tr("À venir")}</h2>
+    ${combler.length ? `<div class="combler-journee"><b>${icone("calendrier")} ${tr("Combler votre journée")}</b>
       <p class="petit muet" style="margin:2px 0 6px">${tr("Missions disponibles près de vos missions prévues, sans chevauchement.")}</p>
       ${combler.map(c => `<a class="ligne-a-venir" href="#missions-disponibles" data-aller="missions-disponibles">
         <span class="quand-a-venir"><b>${esc(dateCourte(new Date(c.mission.creneau)))}</b><span>${heure(new Date(c.mission.creneau).getHours(), new Date(c.mission.creneau).getMinutes())}</span></span>
         <span class="corps">${icone(rubrique(c.mission.rubrique_id)?.icone || "termine")} <span><b>${esc(rubrique(c.mission.rubrique_id)?.nom || "")} · ${c.mission.sur_devis ? tr("Sur devis") : euros(c.mission.estimation_c)}</b>
           <span class="petit">${tr(c.avant ? "Avant votre mission de" : "Après votre mission de")} ${heure(new Date(c.voisine.creneau).getHours(), new Date(c.voisine.creneau).getMinutes())} · ${esc(c.mission.ville || "")}</span></span></span>
         <span aria-hidden="true">›</span></a>`).join("")}</div>` : ""}
-    ${plusTard.length ? `<div class="carte liste-a-venir">${plusTard.slice(0, 3).map(m => `<a class="ligne-a-venir" href="#mes-missions-a-venir" data-segment-aller="a_venir">
+    ${plusTard.length ? `<div class="liste-a-venir">${plusTard.slice(0, 4).map(m => `<a class="ligne-a-venir" href="#mes-missions-a-venir" data-segment-aller="a_venir">
         <span class="quand-a-venir"><b>${m.creneau ? esc(dateCourte(new Date(m.creneau))) : tr("Date flexible")}</b>${m.creneau ? `<span>${heure(new Date(m.creneau).getHours(), new Date(m.creneau).getMinutes())}</span>` : ""}</span>
         <span class="corps">${icone(rubrique(m.rubrique_id)?.icone || "termine")} <span><b>${esc(rubrique(m.rubrique_id)?.nom || "")}</b><span class="petit">${esc(m.ville || "")} · ${duree(m.duree_min)} · ${m.sur_devis ? tr("Sur devis") : euros(m.estimation_c)}</span></span></span>
         <span aria-hidden="true">›</span></a>`).join("")}
-      ${plusTard.length > 3 ? `<a class="lien-bouton" href="#mes-missions-a-venir" data-segment-aller="a_venir">${tr("Voir mes")} ${plusTard.length} ${tr("missions à venir")} ›</a>` : ""}</div>`
+      ${plusTard.length > 4 ? `<a class="lien-bouton" href="#mes-missions-a-venir" data-segment-aller="a_venir">${tr("Voir mes")} ${plusTard.length} ${tr("missions à venir")} ›</a>` : ""}</div>`
       : `<p class="petit muet" style="margin:0">${tr("Aucune mission à venir pour l'instant.")}</p>`}
     </section>
-    ${p.employeur_id ? "" : `<section class="niveau-tdb" aria-labelledby="titre-performance"><h2 class="titre-niveau" id="titre-performance">${tr("Performance")}</h2>
+    ${p.employeur_id ? "" : `<section class="niveau-tdb carte pilotage-bloc" aria-labelledby="titre-performance"><h2 class="titre-niveau" id="titre-performance">${tr("Performance")}</h2>
     <div class="tuiles-tdb performance">
       <a class="tuile-tdb" href="#cleaneur-gains" data-sous-aller="gains"><b>${tableau?.missions_terminees || 0}</b><span>${tr((tableau?.missions_terminees || 0) > 1 ? "missions réalisées" : "mission réalisée")}</span></a>
-      <a class="tuile-tdb" href="#avis-recus" data-sous-aller="gains"><b>${tableau?.nb_avis ? `★ ${String(tableau.note_moyenne).replace(".", ",")}` : "–"}</b><span>${tableau?.nb_avis ? `${tableau.nb_avis} ${tr("avis")}` : tr("Pas encore d'avis")}</span></a>
-      <a class="tuile-tdb" href="#missions-disponibles" data-aller="missions-disponibles"><b>${dispo.length}</b><span>${tr(dispo.length > 1 ? "missions disponibles" : "mission disponible")}</span></a>
       <a class="tuile-tdb${p.dossier === "VALIDE" ? " ok" : " alerte"}" href="#dossier" data-aller="dossier"><b>${p.dossier === "VALIDE" ? "✓" : "!"}</b><span>${tr(p.dossier === "VALIDE" ? "Dossier conforme" : "Dossier à compléter")}</span></a>
     </div>
     <a class="lien-bouton" href="#cleaneur-gains" data-sous-aller="gains">${tr("Voir mes revenus")} ›</a>
     ${avert && !avert.banni && !(avert.nombre > 0) ? blocAvertissements(avert) : ""}
     </section>`}
+    </div></div>
   </div>
   <div id="cleaneur-missions" class="cleaneur-partie">
     <div class="segments segments-missions">${[...(p.employeur_id ? [] : [["disponibles", `${tr("Disponibles")} (${dispo.length})`]]), ["a_venir", `${tr("À venir")} (${plusTard.length})`], ["terminees", tr("Terminées")]]

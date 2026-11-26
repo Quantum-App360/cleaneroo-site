@@ -8,6 +8,7 @@ import { icone } from "./icones.js";
 import { boutonGuidage, brancherGuidage, nomAppliGuidage } from "./guidage.js";
 import { tr, traduire } from "./langue.js";
 import { esc } from "./commun.js";
+import { heure as heureSite } from "./regles.js";
 import { afficherCarte, coordonnees } from "./cartes.js";
 
 export const ZONE_APPROX_M = 1500;
@@ -34,7 +35,8 @@ function km(a, b) {
   const h = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * r) * Math.cos(b.lat * r) * Math.sin(dLon / 2) ** 2;
   return 6371 * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
 }
-const heure = d => d.toLocaleTimeString(document.documentElement.lang || "fr", { hour: "2-digit", minute: "2-digit" });
+// Heures au format du site (« 8 h 45 » en français), comme partout ailleurs.
+const heure = d => heureSite(d.getHours(), d.getMinutes());
 const decimal = v => v.toLocaleString(document.documentElement.lang || "fr", { maximumFractionDigits: 1, minimumFractionDigits: 1 });
 
 let styleFait = false;
@@ -103,6 +105,8 @@ export async function brancherTournee(boite, etapes, depart) {
       const z = boite.querySelector(".tournee-depart");
       z.hidden = false;
       z.querySelector("[data-depart]").textContent = `${tr("Départ conseillé")} : ${heure(departConseille(etapes[0].debut, d))}`;
+      const kpi = document.querySelector("[data-depart-kpi]");
+      if (kpi) kpi.textContent = `${tr("Départ conseillé")} ${heure(departConseille(etapes[0].debut, d))}`;
       z.querySelector("[data-depart-detail]").textContent = tr("Environ {0} km et {1} min de route depuis votre secteur, 10 min de marge comprises.")
         .replace("{0}", decimal(d)).replace("{1}", String(min));
     } else if (i > 0) {
