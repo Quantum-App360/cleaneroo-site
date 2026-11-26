@@ -4684,4 +4684,8 @@ export const T = [
   ["Première mission accompagnée : une seule à la fois, chez un particulier et jamais en urgence. Toutes les missions s'ouvrent dès qu'elle est réussie.", "First supervised job: one at a time, at a private customer's home and never urgent. All jobs open up as soon as it is passed.", "Prima missione accompagnata: una alla volta, presso un privato e mai urgente. Tutte le missioni si sbloccano appena è superata.", "Primera misión acompañada: una a la vez, en casa de un particular y nunca urgente. Todas las misiones se abren en cuanto se supera."],
   ["Incluse · lavage sur place", "Included · washed on site", "Inclusa · lavaggio sul posto", "Incluida · lavado en el lugar"],
   ["Incluse · lavage en laverie", "Included · laundromat wash", "Inclusa · lavaggio in lavanderia", "Incluida · lavado en lavandería"],
+  ["Lavage des draps sur place", "Sheet washing on site", "Lavaggio lenzuola sul posto", "Lavado de sábanas en el lugar"],
+  ["Draps lavés sur place", "Sheets washed on site", "Lenzuola lavate sul posto", "Sábanas lavadas en el lugar"],
+  ["par lit", "per bed", "a letto", "por cama"],
+  ["Le Cleaneur lance les machines, refait les lits et remet serviettes et tapis.", "The Cleaneur runs the machines, remakes the beds and puts back towels and mats.", "Il Cleaneur avvia le lavatrici, rifà i letti e rimette asciugamani e tappetini.", "El Cleaner pone las lavadoras, rehace las camas y vuelve a colocar toallas y alfombrillas."],
 ];

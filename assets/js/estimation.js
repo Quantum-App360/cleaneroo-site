@@ -94,7 +94,7 @@ export function calculer(entree) {
   const lits = e.lavageDrapsLits || 0;
   if (lits > 0) {
     const c = e.drapsC ?? lits * REGLES.LAVAGE_DRAPS_PAR_LIT_C;
-    lignes.push({ libelle: e.drapsLaverie ? `Lavage des draps en laverie × ${lits}` : "Lavage des draps sur place (forfait)", montantC: c });
+    lignes.push({ libelle: `${e.drapsLaverie ? "Lavage des draps en laverie" : "Lavage des draps sur place"} × ${lits}`, montantC: c });
     sousTotal += c;
   }
 
