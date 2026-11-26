@@ -1207,3 +1207,13 @@ Ordre : A base de connaissances + fonction serveur · B conversation et fiche ·
   badge « Renfort · n » sur la fiche publique (renforts_de). Contrat 2026-12-c complété (Prix et commission, Paiement, Annulations, Classement).
   POUR VINCENT : même affichage dans l'appli (carte de mission « 0 % de commission », badge Renfort, plus de « prime d'urgence »).
 - Traduction ajoutée de l'article « Responsabilité, assurance et garantie » (le texte avait changé sans traduction).
+
+## Pass Entretien véhicule (26/11/2026, décision de Michael) — à reporter dans les applis (Vincent)
+- Véhicules seulement. Règles dans `REGLES.PASS_ENTRETIEN` (regles.js) et `outils/base-pass-entretien.sql` (mêmes valeurs, à changer ensemble).
+- Paliers : −5 % dès le 3e passage, −10 % dès le 6e (jamais plus) ; deux passages prévus sautés → on redescend d'un palier ; un filleul dont un véhicule a été lavé → +3 passages comptés.
+- Passage d'entretien : −15 % de temps et de prix si le même véhicule (immatriculation, sinon adresse) a un passage dans les 45 jours avant (120 en trimestriel).
+- Ordre dans le prix : remise pack → passage d'entretien → … → engagement → fidélité → minimum. Frais de service inchangés. Remises arrondies à l'euro.
+- Le prix n'est jamais décidé par l'appli : lire `mon_pass_entretien(p_creneau, p_immat, p_rue, p_cp, p_freq)` juste avant d'envoyer CHAQUE passage (le palier monte à chaque passage). La fonction paiement recalcule avec `pass_entretien_calc` (tolère les passages annulés après la création de la demande).
+- Carte « Pass Entretien » au tableau de bord client (pass-entretien.js) ; report gratuit 1×/an d'un passage confirmé : `reporter_passage_pass(ref, creneau)` (≥ 48 h avant, ±14 jours, pas le dimanche, garde l'ordre de la série ; le Cleaneur reste prioritaire 24 h).
+- Côté Cleaneur : tuiles « déjà réservés sur 30 jours » et « clients fidèles » (missions.js).
+- Pas encore fait : adhésion annuelle (9,90 €, phase 2 : paiement + conditions + rétractation) ; « jour de passage du quartier » (seulement quand il y aura 2 clients proches) ; version Flotte.

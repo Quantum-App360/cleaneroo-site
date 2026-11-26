@@ -20,7 +20,7 @@ import { pageMessages } from "./messages.js";
 import { blocPropositionsClient } from "./propositions.js";
 import { blocConsommablesClient } from "./consommables.js";
 import { blocFavori } from "./favoris.js";
-import { blocModifier, boutonBon, brancherBons, blocConstat } from "./demande-actions.js";
+import { blocModifier, blocReportPass, boutonBon, brancherBons, blocConstat } from "./demande-actions.js";
 import { blocSupplementClient } from "./supplement.js";
 import { blocPaiement } from "./paiement.js";
 import { CONDITIONS, CONFIDENTIALITE, MENTIONS, texteLegal, GESTION_AVIS } from "./legal.js";
@@ -773,6 +773,7 @@ async function afficherPage() {
     if (rendu) compteRenduPieces(rendu, decodeURIComponent(ref || ""));
     // Présence du Cleaneur à confirmer (sa position n'a pas pu confirmer l'arrivée).
     blocModifier(document.getElementById("modifier-demande"), demandeAffichee || {}, decodeURIComponent(ref || ""), decodeURIComponent(jeton || ""), () => afficher());
+    blocReportPass(document.getElementById("modifier-demande"), demandeAffichee || {}, decodeURIComponent(ref || ""), () => afficher()).catch(() => null);
     brancherBons(document.getElementById("bon-client"));
     blocSupplementClient(document.getElementById("supplement-client"), decodeURIComponent(ref || ""), decodeURIComponent(jeton || ""));
     blocConstat(document.getElementById("constat-arrivee"), decodeURIComponent(ref || ""), decodeURIComponent(jeton || ""));

@@ -1,5 +1,5 @@
 // Calcul de l'estimation : copie EXACTE de Estimation.kt (§ 8 du cahier des charges), dans le même ordre.
-import { REGLES, duree, pctZone, libelleZone, fraisServicePct } from "./regles.js";
+import { REGLES, duree, pctZone, libelleZone, fraisServicePct, palierPass } from "./regles.js";
 import { prixSpecialC, minutesSpeciales, equipementsPour, surfaceEffective, TYPES_IMMEUBLE, tranchesConvives, minutesEtapesLocation, prixOptionsLocationC, PACK_ETAPES_CONSEILLE, PACK_CONSOMMABLES_CONSEILLE } from "./catalogue.js";
 import { ANCIENNES_FORMULES_LOCATION } from "./catalogue.js";
 import { rubrique, formulesPour, TYPES_LIEU, RUBRIQUES_CREDIT_IMPOT, TYPES_VITRES_ELIGIBLES, prixLigne, minutesLigne, libelleLigne,
@@ -22,7 +22,7 @@ const ENTREE_DEFAUT = {
   taches: [], remisePackPct: 0, remisePackC: null, tachesPersonnalisees: 0, dimanche: false, creneauMalin: false,
   engagementMois: 0, espacePersonnel: true, typeLieuId: "", panier: [], minutesEnPlus: 0, minimumApresMin: 0,
   lavageDrapsLits: 0, zonePct: 0, tauxC: 0, suiviSms: false, optionsLocationC: 0, formuleId: "", tachesFormule: [], fraisServicePct: 0,
-  remiseParrainageC: 0, cagnotteC: 0,
+  remiseParrainageC: 0, cagnotteC: 0, entretienPass: false, fidelitePct: 0,
 };
 
 export function calculer(entree) {
@@ -127,6 +127,15 @@ export function calculer(entree) {
     sousTotal += c;
   }
 
+  // 6 bis. Pass Entretien (véhicules, 26/11/2026) : le véhicule a été lavé récemment, le passage est plus court ;
+  // le prix baisse du même pourcentage que le temps (le gain par heure du Cleaneur ne change pas).
+  const entretienPct = vehicule && e.entretienPass ? REGLES.PASS_ENTRETIEN.ENTRETIEN_PCT : 0;
+  if (entretienPct > 0) {
+    const m = arrondiEuro(sousTotal * entretienPct / 100);
+    lignes.push({ libelle: `Passage d'entretien (−${entretienPct} %)`, montantC: -m });
+    sousTotal -= m;
+  }
+
   // 7. Déplacement (inclus jusqu'à 15 km)
   lignes.push({ libelle: "Déplacement", montantC: 0, note: "inclus" });
   // Ligne d'information : l'ajustement de la zone est déjà compris dans les prix ci-dessus.
@@ -152,6 +161,12 @@ export function calculer(entree) {
     lignes.push({ libelle: `Engagement ${e.engagementMois} mois (−${engPct} %)`, montantC: -g });
     total -= g;
   }
+  // 10 bis. Pass Entretien : palier de fidélité (véhicules), calculé par le serveur à partir des passages du client.
+  if (vehicule && e.fidelitePct > 0) {
+    const g = arrondiEuro(total * e.fidelitePct / 100);
+    lignes.push({ libelle: `Fidélité Pass Entretien (−${e.fidelitePct} %)`, montantC: -g });
+    total -= g;
+  }
   // 11. Minimum de commande (véhicules, textiles) ou par ménage (location saisonnière)
   const min = minimumC(e.rubriqueId);
   if (min != null) {
@@ -161,7 +176,8 @@ export function calculer(entree) {
 
   // Véhicules : durée affichée d'au moins 30 min.
   const drapsMin = lits * REGLES.LAVAGE_DRAPS_MIN_PAR_LIT + (e.lingeC > 0 ? REGLES.LINGE_MIN : 0) + ((lits > 0 || e.lingeC > 0) && e.drapsLaverie ? REGLES.LAVERIE_TRAJET_MIN : 0);
-  const dureeTotale = vehicule ? Math.max(REGLES.DUREE_MIN_VEHICULE_MIN, dureeBase + tachesMin + persoMin) : dureeBase + tachesMin + persoMin + drapsMin;
+  const dureeVehicule = dureeBase + tachesMin + persoMin;
+  const dureeTotale = vehicule ? Math.max(REGLES.DUREE_MIN_VEHICULE_MIN, entretienPct ? Math.round(dureeVehicule * (100 - entretienPct) / 100 / 5) * 5 : dureeVehicule) : dureeBase + tachesMin + persoMin + drapsMin;
   const deux = dureeTotale > REGLES.SEUIL_DEUX_CLEANEURS_MIN;
   const devis = r.toujoursSurDevis || e.surfaceM2 > REGLES.SEUIL_DEVIS_SURFACE_M2;
   const totalPrestation = total;
@@ -383,5 +399,8 @@ export function entreeEstimation(b, espacePersonnel, debut) {
     zonePct: pctZone(b.codePostal),
     suiviSms: !!b.suiviSms,
     remiseParrainageC: b.remiseParrainageC || 0, cagnotteC: b.utiliserCagnotte ? b.cagnotteDispoC || 0 : 0,
+    // Pass Entretien (véhicules) : b.pass = { n, bonus, entretien } (calculé par la base ; le serveur le recalcule avant le paiement).
+    entretienPass: b.rubriqueId === "car" && !!b.pass?.entretien,
+    fidelitePct: b.rubriqueId === "car" ? palierPass((b.pass?.n || 0) + (b.pass?.bonus || 0)).pct : 0,
   };
 }

@@ -3577,3 +3577,17 @@ body.avec-menu .resa-centre { width: min(1180px, 100% - 64px); }
 @media (max-width: 600px) { .ligne-annexe { grid-template-columns: 1fr; gap: 2px; } .ligne-annexe.entete { display: none; } }
 .badge.corail { background: color-mix(in srgb, var(--corail) 16%, var(--surface)); color: var(--corail-texte); display: inline-flex; align-items: center; gap: 4px; }
 .badge.corail .ico { width: 14px; height: 14px; }
+
+/* Pass Entretien véhicule (26/11/2026) : carte du tableau de bord et encart de la réservation */
+#pass-entretien:empty { display: none; }
+#pass-entretien { margin-top: 20px; }
+.pass-entretien .pass-haut { display: flex; gap: 12px; align-items: center; }
+.pass-entretien h2 { margin: 0; font-size: 1.15rem; }
+.pass-frise { display: flex; gap: 6px; margin-top: 14px; }
+.pass-frise span { flex: 1; height: 8px; border-radius: 4px; background: var(--separateur); }
+.pass-frise span.fait { background: var(--primaire); }
+.pass-frise span.palier { box-shadow: 0 0 0 2px var(--succes); }
+.pass-avantages { list-style: none; padding: 0; margin: 12px 0 0; display: grid; gap: 8px; }
+.pass-avantages li { display: flex; gap: 8px; align-items: flex-start; font-size: .92rem; }
+.pass-avantages li svg { flex: none; margin-top: 2px; color: var(--primaire); }
+.pass-carte .ligne-montant { font-size: .92rem; }

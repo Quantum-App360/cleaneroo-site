@@ -86,6 +86,8 @@ const MOTIFS = IDX === undefined ? [] : [
   [/^Remise pack \(−(\d+) %\)$/, (m, n) => [`Package discount (−${n}%)`, `Sconto formula (−${n}%)`, `Descuento de fórmula (−${n} %)`][IDX]],
   [/^Majoration dimanche \(\+(\d+) %\)$/, (m, n) => [`Sunday surcharge (+${n}%)`, `Maggiorazione domenica (+${n}%)`, `Recargo dominical (+${n} %)`][IDX]],
   [/^Créneau malin \(−(\d+) %\)$/, (m, n) => [`Smart slot (−${n}%)`, `Fascia conveniente (−${n}%)`, `Franja inteligente (−${n} %)`][IDX]],
+  [/^Passage d'entretien \(−(\d+) %\)$/, (m, n) => [`Maintenance visit (−${n}%)`, `Passaggio di manutenzione (−${n}%)`, `Visita de mantenimiento (−${n} %)`][IDX]],
+  [/^Fidélité Pass Entretien \(−(\d+) %\)$/, (m, n) => [`Maintenance Pass loyalty (−${n}%)`, `Fedeltà Pass Manutenzione (−${n}%)`, `Fidelidad Pase Mantenimiento (−${n} %)`][IDX]],
   [/^Engagement (\d+) mois \(−(\d+) %\)$/, (m, a, b) => [`${a}-month commitment (−${b}%)`, `Impegno ${a} mesi (−${b}%)`, `Compromiso de ${a} meses (−${b} %)`][IDX]],
   [/^(.+?) par lit : draps et housses lavés, séchés et pliés\.$/, (m, a) => [`${a} per bed: sheets and covers washed, dried and folded.`, `${a} a letto: lenzuola e copripiumini lavati, asciugati e piegati.`, `${a} por cama: sábanas y fundas lavadas, secadas y dobladas.`][IDX]],   // motif:{0} par lit : draps et housses lavés, séchés et pliés.
   [/^Tarif zone Prestige \(\+(.+?) %\)$/, (m, a) => [`Prestige area rate (+${a}%)`, `Tariffa zona Prestige (+${a}%)`, `Tarifa zona Prestigio (+${a} %)`][IDX]],   // motif:Tarif zone Prestige (+{0} %)

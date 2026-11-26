@@ -45,9 +45,10 @@ function heureDeParis(iso: string | null) {
   return new Date(Number(p.year), Number(p.month) - 1, Number(p.day), Number(p.hour) % 24, Number(p.minute));
 }
 /** Recalcule le prix d'une demande ; null si elle ne peut pas l'être (devis, ancienne demande sans détails). */
-function prixServeur(d: Record<string, any>, abonne: boolean) {
+function prixServeur(d: Record<string, any>, abonne: boolean, pass: Record<string, unknown> | null = null) {
   if (!d.details || !d.rubrique_id) return null;
-  const b = { taches: [], tachesPerso: [], ...d.details, rubriqueId: d.rubrique_id, codePostal: d.code_postal || "", abonnePro: abonne };
+  // Pass Entretien (véhicules) : jamais repris du navigateur, toujours celui calculé par la base (passEntretien).
+  const b = { taches: [], tachesPerso: [], ...d.details, rubriqueId: d.rubrique_id, codePostal: d.code_postal || "", abonnePro: abonne, pass };
   const perso = d.espace === "personnel";
   const e = entreeEstimation(b, perso, heureDeParis(d.creneau));
   const r1 = calculer(e), r2 = calculer({ ...e, creneauMalin: !e.creneauMalin });   // le créneau malin dépend du moment de la réservation
@@ -92,12 +93,23 @@ async function chargerTarifs(admin: Admin) {
   appliquerTarifs(t?.donnees || {}, t?.version || 0);
   tarifsCharges = true;
 }
+/** Pass Entretien d'un passage véhicule (base-pass-entretien.sql) : strict (passages non annulés), et toléré (en comptant aussi les
+ *  passages annulés après la création de la demande : son prix a été calculé quand ils étaient prévus). */
+async function passEntretien(admin: Admin, d: Demande) {
+  if (d.rubrique_id !== "car" || !d.client_id || !d.creneau) return [null];
+  const args = { p_client: d.client_id, p_creneau: d.creneau, p_immat: d.acces?.vehicule?.immat || "", p_rue: d.rue || "", p_cp: d.code_postal || "",
+    p_freq: d.details?.frequenceVehicule || "unique", p_exclure: d.id };
+  const [a, b] = await Promise.all([admin.rpc("pass_entretien_calc", args), admin.rpc("pass_entretien_calc", { ...args, p_annulees_apres: d.cree_le })]);
+  return [a.data || null, b.data || null];
+}
 /** Prix vérifié par le serveur : le prix enregistré par le navigateur doit être celui des règles (à 1 € près).
  *  Renvoie le pourcentage de frais de service, ou une erreur (le prix est alors corrigé dans la demande). */
 async function verifierPrix(admin: Admin, d: Demande): Promise<{ pct: number; erreur?: string; estimation?: number }> {
   await chargerTarifs(admin);
   const abonne = await estAbonne(admin, d);
-  const verif = prixServeur(d, abonne);
+  const passes = await passEntretien(admin, d);
+  const verif = prixServeur(d, abonne, passes[0]);
+  const tolere = passes.length > 1 ? prixServeur(d, abonne, passes[1]) : null;
   const pctDefaut = d.espace === "personnel" ? 5 : abonne ? 0 : 8;
   // Prix libre d'une conciergerie (23/11/2026, montage B) : le prix est celui fixé par la conciergerie, pas la grille.
   // Le prix conseillé (grille) est gardé pour le plancher de 80 % et le baromètre ; frais de service 8 % (0 % abonnée).
@@ -111,7 +123,7 @@ async function verifierPrix(admin: Admin, d: Demande): Promise<{ pct: number; er
   if (verif && !verif.normal.devisObligatoire) {
     const initial = d.estimation_initiale_c ?? d.estimation_c ?? 0;
     const proche = (x: number) => Math.abs(initial - x) <= 100;
-    if (!proche(verif.normal.totalC) && !proche(verif.variante.totalC)) {
+    if (!proche(verif.normal.totalC) && !proche(verif.variante.totalC) && !(tolere && (proche(tolere.normal.totalC) || proche(tolere.variante.totalC)))) {
       if (d.estimation_initiale_c != null) return { pct: pctDefaut, erreur: "prix_a_verifier" };
       const fraisC = Math.round(verif.normal.totalC * verif.normal.fraisServicePct / 100);
       await admin.from("demandes").update({ estimation_c: verif.normal.totalC, credit_impot_c: verif.normal.creditImpotC,

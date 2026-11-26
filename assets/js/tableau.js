@@ -1,5 +1,6 @@
 // Accueil « vivant » du compte connecté (Particulier, Pro, administrateur) : la prochaine prestation en direct
 // et la boîte « À faire » (tout ce qui attend le client). Se met à jour en temps réel. Même écran dans l'appli (AccueilVivant.kt).
+import { cartePassEntretien } from "./pass-entretien.js";
 import { guideVideo } from "./guide-video.js";
 import { badgeNiveau } from "./niveaux.js";
 import { reserverPourLogement, reserverAvecFavori, nomLogement, iconeBien, preremplir } from "./reserver.js";
@@ -246,6 +247,7 @@ export async function pageTableau(vue) {
           : `<div class="tout-va-bien">${icone("valide", { tuile: true })}<p><b>${tr("Tout est à jour")}</b><br><span class="muet">${tr("Rien ne vous attend pour l'instant.")}</span></p></div>`}
       </article>
     </div>
+    <div id="pass-entretien"></div>
     ${pro ? `<div class="grille-raccourcis tableau-raccourcis">
       <a class="carte raccourci" href="#/mes-demandes">${icone("calendrier", { tuile: true })}<b>${tr("Mes prestations")}</b><span class="petit">${tr("En cours, à venir, passées")}</span></a>
       <a class="carte raccourci" href="#/mes-biens">${icone("logement", { tuile: true })}<b>${tr("Mes biens")}</b><span class="petit">${biens.length} ${tr(biens.length > 1 ? "adresses" : "adresse")}</span></a>
@@ -270,6 +272,7 @@ export async function pageTableau(vue) {
   traduire(vue);
   agendaParticulier(vue.querySelector("#agenda-particulier"), { demandes, biens });
   carnetFavoris(vue.querySelector("#carnet-favoris"));
+  cartePassEntretien(vue.querySelector("#pass-entretien"), demandes).catch(() => null);
   brancherRechercheAccueil(vue, lieux);
   vue.querySelectorAll("[data-reserver-ici]").forEach(b => b.onclick = () => reserverPourLogement(b.dataset.reserverIci));
   // Cleaneroo AI depuis le tableau de bord (26/11/2026) : le besoin écrit ici part tout de suite à l'analyse.

@@ -177,6 +177,9 @@ export const REGLES = {
   CRENEAU_MALIN_PCT: 10,
   MAJORATION_URGENCE_SPECIALE_PCT: 30,  // prestations spécialisées : intervention urgente (sous 24 à 48 h)
   ENGAGEMENT_PCT: { 0: 0, 3: 5, 6: 10, 12: 15 },
+  // Pass Entretien véhicule (26/11/2026, décision de Michael) : mêmes valeurs que outils/base-pass-entretien.sql (à changer ensemble).
+  // apres : nombre de passages précédents (non annulés) ; −5 % dès le 3e passage, −10 % dès le 6e, jamais plus.
+  PASS_ENTRETIEN: { ENTRETIEN_PCT: 15, PALIERS: [{ apres: 2, pct: 5 }, { apres: 5, pct: 10 }], BONUS_PARRAINAGE: 3, REPORTS_PAR_AN: 1 },
   CREDIT_IMPOT_PCT: 50,
   CREDIT_IMPOT_PLAFOND_C: 1200000,
   MAX_PROPOSITIONS: 5,
@@ -494,6 +497,13 @@ export function tauxCotisationsPct(acre = "", liberatoire = false) {
 }
 
 /** Frais Stripe d'un paiement (centimes) : pourcentage + part fixe, cartes standard de l'EEE. */
+/** Pass Entretien : remise du palier pour un passage précédé de n passages comptés, et ce qu'il reste pour le palier suivant. */
+export function palierPass(n = 0) {
+  const paliers = REGLES.PASS_ENTRETIEN.PALIERS;
+  const atteint = [...paliers].reverse().find(p => n >= p.apres);
+  const suivant = paliers.find(p => n < p.apres);
+  return { pct: atteint ? atteint.pct : 0, suivant: suivant ? { pct: suivant.pct, reste: suivant.apres - n } : null };
+}
 export const fraisStripeC = prixC => Math.round(prixC * REGLES.FRAIS_STRIPE_PCT / 100) + REGLES.FRAIS_STRIPE_FIXE_C;
 
 /**

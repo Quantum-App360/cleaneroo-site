@@ -36,6 +36,38 @@ export function blocModifier(boite, d, ref, jeton, apres) {
   };
 }
 
+/** Pass Entretien (26/11/2026) : report gratuit, une fois par an, d'un passage véhicule déjà confirmé (au moins 48 h avant,
+ *  14 jours au plus, hors dimanche). Affiché seulement si le compte y a droit (palier atteint, report pas encore utilisé). */
+export async function blocReportPass(boite, d, ref, apres) {
+  if (!boite || d.rubrique_id !== "car" || d.statut !== "CONFIRMEE" || !d.creneau) return;
+  if (new Date(d.creneau) - Date.now() < 48 * 3600e3) return;
+  const { data: p } = await supabase.rpc("mon_pass_entretien", { p_creneau: d.creneau, p_rue: d.rue || "", p_cp: d.code_postal || "",
+    p_freq: d.details?.frequenceVehicule || "unique" }).then(r => r, () => ({ data: null }));
+  if (!p || (p.n || 0) + (p.bonus || 0) < 2 || !p.report_dispo) return;
+  boite.innerHTML = `<details class="carte" style="margin:12px 0"><summary><b>${icone("repeter")} ${tr("Reporter ce passage gratuitement")}</b></summary>
+    <p class="petit">${tr("Avantage du Pass Entretien : un report gratuit par an, jusqu'à 48 h avant le passage, à 14 jours au plus de la date prévue (hors dimanche). Votre Cleaneur est prévenu et reste prioritaire 24 h pour la nouvelle date.")}</p>
+    <form novalidate><label class="champ">${tr("Nouvelle date et heure")}<input name="creneau" type="datetime-local" value="${local(d.creneau)}"></label>
+    <p class="erreur"></p><button class="bouton" type="submit">${tr("Reporter le passage")}</button></form></details>`;
+  traduire(boite);
+  const f = boite.querySelector("form");
+  f.onsubmit = async e => {
+    e.preventDefault();
+    const err = f.querySelector(".erreur");
+    if (!f.creneau.value) { err.textContent = tr("Choisissez une date et une heure."); return; }
+    const { data, error } = await supabase.rpc("reporter_passage_pass", { p_reference: ref, p_creneau: new Date(f.creneau.value).toISOString() });
+    const r = error ? "erreur" : data;
+    if (r === "ok") return apres();
+    err.textContent = tr({
+      creneau: "Choisissez une date au moins 48 h à l'avance et à 14 jours au plus de la date prévue.",
+      dimanche: "Le report gratuit n'est pas possible un dimanche.",
+      ordre: "Cette date dépasse un autre de vos passages : choisissez une date plus proche.",
+      trop_tard: "Le passage a lieu dans moins de 48 h : le report gratuit n'est plus possible.",
+      deja_utilise: "Vous avez déjà utilisé votre report gratuit cette année.",
+      palier: "Le report gratuit s'ouvre dès votre 3e passage.",
+    }[r] || "Le service est momentanément indisponible. Réessayez dans quelques minutes.");
+  };
+}
+
 /** Ouvre le bon d'intervention dans une fenêtre imprimable (Enregistrer en PDF). */
 export async function ouvrirBon(ref, jeton = null) {
   const fen = window.open("", "_blank");

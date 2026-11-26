@@ -3,7 +3,7 @@
 // Mêmes écrans que l'application (EspacesCompte.kt / ServiceTrajet.kt).
 import { blocBriefIA } from "./equipements.js";
 import { rubrique } from "./catalogue.js";
-import { REGLES, euros, dateLongue, dateCourte, heure, duree, finOffreLancement, indemniteAccesC, dateVersement, conseilSecteur, lienWhatsAppSupport } from "./regles.js";
+import { REGLES, euros, dateLongue, dateCourte, heure, duree, finOffreLancement, indemniteAccesC, dateVersement, conseilSecteur, lienWhatsAppSupport, gainCleaneur } from "./regles.js";
 import { monParrainage, lienInviterClient } from "./parrainage.js";
 import { supabase, reduirePhoto, majProfil, mesDemandesPersonnelles, libererFavori, proposerProchainPassage, mesPropositionsPassage, inviterFavori, mesInvitationsFavori, alerteSecurite } from "./donnees.js";
 import { positionAdresse, distanceKm } from "./suivi-live.js";
@@ -452,6 +452,20 @@ function blocProchainsPassages(miennes, propositions, invitations = []) {
         ${recurrente(m) ? zonePassage(m) : zoneInvitation(m)}</div>`).join("")}</div>`;
 }
 
+/** Pass Entretien (26/11/2026) : ce qui est déjà réservé pour les 30 prochains jours (versé, après commission et frais Stripe ;
+ *  mission de renfort : 0 % de commission) et les clients qui reviennent (au moins 2 missions à la même adresse). */
+function tuilesFidelite(miennes, formule) {
+  const fin = Date.now() + 30 * 864e5;
+  const prevues = miennes.filter(m => m.statut === "CONFIRMEE" && !m.sur_devis && m.creneau && new Date(m.creneau).getTime() <= fin && new Date(m.creneau).getTime() > Date.now() - 864e5);
+  const prevuC = prevues.reduce((s, m) => { const g = gainCleaneur(m.estimation_c || 0, m.duree_min, formule === "pro" ? "pro" : "gratuit");
+    return s + (m.urgence ? (m.estimation_c || 0) : g.verseC) - g.stripeC; }, 0);
+  const parClient = new Map();
+  miennes.filter(m => m.statut !== "ANNULEE").forEach(m => { const k = `${(m.prenom || "").trim().toLowerCase()}|${(m.rue || "").trim().toLowerCase()}|${m.code_postal || ""}`; parClient.set(k, (parClient.get(k) || 0) + 1); });
+  const fideles = [...parClient.values()].filter(n => n >= 2).length;
+  return `<a class="tuile-tdb" href="#mes-missions-a-venir" data-segment-aller="a_venir"><b>${euros(prevuC)}</b><span>${tr("déjà réservés sur 30 jours")}</span></a>
+      <a class="tuile-tdb" href="#mes-missions-a-venir" data-segment-aller="a_venir"><b>${fideles}</b><span>${tr(fideles > 1 ? "clients fidèles" : "client fidèle")}</span></a>`;
+}
+
 function carteMission(m) {
   const r = rubrique(m.rubrique_id), [bouton, , etat] = ETAPE[m.statut] || [];
   return `<div class="carte mission" data-mission="${esc(m.reference)}">
@@ -746,6 +760,7 @@ export async function brancherMissions(vue, p) {
     ${p.employeur_id ? "" : `<section class="niveau-tdb carte pilotage-bloc" aria-labelledby="titre-performance"><h2 class="titre-niveau" id="titre-performance">${tr("Performance")}</h2>
     <div class="tuiles-tdb performance">
       <a class="tuile-tdb" href="#cleaneur-gains" data-sous-aller="gains"><b>${tableau?.missions_terminees || 0}</b><span>${tr((tableau?.missions_terminees || 0) > 1 ? "missions réalisées" : "mission réalisée")}</span></a>
+      ${tuilesFidelite(miennes, tableau?.formule)}
       <a class="tuile-tdb${p.dossier === "VALIDE" ? " ok" : " alerte"}" href="#dossier" data-aller="dossier"><b>${p.dossier === "VALIDE" ? "✓" : "!"}</b><span>${tr(p.dossier === "VALIDE" ? "Dossier conforme" : "Dossier à compléter")}</span></a>
     </div>
     <a class="lien-bouton" href="#cleaneur-gains" data-sous-aller="gains">${tr("Voir mes revenus")} ›</a>

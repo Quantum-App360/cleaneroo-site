@@ -7,7 +7,7 @@ import { PARTIES, partie, partiePour, PARTIE_DE_L_ESPACE, rubriquesProposees, li
 import { calculer, entreeEstimation, SALISSURE, disponibilite, meilleurPack, tachesChiffrees, formuleDe, niveauLocation, passagesPlanifies, datesPassages,
   etapesDe, consommablesDe, menageTientEntreVoyageurs, frequenceDe, minutesEquipements, prixIndicatifEquipement, heuresEvenement, litsDe, litsTailles,
   tachesPourOccasion, niveauOccasion } from "./estimation.js";
-import { REGLES, euros, duree, heure, dateCourte, dateLongue, reservationsFermees, MESSAGE_LANCEMENT, photosAvantObligatoires, delaiFavoriH } from "./regles.js";
+import { REGLES, euros, duree, heure, dateCourte, dateLongue, reservationsFermees, MESSAGE_LANCEMENT, photosAvantObligatoires, delaiFavoriH, palierPass } from "./regles.js";
 import { envoyerDemande, secteurCouvert, rejoindreAttente, enregistrerBien, synchroniserBiens, marquerDonneesInvite } from "./donnees.js";
 import { etapesPhotoDe, etapesPersoDe } from "./etapes-bien.js";
 import { maPosition, adresseDe, chercherAdresse, afficherCarte } from "./cartes.js";
@@ -913,6 +913,7 @@ function questionsVehicule() {
     + titre("Fréquence") + choix(FREQUENCES_VEHICULE, freq, "frequenceVehicule")
     + (freq !== "unique" ? `<div class="note" style="margin-top:10px">Idéal pour une flotte d'entreprise : chaque passage est planifié et facturé séparément.</div>
       <div class="carte" style="margin-top:10px">${compteur("Passages à planifier", "passages", b.passages || REGLES.PASSAGES_DEFAUT, { min: REGLES.PASSAGES_MIN, max: REGLES.PASSAGES_MAX })}</div>` : "")
+    + blocPass()
     + `<div class="carte" style="margin-top:10px">${caseCocher("Des animaux voyagent dans le véhicule", "animaux", !!b.animaux)}
       ${b.animaux && !b.taches.includes("poils") ? `<button type="button" class="lien-bouton" id="ajouter-poils">Ajouter « Poils d'animaux »</button>` : ""}</div>`
     ;
@@ -1261,8 +1262,9 @@ function etape5() {
              ${est.creditImpotC ? `<div class="ligne-montant" style="color:var(--succes);font-weight:700"><span>soit ${euros(est.apresCreditImpotC)} après crédit d'impôt, si éligible</span></div>` : ""}
              <p class="petit">Prix approximatif : le montant final ne peut pas le dépasser sans votre accord.</p>
              ${est.nombreCleaneurs === 2 ? `<p class="petit">Au-delà de 6 h de travail, la mission est confiée à 2 Cleaneurs.</p>` : ""}
-             ${passagesPlanifies(b) > 1 ? `<p class="petit">${passagesPlanifies(b)} passages planifiés : chaque passage est une demande séparée, au même prix.</p>` : ""}`}
+             ${passagesPlanifies(b) > 1 && !(b.rubriqueId === "car" && b.pass) ? `<p class="petit">${passagesPlanifies(b)} passages planifiés : chaque passage est une demande séparée, au même prix.</p>` : ""}`}
     </div>
+    ${est.devisObligatoire ? "" : blocPass(true)}
     ${est.creditImpotC ? `<p class="petit">50 % des dépenses pour les prestations éligibles réalisées à votre domicile (résidence principale ou secondaire), dans la limite des plafonds légaux (12 000 € par an, majorés dans certains cas).</p>` : ""}
     ${titre("Choix du Cleaneur")}${blocChoixCleaneur(est)}
     ${titre("Vos garanties")}${blocReassurance({ compact: true })}
@@ -1388,7 +1390,7 @@ let infosParrain = null;
 /** Carnet de Cleaneurs favoris du compte connecté (choix « Mon Cleaneur favori » à l'étape 5). */
 let favoris = [];
 async function chargerParrainage() {
-  infosParrain = null;
+  infosParrain = null; passCle = ""; passValeur = null;
   if (!(await session().catch(() => null))) { favoris = []; return; }
   favoris = await supabase.rpc("mes_favoris").then(r => r.data || []).catch(() => []);
   infosParrain = await monParrainage().catch(() => null);
@@ -1432,6 +1434,57 @@ function appliquerParrainage() {
   b.cagnotteDispoC = infosParrain?.soldes?.[b.espace === "personnel" ? "particulier" : "pro"] || 0;
 }
 
+/* Pass Entretien véhicule (26/11/2026, décision de Michael) : palier de fidélité et passage d'entretien calculés par la base
+   (mon_pass_entretien, base-pass-entretien.sql), jamais par le navigateur ; le serveur les recalcule avant chaque paiement. */
+let passCle = "", passValeur = null;
+const argsPass = (br, creneau) => ({ p_creneau: creneau ? creneau.toISOString() : null, p_immat: String(br.vehImmat || "").trim(), p_rue: String(br.rue || "").trim(),
+  p_cp: String(br.codePostal || "").trim(), p_freq: br.frequenceVehicule || "unique" });
+async function lirePass(args) {
+  if (!(await session().catch(() => null))) return null;
+  const { data, error } = await supabase.rpc("mon_pass_entretien", args);
+  return error || !data ? null : data;
+}
+const passDe = v => (v ? { n: v.n || 0, bonus: v.bonus || 0, entretien: !!v.entretien } : null);
+function appliquerPass() {
+  if (!b) return;
+  if (b.rubriqueId !== "car") { if (b.pass) b.pass = null; return; }
+  const args = argsPass(b, debutChoisi()), cle = JSON.stringify(args);
+  b.pass = passCle === cle ? passDe(passValeur) : null;
+  if (passCle === cle) return;
+  passCle = cle; passValeur = null;
+  lirePass(args).then(v => { if (passCle !== cle || !v) return; passValeur = v; if (b && racine?.isConnected) rendre(); }).catch(() => null);
+}
+/** Passages de la réservation, chacun avec son Pass (le palier monte à chaque passage) et son prix. */
+function passagesAvecPass(debut) {
+  const nb = passagesPlanifies(b);
+  const dates = debut && nb > 1 ? datesPassages(debut, frequenceDe(b), b.jours || [], nb) : [debut];
+  return dates.map((d, i) => {
+    const pass = b.pass ? { ...b.pass, n: b.pass.n + i, entretien: i > 0 || b.pass.entretien } : null;
+    return { d, pass, est: estimer({ ...b, pass }, d) };
+  });
+}
+/** Encart « Pass Entretien » (véhicules) : palier atteint, prochain palier, prix de chaque passage. */
+function blocPass(avecPassages = false) {
+  if (b.rubriqueId !== "car") return "";
+  const P = REGLES.PASS_ENTRETIEN, [p1, p2] = P.PALIERS;
+  if (!b.pass) {
+    if (profilMemorise()) return "";   // compte connecté : Pass en cours de lecture
+    return `<div class="note pass-note" style="margin-top:10px">${icone("repeter")} <span><b>${tr("Pass Entretien")}</b> · ${tr("Avec un compte, vos lavages réguliers coûtent moins cher :")} <span>${tr("passage d'entretien")} −${P.ENTRETIEN_PCT} %</span>, <span>−${p1.pct} % ${tr("dès le 3e passage")}</span>, <span>−${p2.pct} % ${tr("dès le 6e")}</span>.</span></div>`;
+  }
+  const n = b.pass.n + b.pass.bonus, pal = palierPass(n);
+  const ligneSuivant = pal.suivant
+    ? `<p class="petit" style="margin:4px 0 0">${pal.suivant.reste > 1 ? `<span>${tr("Encore")} ${pal.suivant.reste} ${tr("passages pour")} −${pal.suivant.pct} %</span>` : `<span>${tr("Plus qu'un passage pour")} −${pal.suivant.pct} %</span>`}</p>`
+    : `<p class="petit" style="margin:4px 0 0">${tr("Palier maximal atteint : vous gardez cette remise tant que vous ne sautez pas deux passages de suite.")}</p>`;
+  const lignes = avecPassages && passagesPlanifies(b) > 1 ? passagesAvecPass(debutChoisi()) : [];
+  return `<div class="carte pass-carte" style="margin-top:10px">
+    <p style="margin:0"><b>${icone("repeter")} ${tr("Pass Entretien")}</b> · ${pal.pct ? `<span>${tr("palier")} −${pal.pct} %</span>` : `<span>${tr("pas encore de palier")}</span>`}${b.pass.bonus ? ` · <span>${tr("bonus de parrainage inclus")}</span>` : ""}</p>
+    ${ligneSuivant}
+    ${b.pass.entretien ? `<p class="petit" style="margin:4px 0 0">${tr("Votre véhicule a été lavé récemment : ce passage d'entretien est plus court, donc moins cher")} (−${P.ENTRETIEN_PCT} %).</p>` : ""}
+    ${lignes.length ? `<div style="margin-top:8px">${lignes.map((x, i) => `<div class="ligne-montant"><span>${tr("Passage")} ${i + 1}${x.d ? ` · ${esc(dateCourte(x.d))}` : ""}</span><span>${euros(x.est.totalC + x.est.fraisServiceC - (i ? 0 : x.est.remiseParrainageC + x.est.cagnotteC))}</span></div>`).join("")}</div>` : ""}
+    <p class="petit muet" style="margin:6px 0 0">${tr("Chaque passage réservé compte pour le palier ; un passage annulé ne compte plus. Deux passages prévus sautés : vous redescendez d'un palier.")}</p>
+  </div>`;
+}
+
 /** Le prix « respire » quand il change, avec l'écart affiché un instant (+7,50 €, −3,00 €) : chaque choix montre son effet. */
 let prixPrecedent = null;
 function signalerPrix() {
@@ -1469,6 +1522,7 @@ function rendreSansReentree() {
   if (b && !b.dernierNettoyage && b.salissure !== "NORMAL") b = { ...b, salissure: "NORMAL" };
   if (sim) return rendreSimulation();
   appliquerParrainage();
+  appliquerPass();
   const etape = b ? b.etape : 1;
   let est = null;
   if (b && b.rubriqueId && etape > 1) est = estimer(b, debutChoisi());
@@ -1709,10 +1763,18 @@ async function envoyer() {
     let premiere = (b.passagesEnvoyes || []).find(x => x.n === 0) || null;
     for (const [n, d] of dates.entries()) {
     if ((b.passagesEnvoyes || []).some(x => x.n === n)) continue;
+    // Pass Entretien (véhicules) : chaque passage a son propre palier, lu dans la base juste avant son envoi
+    // (les passages précédents de la série sont déjà enregistrés : même calcul que le serveur au paiement).
+    let estN = est, detailsN = details;
+    if (b.rubriqueId === "car" && !est.devisObligatoire) {
+      const pass = passDe(await lirePass(argsPass(b, d)).catch(() => null));
+      estN = estimer({ ...b, pass }, d);
+      detailsN = { ...details, pass, lignes: estN.lignes, fraisServicePct: estN.fraisServicePct, fraisServiceC: estN.fraisServiceC };
+    }
     const envoi1 = await envoyerDemande({
-      rubrique_id: b.rubriqueId, details, estimation_c: est.totalC, credit_impot_c: est.creditImpotC, duree_min: est.dureeMin,
-      remise_parrainage_c: n === 0 ? est.remiseParrainageC : 0, cagnotte_c: n === 0 ? est.cagnotteC : 0,
-      nombre_cleaneurs: est.nombreCleaneurs, sur_devis: est.devisObligatoire, creneau: d ? d.toISOString() : null, flexible: !!b.flexible, prelancement: false,
+      rubrique_id: b.rubriqueId, details: detailsN, estimation_c: estN.totalC, credit_impot_c: estN.creditImpotC, duree_min: estN.dureeMin,
+      remise_parrainage_c: n === 0 ? estN.remiseParrainageC : 0, cagnotte_c: n === 0 ? estN.cagnotteC : 0,
+      nombre_cleaneurs: estN.nombreCleaneurs, sur_devis: estN.devisObligatoire, creneau: d ? d.toISOString() : null, flexible: !!b.flexible, prelancement: false,
       choix_cleaneur: choixEnvoye(), cleaneur_favori: choixEnvoye() === "favori" ? b.cleaneurFavori : null, espace: b.espace, prenom: b.prenom.trim(), nom: b.nom.trim(), email: b.email.trim(), telephone: b.telephone.trim(),
       rue: b.rue.trim(), code_postal: b.codePostal.trim(), ville: b.ville.trim(), accueil: b.accueil || "PRESENT", acces, groupe_paiement: b.groupePaiement,
       ...(Number.isFinite(b.lat) && Number.isFinite(b.lon) ? { lat: b.lat, lon: b.lon } : {}),   // alertes ciblées des Cleaneurs (base-cleaneur-idees.sql)
