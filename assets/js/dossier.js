@@ -9,7 +9,8 @@ import { tr, traduire } from "./langue.js";
 import { esc } from "./commun.js";
 import { zoneSignature } from "./signature.js";
 
-export const CONTRAT_VERSION = "2026-12-c";   // 26/11/2026 : paiement encaissé via Stripe et reversé après validation (frais Stripe de la prestation
+export const CONTRAT_VERSION = "2026-12-d";   // 26/11/2026 : première mission accompagnée (payée par le client, 0 % de commission) au lieu de la mission test payée par Cleaneroo
+// Version précédente 2026-12-c   // 26/11/2026 : paiement encaissé via Stripe et reversé après validation (frais Stripe de la prestation
 // à la charge du Cleaneur), plus de réserve de garantie (retenue plafonnée), certificats légaux seuls obligatoires, annexe des exigences.
 // Même valeur en base : contrat_version_actuelle() (outils/base-contrat-2026-12-c.sql).
 /** Contrat de prestataire (texte affiché et signé ; version CONTRAT_VERSION). Valeurs {entre accolades} tirées de REGLES.
@@ -18,7 +19,7 @@ export const CONTRAT = [
   ["Parties et objet", "Ce contrat est conclu entre Cleaneroo, qui exploite la plateforme de mise en relation cleaneroo.fr et l'application Cleaneroo, et le Cleaneur, professionnel indépendant immatriculé (micro-entreprise ou société). Cleaneroo met le Cleaneur en relation avec des clients (particuliers, conciergeries, entreprises) et lui fournit les outils de la plateforme. Chaque prestation est conclue directement entre le client et le Cleaneur, qui la réalise en son nom et sous sa responsabilité ; Cleaneroo n'est pas l'employeur du Cleaneur."],
   ["Indépendance du Cleaneur", "Le Cleaneur travaille en toute indépendance : il choisit librement s'il se rend disponible, quand, où et pour quelles missions, sans minimum d'activité ni exclusivité. Refuser une mission ou ne pas répondre n'entraîne aucune sanction. Il peut travailler pour d'autres plateformes et pour ses propres clients, et organise lui-même son travail, son matériel, ses produits et ses déplacements, dans le respect de la sécurité et de la description de la réservation. Rien dans ce contrat ne crée de lien de subordination."],
   ["Conditions pour recevoir des missions", "Pour recevoir des missions, le Cleaneur fournit et tient à jour : pièce d'identité, justificatif d'immatriculation (SIRET), attestation de vigilance URSSAF de moins de 6 mois et attestation d'assurance responsabilité civile professionnelle couvrant les activités qu'il exerce. Les prestations pour lesquelles la réglementation impose un certificat (Certibiocide pour la lutte contre les nuisibles et pour la désinfection) ne lui sont proposées qu'avec ce certificat en cours de validité. Les modules de formation et les guides de Cleaneroo sont gratuits et facultatifs : ce sont des conseils de méthode et de sécurité, jamais une condition pour recevoir des missions. Le Cleaneur reste seul juge de ses compétences et de sa sécurité : il n'accepte une mission que s'il peut la réaliser en sécurité et si son assurance la couvre, notamment pour le travail en hauteur. Un document expiré suspend seulement les missions qui en dépendent, jusqu'à sa mise à jour. Les exigences de chaque prestation figurent en annexe."],
-  ["Mission test", "Avant l'activation complète, le Cleaneur réalise une mission test rémunérée {missionTest} € par Cleaneroo, qui permet de vérifier que les exigences des prestations sont maîtrisées. Il la facture à Cleaneroo comme toute prestation."],
+  ["Première mission accompagnée", "Avant l'activation complète, le Cleaneur réalise une première mission accompagnée : une vraie mission chez un particulier, non urgente, payée par le client au prix normal. Cleaneroo n'y prend aucune commission : le Cleaneur touche 100 % du prix. Une seule mission à la fois tant qu'elle n'est pas réussie. Elle est réussie si le client laisse un avis d'au moins 4/5 ; sinon, Cleaneroo décide au vu des photos et du compte rendu, et peut demander une nouvelle mission accompagnée."],
   ["Missions et engagement", "Les missions compatibles avec les prestations, la zone, les qualifications et les disponibilités du Cleaneur lui sont proposées. Il peut les accepter au prix affiché ou faire une proposition au client (remise jusqu'à {remiseMax} %, hausse justifiée jusqu'à {hausseMax} %, autre horaire, frais de déplacement), que le client accepte ou non. Une mission acceptée engage le Cleaneur envers le client : il la réalise lui-même ou, s'il ne le peut plus, utilise la fonction de remplacement, qui la confie à un autre Cleaneur validé. Il ne peut pas la confier à une personne non validée par Cleaneroo."],
   ["Réalisation et preuves", "Le Cleaneur réalise la prestation décrite dans la réservation avec soin, selon les règles de l'art, les consignes du client et les règles de sécurité. Pour informer le client et prévenir les litiges, l'application enregistre les étapes de la mission (départ, arrivée, début, fin), les photos avant et après, le compte rendu et, le jour de la mission, une photo du Cleaneur qui permet au client de reconnaître la personne réservée. Le Cleaneur prévient le client de tout retard depuis l'application ; au-delà de {retardTolere} min, le client peut annuler sans frais. Les fiches et formations de Cleaneroo sont des conseils de méthode et de sécurité, pas des directives sur l'organisation de son travail."],
   ["Accès impossible et client absent", "Si le Cleaneur ne peut pas entrer dans le logement ou si le client est absent, il le signale depuis l'application ; après {attente} min d'attente, il peut repartir et reçoit une indemnité de {indemnitePct} % du prix de la mission (entre {indemniteMin} € et {indemniteMax} €), payée par le client."],
@@ -36,7 +37,7 @@ export const CONTRAT = [
   ["Modification du contrat", "Cleaneroo informe le Cleaneur de toute modification au moins 15 jours avant son entrée en vigueur ; la nouvelle version lui est présentée pour signature dans son espace. Il peut refuser la modification en mettant fin au contrat avant cette date."],
   ["Signature, langue et litiges", "Le contrat est signé électroniquement dans l'application ; la signature, la date et la version sont conservées comme preuve. Le texte français fait foi, les traductions sont fournies pour information. Le contrat est soumis au droit français. En cas de désaccord, les parties cherchent d'abord une solution amiable pendant 30 jours (contact@cleaneroo.fr), puis peuvent saisir le tribunal compétent."],
 ];
-const valeursContrat = () => ({ missionTest: REGLES.MISSION_TEST_C / 100, remiseMax: REGLES.PROPOSITION_REMISE_MAX_PCT, hausseMax: REGLES.PROPOSITION_HAUSSE_MAX_PCT,
+const valeursContrat = () => ({ remiseMax: REGLES.PROPOSITION_REMISE_MAX_PCT, hausseMax: REGLES.PROPOSITION_HAUSSE_MAX_PCT,
   retardTolere: REGLES.RETARD_TOLERE_MIN, attente: REGLES.ATTENTE_ACCES_IMPOSSIBLE_MIN, indemnitePct: REGLES.INDEMNITE_PCT,
   indemniteMin: REGLES.INDEMNITE_MIN_C / 100, indemniteMax: REGLES.INDEMNITE_MAX_C / 100, commissionGratuit: REGLES.COMMISSION_GRATUIT_PB / 100,
   commissionPro: REGLES.COMMISSION_PRO_PB / 100, abonnementPro: euros(REGLES.ABONNEMENT_CLEANEUR_C), validationAuto: REGLES.VALIDATION_AUTO_H,
@@ -109,7 +110,7 @@ export async function blocCeQuiMeManque(boite) {
   const lignes = [
     [m.dossier === "VALIDE", "Dossier administratif validé"],
     [m.contrat_signe, "Contrat de prestataire signé"],
-    [m.mission_test === "REUSSIE", m.mission_test === "A_REFAIRE" ? `${tr("Mission test à refaire")}${m.mission_test_motif ? " : " + m.mission_test_motif : ""}` : "Mission test rémunérée réussie"],
+    [m.mission_test === "REUSSIE", m.mission_test === "A_REFAIRE" ? `${tr("Première mission accompagnée à refaire")}${m.mission_test_motif ? " : " + m.mission_test_motif : ""}` : "Première mission accompagnée réussie"],
     // Seule la loi bloque une mission (Certibiocide « nuisibles » et « désinfection ») ; les autres modules sont conseillés, jamais bloquants.
     ...(() => { const l = m.formations_manquantes || [], loi = l.filter(x => ["nuisibles", "biocides"].includes(x)), autres = l.length - loi.length;
       return [[!loi.length, loi.length ? `${loi.length} ${tr("certificat(s) exigé(s) par la loi pour vos prestations")}` : "Certificats exigés par la loi : en règle"],
@@ -136,10 +137,10 @@ export async function blocDossierAdmin(boite, idCleaneur, recharger) {
   const { data: i } = await supabase.rpc("infos_dossier", { p_cleaneur: idCleaneur });
   if (!boite || !i) return;
   const act = i.rc_pro_activites;
-  boite.innerHTML = `<h2 style="margin-top:20px">Mission test, RC Pro et contrat</h2>
+  boite.innerHTML = `<h2 style="margin-top:20px">Première mission accompagnée, RC Pro et contrat</h2>
     <div class="carte"><p><b>Contrat :</b> ${i.contrat_signe_le ? `signé le ${new Date(i.contrat_signe_le).toLocaleDateString("fr-FR")} (version ${esc(i.contrat_version || "")})` : "pas encore signé"}</p>
-      <p><b>Mission test (${REGLES.MISSION_TEST_C / 100} €) :</b> ${{ A_PLANIFIER: "à planifier", REUSSIE: "réussie", A_REFAIRE: "à refaire" }[i.mission_test]}${i.mission_test_motif ? ` · ${esc(i.mission_test_motif)}` : ""}</p>
-      <div class="boutons"><button class="bouton" data-test="1">Mission test réussie</button><button class="bouton danger" data-test="0">À refaire</button></div>
+      <p><b>Première mission accompagnée (0 % de commission, payée par le client) :</b> ${{ A_PLANIFIER: "à planifier", REUSSIE: "réussie", A_REFAIRE: "à refaire" }[i.mission_test]}${i.mission_test_motif ? ` · ${esc(i.mission_test_motif)}` : ""}</p>
+      <div class="boutons"><button class="bouton" data-test="1">Première mission réussie</button><button class="bouton danger" data-test="0">À refaire</button></div>
       <p style="margin-top:14px"><b>Activités couvertes par la RC Pro</b> <span class="petit">(rien de coché = pas encore restreint)</span></p>
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:4px">${ACTIVITES_RC_PRO.map(([v, t]) =>
         `<label class="petit"><input type="checkbox" value="${v}" data-activite ${act?.includes(v) ? "checked" : ""}> ${t}</label>`).join("")}</div>

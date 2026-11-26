@@ -1217,3 +1217,9 @@ Ordre : A base de connaissances + fonction serveur · B conversation et fiche ·
 - Carte « Pass Entretien » au tableau de bord client (pass-entretien.js) ; report gratuit 1×/an d'un passage confirmé : `reporter_passage_pass(ref, creneau)` (≥ 48 h avant, ±14 jours, pas le dimanche, garde l'ordre de la série ; le Cleaneur reste prioritaire 24 h).
 - Côté Cleaneur : tuiles « déjà réservés sur 30 jours » et « clients fidèles » (missions.js).
 - Pas encore fait : adhésion annuelle (9,90 €, phase 2 : paiement + conditions + rétractation) ; « jour de passage du quartier » (seulement quand il y aura 2 clients proches) ; version Flotte.
+
+## Première mission accompagnée (26/11/2026, décision de Michael : Cleaneroo n'a pas de trésorerie) — à reporter dans les applis (Vincent)
+- Fini la « mission test rémunérée 40 € par Cleaneroo » (REGLES.MISSION_TEST_C supprimé). À la place : une vraie mission chez un particulier, non urgente, payée par le client au prix normal ; 0 % de commission (le Cleaneur touche 100 %).
+- Base (outils/base-premiere-mission-accompagnee.sql) : demandes.mission_accompagnee (posé par déclencheur quand le Cleaneur reçoit la mission), test_autorise(d), cleaneur_actif() (une mission à la fois), prendre_mission / proposer renvoient « mission_test », emettre_factures 0 % de commission, avis ≥ 4/5 → compte activé automatiquement ; sinon decider_mission_test (gestion).
+- Contrat 2026-12-d (article « Première mission accompagnée ») ; contrat_version_actuelle() = 2026-12-d.
+- Textes à reprendre dans les applis : « Réussir votre première mission accompagnée (… 100 % du prix, sans commission) », plus aucun « 40 € payés par Cleaneroo ».

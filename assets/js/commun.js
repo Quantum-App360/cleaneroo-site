@@ -91,7 +91,7 @@ export const PARCOURS = {
     ["credit-impot", "Des relevés pour vos propriétaires", "Un relevé PDF par propriétaire : séjours, ménages, incidents et montants à refacturer."],
   ],
   cleaneur: [
-    ["bouclier-coche", "Inscrivez-vous gratuitement", "Identité, SIRET, attestation URSSAF et assurance RC Pro vérifiées, puis une mission test."],
+    ["bouclier-coche", "Inscrivez-vous gratuitement", "Identité, SIRET, attestation URSSAF et assurance RC Pro vérifiées, puis une première mission accompagnée."],
     ["position", "Choisissez vos missions", "Les missions près de chez vous s'affichent avec le prix, la durée et le trajet. Vous vous proposez ; le client choisit."],
     ["photo", "Laissez-vous guider le jour J", "En route, arrivée géolocalisée, photo avant, tâches cochées, photo après : l'application vous guide pièce par pièce et l'IA vérifie les photos."],
     ["paiement", "Recevez votre paiement après validation", "Le client valide le compte rendu, ou la validation se fait automatiquement 48 h après la fin : votre paiement est alors versé."],
@@ -121,7 +121,7 @@ export const blocEtapes = (liste = ETAPES) => `<div class="etapes etroit">${list
 /** Les 5 garanties (prompt 2, partie 2) : textes repris mot pour mot, chacun vrai aujourd'hui. */
 export const GARANTIES = [
   ["carte-bancaire", "Paiement 100 % sécurisé", "Paiement géré par Stripe, leader mondial du paiement en ligne. Votre numéro de carte n'est jamais vu ni conservé par Cleaneroo. Authentification 3-D Secure par votre banque."],
-  ["bouclier-coche", "Cleaneurs vérifiés et assurés", "Identité, SIRET, attestation URSSAF et assurance responsabilité civile professionnelle contrôlés avant toute mission, puis une mission test."],
+  ["bouclier-coche", "Cleaneurs vérifiés et assurés", "Identité, SIRET, attestation URSSAF et assurance responsabilité civile professionnelle contrôlés avant toute mission, puis une première mission accompagnée."],
   ["cleaneurs", "Garantie remplacement", "Votre Cleaneur ne peut pas venir ? Un remplaçant vérifié en priorité, sinon annulation sans frais : vous êtes remboursé."],
   ["appareil-photo", "Preuves photo horodatées", "Avant et après chaque intervention : un dossier clair en cas de question ou de litige."],
   ["cadenas", "Données protégées", "Vos données sont hébergées à Paris et ne sont jamais revendues.", "/#/confidentialite", "Politique de confidentialité"],

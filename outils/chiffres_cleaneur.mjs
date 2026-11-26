@@ -22,4 +22,4 @@ const { REGLES, euros, joursOffreLancement } = await import("../assets/js/regles
 const { exempleCleaneur } = await import("../assets/js/devenir-cleaneur.js");
 const ex = exempleCleaneur();
 const e = c => euros(c).replace(/[  ]/g, " ");
-console.log(JSON.stringify({ prix: e(ex.prixC), duree: ex.dureeMin, horaireAvant: e(ex.pro.horaireAvantC), missionTest: e(REGLES.MISSION_TEST_C).replace(",00", ""), moisPro: REGLES.OFFRE_LANCEMENT_MOIS, offreOuverte: joursOffreLancement() > 0 }));
+console.log(JSON.stringify({ prix: e(ex.prixC), duree: ex.dureeMin, horaireAvant: e(ex.pro.horaireAvantC), moisPro: REGLES.OFFRE_LANCEMENT_MOIS, offreOuverte: joursOffreLancement() > 0 }));

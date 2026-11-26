@@ -8,7 +8,7 @@
 #   - les traductions des textes locaux des villes dans assets/js/traductions.js (bloc <villes-textes>).
 import io, json, os, re, html
 
-VERSION = "2026112610"
+VERSION = "2026112611"
 DATE_PLAN = "2026-11-06"        # date des pages dans sitemap.xml
 SITE = "https://cleaneroo.fr"
 
@@ -67,7 +67,7 @@ CRITERES = [
     ["Crédit d'impôt", "Selon éligibilité : possible pour les prestations à domicile réalisées par un Cleaneur déclaré « services à la personne »"],
     ["Preuves photo avant / après", "Oui, dans le compte rendu de chaque intervention"],
     ["Suivi en direct", "Oui : en route, arrivée confirmée par géolocalisation"],
-    ["Vérification des intervenants", "Identité, SIRET, attestation URSSAF et assurance RC Pro, puis une mission test"],
+    ["Vérification des intervenants", "Identité, SIRET, attestation URSSAF et assurance RC Pro, puis une première mission accompagnée"],
     ["Application mobile", "Android et iOS, à l'ouverture des réservations"],
     ["Synchronisation de calendriers", "Oui : calendriers iCal (Airbnb, Booking…) pour les conciergeries et les hôtels et campings"],
 ]
@@ -253,7 +253,7 @@ except Exception as x:
     raise SystemExit(f"Chiffres de la page Cleaneur non calculés : {x}")
 titre_c = f"Devenir Cleaneur · Jusqu'à {ch['horaireAvant']}/h avant cotisations · Cleaneroo"
 desc_c = (f"Missions de ménage près de chez vous, en autoentrepreneur. Libre d'accepter, sans minimum ni exclusivité. "
-          f"Mission test payée {ch['missionTest']}" + (f", {ch['moisPro']} mois de formule Pro offerts." if ch["offreOuverte"] else "."))
+          f"Première mission accompagnée sans commission" + (f", {ch['moisPro']} mois de formule Pro offerts." if ch["offreOuverte"] else "."))
 # Offre de lancement terminée : la page doit être régénérée (VERSION + ce script) pour que l'aperçu ne la promette plus.
 src = lire("index.html")
 remplacements = [

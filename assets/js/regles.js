@@ -244,7 +244,6 @@ export const REGLES = {
   // Frais de déplacement proposés par le Cleaneur (indicatifs, toujours acceptés par le client) : inclus jusqu'à 15 km,
   // 8 € jusqu'à 30 km, 15 € jusqu'à 50 km, au-delà 0,30 €/km aller-retour, 60 € au plus.
   FRAIS_DEPLACEMENT: { inclusKm: 15, palier1Km: 30, palier1C: 800, palier2Km: 50, palier2C: 1500, parKmC: 30, maxC: 6000 },
-  MISSION_TEST_C: 4000,
   // Lancement des missions (page « Devenir Cleaneur ») : à remplir par Vincent, ex. LANCEMENT_ZONE: "Fréjus et Saint-Raphaël",
   // LANCEMENT_DATE: "5 janvier 2027". Vides : la page invite seulement à s'inscrire pour être prévenu.
   LANCEMENT_ZONE: "",
@@ -253,7 +252,7 @@ export const REGLES = {
   // réponse du client sous 15 min (sinon refus). Copie de Regles.kt ; la base fait foi (proposer_supplement).
   SUPPLEMENT_PAS_MIN: 15, SUPPLEMENT_MAX_MIN: 60, SUPPLEMENT_MAX_PCT: 25, SUPPLEMENT_REPONSE_MIN: 15,
   // Créneaux disponibles du Cleaneur (grille) et score de recommandation des missions (repris de Vincent).
-  CRENEAUX_DEBUT_H: 6, CRENEAUX_FIN_H: 22,   // mission test rémunérée par Cleaneroo avant l'activation (base-dossier-complet.sql)
+  CRENEAUX_DEBUT_H: 6, CRENEAUX_FIN_H: 22,   // première mission accompagnée avant l'activation (base-premiere-mission-accompagnee.sql)
   RETARD_TOLERE_MIN: 30,   // retard annoncé toléré ; au-delà, le client peut annuler sans frais (base-retards.sql)
   VITESSE_MOYENNE_KMH: 35,
   MARGE_TRAJET_MIN: 10,

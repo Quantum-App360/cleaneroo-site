@@ -69,7 +69,7 @@ export function etapesCleaneur() {
     tr("Préparer vos documents (pièce d'identité, SIRET, RC Pro, attestation de vigilance URSSAF)"),
     tr("Déposer votre dossier (zone, prestations ; chaque document vérifié avant activation)"),
     tr("Signer le contrat de prestataire (les modules de formation sont conseillés, gratuits et facultatifs)"),
-    `${tr("Réussir la mission test (rémunérée")} ${euros(REGLES.MISSION_TEST_C)}, ${tr("payée par Cleaneroo)")}`,
+    tr("Réussir votre première mission accompagnée (une vraie mission chez un particulier, payée par le client : vous touchez 100 % du prix, sans commission)"),
     tr("Choisir vos missions (prix et horaires proposés, libre d'accepter)"),
     tr("Être payé chaque vendredi (validation du client, commission prélevée, versement)"),
   ];

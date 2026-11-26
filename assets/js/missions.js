@@ -897,6 +897,7 @@ ${p.employeur_id ? "" : `    <h2 class="titre-section" id="missions-disponibles"
       fermee: "Cette mission tombe pendant une de vos périodes fermées.",
       candidature: "Le client choisit parmi les propositions : proposez vos conditions.",
       assurance: "Votre RC Pro ne couvre pas cette activité : mettez-la à jour dans votre dossier.",
+      mission_test: "Première mission accompagnée : une seule à la fois, chez un particulier et jamais en urgence. Toutes les missions s'ouvrent dès qu'elle est réussie.",
       equipement: "Cette mission demande un matériel que vous n'avez pas coché dans « Mon matériel » (Profil)." }[r] || "Le service est momentanément indisponible. Réessayez dans quelques minutes.");
   });
   // Mode mission plein écran (lot 6, validé le 25/11) : la carte de la mission occupe tout l'écran, gros boutons, minuteur
