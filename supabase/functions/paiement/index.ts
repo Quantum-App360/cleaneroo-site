@@ -48,7 +48,7 @@ function heureDeParis(iso: string | null) {
 function prixServeur(d: Record<string, any>, abonne: boolean, pass: Record<string, unknown> | null = null) {
   if (!d.details || !d.rubrique_id) return null;
   // Pass Entretien (véhicules) : jamais repris du navigateur, toujours celui calculé par la base (passEntretien).
-  const b = { taches: [], tachesPerso: [], ...d.details, rubriqueId: d.rubrique_id, codePostal: d.code_postal || "", abonnePro: abonne, pass };
+  const b = { taches: [], tachesPerso: [], ...d.details, rubriqueId: d.rubrique_id, codePostal: d.code_postal || "", abonnePro: abonne, pass, fraisOfferts: false };
   const perso = d.espace === "personnel";
   // Prix calculé à l'heure de début (26/11/2026) : la plage horaire laisse le Cleaneur choisir son heure sans changer le prix.
   const e = entreeEstimation(b, perso, heureDeParis(d.details?.creneauPrix || d.creneau));
@@ -111,7 +111,8 @@ async function verifierPrix(admin: Admin, d: Demande): Promise<{ pct: number; er
   const passes = await passEntretien(admin, d);
   const verif = prixServeur(d, abonne, passes[0]);
   const tolere = passes.length > 1 ? prixServeur(d, abonne, passes[1]) : null;
-  const pctDefaut = d.espace === "personnel" ? 5 : abonne ? 0 : 8;
+  // Parrainage sans trésorerie (26/11/2026) : frais de service offerts décidés par la base au dépôt (colonne frais_offerts).
+  const pctDefaut = d.frais_offerts ? 0 : d.espace === "personnel" ? 5 : abonne ? 0 : 8;
   // Prix libre d'une conciergerie (23/11/2026, montage B) : le prix est celui fixé par la conciergerie, pas la grille.
   // Le prix conseillé (grille) est gardé pour le plancher de 80 % et le baromètre ; frais de service 8 % (0 % abonnée).
   if (d.prix_libre) {
@@ -119,21 +120,21 @@ async function verifierPrix(admin: Admin, d: Demande): Promise<{ pct: number; er
     if (prix < 1000 || prix > 200000) return { pct: pctDefaut, erreur: "prix_a_verifier" };
     if (d.conseil_c == null && verif && !verif.normal.devisObligatoire)
       await admin.from("demandes").update({ conseil_c: verif.normal.totalC }).eq("id", d.id);
-    return { pct: abonne ? 0 : 8 };
+    return { pct: abonne || d.frais_offerts ? 0 : 8 };
   }
   if (verif && !verif.normal.devisObligatoire) {
     const initial = d.estimation_initiale_c ?? d.estimation_c ?? 0;
     const proche = (x: number) => Math.abs(initial - x) <= 100;
     if (!proche(verif.normal.totalC) && !proche(verif.variante.totalC) && !(tolere && (proche(tolere.normal.totalC) || proche(tolere.variante.totalC)))) {
       if (d.estimation_initiale_c != null) return { pct: pctDefaut, erreur: "prix_a_verifier" };
-      const fraisC = Math.round(verif.normal.totalC * verif.normal.fraisServicePct / 100);
+      const pctC = d.frais_offerts ? 0 : verif.normal.fraisServicePct, fraisC = Math.round(verif.normal.totalC * pctC / 100);
       await admin.from("demandes").update({ estimation_c: verif.normal.totalC, credit_impot_c: verif.normal.creditImpotC,
-        details: { ...d.details, fraisServiceC: fraisC, fraisServicePct: verif.normal.fraisServicePct, prixCorrigeLe: new Date().toISOString(), prixNavigateurC: initial } }).eq("id", d.id);
-      return { pct: verif.normal.fraisServicePct, erreur: "prix_corrige", estimation: verif.normal.totalC };
+        details: { ...d.details, fraisServiceC: fraisC, fraisServicePct: pctC, prixCorrigeLe: new Date().toISOString(), prixNavigateurC: initial } }).eq("id", d.id);
+      return { pct: pctC, erreur: "prix_corrige", estimation: verif.normal.totalC };
     }
   }
   // Frais de service recalculés (5 % particulier, 8 % pro, 0 % abonné), jamais repris tels quels du navigateur.
-  return { pct: verif?.normal.fraisServicePct ?? pctDefaut };
+  return { pct: d.frais_offerts ? 0 : verif?.normal.fraisServicePct ?? pctDefaut };
 }
 /** Même total que l'écran : prestation + frais de service − remises (parrainage, cagnotte). */
 const montantDe = (d: Demande, pct: number) =>

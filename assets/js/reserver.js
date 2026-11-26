@@ -203,7 +203,7 @@ export function brouillonPour(rubriqueId, champs = {}, espace = "personnel") {
 }
 export const estimerBrouillon = br => estimer(br, null);
 /** Montant affiché « Total à payer », comme le récapitulatif de la réservation. */
-export const totalAffiche = est => est.devisObligatoire ? null : (est.fraisServicePct || est.remiseParrainageC || est.cagnotteC ? est.totalAPayerC : est.totalC);
+export const totalAffiche = est => est.devisObligatoire ? null : (est.fraisServicePct || est.fraisOfferts || est.remiseParrainageC || est.cagnotteC ? est.totalAPayerC : est.totalC);
 
 /** Prix conseillé Cleaneroo (grille) d'un ménage de location pour ce logement, en centimes. */
 export function prixConseilleBien(l) {
@@ -324,7 +324,7 @@ function oublierBrouillon(rubriqueId) {
 function demandesEnCours() {
   return Object.values(brouillons()).filter(x => rubrique(x.rubriqueId)).sort((a, z) => (z.majLe || 0) - (a.majLe || 0)).map(x => {
     let total = null;
-    try { const est = estimer(x, null); total = est.devisObligatoire ? null : (est.fraisServicePct || est.remiseParrainageC || est.cagnotteC ? est.totalAPayerC : est.totalC); } catch { /* brouillon ancien */ }
+    try { const est = estimer(x, null); total = est.devisObligatoire ? null : (est.fraisServicePct || est.fraisOfferts || est.remiseParrainageC || est.cagnotteC ? est.totalAPayerC : est.totalC); } catch { /* brouillon ancien */ }
     return { br: x, total };
   });
 }
@@ -1284,11 +1284,12 @@ function etape5() {
           + `<div class="ligne-montant total"><span>Total estimé</span><span>${euros(est.totalC)}</span></div>
              ${est.prixLibre ? `<p class="petit">${tr("Prix conseillé Cleaneroo pour ce logement")} : <b>${euros(est.prixConseilleC)}</b>. ${tr("Les frais Cleaneroo sont compris dans ce prix : le Cleaneur reçoit le reste.")}</p>
                ${messagePlancher(est.totalC, est.prixConseilleC) ? `<div class="note"><span>${messagePlancher(est.totalC, est.prixConseilleC)}</span></div>` : ""}` : ""}
+             ${est.fraisOfferts ? `<div class="ligne-montant remise"><span>${tr("Frais de service Cleaneroo")} · ${tr(avantages?.ambassadeur_jusqu ? "offerts (Ambassadeur)" : "offerts (parrainage)")}</span><span>0 €</span></div>` : ""}
              ${est.fraisServicePct ? `<div class="ligne-montant"><span>${tr("Frais de service Cleaneroo")} (${est.fraisServicePct} %)</span><span>${euros(est.fraisServiceC)}</span></div>`
                : b.abonnePro ? `<div class="ligne-montant"><span>${tr("Frais de service Cleaneroo")}</span><span>${tr("0 € (abonné)")}</span></div>` : ""}
              ${est.remiseParrainageC ? `<div class="ligne-montant remise"><span>${tr("Remise de parrainage")}</span><span>−${euros(est.remiseParrainageC)}</span></div>` : ""}
              ${est.cagnotteC ? `<div class="ligne-montant remise"><span>${tr("Ma cagnotte")}</span><span>−${euros(est.cagnotteC)}</span></div>` : ""}
-             ${est.fraisServicePct || est.remiseParrainageC || est.cagnotteC ? `<div class="ligne-montant total"><span>${tr("Total à payer")}</span><span>${euros(est.totalAPayerC)}</span></div>` : ""}
+             ${est.fraisServicePct || est.fraisOfferts || est.remiseParrainageC || est.cagnotteC ? `<div class="ligne-montant total"><span>${tr("Total à payer")}</span><span>${euros(est.totalAPayerC)}</span></div>` : ""}
              ${/^[0-9]{5}$/.test(b.codePostal || "") ? `<p class="petit mention-cp">${icone("position")} ${mentionCodePostal(b.codePostal)}</p>` : ""}
              ${b.remiseParrainageC && !est.remiseParrainageC ? `<p class="petit">${tr("Votre remise de parrainage de")} ${euros(b.remiseParrainageC)} ${tr("s'applique dès")} ${euros(REGLES.PARRAINAGE_MIN_COMMANDE_C)}.</p>` : ""}
              ${b.cagnotteDispoC > 0 ? caseCocher(`${tr("Utiliser ma cagnotte")} (${euros(b.cagnotteDispoC)} ${tr("disponibles")})`, "utiliserCagnotte", !!b.utiliserCagnotte) : ""}
@@ -1329,7 +1330,7 @@ function notePaiement(est) {
 function valeursRecap(est) {
   const r = rubrique(b.rubriqueId), f = formuleDe(b);
   const debut = debutChoisi();
-  const prix = est.devisObligatoire ? tr("Sur devis") : euros(est.fraisServicePct || est.remiseParrainageC || est.cagnotteC ? est.totalAPayerC : est.totalC);
+  const prix = est.devisObligatoire ? tr("Sur devis") : euros(est.fraisServicePct || est.fraisOfferts || est.remiseParrainageC || est.cagnotteC ? est.totalAPayerC : est.totalC);
   const dureeTxt = est.dureeMin ? (est.nombreCleaneurs === 2 ? `2 Cleaneurs × ${duree(est.dureeMin)}` : duree(est.dureeMin)) : "";
   const quand = b.flexible ? tr("Date flexible") : debut ? `${dateCourte(debut)} · ${heure(debut.getHours())}-${heure(debut.getHours() + 1)}` : b.jour ? `${dateCourte(new Date(b.jour + "T00:00"))} · ${tr("heure à choisir")}` : "";
   const logement = b.logementId ? logements().find(l => l.id === b.logementId) : null;
@@ -1355,7 +1356,7 @@ function recapitulatif(est) {
       </ul>
       ${v.n === null ? "" : v.n > 0 ? `<p class="recap-dispo ok">${icone("valide")} ${v.n} ${tr(v.n > 1 ? "Cleaneurs vérifiés couvrent votre secteur." : "Cleaneur vérifié couvre votre secteur.")}</p>`
         : v.n === 0 ? `<p class="recap-dispo">${icone("alerte")} ${tr("Pas encore de Cleaneur dans votre secteur")}</p>` : ""}
-      <div class="recap-prix"><span>${tr(est.devisObligatoire ? "Prix" : est.fraisServicePct || est.remiseParrainageC || est.cagnotteC ? "Total à payer" : "Total estimé")}</span><b>${v.prix}</b></div>
+      <div class="recap-prix"><span>${tr(est.devisObligatoire ? "Prix" : est.fraisServicePct || est.fraisOfferts || est.remiseParrainageC || est.cagnotteC ? "Total à payer" : "Total estimé")}</span><b>${v.prix}</b></div>
       ${est.creditImpotC ? `<p class="petit recap-credit">${tr("soit")} ${euros(est.apresCreditImpotC)} ${tr("après crédit d'impôt, si éligible")}</p>` : ""}
       <p class="petit muet recap-paiement">${icone("cadenas")} ${tr(est.devisObligatoire ? "Aucun paiement avant le devis." : "Payé à la réservation, versé au Cleaneur seulement après votre validation.")}</p>
     </aside>`;
@@ -1422,11 +1423,15 @@ export function rangerEnCartes(etape) {
 let infosParrain = null;
 /** Carnet de Cleaneurs favoris du compte connecté (choix « Mon Cleaneur favori » à l'étape 5). */
 let favoris = [];
+let avantages = null;
+/** Frais offerts pour le n-ième passage d'une réservation (Ambassadeur : tous ; sinon autant que d'avantages disponibles). */
+const fraisOffertsPassage = n => !!(avantages && !avantages.abonne && (avantages.ambassadeur_jusqu || n < (avantages.frais || 0)));
 async function chargerParrainage() {
-  infosParrain = null; passCle = ""; passValeur = null;
+  infosParrain = null; avantages = null; passCle = ""; passValeur = null;
   if (!(await session().catch(() => null))) { favoris = []; return; }
   favoris = await supabase.rpc("mes_favoris").then(r => r.data || []).catch(() => []);
   infosParrain = await monParrainage().catch(() => null);
+  avantages = await supabase.rpc("mes_avantages").then(r => r.data || null, () => null);
   if (infosParrain && b && b.etape === 5 && racine?.isConnected) rendre();
 }
 /* Choix du Cleaneur (16 novembre 2026) : attribué automatiquement, validé par le client, ou demandé à un Cleaneur favori. */
@@ -1463,8 +1468,9 @@ function blocChoixCleaneur(est) {
 
 function appliquerParrainage() {
   if (!b) return;
-  b.remiseParrainageC = b.espace === "personnel" || b.espace === "conciergerie" || b.espace === "professionnel" ? infosParrain?.remise_bienvenue_c || 0 : 0;
-  b.cagnotteDispoC = infosParrain?.soldes?.[b.espace === "personnel" ? "particulier" : "pro"] || 0;
+  // Parrainage sans trésorerie (26/11/2026) : plus de remise ni de cagnotte en euros ; frais de service offerts (avantage ou Ambassadeur).
+  b.remiseParrainageC = 0; b.cagnotteDispoC = 0; b.utiliserCagnotte = false;
+  b.fraisOfferts = !!(avantages && !avantages.abonne && (avantages.ambassadeur_jusqu || avantages.frais > 0));
 }
 
 /* Pass Entretien véhicule (26/11/2026, décision de Michael) : palier de fidélité et passage d'entretien calculés par la base
@@ -1561,7 +1567,7 @@ function rendreSansReentree() {
   if (b && b.rubriqueId && etape > 1) est = estimer(b, debutChoisi());
   racine.innerHTML = `<section class="bloc" style="padding-top:28px"><div class="${est ? "resa-avec-recap" : etape === 1 ? "etroit resa-centre" : "etroit"}"><div class="resa-etape">
     <div class="tete-etape petit">${etape > 1 ? `<button type="button" class="retour-haut" data-retour>‹ Retour</button>` : ""}<span>Étape ${etape} sur 5</span>
-      ${est && !est.devisObligatoire ? `<b style="color:var(--primaire)">${est.fraisServicePct || est.remiseParrainageC || est.cagnotteC ? `${tr("Total à payer")} ${euros(est.totalAPayerC)}` : `Total estimé ${euros(est.totalC)}`}</b>` : ""}</div>
+      ${est && !est.devisObligatoire ? `<b style="color:var(--primaire)">${est.fraisServicePct || est.fraisOfferts || est.remiseParrainageC || est.cagnotteC ? `${tr("Total à payer")} ${euros(est.totalAPayerC)}` : `Total estimé ${euros(est.totalC)}`}</b>` : ""}</div>
     <div class="progression">${[1, 2, 3, 4, 5].map(i => `<span class="${i <= etape ? "fait" : ""}"></span>`).join("")}</div>
     ${[etape1, etape2, etape3, etape4, etape5][etape - 1]()}
   </div>${recapitulatif(est)}</div></section>`;
@@ -1808,9 +1814,14 @@ async function envoyer() {
     // Pass Entretien (véhicules) : chaque passage a son propre palier, lu dans la base juste avant son envoi
     // (les passages précédents de la série sont déjà enregistrés : même calcul que le serveur au paiement).
     let estN = est, detailsN = details;
+    // Frais offerts : seulement pour autant de passages que d'avantages disponibles (la base décide, l'écran l'annonce).
+    if (fraisOffertsPassage(n) !== !!b.fraisOfferts && !est.devisObligatoire) {
+      estN = estimer({ ...b, fraisOfferts: fraisOffertsPassage(n) }, d);
+      detailsN = { ...details, lignes: estN.lignes, fraisServicePct: estN.fraisServicePct, fraisServiceC: estN.fraisServiceC };
+    }
     if (b.rubriqueId === "car" && !est.devisObligatoire) {
       const pass = passDe(await lirePass(argsPass(b, d)).catch(() => null));
-      estN = estimer({ ...b, pass }, d);
+      estN = estimer({ ...b, pass, fraisOfferts: fraisOffertsPassage(n) }, d);
       detailsN = { ...details, pass, lignes: estN.lignes, fraisServicePct: estN.fraisServicePct, fraisServiceC: estN.fraisServiceC };
     }
     // Prix calculé à l'heure de début : il ne change pas si le Cleaneur fixe une autre heure dans la plage (fonction paiement).

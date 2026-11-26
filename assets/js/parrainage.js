@@ -31,7 +31,9 @@ export const champCodeParrain = () => `<label class="champ">Code de parrainage (
 export async function monParrainage() {
   const { data, error } = await supabase.rpc("mon_parrainage");
   if (error) throw new Error(error.message);
-  return data;
+  // Parrainage sans trésorerie (26/11/2026) : avantages en frais de service ou commission offerts (base-parrainage-sans-tresorerie.sql).
+  const av = await supabase.rpc("mes_avantages").then(r => r.data, () => null);
+  return data ? { ...data, avantages: av || {} } : data;
 }
 const utiliserCode = async code => {
   const { data, error } = await supabase.rpc("utiliser_code_parrainage", { p_code: code });
@@ -43,20 +45,39 @@ const utiliserCode = async code => {
 const ligne = parts => parts.map(x => (typeof x === "string" ? tr(x) : x.v)).join(" ");
 const m = v => ({ v });
 
-/** Ce que rapporte un parrainage, selon l'espace ouvert. */
+/** Ce que rapporte un parrainage, selon l'espace ouvert (26/11/2026 : jamais d'argent, des frais ou une commission offerts). */
 function gains(espace) {
   const N = REGLES.PARRAINAGE_MISSIONS_CLEANEUR;
   if (espace === "cleaneur") return [
-    ["Cleaneur parrainé :", m(euros(REGLES.PARRAINAGE_PRIME_CLEANEUR_C)), "de prime pour vous, après", m(N), "missions terminées"],
-    ["Client parrainé :", m(euros(REGLES.PARRAINAGE_FILLEUL_C)), "de remise pour lui sur sa 1re prestation, dès", m(euros(REGLES.PARRAINAGE_MIN_COMMANDE_C))],
+    ["Cleaneur parrainé : après ses", m(N), "premières missions, vous gagnez", m(3), "missions sans commission et vous voyez les nouvelles missions 10 minutes avant les autres pendant 1 mois"],
+    ["Client parrainé : ses", m(3), "premières réservations sans frais de service"],
   ];
   const base = [
-    ["Votre filleul :", m(euros(REGLES.PARRAINAGE_FILLEUL_C)), "de remise sur sa 1re prestation, dès", m(euros(REGLES.PARRAINAGE_MIN_COMMANDE_C))],
-    ["Vous :", m(euros(REGLES.PARRAINAGE_PARRAIN_C)), "dans votre cagnotte quand sa prestation est terminée"],
+    ["Votre filleul : ses", m(3), "premières réservations sans frais de service"],
+    ["Vous : 1 réservation sans frais de service à sa 1re prestation, puis", m(2), "de plus à sa 3e"],
+    ["Ambassadeur : 3 filleuls récompensés, plus aucuns frais de service pendant 3 mois ; 10 filleuls, pendant 12 mois"],
   ];
   if (espace === "pro") base.push(["Conciergerie parrainée :", m(REGLES.PARRAINAGE_MOIS_CONCIERGERIE), "mois d'abonnement offert à chacune, après sa 1re prestation"]);
-  base.push(["Vous faites venir un Cleaneur :", m(euros(REGLES.PARRAINAGE_PARRAIN_C)), "dans votre cagnotte, après", m(N), "missions terminées"]);
+  base.push(["Vous faites venir un Cleaneur :", m(3), "réservations sans frais de service, après ses", m(N), "missions terminées"]);
+  base.push(["Un voisin à parrainer ? Réservez le même jour : vos créneaux ressortent en « tournée », et un même Cleaneur peut enchaîner"]);
   return base;
+}
+/** Carte « Mes avantages » : ce qui reste à utiliser (frais offerts, missions sans commission, Ambassadeur, avance). */
+function carteAvantages(d, espace) {
+  const a = d.avantages || {};
+  const lignes = [];
+  if (espace === "cleaneur") {
+    lignes.push(`<b class="solde">${a.commission || 0}</b><span class="petit">${tr((a.commission || 0) > 1 ? "missions sans commission" : "mission sans commission")}</span>`);
+    if (a.avance_jusqu) lignes.push(`<span class="tampon vert">${tr("10 min d'avance sur les nouvelles missions jusqu'au")} ${dateCourte(new Date(a.avance_jusqu))}</span>`);
+  } else if (a.ambassadeur_jusqu) {
+    lignes.push(`<b class="solde">${tr("Ambassadeur")}</b><span class="petit">${tr("Aucuns frais de service jusqu'au")} ${dateCourte(new Date(a.ambassadeur_jusqu))}</span>`);
+  } else {
+    lignes.push(`<b class="solde">${a.frais || 0}</b><span class="petit">${tr((a.frais || 0) > 1 ? "réservations sans frais de service" : "réservation sans frais de service")}</span>`);
+  }
+  if (a.abonne && espace !== "cleaneur") lignes.push(`<span class="petit">${tr("Vous êtes déjà à 0 % de frais de service : vos avantages sont gardés pour plus tard.")}</span>`);
+  if (a.expire_le) lignes.push(`<span class="petit">${tr("Valables 12 mois · prochaine échéance le")} ${dateCourte(new Date(a.expire_le))}</span>`);
+  if (espace === "pro" && d.mois_offerts > 0) lignes.push(`<span class="tampon vert">${d.mois_offerts} ${tr("mois d'abonnement offerts")}</span>`);
+  return `<div class="carte cagnotte"><span class="petit">${tr("Mes avantages")}</span>${lignes.join("")}</div>`;
 }
 
 const STATUTS = { en_attente: ["En attente", ""], recompense: ["Récompensé", " vert"], refuse: ["Refusé", " gris"], plafond: ["Plafond annuel atteint", " gris"] };
@@ -67,27 +88,22 @@ export function blocParrainage(d, espace) {
   if (!d?.code) return "";
   const solde = d.soldes?.[espace] || 0;
   const mouvements = (d.mouvements || []).filter(x => x.espace === espace).slice(0, 5);
-  return `<h2 class="titre-section">${icone("cadeau", { tuile: true })}${tr("Parrainage et cagnotte")}</h2>
+  return `<h2 class="titre-section">${icone("cadeau", { tuile: true })}${tr("Parrainage")}</h2>
   <div class="parrainage" id="parrainage">
-    ${d.remise_bienvenue_c > 0 && espace !== "cleaneur" ? `<div class="note bienvenue-parrain"><span>${ligne(["Bienvenue. Vous avez", m(euros(d.remise_bienvenue_c)), "de remise sur votre 1re prestation, dès", m(euros(REGLES.PARRAINAGE_MIN_COMMANDE_C))])}</span></div>` : ""}
+    ${espace !== "cleaneur" && (d.avantages?.frais || 0) > 0 && d.a_un_parrain ? `<div class="note bienvenue-parrain"><span>${ligne(["Bienvenue. Vos", m(d.avantages.frais), "prochaines réservations sont sans frais de service"])}</span></div>` : ""}
     <div class="cartes-parrainage">
-      <div class="carte cagnotte">
-        <span class="petit">${tr(espace === "cleaneur" ? "Mes primes de parrainage" : "Ma cagnotte")}</span>
-        <b class="solde">${euros(solde)}</b>
-        <span class="petit">${espace === "cleaneur" ? tr("Versées avec vos gains")
-          : ligne(["Utilisable sur vos prochaines prestations · valable", m(REGLES.CAGNOTTE_VALIDITE_MOIS), "mois · non convertible en argent"])}</span>
-        ${espace === "pro" && d.mois_offerts > 0 ? `<span class="tampon vert">${d.mois_offerts} ${tr("mois d'abonnement offerts")}</span>` : ""}
-      </div>
+      ${carteAvantages(d, espace)}
       <div class="carte code-parrain">
         <span class="petit">${tr("Votre code de parrainage")}</span>
         <b class="code">${esc(d.code)}</b>
         <div class="actions-code"><button type="button" class="bouton" data-partager>${tr("Partager")}</button>
+          <a class="bouton secondaire" data-whatsapp target="_blank" rel="noopener">${tr("WhatsApp")}</a>
           <button type="button" class="bouton secondaire" data-copier>${tr("Copier le lien")}</button></div>
         <span class="petit" data-copie-ok></span>
       </div>
     </div>
     <ul class="gains-parrainage">${gains(espace).map(g => `<li>${ligne(g)}</li>`).join("")}</ul>
-    <p class="petit">${ligne(["Récompense versée une fois la prestation terminée ·", m(REGLES.PARRAINAGE_MAX_PAR_AN), "filleuls récompensés par an au maximum · pas de parrainage dans un même foyer"])}</p>
+    <p class="petit">${ligne(["Avantages gagnés une fois la prestation terminée, valables 12 mois, jamais convertibles en argent ·", m(REGLES.PARRAINAGE_MAX_PAR_AN), "filleuls récompensés par an au maximum · pas de parrainage dans un même foyer"])}</p>
     <details class="carte"><summary>${tr("Mes filleuls")} (${(d.filleuls || []).length})</summary>
       ${(d.filleuls || []).length ? `<ul class="liste-filleuls">${d.filleuls.map(f => `<li><span>${esc(f.prenom || "—")} <span class="petit">${dateCourte(new Date(f.cree_le))}</span></span>
         <span class="tampon${STATUTS[f.statut]?.[1] || ""}">${tr(STATUTS[f.statut]?.[0] || f.statut)}</span></li>`).join("")}</ul>`
@@ -112,7 +128,9 @@ export function brancherParrainage(racine, d, recharger = () => {}) {
   const bloc = racine.querySelector("#parrainage");
   if (!bloc || !d?.code) return;
   const lien = lienParrainage(d.code);
-  const message = `${tr("Je t'offre")} ${euros(REGLES.PARRAINAGE_FILLEUL_C)} ${tr("sur ta 1re prestation Cleaneroo avec mon code")} ${d.code} : ${lien}`;
+  const message = `${tr("Avec mon code")} ${d.code}${tr(", tes 3 premières réservations Cleaneroo sont sans frais de service :")} ${lien}`;
+  const wa = bloc.querySelector("[data-whatsapp]");
+  if (wa) wa.href = `https://wa.me/?text=${encodeURIComponent(message)}`;
   const copier = async () => {
     try { await navigator.clipboard.writeText(message); bloc.querySelector("[data-copie-ok]").textContent = tr("Lien copié ✓"); }
     catch { prompt(tr("Copiez ce lien :"), lien); }

@@ -1235,3 +1235,9 @@ Ordre : A base de connaissances + fonction serveur · B conversation et fiche ·
 - Réservation : « Heure précise » ou « Plage horaire » (location saisonnière : plage par défaut, jusqu'au dernier début possible) ; sous chaque créneau, « n dispo. » ou « complet », et « tournée ».
 - Cleaneur : sur une mission à plage, menu « Mon heure d'arrivée » ; le client est prévenu de l'heure fixée.
 - Pilote automatique : plage entre le départ et l'arrivée suivante lue dans le calendrier ; nouveau mode « Proposé » (biens.donnees.pilote.mode = "propose") : une notification par départ sans ménage, rien n'est réservé.
+
+## Parrainage sans trésorerie (26/11/2026, décision de Michael : Cleaneroo ne dépense jamais un euro) — à reporter dans les applis
+- Plus de remise de 10 € ni de cagnotte ni de prime de 20 € : base outils/base-parrainage-sans-tresorerie.sql (table avantages, mes_avantages()).
+- Filleul client : 3 réservations sans frais de service ; parrain : 1 à la 1re prestation du filleul, 2 à la 3e ; client qui fait venir un Cleaneur : 3 ; Cleaneur parrain : 3 missions sans commission + 10 min d'avance 1 mois ; conciergerie : 1 mois offert ; Ambassadeur (3 / 10 filleuls) : 0 % de frais 3 / 12 mois ; avantages valables 12 mois.
+- La base décide au dépôt (demandes.frais_offerts) ; l'appli affiche « Frais de service Cleaneroo · offerts (parrainage) » et un total sans frais, comme le site (estimation : b.fraisOfferts).
+- Pas fait : QR code de parrainage (bibliothèque tierce à valider).

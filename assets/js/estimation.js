@@ -196,7 +196,7 @@ export function calculer(entree) {
   return {
     lignes, totalC: total, dureeMin: deux ? arrondiQuartSup(dureeTotale / 2) : dureeTotale,
     nombreCleaneurs: deux ? 2 : 1, devisObligatoire: devis, creditImpotC: credit,
-    fraisServicePct: fraisPct, fraisServiceC: fraisC, remiseParrainageC: remise, cagnotteC: cagnotte,
+    fraisServicePct: fraisPct, fraisServiceC: fraisC, fraisOfferts: !!e.fraisOfferts, remiseParrainageC: remise, cagnotteC: cagnotte,
     totalAPayerC: aPayer, apresCreditImpotC: aPayer - credit,
   };
 }
@@ -412,7 +412,9 @@ export function entreeEstimation(b, espacePersonnel, debut) {
     consommablesAControler: b.rubriqueId === "rental" && consommablesDe(b).length > 0,
     salissure: b.salissure, taches: tachesChoisies, remisePackPct: pack ? pack.remisePct : 0, remisePackC: pack ? remisePack(pack, chiffrees) * n : null,
     formuleId: pack && ["confort", "prestige"].includes(pack.id) ? pack.id : "", tachesFormule: pack ? pack.tacheIds : [],
-    fraisServicePct: fraisServicePct(espacePersonnel, !!b.abonnePro),
+    // Parrainage sans trésorerie (26/11/2026) : frais de service offerts (avantage de parrainage ou Ambassadeur), décidés par la base.
+    fraisServicePct: b.fraisOfferts ? 0 : fraisServicePct(espacePersonnel, !!b.abonnePro),
+    fraisOfferts: !!b.fraisOfferts && fraisServicePct(espacePersonnel, !!b.abonnePro) > 0,
     tachesPersonnalisees: b.tachesPerso.length,
     dimanche: debut ? debut.getDay() === 0 : false,
     creneauMalin: dispo === "MALIN" && !b.flexible,

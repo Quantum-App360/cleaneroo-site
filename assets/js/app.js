@@ -221,13 +221,13 @@ const ESPACES_ACCUEIL = [
 /* Inscription inspirante (visiteur) : un espace par profil, chacun avec son avantage offert. Même bloc dans l'appli (Vitrine.kt). */
 const INSCRIPTION_ESPACES = () => [
   ["logement", "Particulier", "Votre ménage, sans y penser.", ["Prix affiché tout de suite", "Un ou plusieurs logements, tous dans votre espace", "Suivi du Cleaneur en direct", "Crédit d'impôt selon éligibilité"],
-    `${euros(REGLES.PARRAINAGE_FILLEUL_C)} ${tr("offerts avec un code de parrainage")}`, "#/compte/creer"],
+    tr("3 réservations sans frais de service avec un code de parrainage"), "#/compte/creer"],
   ["bureaux", "Entreprise", "Vos locaux, toujours impeccables.", ["Bureaux, commerces et cabinets", "Factures au nom de votre société", "Cleaneurs vérifiés et assurés"],
-    `${euros(REGLES.PARRAINAGE_FILLEUL_C)} ${tr("offerts avec un code de parrainage")}`, "#/compte/entreprise"],
+    tr("3 réservations sans frais de service avec un code de parrainage"), "#/compte/entreprise"],
   ["location", "Conciergerie ou SCI", "Vos locations, toujours prêtes.", ["Agenda relié à Airbnb et Booking", "Ménages entre deux voyageurs", "Compte rendu photo de chaque logement"],
     offreConciergerieOuverte() ? tr("3 mois offerts dès votre première intervention, 0 % de frais de service") : tr("0 % de frais de service avec l'abonnement"), "#/compte/pro"],
   ["location", "Hôtel ou camping", "Vos logements, prêts à temps.", ["Calculateur de rotation", "Agenda iCal et planning", "Renforts pour vos pics d'activité"],
-    `${euros(REGLES.PARRAINAGE_FILLEUL_C)} ${tr("offerts avec un code de parrainage")}`, "#/compte/hotellerie"],
+    tr("3 réservations sans frais de service avec un code de parrainage"), "#/compte/hotellerie"],
 ];
 function blocInscriptionInspirante() {
   return `<section class="inscription-inspirante"><div class="conteneur">
