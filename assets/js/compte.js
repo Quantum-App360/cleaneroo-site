@@ -27,6 +27,7 @@ import {
   demandesDuCompte, mesDemandes, synchroniserBiens, enregistrerBien, supprimerBien,
 } from "./donnees.js";
 import { oublierMesInformations, reserverPourLogement, nomLogement, iconeBien } from "./reserver.js";
+import { tableauDemandes, brancherTableauDemandes } from "./demandes-bureau.js";
 import { rendreEntete, memoriserProfil } from "./entete.js";
 import { ONGLETS, ongletParDefaut, espaceDu, statutsDu, NOMS_ESPACES, barreOnglets, ongletParticulier, ongletPro, ongletEntreprise, ongletHotellerie, brancherRotation, brancherSociete, brancherPro, ongletCleaneur, brancherMissions, demanderGeoloc } from "./espaces.js";
 import { brancherEspaceSociete, brancherActiverSociete, brancherSalarie, utiliserCodeEquipeGarde } from "./societe.js";
@@ -668,10 +669,11 @@ export async function pageMesPrestations(vue, mode = "demandes", sous = null) {
     ${s ? "" : `<div class="note" style="margin:8px 0 6px"><span>Créez votre compte pour retrouver vos biens et vos prestations sur tous vos appareils et dans l'application. <a href="#/compte/creer">Créer mon compte</a> · <a href="#/compte">Se connecter</a></span></div>`}
     <nav class="onglets-compte onglets-demandes" aria-label="Mes prestations">${ONGLETS_DEMANDES.map(([id, nom, ico]) => `<a href="#/mes-demandes/${id}" class="${id === actif ? "actif" : ""}" ${id === actif ? 'aria-current="page"' : ""}>${icone(ico)}<span>${nom}</span>${parOnglet[id].length ? `<em>${parOnglet[id].length}</em>` : ""}</a>`).join("")}</nav>
     ${s ? `<p class="petit direct"><i></i>Mis à jour en temps réel</p>` : ""}
-    ${parOnglet[actif].length ? parOnglet[actif].map(carte).join("") : vide(VIDES[actif], actif === "a-venir" ? OUVERTURE : "")}
+    ${parOnglet[actif].length ? `<div class="liste-demandes-cartes">${parOnglet[actif].map(carte).join("")}</div>${tableauDemandes(parOnglet[actif], biens)}` : vide(VIDES[actif], actif === "a-venir" ? OUVERTURE : "")}
     ${s ? "" : `<p class="petit" style="margin-top:18px">Vous avez réservé depuis un autre appareil ? Ouvrez le lien de suivi reçu après la réservation : la demande s'ajoutera ici.</p>`}
   </div></section>`;
   traduire(vue);
+  if (mode === "demandes") brancherTableauDemandes(vue, parOnglet[actif], biens);
   // Temps réel : la page se redessine dès qu'une demande change (prise en charge, en route, arrivée…).
   arreterEcouteDemandes();
   if (mode === "demandes" && s) {
