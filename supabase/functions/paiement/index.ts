@@ -7,8 +7,8 @@
 // Actions du client (lien de suivi ou compte) : creer (→ adresse de la page de paiement), verifier (retour de Stripe).
 // Actions du serveur (en-tête x-cle-alertes, base-paiement-reservation.sql) : rembourser, liberer, synchroniser.
 // Prix libres des conciergeries (base-prix-conciergeries.sql) : prix non recalculé ; la facture du Cleaneur porte déjà son net.
-// Versements (Stripe Connect, base-pilote-connect.sql) : à la validation, la part du Cleaneur (prestation − commission + pourboire
-// + prime d'urgence) est transférée sur son compte de versement ; virement sur son IBAN chaque vendredi.
+// Versements (Stripe Connect, base-pilote-connect.sql) : à la validation, la part du Cleaneur (prestation − commission − frais Stripe de
+// la prestation + pourboire + prime d'urgence − pénalités, au plus 50 %) est transférée sur son compte de versement ; virement chaque vendredi.
 // Actions du Cleaneur connecté : connect (→ formulaire Stripe : identité, IBAN), connect_etat (versements activés ?).
 // Ancien fonctionnement (empreinte) gardé pour les demandes déjà garanties : encaisser, annuler, statuts AUTORISE / ENCAISSE / ANNULE.
 import { createClient } from "jsr:@supabase/supabase-js@2";
@@ -23,6 +23,10 @@ const PRELEVEMENT_AVANT_H = 72;
 const DELAI_PAIEMENT_H = 24;
 /** Prélèvement refusé : le client a jusqu'à ce nombre d'heures avant le passage pour payer, sinon le passage est annulé. */
 const DERNIER_DELAI_AVANT_H = 24;
+/** Frais de traitement Stripe à la charge du Cleaneur (contrat 2026-12-c) : mêmes valeurs que REGLES.FRAIS_STRIPE_PCT / FRAIS_STRIPE_FIXE_C. */
+const FRAIS_STRIPE_PCT = 1.5, FRAIS_STRIPE_FIXE_C = 25;
+/** Pénalités retenues sur un versement : au plus ce pourcentage de son montant (REGLES.RETENUE_MAX_PCT). */
+const RETENUE_MAX_PCT = 50;
 /** Ouverture des réservations (24/11/2026) : plus de date fixe, interrupteur en base (infos_cleaneroo « reservations_ouvertes »,
  *  « ouvert_le »). Fermé : rien n'est payé ; les anciennes pré-réservations ont 48 h à partir de l'ouverture. */
 let OUVERTURE = Infinity;
@@ -187,7 +191,7 @@ async function preleverPassage(admin: Admin, d: Demande) {
   }
 }
 
-/** Versement au Cleaneur (ou à sa société) d'une prestation validée : prestation − commission + pourboire + prime d'urgence,
+/** Versement au Cleaneur (ou à sa société) d'une prestation validée : prestation − commission − frais Stripe + pourboire + prime d'urgence − pénalités,
  *  d'après les factures émises à la validation. Sans compte de versement actif : en attente, réessayé dès qu'il est activé. */
 async function verser(admin: Admin, d: Demande) {
   if (d.versement_statut === "VERSE" || !["LIBERE", "ENCAISSE"].includes(d.paiement_statut)) return d.versement_statut;
@@ -198,8 +202,17 @@ async function verser(admin: Admin, d: Demande) {
   const { data: avis } = await admin.from("avis").select("pourboire_c").eq("reference", d.reference).maybeSingle();
   const presta = (factures || []).find((f: any) => f.type === "prestation")?.total_ttc_c ?? d.estimation_c ?? 0;
   const commission = (factures || []).find((f: any) => f.type === "commission")?.total_ttc_c ?? 0;
-  const montant = presta - commission + (avis?.pourboire_c ?? 0) + (d.prime_urgence_c ?? 0);
-  if (montant <= 0) { await admin.from("demandes").update({ versement_statut: "RIEN", versement_c: 0 }).eq("id", d.id); return "RIEN"; }
+  // Contrat 2026-12-c (26/11/2026, option B) : le Cleaneur paie les frais de traitement Stripe du prix de sa prestation
+  // (tarif des cartes européennes standard, REGLES.FRAIS_STRIPE_* du site) ; Cleaneroo garde ceux des frais de service et des pourboires.
+  const fraisStripe = presta > 0 ? Math.round(presta * FRAIS_STRIPE_PCT / 100) + FRAIS_STRIPE_FIXE_C : 0;
+  const brut = presta - commission - fraisStripe + (avis?.pourboire_c ?? 0) + (d.prime_urgence_c ?? 0);
+  if (brut <= 0) { await admin.from("demandes").update({ versement_statut: "RIEN", versement_c: 0 }).eq("id", d.id); return "RIEN"; }
+  // Pénalités en cours (annulation tardive, absence, litige) : retenues sur ce versement, au plus RETENUE_MAX_PCT de son montant.
+  const { data: dues } = await admin.from("penalites_cleaneur").select("reste_a_retenir_c").eq("cleaneur_id", payeur).eq("statut", "APPLIQUEE").gt("reste_a_retenir_c", 0);
+  const { data: dejaRetenu } = await admin.from("retenues_penalites").select("montant_c").eq("cleaneur_id", payeur).eq("reference", d.reference);
+  const retenuAvant = (dejaRetenu || []).reduce((s: number, x: any) => s + x.montant_c, 0);
+  const retenuePrevue = retenuAvant || Math.min((dues || []).reduce((s: number, x: any) => s + x.reste_a_retenir_c, 0), Math.floor(brut * RETENUE_MAX_PCT / 100));
+  const montant = brut - retenuePrevue;
   if (!p?.stripe_compte || !p.stripe_compte_actif) {
     if (d.versement_statut !== "COMPTE_A_ACTIVER") {
       await admin.from("demandes").update({ versement_statut: "COMPTE_A_ACTIVER", versement_c: montant }).eq("id", d.id);
@@ -216,11 +229,14 @@ async function verser(admin: Admin, d: Demande) {
       if (pi?.latest_charge && montant <= (pi.amount_received ?? 0)) source = typeof pi.latest_charge === "string" ? pi.latest_charge : pi.latest_charge.id;
     }
     const t = await stripe("transfers", { amount: String(montant), currency: "eur", destination: p.stripe_compte, transfer_group: d.reference,
-      "metadata[reference]": d.reference, description: `Cleaneroo ${d.reference}`, ...(source ? { source_transaction: source } : {}) }, `versement-${d.reference}`);
+      "metadata[reference]": d.reference, "metadata[frais_stripe_c]": String(fraisStripe), "metadata[retenue_c]": String(retenuePrevue),
+      description: `Cleaneroo ${d.reference}`, ...(source ? { source_transaction: source } : {}) }, `versement-${d.reference}`);
+    // La retenue n'est enregistrée qu'une fois le virement fait (idempotente : rejouée pour la même prestation, rien ne change).
+    if (retenuePrevue > 0 && !retenuAvant) await admin.rpc("retenir_penalites", { p_cleaneur: payeur, p_reference: d.reference, p_max_c: retenuePrevue });
     await admin.from("demandes").update({ versement_statut: "VERSE", versement_c: montant, versement_id: t.id,
-      paiement_journal: trace(d, { type: "versement", montant_c: montant, id: t.id }) }).eq("id", d.id);
+      paiement_journal: trace(d, { type: "versement", montant_c: montant, frais_stripe_c: fraisStripe, retenue_c: retenuePrevue, id: t.id }) }).eq("id", d.id);
     try { await admin.rpc("notifier", { p_dest: payeur, p_espace: "cleaneur", p_type: "paiement", p_niveau: "standard", p_titre: "Paiement reçu",
-      p_texte: `${euros(montant)} pour la prestation ${d.reference} : viré sur votre compte bancaire vendredi.`, p_reference: d.reference }); } catch { /* sans gravité */ }
+      p_texte: `${euros(montant)} pour la prestation ${d.reference} (frais de paiement ${euros(fraisStripe)}${retenuePrevue ? `, pénalité retenue ${euros(retenuePrevue)}` : ""}) : viré sur votre compte bancaire vendredi.`, p_reference: d.reference }); } catch { /* sans gravité */ }
     return "VERSE";
   } catch (e) {
     await admin.from("demandes").update({ versement_statut: "ECHEC", versement_c: montant,

@@ -1186,3 +1186,18 @@ Ordre : A base de connaissances + fonction serveur · B conversation et fiche ·
 - POUR VINCENT (applis) : Regles.kt (URSSAF_ACRE_PCT 15.9, URSSAF_ACRE_AVANT_JUILLET_2026_PCT 10.6, FRAIS_STRIPE_PCT 1.5, FRAIS_STRIPE_FIXE_C 25, LANCEMENT_ZONE, LANCEMENT_DATE, gainCleaneur), FormulesCleaneur.kt (« Paiement sécurisé et outils identiques à la formule Pro », ligne « après cotisations URSSAF », mention Stripe), Activite.kt (choix ACRE à 3 options), Dossier.kt (signature indisponible avant l'immatriculation), écran Devenir Cleaneur (tableau, règles, étapes), vitrine société (« Paiement sécurisé · Versé à la société chaque vendredi… »), page indépendant (« Formations de vos prestations »), écran Réserver (centre), arrivée après connexion.
 - RÉSERVE DE GARANTIE (à trancher par Vincent) : colonne profils.garantie_c (défaut 0). Aucune fonction ne l'alimente ; remettre_en_urgence y prend min(pénalité, réserve), le reste va dans penalites_cleaneur.reste_a_retenir_c (retenu sur les versements suivants) ; annuler_penalite rend la part non utilisée. Aujourd'hui la réserve vaut 0 pour tout le monde : toute pénalité est retenue sur les versements suivants. Soit on la constitue (montant, quand elle est rendue), soit on retire la mention du contrat et de missions.js.
 - FORMATIONS (règle retenue = celle de la base) : formations_manquantes = tous les modules de qualifs_requises de chaque prestation proposée par le Cleaneur (socle + module de la prestation, + hauteur / machines / polissage / biocides selon les tâches). Textes du site alignés. Contrat NON modifié : il présente les formations comme des « conseils de méthode » et ne cite que « certaines prestations » ; le modifier = nouvelle CONTRAT_VERSION, contrat_version_actuelle() en base, nouvelle signature de tous : à voir avec la relecture juridique (risque de requalification si les formations deviennent des directives).
+
+### Contrat 2026-12-c (26/11) — base et fonction paiement v10 en service ; site 2026112608 (accord de Michael, option B)
+- Paiement (option B) : le client paie à la réservation, Cleaneroo encaisse via Stripe et reverse après validation. verser() déduit désormais
+  les frais Stripe du prix de la prestation (1,5 % + 0,25 €, FRAIS_STRIPE_* identiques au site) et les pénalités en cours, au plus 50 % du
+  versement (RETENUE_MAX_PCT), enregistrées par retenir_penalites() dans retenues_penalites (idempotente, testée en transaction annulée).
+- Base (outils/base-contrat-2026-12-c.sql) : contrat_version_actuelle() = « 2026-12-c », table retenues_penalites, retenir_penalites (serveur seulement),
+  mes_penalites (retenues visibles, plus de réserve). profils.garantie_c n'est plus utilisée.
+- Contrat : « Conditions pour recevoir des missions » (seuls les certificats légaux bloquent ; modules facultatifs ; RC Pro doit couvrir, notamment
+  le travail en hauteur), « Paiement par le client et commission » (option B), « Annulations et fiabilité » (retenue plafonnée, 60 jours, somme
+  reversée en cas de force majeure) ; annexe « exigences par prestation » générée depuis formationsExigees / formationsConseillees.
+- POUR VINCENT : Dossier.kt (même texte + annexe), Regles.kt (RETENUE_MAX_PCT), écran Pénalités de l'appli (retenues, plus de réserve), libellé
+  « Conseillé à tous » pour le socle de formation.
+- RESTE À TRANCHER : la prime d'urgence du remplaçant est calculée sur la part « couverte par la réserve » (remettre_en_urgence) : sans réserve,
+  elle vaut toujours 0 (avancer la prime, ou la retirer). Équivalences de formation : sans objet (seuls des certificats légaux bloquent).
+  Travail en hauteur : rester « conseillé » ou exiger une RC Pro qui le couvre (rc_pro_activites).

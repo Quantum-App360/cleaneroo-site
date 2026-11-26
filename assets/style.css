@@ -3569,3 +3569,9 @@ body.avec-menu .resa-centre { width: min(1180px, 100% - 64px); }
 .lancement-cleaneur { display: flex; gap: 10px; align-items: flex-start; margin: 14px 0; }
 .lancement-cleaneur .ico { flex: none; width: 20px; height: 20px; color: var(--primaire); }
 .resultat-calcul .ligne-apres { display: flex; justify-content: flex-end; gap: 6px; margin: -4px 0 6px; color: var(--texte2); }
+/* Annexe du contrat : exigences par prestation (2026-12-c) */
+.table-annexe { display: grid; border: 1px solid var(--separateur); border-radius: 12px; overflow: hidden; margin-top: 8px; font-size: 14px; }
+.ligne-annexe { display: grid; grid-template-columns: 1.2fr 1fr 1.6fr; gap: 10px; padding: 8px 12px; border-top: 1px solid var(--separateur); }
+.ligne-annexe:first-child { border-top: 0; }
+.ligne-annexe.entete { font-weight: 800; color: var(--primaire); background: color-mix(in srgb, var(--primaire) 8%, var(--surface)); }
+@media (max-width: 600px) { .ligne-annexe { grid-template-columns: 1fr; gap: 2px; } .ligne-annexe.entete { display: none; } }

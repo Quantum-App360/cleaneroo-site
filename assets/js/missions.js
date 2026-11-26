@@ -328,14 +328,14 @@ export function blocAvertissements(a) {
     ${(a.liste || []).map(x => `<p class="petit" style="margin:4px 0 0">• ${esc(dateLongue(new Date(x.le)))} : ${esc(x.motif)}</p>`).join("")}</div>`;
 }
 
-/** Pénalités (annulation tardive, absence) : retenues sur la réserve de garantie puis sur les prochains versements. */
+/** Pénalités (annulation tardive, absence, litige) : retenues sur les versements suivants, au plus RETENUE_MAX_PCT de chacun (contrat 2026-12-c). */
 export function blocPenalites(p) {
   if (!p || !(p.liste || []).length) return "";
   const reste = p.liste.reduce((s, x) => s + (x.reste_c || 0), 0);
   return `<div class="carte avertissements alerte"><b>${icone("paiement")} Pénalités</b>
     ${p.liste.map(x => `<p class="petit" style="margin:4px 0 0">• ${esc(dateLongue(new Date(x.le)))} : ${tr(x.raison === "absence" ? "Absence sans prévenir" : x.raison === "litige" ? "Remboursement client après litige" : "Annulation à moins de 24 h")} · ${euros(x.montant_c)}</p>`).join("")}
-    ${reste ? `<p class="petit" style="margin:6px 0 0">${tr("Reste à retenir sur vos prochains versements :")} <b>${euros(reste)}</b></p>` : ""}
-    <p class="petit" style="margin:4px 0 0">${tr("Réserve de garantie :")} ${euros(p.garantie_c || 0)}</p></div>`;
+    ${reste ? `<p class="petit" style="margin:6px 0 0">${tr("Reste à retenir sur vos prochains versements :")} <b>${euros(reste)}</b> · ${tr("au plus")} ${REGLES.RETENUE_MAX_PCT} % ${tr("de chaque versement")}</p>` : ""}
+    ${(p.retenues || []).map(x => `<p class="petit" style="margin:4px 0 0">${tr("Retenu sur le versement de")} ${esc(x.reference)} : ${euros(x.montant_c)}</p>`).join("")}</div>`;
 }
 
 /* ------------------------------------------------------------------ Photo de vérification du jour (identité avant la première mission) */

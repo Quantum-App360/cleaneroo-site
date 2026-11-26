@@ -11,7 +11,7 @@ import { qualificationsRequises } from "./regles.js";
 import { tr, traduire, langue } from "./langue.js";
 import { esc } from "./commun.js";
 
-const CATEGORIES = [["obligatoire", "Obligatoire pour tous"], ["prestations", "Prestations"], ["techniques", "Techniques et équipements"], ["attestation", "Sur attestation"]];
+const CATEGORIES = [["obligatoire", "Conseillé à tous"], ["prestations", "Prestations"], ["techniques", "Techniques et équipements"], ["attestation", "Sur attestation"]];
 const ICONES = { socle: icone("garantie"), domicile: icone("logement"), location: icone("cle"), vitres: icone("vitres"), hauteur: icone("chantier"), "remise-etat": icone("outil"), "cuisine-pro": icone("cuisine"), haccp: icone("document"),
   auto: icone("vehicule"), polissage: icone("termine"), textiles: icone("canape"), "locaux-pro": icone("bureaux"), machines: icone("outil"), bionettoyage: icone("specialise"), exterieurs: icone("exterieurs"), evenementiel: icone("termine"),
   biocides: icone("specialise"), nuisibles: icone("specialise"), electrique: icone("instantane"), specialise: icone("specialise") };

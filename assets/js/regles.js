@@ -204,6 +204,9 @@ export const REGLES = {
   // Frais de paiement Stripe (cartes standard de l'EEE), à la charge du Cleaneur : tarif à vérifier chaque année sur stripe.com/fr/pricing.
   FRAIS_STRIPE_PCT: 1.5,
   FRAIS_STRIPE_FIXE_C: 25,
+  // Pénalités retenues sur les versements suivants du Cleaneur, au plus ce pourcentage de chaque versement (contrat 2026-12-c ;
+  // même valeur dans la fonction serveur « paiement » : RETENUE_MAX_PCT). Plus de réserve de garantie.
+  RETENUE_MAX_PCT: 50,
   VERSEMENT_LIBERATOIRE_PCT: 1.7,
   PLAFOND_MICRO_SERVICES_C: 8360000,   // 83 600 € de chiffre d'affaires par an (prestations de services, 2026-2028)
   DEVIS_VALIDITE_JOURS: 30,
