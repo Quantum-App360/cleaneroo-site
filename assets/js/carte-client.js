@@ -6,7 +6,7 @@
 // La date, l'heure et la fréquence sont reprises telles quelles dans la réservation ; le prix exact se calcule à l'étape suivante.
 import { RUBRIQUES, rubrique, FREQUENCES } from "./catalogue.js";
 import { afficherCarte, chercherAdresse, maPosition, adresseDe } from "./cartes.js";
-import { secteurCouvert, secteursPublics, rejoindreAttente, cleaneursPublics, reputationCleaneur } from "./donnees.js";
+import { secteurCouvert, secteursPublics, rejoindreAttente, cleaneursPublics, reputationCleaneur, renfortsDe } from "./donnees.js";
 import { blocReputation } from "./reputation.js";
 import { preremplir, reserverAvecCleaneur } from "./reserver.js";
 import { badgeNiveau } from "./niveaux.js";
@@ -203,6 +203,12 @@ export function brancherCarteClient(vue) {
       if (e.target.closest("[data-reserver-avec]")) { lireCriteres(); reserverAvecCleaneur(etat.rubriqueId, c, champsReservation(etat.rubriqueId)); }
     });
     fiche.querySelector(".fiche-fermer")?.focus();
+    // Badge « Renfort » (26/11/2026) : ce Cleaneur a déjà remplacé un collègue au pied levé.
+    renfortsDe(c.cleaneur_id).catch(() => 0).then(n => {
+      const b = fiche.querySelector(".fiche-badges");
+      if (!n || !b?.isConnected) return;
+      b.insertAdjacentHTML("beforeend", `<span class="badge corail" title="${tr("Missions de renfort : a remplacé un autre Cleaneur au dernier moment")}">${icone("repeter")} ${tr("Renfort")} · ${n}</span>`);
+    });
     // Réputation détaillée (lot 7) : répartition, critères, satisfaction, avis récents.
     reputationCleaneur(c.cleaneur_id).catch(() => null).then(rep => {
       const z = fiche.querySelector("[data-reputation-fiche]");

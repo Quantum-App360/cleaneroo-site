@@ -1201,3 +1201,9 @@ Ordre : A base de connaissances + fonction serveur · B conversation et fiche ·
 - RESTE À TRANCHER : la prime d'urgence du remplaçant est calculée sur la part « couverte par la réserve » (remettre_en_urgence) : sans réserve,
   elle vaut toujours 0 (avancer la prime, ou la retirer). Équivalences de formation : sans objet (seuls des certificats légaux bloquent).
   Travail en hauteur : rester « conseillé » ou exiger une RC Pro qui le couvre (rc_pro_activites).
+- MISSION DE RENFORT (26/11, accord de Michael, appliquée en base : outils/base-mission-renfort.sql) : plus de prime d'urgence (Cleaneroo n'a pas
+  de trésorerie). Mission remise en urgence → 0 % de commission (emettre_factures, testé : aucune facture de commission), plus de réserve dans
+  remettre_en_urgence (indemnité entièrement retenue sur les versements suivants), +10 min d'avance pendant 24 h après un renfort (avance_niveau),
+  badge « Renfort · n » sur la fiche publique (renforts_de). Contrat 2026-12-c complété (Prix et commission, Paiement, Annulations, Classement).
+  POUR VINCENT : même affichage dans l'appli (carte de mission « 0 % de commission », badge Renfort, plus de « prime d'urgence »).
+- Traduction ajoutée de l'article « Responsabilité, assurance et garantie » (le texte avait changé sans traduction).

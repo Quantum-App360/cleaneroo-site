@@ -53,6 +53,7 @@ export function reglesEnClair() {
     ["calendrier", "Payé chaque vendredi", `${tr("Pour les missions validées par le client jusqu'au mercredi minuit (validation automatique")} ${REGLES.VALIDATION_AUTO_H} ${tr("h après la fin sans réclamation).")}`],
     ["horloge", "Fiabilité", `${tr("Annulation gratuite plus de 24 h avant. À moins de 24 h :")} ${euros(REGLES.PENALITE_24H_C)}. ${tr("À moins de 2 h ou absence :")} ${euros(REGLES.PENALITE_2H_C)} ${tr("ou")} ${REGLES.PENALITE_2H_PCT} % ${tr("du prix. Aucune pénalité en cas de force majeure justifiée sous 72 h.")} ${tr("Retenue sur vos versements suivants, au plus")} ${REGLES.RETENUE_MAX_PCT} % ${tr("de chacun.")}`],
     ["cle", "Client absent ou accès impossible", `${tr("Après")} ${REGLES.ATTENTE_ACCES_IMPOSSIBLE_MIN} ${tr("min d'attente, vous repartez avec")} ${REGLES.INDEMNITE_PCT} % ${tr("du prix")} (${euros(REGLES.INDEMNITE_MIN_C)} ${tr("à")} ${euros(REGLES.INDEMNITE_MAX_C)}).`],
+    ["repeter", "Missions de renfort", `${tr("Vous remplacez un Cleaneur qui a annulé au dernier moment : 0 % de commission, vous touchez 100 % du prix, et")} ${REGLES.RENFORT_AVANCE_MIN} ${tr("min d'avance sur les nouvelles missions pendant 24 h.")}`],
     ["garantie", "Votre assurance", "Une RC Pro à votre nom, qui couvre vos activités, est obligatoire. Cleaneroo vous fournit les preuves photo de chaque mission en cas de sinistre."],
   ];
   return `<h2 class="titre-section">${icone("document", { tuile: true })}${tr("Les règles, en clair")}</h2>

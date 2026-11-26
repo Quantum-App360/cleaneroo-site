@@ -3575,3 +3575,5 @@ body.avec-menu .resa-centre { width: min(1180px, 100% - 64px); }
 .ligne-annexe:first-child { border-top: 0; }
 .ligne-annexe.entete { font-weight: 800; color: var(--primaire); background: color-mix(in srgb, var(--primaire) 8%, var(--surface)); }
 @media (max-width: 600px) { .ligne-annexe { grid-template-columns: 1fr; gap: 2px; } .ligne-annexe.entete { display: none; } }
+.badge.corail { background: color-mix(in srgb, var(--corail) 16%, var(--surface)); color: var(--corail-texte); display: inline-flex; align-items: center; gap: 4px; }
+.badge.corail .ico { width: 14px; height: 14px; }

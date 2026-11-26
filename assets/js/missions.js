@@ -467,7 +467,7 @@ function carteMission(m) {
       <p class="petit muet" style="margin:4px 0 0">${icone("message")} ${tr("Le client est prévenu tout de suite ; échangez avec lui dans la messagerie de la prestation.")}</p>` : ""}
     ${m.remarque ? `<p class="petit" style="margin:4px 0 0">« ${esc(m.remarque)} »</p>` : ""}
     ${blocBriefIA(m)}
-    ${m.urgence && m.prime_urgence_c ? `<p class="petit" style="margin:6px 0 0;color:var(--succes);font-weight:700">${icone("alerte")} Mission d'urgence : prime de ${euros(m.prime_urgence_c)} comprise</p>` : ""}
+    ${m.urgence ? `<p class="petit" style="margin:6px 0 0;color:var(--succes);font-weight:700">${icone("alerte")} ${tr("Mission de renfort : 0 % de commission, vous touchez 100 % du prix")}</p>` : ""}
     ${m.statut === "CONFIRMEE" ? `<div class="confirmation-mission">${(m.etapes || {}).confirme ? `<span class="tampon vert">✓ Mission confirmée</span>`
       : `<button type="button" class="bouton secondaire" data-confirmer="${esc(m.reference)}">${icone("valide")} Je confirme ma venue</button>`}
       <button type="button" class="lien-bouton" style="color:var(--erreur)" data-annuler-mission="${esc(m.reference)}">Annuler la mission</button></div>` : ""}
@@ -549,7 +549,7 @@ function carteDisponible(m) {
   const r = rubrique(m.rubrique_id);
   return `<div class="carte ligne-compte" data-dispo="${esc(m.reference)}">${icone(r.icone, { tuile: true })}
     <div class="corps"><div class="haut"><h3>${m.urgence ? `<span class="tampon urgence">${icone("alerte")} Urgence</span> ` : ""}${r.nom}</h3><b>${m.sur_devis ? tr("Sur devis") : euros(m.estimation_c)}</b></div>
-      ${m.urgence && m.prime_urgence_c ? `<p class="petit" style="margin:2px 0 0;color:var(--succes);font-weight:700">+ ${euros(m.prime_urgence_c)} de prime d'urgence</p>` : ""}
+      ${m.urgence ? `<p class="petit" style="margin:2px 0 0;color:var(--succes);font-weight:700">${tr("Renfort : 0 % de commission")} · ${tr("vous touchez")} ${euros(m.estimation_c)}</p>` : ""}
       <p class="muet" style="margin:2px 0 0">${quand(m)} · ${duree(m.duree_min)}${m.nombre_cleaneurs === 2 ? " · 2 Cleaneurs" : ""}</p>
       <div data-chez-qui="${esc(m.reference)}"></div>
       <p class="petit" style="margin:2px 0 0">${esc(m.code_postal)} ${esc(m.ville)}${scores.has(m.reference) ? ` · <b style="color:var(--primaire)">${tr("Compatibilité")} ${Math.min(100, scores.get(m.reference))}/100</b>` : ""}</p><p class="petit" data-note-client="${esc(m.reference)}" style="margin:2px 0 0"></p><p class="erreur" data-erreur-prendre style="margin:4px 0 0"></p></div>

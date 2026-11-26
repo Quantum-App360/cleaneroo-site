@@ -544,6 +544,8 @@ export async function repondrePassage(id, jeton, accepte) {
   return data;
 }
 /** Réputation publique d'un Cleaneur (avis publiés seulement, base-lot7.sql) ; null si indisponible. */
+/** Missions de renfort réalisées par un Cleaneur (badge « Renfort » de sa fiche publique, base-mission-renfort.sql). */
+export async function renfortsDe(cleaneurId) { const { data } = await supabase.rpc("renforts_de", { p_cleaneur: cleaneurId }); return data || 0; }
 export async function reputationCleaneur(id) {
   const { data, error } = await supabase.rpc("reputation_cleaneur", { p_cleaneur: id });
   return error ? null : data || null;

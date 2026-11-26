@@ -264,7 +264,9 @@ export const REGLES = {
   PENALITE_24H_C: 1500,              // annulation à moins de 24 h
   PENALITE_2H_C: 3000,               // annulation à moins de 2 h ou absence (minimum)
   PENALITE_2H_PCT: 25,               // … ou 25 % du prix si c'est plus
-  URGENCE_PRIME_PCT: [[2, 50], [4, 35], [24, 20]],   // [moins de N heures, prime en % du prix]
+  // Mission de renfort (26/11/2026) : plus de prime d'urgence ; 0 % de commission sur une mission remise en urgence, et 10 min
+  // d'avance pendant 24 h après un renfort (emettre_factures, avance_niveau : base-mission-renfort.sql).
+  RENFORT_COMMISSION_PCT: 0, RENFORT_AVANCE_MIN: 10,
   URGENCE_FRAIS_C: 200,              // frais d'appels et de SMS gardés par Cleaneroo
   URGENCE_DISPO_H: 3,                // « Disponible pour une urgence » : prioritaire pendant 3 h
   // Niveaux des Cleaneurs (missions terminées) : copie de NiveauCleaneur (ReglesMetier.kt)
