@@ -87,7 +87,7 @@ export function piecesDe(rubriqueId, details = {}) {
   };
   choisies.forEach(t => ajouter(PIECE_DU_GROUPE(t.groupe || ""), { id: t.id, nom: t.nom }));
   // Location saisonnière : étapes choisies, faites dans chaque chambre / salle de bain concernée
-  if (rubriqueId === "rental") ETAPES_LOCATION.filter(e => (details.etapesChoisies || []).includes(e.id))
+  if (rubriqueId === "rental") ETAPES_LOCATION.filter(e => [...(details.etapesChoisies || []), ...(details.etapesInclusesLinge || [])].includes(e.id))
     .forEach(e => ajouter(e.piece === "entree" ? "entree" : e.piece, { id: `e_${e.id}`, nom: e.nom }, true));
   // Location saisonnière : tâches du forfait de la formule (court séjour → grand ménage), chacune dans sa pièce.
   if (rubriqueId === "rental") inclusCumuleLocation(details.formuleId).forEach((t, i) => {

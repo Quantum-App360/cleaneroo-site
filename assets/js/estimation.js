@@ -318,7 +318,15 @@ export function disponibilite(maintenant, creneau) {
 }
 
 /** Location saisonnière : étapes et consommables du brouillon (pack conseillé si rien n'est encore choisi). */
-export const etapesDe = b => b.etapesChoisies ?? PACK_ETAPES_CONSEILLE;
+/** Étapes comprises dans une autre option (26/11/2026, demande de Michael) : avec un lavage du linge (draps ou serviettes, sur place ou
+ *  en laverie), « Lancer et étendre le linge » est cochée d'office et incluse, sans prix ni temps en plus (déjà comptés dans le lavage). */
+export const etapesIncluses = b => (b.rubriqueId === "rental" && (b.lavageDraps || b.lavageLinge) ? ["linge"] : []);
+/** Étapes choisies par le client (sans les étapes incluses d'office). */
+export const etapesChoisiesDe = b => b.etapesChoisies ?? PACK_ETAPES_CONSEILLE;
+/** Étapes à valider en photo : celles choisies et celles incluses d'office. */
+export const etapesDe = b => [...new Set([...etapesChoisiesDe(b), ...etapesIncluses(b)])];
+/** Étapes facturées : sans celles incluses dans une autre option. */
+const etapesPayantes = b => etapesDe(b).filter(x => !etapesIncluses(b).includes(x));
 export const consommablesDe = b => b.consommablesChoisis ?? PACK_CONSOMMABLES_CONSEILLE;
 /** Option « Lavage des draps » : nombre de lits (par défaut un par chambre, un studio compte 1). */
 export const litsDe = b => Math.min(REGLES.LITS_MAX, Math.max(1, b.lits ?? Math.max(1, b.chambres ?? 1)));
@@ -379,8 +387,8 @@ export function entreeEstimation(b, espacePersonnel, debut) {
     coefPrix: 1.0, // déjà appliqué aux tâches chiffrées
     dureeBaseImposeeMin: dureeImposee,
     niveauxSupplementaires: ["home", "moving"].includes(b.rubriqueId) ? Math.max(0, b.niveaux - 1) : 0,
-    minutesEtapesLocation: b.rubriqueId === "rental" ? minutesEtapesLocation(etapesDe(b), (b.etapesPerso || []).length, b.chambres, b.sdb) : 0,
-    optionsLocationC: b.rubriqueId === "rental" ? prixOptionsLocationC(etapesDe(b), (b.etapesPerso || []).length, b.chambres, b.sdb) : 0,
+    minutesEtapesLocation: b.rubriqueId === "rental" ? minutesEtapesLocation(etapesPayantes(b), (b.etapesPerso || []).length, b.chambres, b.sdb) : 0,
+    optionsLocationC: b.rubriqueId === "rental" ? prixOptionsLocationC(etapesPayantes(b), (b.etapesPerso || []).length, b.chambres, b.sdb) : 0,
     consommablesAControler: b.rubriqueId === "rental" && consommablesDe(b).length > 0,
     salissure: b.salissure, taches: tachesChoisies, remisePackPct: pack ? pack.remisePct : 0, remisePackC: pack ? remisePack(pack, chiffrees) * n : null,
     formuleId: pack && ["confort", "prestige"].includes(pack.id) ? pack.id : "", tachesFormule: pack ? pack.tacheIds : [],

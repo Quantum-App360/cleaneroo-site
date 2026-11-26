@@ -5,7 +5,7 @@ import { PARTIES, partie, partiePour, PARTIE_DE_L_ESPACE, rubriquesProposees, li
   FREQUENCES, JOURS_SEMAINE, DERNIERS_NETTOYAGES, packsPour, remisePack,
   TACHES_A_TRAITER, TYPES_CHANTIER, photosPlusTardPossibles, equipementsPour, DELAIS_URGENCE, TYPES_IMMEUBLE, surfaceEffective, SELECTION_CONSEILLEE_VEHICULE, LIEUX_VEHICULE, FREQUENCES_VEHICULE, RUBRIQUES_LOGEMENT, vuesPhotos, vuesCompletes, PIECES_LOCATION, ETAPES_LOCATION, PACK_ETAPES_CONSEILLE, ETAPES_DEPART, prixEtapeLocationC, repetitionsEtape, CONSOMMABLES_LOCATION, PACK_CONSOMMABLES_CONSEILLE, PRIX_FORMULES, FORMULE_STANDARD_VEHICULE } from "./catalogue.js";
 import { calculer, entreeEstimation, SALISSURE, disponibilite, meilleurPack, tachesChiffrees, formuleDe, niveauLocation, passagesPlanifies, datesPassages,
-  etapesDe, consommablesDe, menageTientEntreVoyageurs, frequenceDe, minutesEquipements, prixIndicatifEquipement, heuresEvenement, litsDe, litsTailles,
+  etapesDe, etapesChoisiesDe, etapesIncluses, consommablesDe, menageTientEntreVoyageurs, frequenceDe, minutesEquipements, prixIndicatifEquipement, heuresEvenement, litsDe, litsTailles,
   tachesPourOccasion, niveauOccasion } from "./estimation.js";
 import { REGLES, euros, duree, heure, dateCourte, dateLongue, reservationsFermees, MESSAGE_LANCEMENT, photosAvantObligatoires, delaiFavoriH, palierPass } from "./regles.js";
 import { envoyerDemande, secteurCouvert, rejoindreAttente, enregistrerBien, synchroniserBiens, marquerDonneesInvite } from "./donnees.js";
@@ -63,7 +63,7 @@ function memoriserCommande(b) {
     ...(Number.isFinite(b.lat) ? { lat: b.lat, lon: b.lon } : {}) };
   // Location saisonnière : les étapes à valider en photo sont gardées avec le logement (et dans le compte).
   if (b.rubriqueId === "rental" && b.memoriserEtapes !== false) {
-    log.etapesPhoto = { etapes: etapesDe(b), perso: b.etapesPerso || [] };
+    log.etapesPhoto = { etapes: etapesChoisiesDe(b), perso: b.etapesPerso || [] };
     if (b.logementId === log.id || ancien) enregistrerBien(log).catch(() => null);
   }
   ecrire(CLE_LOGEMENTS, [log, ...liste.filter(l => l.id !== log.id && !(ADRESSES.includes(cat) && categorieBien(l) === cat && meme(l)))].slice(0, REGLES.BIENS_MAX));
@@ -978,11 +978,13 @@ document.addEventListener("toggle", e => {
 }, true);
 
 function etapesLocation() {
-  const etapes = etapesDe(b), perso = b.etapesPerso || [], conso = consommablesDe(b);
+  const etapes = etapesDe(b), incluses = etapesIncluses(b), perso = b.etapesPerso || [], conso = consommablesDe(b);
+  const motifInclus = b.drapsLieu === "laverie" ? "Incluse · lavage en laverie" : "Incluse · lavage sur place";
   const detail = titreAction("Étapes à valider en photo", "pack-etapes", "Pack conseillé")
     + `<p class="petit">Une étape « Chambre » compte une fois par chambre, « Salle de bain » une fois par salle de bain.</p>`
     + PIECES_LOCATION.map(([piece, nom]) => `<p class="petit" style="margin:12px 0 4px"><b>${nom}</b></p><div class="carte">`
-      + ETAPES_LOCATION.filter(e => e.piece === piece).map(e => `<label class="case"><input type="checkbox" data-etape="${e.id}" ${etapes.includes(e.id) ? "checked" : ""}>
+      + ETAPES_LOCATION.filter(e => e.piece === piece).map(e => incluses.includes(e.id) ? `<label class="case"><input type="checkbox" checked disabled>
+        <span>${e.nom}</span><span class="info">${tr(motifInclus)}</span></label>` : `<label class="case"><input type="checkbox" data-etape="${e.id}" ${etapes.includes(e.id) ? "checked" : ""}>
         <span>${e.nom}</span><span class="info">${e.minutes ? `<b>+${euros(prixEtapeLocationC(e, b.chambres, b.sdb))}</b><small>${duree(e.minutes * repetitionsEtape(e, b.chambres, b.sdb))}</small>` : "Incluse"}</span></label>`).join("")
       + perso.map((p, i) => p.piece === piece ? `<div style="display:flex;align-items:center;gap:8px"><span style="flex:1">• ${esc(p.texte)}</span>
         <span class="info"><b>+${euros(prixEtapeLocationC({ minutes: REGLES.ETAPE_PERSO_LOCATION_MIN, piece: "entree" }, 1, 1))}</b><small>${duree(REGLES.ETAPE_PERSO_LOCATION_MIN)}</small></span><button type="button" class="lien-bouton" style="color:var(--erreur)" data-retirer-etape="${i}">Retirer</button></div>` : "").join("")
@@ -1659,7 +1661,7 @@ document.addEventListener("click", async e => {
   if (ds.tacheATraiter) { const l = b.tachesATraiter || [], v = ds.tacheATraiter; return maj({ tachesATraiter: l.includes(v) ? l.filter(x => x !== v) : [...l, v] }); }
   if (t.id === "ajouter-poils") return maj({ taches: [...new Set([...b.taches, "poils"])] });
   if (t.id === "selection-conseillee") return maj({ taches: [...new Set([...b.taches, ...SELECTION_CONSEILLEE_VEHICULE])] });
-  if (t.id === "pack-etapes") return maj({ etapesChoisies: [...new Set([...etapesDe(b), ...PACK_ETAPES_CONSEILLE])] });
+  if (t.id === "pack-etapes") return maj({ etapesChoisies: [...new Set([...etapesChoisiesDe(b), ...PACK_ETAPES_CONSEILLE])] });
   if (t.id === "pack-conso") return maj({ consommablesChoisis: [...new Set([...consommablesDe(b), ...PACK_CONSOMMABLES_CONSEILLE])] });
   if (ds.retirerEtape !== undefined) return maj({ etapesPerso: (b.etapesPerso || []).filter((_, i) => i !== +ds.retirerEtape) });
   if (t.id === "ajouter-etape") {
@@ -1692,7 +1694,7 @@ document.addEventListener("change", e => {
   if (ds.case === "lavageDraps") { const t = litsTailles(b); return maj({ lavageDraps: e.target.checked, lits1: t.un, lits2: t.deux || (t.total ? 0 : litsDe(b)), litsKing: t.king }); }
   if (ds.case) return maj({ [ds.case]: e.target.checked });
   if (ds.tache) return maj({ taches: e.target.checked ? [...b.taches, ds.tache] : b.taches.filter(x => x !== ds.tache) });
-  if (ds.etape) { const l = etapesDe(b); return maj({ etapesChoisies: e.target.checked ? [...l, ds.etape] : l.filter(x => x !== ds.etape) }); }
+  if (ds.etape) { const l = etapesChoisiesDe(b); return maj({ etapesChoisies: e.target.checked ? [...l, ds.etape] : l.filter(x => x !== ds.etape) }); }
   if (ds.conso) { const l = consommablesDe(b); return maj({ consommablesChoisis: e.target.checked ? [...l, ds.conso] : l.filter(x => x !== ds.conso) }); }
   if (ds.nature) { const n = b.natures || []; return maj({ natures: e.target.checked ? [...n, ds.nature] : n.filter(x => x !== ds.nature) }); }
   if ((e.target.id === "photo-boite-appareil" || e.target.id === "photo-boite-galerie") && e.target.files?.[0]) {
@@ -1748,7 +1750,8 @@ async function envoyer() {
     const details = { ...b }; ["prenom", "nom", "email", "telephone", "rue", "codePostal", "ville", "code", "tiersNom", "tiersTel", "boiteEmplacement", "cgv", "etape", "passagesEnvoyes", "groupePaiement",
       "vehRepere", "vehAccesParking", "vehModele", "vehImmat", "vehLat", "vehLon", "accueilRestitution"].forEach(k => delete details[k]);
     details.lignes = est.lignes;
-    details.photosAvantExigees = photosAvantObligatoires(b.rubriqueId) || !!b.photosAvantExigees;   // prompt 2, partie 6
+    details.photosAvantExigees = photosAvantObligatoires(b.rubriqueId) || !!b.photosAvantExigees;
+    if (b.rubriqueId === "rental") details.etapesInclusesLinge = etapesIncluses(b);   // étapes incluses d'office (lavage du linge) : visibles du Cleaneur   // prompt 2, partie 6
     details.langue = langue;
     details.fraisServicePct = est.fraisServicePct; details.fraisServiceC = est.fraisServiceC;
     delete details.prixLibre; delete details.prixConseilleC;
