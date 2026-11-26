@@ -1141,4 +1141,16 @@ Et les deux doivent former un seul écosystème cohérent.
 ### Retours de Michael du 26/11 — point 3 : distinction côté client (en cours)
 - Corrigé (commit local 0404f5f) : raccourci « Mes favoris » du tableau client, qui ouvrait la page d'accueil publique.
 - Validé par Michael : site pensé ordinateur d'abord (téléphone = applis) ; menu latéral fixe pour l'espace client (Accueil, Réserver, Mes prestations, Messages, Mes favoris en vraie page, Mes biens, Mon compte) ; pastilles de raccourcis supprimées ; « Près de chez moi » retiré de l'espace client ; rubriques en cartes numérotées, choix avec rond à cocher, onglet actif plein, boutons primaire / contour / lien.
-- Proposé, en attente : même menu côté Cleaneur ; maquettes « Aujourd'hui » Cleaneur (chiffres du jour, journée en ligne de temps, carte de tournée, missions proposées) et « Mes prestations » client (tableau + panneau de détail). Prototypes : /tmp/srv/proto2-4, /tmp/srv/maq/.
+- Validé ensuite (« Oui go ») et réalisé (version 2026112603, commits locaux) : même menu côté Cleaneur ; pages « Aujourd'hui » Cleaneur (chiffres du jour, journée en ligne de temps, carte de tournée, missions proposées) et « Mes prestations » client (tableau + panneau de détail). Prototypes : /tmp/srv/proto2-4, /tmp/srv/maq/.
+
+- Réalisé (26/11, version 2026112603) :
+  - assets/js/menu-lateral.js (nouveau) : menu fixe à gauche ≥ 1100 px sur les pages de l'espace ; entrées par espace ; côté Cleaneur, pilote les sous-onglets (événement « cleaneroo:sous-onglet » ajouté dans sous-onglets.js) ; compteur de messages non lus (mes_conversations).
+  - entete.js : marquerActif() redessine le menu ; les liens du haut, « Être rappelé » et « Réserver » de l'en-tête sont masqués quand le menu est là.
+  - Route #/favoris (pageFavoris dans tableau.js) ; raccourci « Près de chez moi » supprimé ; pastilles de raccourcis masquées avec le menu.
+  - reserver.js : rangerEnCartes() — chaque h3 de l'étape devient une carte numérotée.
+  - style.css : onglet actif plein, choix avec rond à cocher, bouton secondaire en contour, retour en lien, barre d'actions en bande.
+  - missions.js : « Aujourd'hui » Cleaneur en poste de pilotage (chiffresDuJour : missions du jour, prochaine mission + départ conseillé, missions disponibles, note ; journée à gauche ; tournée, À venir, Performance à droite ; urgences en bandeaux).
+  - tournee.js : heures au format « 8 h 45 ».
+  - demandes-bureau.js (nouveau) : Mes prestations en tableau + panneau de détail (prénom du Cleaneur via infos_fil ; étapes cochées selon le statut, sans date inventée ; actions : Ouvrir le suivi, Écrire au Cleaneur).
+  - 25 nouvelles traductions.
+- À REPORTER PAR VINCENT (applis) : mêmes règles visuelles (onglet actif plein, rond à cocher, bouton secondaire en contour, rubriques en cartes numérotées) ; le menu latéral et le tableau sont propres au site sur ordinateur.

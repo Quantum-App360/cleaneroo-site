@@ -3262,7 +3262,7 @@ body.sans-defilement { overflow: hidden; }
   body.avec-menu .sous-onglets:has([data-sous-onglet="aujourdhui"]) { display: none !important; }
   body.avec-menu .etroit { width: min(1040px, 100% - 64px); }
 }
-.menu-lateral-titre { margin: 0 10px 10px; font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--turquoise); }
+.menu-lateral-titre { margin: 0 10px 10px; font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--primaire); }
 .menu-lateral nav { display: flex; flex-direction: column; gap: 4px; }
 .menu-lateral a, .menu-lateral-bas button { display: flex; align-items: center; gap: 12px; padding: 11px 12px; border-radius: 12px; color: var(--texte); text-decoration: none;
   font: inherit; font-weight: 600; font-size: 15px; background: none; border: 0; width: 100%; cursor: pointer; text-align: left; transition: background .15s, color .15s; }
@@ -3344,10 +3344,10 @@ a.chiffre-jour:hover { border-color: color-mix(in srgb, var(--primaire) 50%, tra
   body.avec-menu .liste-demandes-cartes { display: none; }
   body.avec-menu .maitre-detail { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 18px; align-items: start; }
   body.avec-menu .bloc:has(.maitre-detail) > .etroit { width: min(1320px, 100% - 64px); }
-  body.avec-menu .bloc:has(.maitre-detail) .onglets-demandes { max-width: 720px; }
+  body.avec-menu .onglets-demandes { max-width: 720px; }
   body.avec-menu .bloc:has(.onglets-demandes) { padding-top: 30px; }
   body.avec-menu .bloc:has(.onglets-demandes) > .etroit { position: relative; }
-  body.avec-menu .bloc:has(.onglets-demandes) > .etroit > h1 { font-size: clamp(30px, 2.6vw, 38px); }
+  body.avec-menu .bloc:has(.onglets-demandes) > .etroit > h1 { font-size: clamp(30px, 2.6vw, 38px); margin-bottom: 20px; }
   body.avec-menu .bloc:has(.onglets-demandes) > .etroit > .trait-corail { display: none; }
   body.avec-menu .bloc:has(.onglets-demandes) .etroit > a.bouton.plein[data-choisir-prestation] { position: absolute; right: 0; top: 0; width: auto; display: inline-flex; padding-inline: 26px; margin: 0; }
 }
