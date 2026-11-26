@@ -207,7 +207,7 @@ export async function pageTableau(vue) {
       ${enDirect ? `<a class="action-accueil vive" href="#/demande/${esc(d.reference)}/${esc(d.jeton)}">${icone("position", { tuile: true })}<b>${tr("Suivre en direct")}</b></a>` : ""}
       <a class="action-accueil" href="#/recherche">${icone("cleaneurs", { tuile: true })}<b>${tr("Près de chez moi")}</b></a>
       <a class="action-accueil" href="#/mes-demandes">${icone("calendrier", { tuile: true })}<b>${tr("Mes prestations")}</b></a>
-      <a class="action-accueil" href="#carnet-favoris">${icone("coeur", { tuile: true })}<b>${tr("Mes favoris")}</b></a>
+      <a class="action-accueil" href="#/tableau" data-ancre="carnet-favoris">${icone("coeur", { tuile: true })}<b>${tr("Mes favoris")}</b></a>
       <a class="action-accueil" href="#/mes-biens">${icone("logement", { tuile: true })}<b>${tr("Mes biens")}</b></a>
     </nav>`}
     ${demandes.length ? "" : guideVideo("client", "particulier")}
@@ -259,6 +259,8 @@ export async function pageTableau(vue) {
   carnetFavoris(vue.querySelector("#carnet-favoris"));
   brancherRechercheAccueil(vue, lieux);
   vue.querySelectorAll("[data-reserver-ici]").forEach(b => b.onclick = () => reserverPourLogement(b.dataset.reserverIci));
+  // Lien vers une rubrique de la page : on y descend sans toucher à l'adresse (sinon le routeur ouvre la page d'accueil publique).
+  vue.querySelectorAll("[data-ancre]").forEach(a => a.addEventListener("click", e => { e.preventDefault(); vue.querySelector("#" + a.dataset.ancre)?.scrollIntoView({ behavior: "smooth", block: "start" }); }));
   vue.querySelectorAll("[data-sous-voulu]").forEach(a => a.addEventListener("click", () => { try { localStorage.setItem("cleaneroo-sous-onglet-particulier", a.dataset.sousVoulu); } catch { /* rien */ } }));
   vue.querySelectorAll("[data-refaire]").forEach(b => b.onclick = () => {
     const x = refaire.find(y => y.reference === b.dataset.refaire); if (!x) return;
