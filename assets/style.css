@@ -3390,3 +3390,10 @@ a.chiffre-jour:hover { border-color: color-mix(in srgb, var(--primaire) 50%, tra
 .avatar-demande { width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; color: var(--fond); background: linear-gradient(135deg, var(--primaire), var(--turquoise)); flex: none; }
 .somme-demande { display: flex; justify-content: space-between; align-items: baseline; margin: 14px 0; } .somme-demande b { font-size: 22px; color: var(--primaire); }
 .actions-demande { display: grid; gap: 8px; } .actions-demande .bouton { justify-content: center; }
+/* Écrans d'inscription (26/11/2026) : adresse déjà inscrite, e-mail à confirmer. */
+.etape-inscription { display: grid; gap: 4px; padding: 22px; max-width: 620px; }
+.etape-inscription .tuile-ia { margin-bottom: 8px; }
+.boutons-inscription { display: grid; gap: 8px; margin-top: 16px; }
+.etape-inscription [hidden] { display: none !important; }
+.etape-inscription .tuile-ia { width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; background: linear-gradient(135deg, var(--primaire), var(--turquoise)); color: var(--fond); }
+.etape-inscription .tuile-ia .ico { width: 24px; height: 24px; }

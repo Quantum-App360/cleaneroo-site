@@ -253,8 +253,26 @@ export async function creerCompte({ email, mdp, statuts, prenom, nom, societe = 
     options: { data: { canal: (() => { try { return localStorage.getItem("cleaneroo-canal") || ""; } catch { return ""; } })(), statuts: st, prenom, nom, societe, secteur, civilite, telephone, qualite, type_cleaneur: typeCleaneur, engagement_formation: engagement ? "true" : "", siret_societe: siretSociete.replace(/\D/g, ""), code_parrain: codeParrain.trim().toUpperCase().slice(0, 20),
       role: st.includes("cleaneur") ? "cleaneur" : "client", espace: st.includes("pro") ? "pro" : st.includes("entreprise") ? "entreprise" : "particulier" }, emailRedirectTo: retour("compte") } });
   if (error) throw new Error(error.message);
+  // Adresse déjà inscrite (par e-mail ou avec Google) : Supabase ne renvoie pas d'erreur et n'envoie AUCUN e-mail (protection
+  // contre la recherche d'adresses) ; il le signale par un utilisateur sans identité. Le site ne doit pas annoncer d'e-mail (26/11/2026).
+  if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) return "existe";
   return data.session ? "connecte" : "confirmer";
 }
+
+/** Renvoie l'e-mail de confirmation d'une inscription (écran « Plus qu'une étape »). */
+export async function renvoyerConfirmation(email) {
+  const { error } = await supabase.auth.resend({ type: "signup", email, options: { emailRedirectTo: retour("compte") } });
+  if (error) throw new Error(error.message);
+}
+
+/* Inscription en attente (26/11/2026) : ce qui a été saisi est gardé sur l'appareil (1 h) quand l'adresse a déjà un compte ou que
+   l'e-mail doit être confirmé ; une fois connecté, l'espace demandé s'ajoute au compte avec ces informations (compte.js). */
+const CLE_ATTENTE = "cleaneroo-inscription-attente";
+export function garderInscription(infos) { try { localStorage.setItem(CLE_ATTENTE, JSON.stringify({ ...infos, le: Date.now() })); } catch { /* rien */ } }
+export function inscriptionEnAttente() {
+  try { const x = JSON.parse(localStorage.getItem(CLE_ATTENTE) || "null"); return x && Date.now() - x.le < 3600e3 ? x : null; } catch { return null; }
+}
+export function oublierInscription() { try { localStorage.removeItem(CLE_ATTENTE); } catch { /* rien */ } }
 
 export async function connecter(email, mdp) {
   const { error } = await supabase.auth.signInWithPassword({ email, password: mdp });
@@ -284,7 +302,7 @@ export async function monProfil() {
   if (error) throw new Error(error.message);
   return data ? { ...data, email: s.user.email } : null;
 }
-const CHAMPS_PROFIL = ["prenom", "nom", "telephone", "code_postal", "ville", "siret", "societe", "prestations", "zone_km", "zone_lat", "zone_lon", "espace", "disponibilites", "adresse", "sap_numero", "sap_date"];
+const CHAMPS_PROFIL = ["prenom", "nom", "telephone", "civilite", "qualite", "siret_societe", "code_postal", "ville", "siret", "societe", "prestations", "zone_km", "zone_lat", "zone_lon", "espace", "disponibilites", "adresse", "sap_numero", "sap_date"];
 export async function majProfil(champs) {
   const s = await session();
   const maj = Object.fromEntries(Object.entries(champs).filter(([k]) => CHAMPS_PROFIL.includes(k)));

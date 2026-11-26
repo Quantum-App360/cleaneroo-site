@@ -23,6 +23,7 @@ import { editeurTemoins, brancherTemoins } from "./temoins.js";
 import { traduire, tr } from "./langue.js";
 import {
   supabase, session, creerCompte, connecter, deconnecter, mdpOublie, nouveauMdp, monProfil, majProfil, ajouterStatut, ecouterDemandes,
+  renvoyerConfirmation, garderInscription, inscriptionEnAttente, oublierInscription,
   DOCUMENTS_CLEANEUR, mesDocuments, deposerDocument, retirerDocument, lienDocument, soumettreDossier,
   demandesDuCompte, mesDemandes, synchroniserBiens, enregistrerBien, supprimerBien,
 } from "./donnees.js";
@@ -96,6 +97,9 @@ export async function pageCompte(vue, param) {
   }
   const [p, biens, demandes, parrain] = await Promise.all([monProfil().catch(() => null), synchroniserBiens().catch(() => []), demandesDuCompte().catch(() => []), monParrainage().catch(() => null)]);
   if (location.hash !== ici) return;
+  // Inscription commencée avec une adresse déjà inscrite, ou e-mail tout juste confirmé : l'espace demandé est ajouté maintenant.
+  const ajoute = await appliquerInscriptionEnAttente(p).catch(() => null);
+  if (ajoute) { majLienCompte(); location.hash = `#/compte/${ajoute}`; return; }
   if (!p) { vue.innerHTML = `<section class="bloc"><div class="etroit">${titre("Mon espace")}<p class="erreur">${tr("Le service est momentanément indisponible. Réessayez dans quelques minutes.")}</p></div></section>`; traduire(vue); return; }
   memoriserCoordonnees(p);
   if (await utiliserCodeEquipeGarde()) { location.hash = "#/compte/cleaneur"; return; }
@@ -252,7 +256,7 @@ function blocInscriptionCleaneur(type) {
     ${soc ? `<label class="case"><input type="checkbox" name="engagement"> <span>${tr("En tant qu'employeur, je forme mes salariés (hygiène, sécurité, gestes et produits, équipements de protection) et je réponds de leur formation. Une prestation réglementée n'est confiée qu'à un salarié qui a l'attestation exigée par la loi.")}</span></label>` : ""}`;
 }
 
-function ecranConnexion(vue, mode, message = "", ok = false, roleDefaut = "client") {
+function ecranConnexion(vue, mode, message = "", ok = false, roleDefaut = "client", emailDefaut = "") {
   const creer = mode === "creer";
   const inscriptionCleaneur = creer && roleDefaut === "cleaneur", type = typeCleaneurVoulu();
   // Espace de l'inscription : celui de l'onglet (un espace = un parcours) ; sans onglet, on demande d'abord le profil.
@@ -295,6 +299,7 @@ function ecranConnexion(vue, mode, message = "", ok = false, roleDefaut = "clien
     supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: location.origin + location.pathname + "?vers=compte" } }));
   const f = vue.querySelector("#form-compte");
   if (!f) return;   // écran « Vous êtes : » : les cartes sont des liens
+  if (emailDefaut) { f.email.value = emailDefaut; f.mdp.focus(); }
   // SIRET tapé : la raison sociale se remplit depuis le registre officiel, et l'entreprise fermée est signalée tout de suite.
   const champSiret = f.querySelector("[name=siretSociete]"), fiche = f.querySelector("[data-fiche-siret]");
   if (champSiret && fiche) champSiret.addEventListener("input", async () => {
@@ -337,7 +342,10 @@ function ecranConnexion(vue, mode, message = "", ok = false, roleDefaut = "clien
         secteur: statuts.includes("entreprise") ? f.secteur.value : "" });
       oublierCodeParrain();
       if (r === "connecte") { majLienCompte(); return pageCompte(vue); }
-      ecranConnexion(vue, "connexion", tr("Compte créé. Ouvrez l'e-mail de confirmation que nous venons de vous envoyer, cliquez sur le lien, puis connectez-vous."), true);
+      garderInscription({ email, statuts, prenom: f.prenom.value.trim(), nom: f.nom.value.trim(), societe: avecSociete ? f.societe.value.trim() : "",
+        siretSociete: avecSociete ? f.siretSociete.value.replace(/\D/g, "") : "" });
+      if (r === "existe") return ecranCompteExistant(vue, email, roleDefaut, statuts);
+      ecranConfirmerEmail(vue, email, roleDefaut);
     } catch (err) {
       erreur(/registered|already/i.test(err.message) ? "Un compte existe déjà avec cet e-mail : connectez-vous." : /password/i.test(err.message) ? "Mot de passe trop simple : choisissez-en un plus long ou plus varié." : "Le service est momentanément indisponible. Réessayez dans quelques minutes.");
     }
@@ -348,6 +356,80 @@ function ecranConnexion(vue, mode, message = "", ok = false, roleDefaut = "clien
     await mdpOublie(email).catch(() => null);
     ecranConnexion(vue, "connexion", tr("Si un compte existe avec cet e-mail, vous allez recevoir un lien pour choisir un nouveau mot de passe."), true);
   });
+}
+
+/* Inscription (26/11/2026, retour de Vincent) : deux écrans vrais au lieu d'un message sur la page de connexion. */
+const NOMS_INSCRIPTION = { cleaneur: "Cleaneur", particulier: "Particulier", entreprise: "Entreprise", pro: "Conciergerie", hotellerie: "Hôtels et campings" };
+
+/** Adresse déjà inscrite (Supabase n'envoie alors aucun e-mail) : se connecter ; l'espace demandé s'ajoute ensuite au compte. */
+function ecranCompteExistant(vue, email, roleDefaut, statuts) {
+  const espaces = statuts.map(x => tr(NOMS_INSCRIPTION[x] || x)).join(", ");
+  window.scrollTo(0, 0);
+  vue.innerHTML = `<section class="bloc"><div class="etroit">${titre(tr("Vous avez déjà un compte"))}
+    <div class="carte etape-inscription"><span class="tuile-ia">${icone("equipe")}</span>
+      <p style="margin:0"><b>${esc(email)}</b> ${tr("a déjà un compte Cleaneroo.")}</p>
+      <p class="petit" style="margin:6px 0 0">${tr("Connectez-vous avec la méthode utilisée à sa création. Les informations que vous venez de saisir sont gardées : l'espace")} <b>${esc(espaces)}</b> ${tr("sera ajouté à votre compte.")}</p>
+      <div class="boutons-inscription">
+        ${REGLES.CONNEXION_GOOGLE ? `<button type="button" class="bouton plein" data-google>${tr("Continuer avec Google")}</button>` : ""}
+        <button type="button" class="bouton ${REGLES.CONNEXION_GOOGLE ? "secondaire" : ""} plein" data-connexion>${tr("Me connecter avec mon mot de passe")}</button>
+        <button type="button" class="lien-bouton" data-oubli>${tr("Mot de passe oublié ou jamais créé ?")}</button>
+      </div><p class="note" data-message hidden></p>
+      <p class="petit muet" style="margin:10px 0 0">${tr("Ce n'est pas votre adresse ?")} <button type="button" class="lien-bouton" data-autre>${tr("Utiliser une autre adresse")}</button></p></div></div></section>`;
+  traduire(vue);
+  vue.querySelector("[data-google]")?.addEventListener("click", () =>
+    supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: location.origin + location.pathname + "?vers=compte" } }));
+  vue.querySelector("[data-connexion]").onclick = () => ecranConnexion(vue, "connexion", "", false, roleDefaut, email);
+  vue.querySelector("[data-oubli]").onclick = async () => {
+    await mdpOublie(email).catch(() => null);
+    const m = vue.querySelector("[data-message]"); m.hidden = false;
+    m.textContent = tr("C'est envoyé : ouvrez l'e-mail reçu pour choisir un mot de passe. Vous serez ensuite connecté.");
+  };
+  vue.querySelector("[data-autre]").onclick = () => { oublierInscription(); ecranConnexion(vue, "creer", "", false, roleDefaut); };
+}
+
+/** Nouvelle adresse : plus qu'une étape. Le lien de l'e-mail connecte directement (retourEmail) et ouvre l'espace créé. */
+function ecranConfirmerEmail(vue, email, roleDefaut) {
+  const cleaneur = roleDefaut === "cleaneur";
+  window.scrollTo(0, 0);
+  vue.innerHTML = `<section class="bloc"><div class="etroit">${titre(tr("Plus qu'une étape : confirmez votre e-mail"))}
+    <div class="carte etape-inscription"><span class="tuile-ia">${icone("message")}</span>
+      <p style="margin:0">${tr("Nous venons d'envoyer un lien de confirmation à")} <b>${esc(email)}</b>.</p>
+      <p class="petit" style="margin:6px 0 0">${tr(cleaneur ? "Cliquez sur ce lien : vous serez connecté directement et arriverez sur « Mon dossier » pour envoyer vos documents." : "Cliquez sur ce lien : vous serez connecté directement à votre espace.")}</p>
+      <p class="petit muet" style="margin:6px 0 0">${tr("Rien reçu après 2 minutes ? Regardez dans les courriers indésirables (expéditeur Cleaneroo), puis renvoyez l'e-mail.")}</p>
+      <div class="boutons-inscription"><button type="button" class="bouton secondaire plein" data-renvoyer>${tr("Renvoyer l'e-mail")}</button>
+        <button type="button" class="lien-bouton" data-changer>${tr("Modifier mon adresse e-mail")}</button>
+        <button type="button" class="lien-bouton" data-deja>${tr("J'ai confirmé : me connecter")}</button></div>
+      <p class="note" data-message hidden></p></div></div></section>`;
+  traduire(vue);
+  const b = vue.querySelector("[data-renvoyer]"), m = vue.querySelector("[data-message]");
+  const attendre = s => { b.disabled = true; const t = setInterval(() => { if (!b.isConnected) return clearInterval(t);
+    b.textContent = s > 0 ? `${tr("Renvoyer l'e-mail")} (${s--} s)` : (clearInterval(t), b.disabled = false, tr("Renvoyer l'e-mail")); }, 1000); };
+  attendre(60);
+  b.onclick = async () => {
+    try { await renvoyerConfirmation(email); m.hidden = false; m.className = "note"; m.textContent = tr("E-mail renvoyé."); }
+    catch { m.hidden = false; m.className = "erreur"; m.textContent = tr("Envoi impossible pour le moment : réessayez dans une minute."); }
+    attendre(60);
+  };
+  vue.querySelector("[data-changer]").onclick = () => ecranConnexion(vue, "creer", "", false, roleDefaut);
+  vue.querySelector("[data-deja]").onclick = () => ecranConnexion(vue, "connexion", "", false, roleDefaut, email);
+}
+
+/** Connecté avec une inscription en attente : les espaces demandés s'ajoutent au compte, avec les informations saisies
+ *  (seulement les champs encore vides du profil). Renvoie l'espace à ouvrir, ou null. */
+async function appliquerInscriptionEnAttente(p) {
+  const x = inscriptionEnAttente(), s = await session();
+  if (!x || !p || !s) return null;
+  oublierInscription();
+  // Seulement pour le compte de l'adresse saisie (un autre compte connecté sur cet appareil n'est pas modifié).
+  if (String(x.email || "").toLowerCase() !== String(s.user.email || "").toLowerCase()) return null;
+  const manquants = (x.statuts || []).filter(st => !(p.statuts || []).includes(st));
+  for (const st of manquants) await ajouterStatut(st).catch(() => null);
+  const champs = { prenom: x.prenom, nom: x.nom, telephone: x.telephone, civilite: x.civilite, qualite: x.qualite, societe: x.societe, siret_societe: x.siretSociete };
+  const vides = Object.fromEntries(Object.entries(champs).filter(([k, v]) => v && !p[k]));
+  if (Object.keys(vides).length) await majProfil(vides).catch(() => null);
+  if (!manquants.length) return null;
+  if (manquants.includes("cleaneur")) try { localStorage.setItem("cleaneroo-sous-onglet-cleaneur", "profil"); } catch { /* rien */ }
+  return manquants.includes("cleaneur") ? "cleaneur" : manquants[0];
 }
 
 /** Pré-inscription du Cleaneur (indépendant ou société) ; il arrive ensuite sur « Mon dossier » pour ses documents. */
@@ -371,7 +453,10 @@ async function inscrireCleaneur(f, email, erreur, vue, type) {
     try { localStorage.setItem("cleaneroo-sous-onglet-cleaneur", "profil"); } catch { /* rien */ }
     typeCleaneur = null;
     if (r === "connecte") { majLienCompte(); return pageCompte(vue); }
-    ecranConnexion(vue, "connexion", tr("Pré-inscription enregistrée. Ouvrez l'e-mail de confirmation que nous venons de vous envoyer, cliquez sur le lien, puis connectez-vous : vous arriverez sur « Mon dossier » pour envoyer vos documents."), true, "cleaneur");
+    garderInscription({ email, statuts: ["cleaneur"], prenom: f.prenom.value.trim(), nom: f.nom.value.trim(), telephone: tel, civilite,
+      societe: soc ? f.societe.value.trim() : "", siretSociete: soc ? f.siretSociete.value.replace(/\D/g, "") : "", qualite: soc ? f.qualite.value : "" });
+    if (r === "existe") return ecranCompteExistant(vue, email, "cleaneur", ["cleaneur"]);
+    ecranConfirmerEmail(vue, email, "cleaneur");
   } catch (err) {
     erreur(/registered|already/i.test(err.message) ? "Un compte existe déjà avec cet e-mail : connectez-vous." : /password/i.test(err.message) ? "Mot de passe trop simple : choisissez-en un plus long ou plus varié." : "Le service est momentanément indisponible. Réessayez dans quelques minutes.");
   }
