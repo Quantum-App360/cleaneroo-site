@@ -1138,3 +1138,7 @@ Le parcours Client doit être extrêmement simple.
 L'espace Cleaner doit être extrêmement efficace.
 
 Et les deux doivent former un seul écosystème cohérent.
+### Retours de Michael du 26/11 — point 3 : distinction côté client (en cours)
+- Corrigé (commit local 0404f5f) : raccourci « Mes favoris » du tableau client, qui ouvrait la page d'accueil publique.
+- Validé par Michael : site pensé ordinateur d'abord (téléphone = applis) ; menu latéral fixe pour l'espace client (Accueil, Réserver, Mes prestations, Messages, Mes favoris en vraie page, Mes biens, Mon compte) ; pastilles de raccourcis supprimées ; « Près de chez moi » retiré de l'espace client ; rubriques en cartes numérotées, choix avec rond à cocher, onglet actif plein, boutons primaire / contour / lien.
+- Proposé, en attente : même menu côté Cleaneur ; maquettes « Aujourd'hui » Cleaneur (chiffres du jour, journée en ligne de temps, carte de tournée, missions proposées) et « Mes prestations » client (tableau + panneau de détail). Prototypes : /tmp/srv/proto2-4, /tmp/srv/maq/.
