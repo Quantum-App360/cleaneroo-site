@@ -8,7 +8,8 @@ export const GUIDES_VIDEO = {
   // (le paiement a lieu à la réservation). À refaire avant de la remettre : passer « retire » à false.
   client: { retire: true, video: "assets/video/guide-client.mp4", image: "assets/video/guide-client.jpg",
     titre: "Votre ménage en 2 minutes", texte: "Choisir, décrire, réserver, suivre en direct puis valider : tout le parcours en 40 secondes." },
-  cleaneur: { video: "assets/video/guide-cleaneur.mp4", image: "assets/video/guide-cleaneur.jpg",
+  // Guide Cleaneur retiré le 26/11/2026 (demande de Michael : toutes les vidéos de démonstration retirées, nouvelles à venir).
+  cleaneur: { retire: true, video: "assets/video/guide-cleaneur.mp4", image: "assets/video/guide-cleaneur.jpg",
     titre: "Votre première mission, pas à pas", texte: "Trouver une mission, vous proposer, être guidé le jour J puis être payé : tout en 40 secondes." },
 };
 

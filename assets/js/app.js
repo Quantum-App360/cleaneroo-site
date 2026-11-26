@@ -350,8 +350,11 @@ function pageAccueil() {
       <div class="revele" id="inscription">${formulaireInscription()}</div></div></section>` : ""}`;
 }
 
-/** Vidéo pub (12 s, verticale) : muette en boucle, lancée seulement quand elle est visible ; bouton pour le son. */
+/** Vidéo pub (12 s, verticale) : muette en boucle, lancée seulement quand elle est visible ; bouton pour le son.
+ *  Retirée le 26/11/2026 (demande de Michael : nouvelles vidéos à venir). Pour la remettre : VIDEO_PUB = true et le fichier dans assets/video. */
+const VIDEO_PUB = false;
 function blocVideoPub() {
+  if (!VIDEO_PUB) return "";
   return `<section class="bloc bloc-video"><div class="conteneur video-grille">
     <div class="video-texte revele">
       <span class="surtitre-video">En vidéo</span>
