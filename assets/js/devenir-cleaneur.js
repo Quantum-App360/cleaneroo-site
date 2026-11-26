@@ -60,20 +60,21 @@ export function reglesEnClair() {
     <p class="petit"><a href="#/conditions-cleaneurs">${tr("Lire le contrat de prestataire")} ›</a></p>`;
 }
 
-/** Étapes pour devenir Cleaneur (formations : la règle de la base, formations_manquantes = modules des prestations choisies). */
+/** Étapes pour devenir Cleaneur. Formations : seule la loi bloque une mission (qualifie / formations_exigees en base : Certibiocide « nuisibles »
+ *  et « désinfection ») ; les modules Cleaneroo sont conseillés, jamais imposés (décision du 16/11/2026, base-formations-loi.sql). */
 export function etapesCleaneur() {
   const etapes = [
     `${tr("Avoir un statut d'indépendant (pas encore auto-entrepreneur ? Création gratuite en ligne sur")} <a href="https://www.autoentrepreneur.urssaf.fr" target="_blank" rel="noopener">autoentrepreneur.urssaf.fr</a>, ${tr("environ 15 minutes)")}`,
     tr("Préparer vos documents (pièce d'identité, SIRET, RC Pro, attestation de vigilance URSSAF)"),
     tr("Déposer votre dossier (zone, prestations ; chaque document vérifié avant activation)"),
-    tr("Signer le contrat de prestataire et valider les modules de formation des prestations que vous choisissez"),
+    tr("Signer le contrat de prestataire (les modules de formation sont conseillés, gratuits et facultatifs)"),
     `${tr("Réussir la mission test (rémunérée")} ${euros(REGLES.MISSION_TEST_C)}, ${tr("payée par Cleaneroo)")}`,
     tr("Choisir vos missions (prix et horaires proposés, libre d'accepter)"),
     tr("Être payé chaque vendredi (validation du client, commission prélevée, versement)"),
   ];
   return `<h2 class="titre-section">${icone("valide", { tuile: true })}${tr("Les étapes")}</h2>
     ${etapes.map((t, i) => `<div class="carte etape-cleaneur"><b>${i + 1}.</b> <span>${t}</span></div>`).join("")}
-    <p class="petit" style="margin:4px 0 14px">${tr("Certaines prestations demandent une qualification supplémentaire (travail en hauteur, biocides…) : elles ne vous sont proposées que si vous l'avez.")}</p>
+    <p class="petit" style="margin:4px 0 14px">${tr("Seules les prestations qui exigent un certificat imposé par la loi (Certibiocide pour les nuisibles et la désinfection) ne vous sont proposées qu'avec ce certificat.")}</p>
     <div class="note bon-a-savoir"><b>${tr("Bon à savoir")}</b> ${tr("Vous ne faites que du ménage chez des particuliers ? Déclarez-vous aussi « services à la personne » (gratuit, en ligne sur la plateforme NOVA) : vos clients pourront bénéficier du crédit d'impôt, ce qui rend vos missions plus attractives. Attention, cette déclaration impose de n'exercer que des services à la personne (pas de bureaux ni de véhicules).")}</div>`;
 }
 

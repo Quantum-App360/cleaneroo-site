@@ -76,7 +76,10 @@ export async function blocCeQuiMeManque(boite) {
     [m.dossier === "VALIDE", "Dossier administratif validé"],
     [m.contrat_signe, "Contrat de prestataire signé"],
     [m.mission_test === "REUSSIE", m.mission_test === "A_REFAIRE" ? `${tr("Mission test à refaire")}${m.mission_test_motif ? " : " + m.mission_test_motif : ""}` : "Mission test rémunérée réussie"],
-    [!m.formations_manquantes?.length, m.formations_manquantes?.length ? `${m.formations_manquantes.length} ${tr("formation(s) à valider pour vos prestations")}` : "Formations de vos prestations validées"],
+    // Seule la loi bloque une mission (Certibiocide « nuisibles » et « désinfection ») ; les autres modules sont conseillés, jamais bloquants.
+    ...(() => { const l = m.formations_manquantes || [], loi = l.filter(x => ["nuisibles", "biocides"].includes(x)), autres = l.length - loi.length;
+      return [[!loi.length, loi.length ? `${loi.length} ${tr("certificat(s) exigé(s) par la loi pour vos prestations")}` : "Certificats exigés par la loi : en règle"],
+        ...(autres ? [[true, `${autres} ${tr("module(s) de formation conseillé(s), facultatif(s)")}`]] : [])]; })(),
     [!m.documents_expirent?.length, m.documents_expirent?.length ? `${m.documents_expirent.length} ${tr("document(s) qui expirent bientôt")}` : "Documents à jour"],
   ];
   const ok = lignes.every(l => l[0]);

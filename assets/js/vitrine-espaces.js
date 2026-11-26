@@ -35,7 +35,7 @@ export const VITRINES = {
     ["valide", "Déroulé guidé", "Tâches et photos guidées, signature et compte rendu."],
     ["paiement", "Paiement après validation", "Versé chaque vendredi pour les missions validées jusqu'au mercredi, pourboires compris."],
     ["avis", "Votre activité", "Chiffre d'affaires, cotisations URSSAF et factures calculés pour vous."],
-    ["garantie", "Formations de vos prestations", "Des modules en ligne à valider pour chaque prestation que vous proposez, avant d'en recevoir les missions ; guides et vidéos en plus pour progresser."]] },
+    ["garantie", "Formations conseillées", "Modules et vidéos pour progresser, gratuits et facultatifs. Seuls les certificats exigés par la loi (Certibiocide pour les nuisibles et la désinfection) sont obligatoires."]] },
   // Société de nettoyage (23/11/2026, retour de Vincent) : sa propre page, jamais la présentation de l'auto-entrepreneur.
   societe: { nom: "Espace Société de nettoyage", accroche: "Référencez votre société de nettoyage : des missions près de chez vous pour vos équipes.", ico: "bureaux", video: "cleaneur",
     documents: "Kbis ou SIRET, assurance RC Pro et attestation URSSAF de la société : vous les envoyez après la pré-inscription, depuis « Mon dossier ».", points: [
