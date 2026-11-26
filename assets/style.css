@@ -3591,3 +3591,12 @@ body.avec-menu .resa-centre { width: min(1180px, 100% - 64px); }
 .pass-avantages li { display: flex; gap: 8px; align-items: flex-start; font-size: .92rem; }
 .pass-avantages li svg { flex: none; margin-top: 2px; color: var(--primaire); }
 .pass-carte .ligne-montant { font-size: .92rem; }
+
+/* Créneaux avancés (26/11/2026) : nombre de Cleaneurs libres, créneau complet, tournée */
+.creneaux button small { display: block; font-size: .68rem; font-weight: 600; opacity: .75; line-height: 1.2; }
+.creneaux button.complet { opacity: .5; }
+.creneaux button.tournee { box-shadow: inset 0 0 0 2px var(--primaire); }
+.creneaux button .tournee-mot { color: var(--primaire); opacity: 1; }
+.creneaux button.choisi .tournee-mot { color: inherit; }
+.legende-creneaux .tournee::before { background: transparent; box-shadow: inset 0 0 0 2px var(--primaire); }
+.creneaux button.dans-plage { background: color-mix(in srgb, var(--primaire) 14%, transparent); }

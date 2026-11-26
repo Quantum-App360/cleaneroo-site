@@ -1229,3 +1229,9 @@ Ordre : A base de connaissances + fonction serveur · B conversation et fiche ·
 - Location saisonnière : du départ des voyageurs jusqu'au dernier début qui finit avant l'arrivée suivante, fenêtre d'arrivée de 30 min comprise.
 - Ménage et autres : 7 h-11 h 30 et 13 h-18 h 30, fini avant 20 h ; bureaux, commerces, parties communes : 6 h-20 h 30, fini avant 22 h ; extérieurs et piscine : 8 h-17 h 30, fini avant 19 h ; événements : comme avant, à la demi-heure.
 - L'heure du brouillon devient décimale (10.5 = 10 h 30). Prix inchangés (créneau malin et forte demande : mêmes plages).
+
+## Créneaux avancés (26/11/2026, accord de Michael) — à reporter dans les applis (Vincent)
+- Base (outils/base-creneaux-avances.sql) : creneaux_disponibles(rubrique, lat, lon, jour, durée) → nombre de Cleaneurs libres par demi-heure (jamais d'identité) ; creneaux_tournee(lat, lon, jour) → fins de missions à moins de 5 km ; demandes.plage_fin (plage d'arrivée, 12 h au plus, effacée dès qu'un Cleaneur reçoit la mission) ; plages_missions() ; prendre_mission(ref, p_heure) ; proposer refuse une heure hors plage (« heure ») ; details.creneauPrix posé à la création (prix figé sur l'heure de début, lu par la fonction paiement).
+- Réservation : « Heure précise » ou « Plage horaire » (location saisonnière : plage par défaut, jusqu'au dernier début possible) ; sous chaque créneau, « n dispo. » ou « complet », et « tournée ».
+- Cleaneur : sur une mission à plage, menu « Mon heure d'arrivée » ; le client est prévenu de l'heure fixée.
+- Pilote automatique : plage entre le départ et l'arrivée suivante lue dans le calendrier ; nouveau mode « Proposé » (biens.donnees.pilote.mode = "propose") : une notification par départ sans ménage, rien n'est réservé.

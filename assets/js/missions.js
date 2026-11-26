@@ -5,7 +5,7 @@ import { blocBriefIA } from "./equipements.js";
 import { rubrique } from "./catalogue.js";
 import { REGLES, euros, dateLongue, dateCourte, heure, duree, finOffreLancement, indemniteAccesC, dateVersement, conseilSecteur, lienWhatsAppSupport, gainCleaneur } from "./regles.js";
 import { monParrainage, lienInviterClient } from "./parrainage.js";
-import { supabase, reduirePhoto, majProfil, mesDemandesPersonnelles, libererFavori, proposerProchainPassage, mesPropositionsPassage, inviterFavori, mesInvitationsFavori, alerteSecurite } from "./donnees.js";
+import { supabase, reduirePhoto, majProfil, mesDemandesPersonnelles, libererFavori, proposerProchainPassage, mesPropositionsPassage, inviterFavori, mesInvitationsFavori, alerteSecurite, plagesMissions } from "./donnees.js";
 import { positionAdresse, distanceKm } from "./suivi-live.js";
 import { blocNoterClients, remplirNotesClients, blocAvisRecus } from "./avis-clients.js";
 import { blocFormations } from "./formations.js";
@@ -559,12 +559,23 @@ function blocAccesVehicule(m) {
       ${cles}${preuve}</div></div>`;
 }
 
+/** Plage horaire : le client accepte une arrivée entre deux heures ; le Cleaneur choisit la sienne (toutes les 30 minutes). */
+function blocPlage(m) {
+  const fin = plages.get(m.reference);
+  if (!fin || !m.creneau) return "";
+  const d = new Date(m.creneau), f = new Date(fin), options = [];
+  for (let t = d.getTime(); t <= f.getTime(); t += 30 * 60000) options.push(new Date(t));
+  const hm = x => heure(x.getHours(), x.getMinutes());
+  return `<p class="petit" style="margin:4px 0 0"><b>${tr("Plage horaire")}</b> : ${tr("arrivée entre")} ${hm(d)} ${tr("et")} ${hm(f)}</p>
+    <label class="champ" style="margin:4px 0 0">${tr("Mon heure d'arrivée")}<select data-heure-plage="${esc(m.reference)}">${options.map(x => `<option value="${x.toISOString()}">${hm(x)}</option>`).join("")}</select></label>`;
+}
 function carteDisponible(m) {
   const r = rubrique(m.rubrique_id);
   return `<div class="carte ligne-compte" data-dispo="${esc(m.reference)}">${icone(r.icone, { tuile: true })}
     <div class="corps"><div class="haut"><h3>${m.urgence ? `<span class="tampon urgence">${icone("alerte")} Urgence</span> ` : ""}${r.nom}</h3><b>${m.sur_devis ? tr("Sur devis") : euros(m.estimation_c)}</b></div>
       ${m.urgence ? `<p class="petit" style="margin:2px 0 0;color:var(--succes);font-weight:700">${tr("Renfort : 0 % de commission")} · ${tr("vous touchez")} ${euros(m.estimation_c)}</p>` : ""}
       <p class="muet" style="margin:2px 0 0">${quand(m)} · ${duree(m.duree_min)}${m.nombre_cleaneurs === 2 ? " · 2 Cleaneurs" : ""}</p>
+      ${blocPlage(m)}
       <div data-chez-qui="${esc(m.reference)}"></div>
       <p class="petit" style="margin:2px 0 0">${esc(m.code_postal)} ${esc(m.ville)}${scores.has(m.reference) ? ` · <b style="color:var(--primaire)">${tr("Compatibilité")} ${Math.min(100, scores.get(m.reference))}/100</b>` : ""}</p><p class="petit" data-note-client="${esc(m.reference)}" style="margin:2px 0 0"></p><p class="erreur" data-erreur-prendre style="margin:4px 0 0"></p></div>
     ${personnelles.has(m.reference) ? `<div class="demande-perso"><span class="tampon vert">${icone("cleaneurs")} ${tr("Le client vous a demandé")}</span>
@@ -577,6 +588,7 @@ function carteDisponible(m) {
 let mesPropositions = [];
 /** Demandes où le client m'a demandé personnellement (référence → fin de l'exclusivité). */
 let personnelles = new Map();
+let plages = new Map();   // référence → fin de la plage horaire (le Cleaneur choisit son heure d'arrivée)
 let scores = new Map();
 
 const vide = (t, plus = "") => `<div class="vide-compte"><p class="muet">${t}</p>${plus ? `<p class="petit">${plus}</p>` : ""}</div>`;
@@ -689,6 +701,7 @@ export async function brancherMissions(vue, p) {
     selfieDuJour().catch(() => "aucun"), p.role === "admin" ? null : mesAvertissements().catch(() => null)]);
   mesPropositions = await supabase.rpc("mes_propositions").then(r => r.data || []).catch(() => []);
   personnelles = new Map((await mesDemandesPersonnelles().catch(() => [])).map(x => [x.reference, x.jusqu]));
+  plages = new Map(((await plagesMissions().catch(() => [])) || []).map(x => [x.reference, x.plage_fin]));
   const [propositions, invitations] = p.employeur_id ? [[], []] : await Promise.all([mesPropositionsPassage().catch(() => null).then(x => x || []),
     mesInvitationsFavori().catch(() => null).then(x => x || [])]);
   const [penalites, docs, tableau] = await Promise.all([p.role === "admin" ? null : mesPenalites().catch(() => null),
@@ -887,7 +900,8 @@ ${p.employeur_id ? "" : `    <h2 class="titre-section" id="missions-disponibles"
   });
   boite.querySelectorAll("[data-prendre]").forEach(b => b.onclick = async () => {
     b.disabled = true;
-    const r = await prendreMission(b.dataset.prendre).catch(() => "erreur");
+    const choixHeure = boite.querySelector(`[data-heure-plage="${CSS.escape(b.dataset.prendre)}"]`)?.value || null;
+    const r = await prendreMission(b.dataset.prendre, choixHeure).catch(() => "erreur");
     if (r === "ok") return recharger();
     b.disabled = false;
     b.closest(".carte").querySelector("[data-erreur-prendre]").textContent = tr({
@@ -897,6 +911,7 @@ ${p.employeur_id ? "" : `    <h2 class="titre-section" id="missions-disponibles"
       fermee: "Cette mission tombe pendant une de vos périodes fermées.",
       candidature: "Le client choisit parmi les propositions : proposez vos conditions.",
       assurance: "Votre RC Pro ne couvre pas cette activité : mettez-la à jour dans votre dossier.",
+      heure: "Choisissez une heure d'arrivée comprise dans la plage du client.",
       mission_test: "Première mission accompagnée : une seule à la fois, chez un particulier et jamais en urgence. Toutes les missions s'ouvrent dès qu'elle est réussie.",
       equipement: "Cette mission demande un matériel que vous n'avez pas coché dans « Mon matériel » (Profil)." }[r] || "Le service est momentanément indisponible. Réessayez dans quelques minutes.");
   });

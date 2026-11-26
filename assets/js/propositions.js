@@ -21,6 +21,7 @@ export const MESSAGES_PROPOSITION = {
   frais: "Les frais de déplacement ne peuvent pas dépasser 60 €.", planning: "Ce créneau chevauche une de vos missions confirmées (30 min de trajet comprises).",
   chevauchement: "Vous avez déjà une proposition en attente sur un créneau qui chevauche celui-ci.",
   assurance: "Votre RC Pro ne couvre pas cette activité : mettez-la à jour dans votre dossier.",
+  heure: "Choisissez une heure d'arrivée comprise dans la plage du client.",
   mission_test: "Première mission accompagnée : une seule à la fois, chez un particulier et jamais en urgence. Toutes les missions s'ouvrent dès qu'elle est réussie.",
   equipement: "Cette mission demande un matériel que vous n'avez pas coché dans « Mon matériel » (Profil)." };
 

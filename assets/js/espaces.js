@@ -289,10 +289,11 @@ export function ongletPro(p, biens, hotellerie = false) {
 /** Pilote automatique d'un logement relié à un calendrier (18 novembre 2026) : Manuel (par défaut) ou Automatique avec plafond mensuel.
  *  En Automatique, le serveur (fonction pilote-auto) programme le ménage de chaque départ de voyageurs, au prix du dernier ménage réservé. */
 function blocPilote(l) {
-  const p = l.pilote || {}, auto = p.mode === "auto";
-  return `<details class="pilote-bien"><summary>${icone("instantane")} ${tr("Pilote automatique")} : <b>${tr(auto ? "Automatique" : "Manuel")}</b>${auto && p.plafondC ? ` · ${tr("plafond")} ${euros(p.plafondC)} / ${tr("mois")}` : ""}</summary>
+  const p = l.pilote || {}, auto = p.mode === "auto", propose = p.mode === "propose";
+  return `<details class="pilote-bien"><summary>${icone("instantane")} ${tr("Pilote automatique")} : <b>${tr(auto ? "Automatique" : propose ? "Proposé" : "Manuel")}</b>${auto && p.plafondC ? ` · ${tr("plafond")} ${euros(p.plafondC)} / ${tr("mois")}` : ""}</summary>
     <form data-form-pilote="${esc(l.id)}" novalidate style="margin-top:10px">
-      <label class="case"><input type="radio" name="mode" value="manuel" ${auto ? "" : "checked"}><span>${tr("Manuel : je programme moi-même chaque ménage")}</span></label>
+      <label class="case"><input type="radio" name="mode" value="manuel" ${auto || propose ? "" : "checked"}><span>${tr("Manuel : je programme moi-même chaque ménage")}</span></label>
+      <label class="case"><input type="radio" name="mode" value="propose" ${propose ? "checked" : ""}><span>${tr("Proposé : à chaque départ de voyageurs, je suis prévenu et je programme le ménage en un geste (rien n'est réservé sans moi)")}</span></label>
       <label class="case"><input type="radio" name="mode" value="auto" ${auto ? "checked" : ""}><span>${tr("Automatique : chaque départ de voyageurs programme son ménage tout seul")}</span></label>
       <label class="champ">${tr("Plafond mensuel (€)")}<input name="plafond" type="number" inputmode="numeric" min="0" step="1" value="${p.plafondC ? Math.round(p.plafondC / 100) : ""}"></label>
       <p class="petit">${tr("Prix : celui fixé pour ce logement (« Prix du ménage »), sinon celui du dernier ménage réservé ; consignes : celles du dernier ménage. Au-delà du plafond, rien n'est programmé sans vous. Vous êtes prévenu à chaque ménage programmé.")}</p>
@@ -347,7 +348,7 @@ export function brancherPro(vue, p, biens, demandes, { majProfil, recharger }) {
     const mode = f.querySelector("[name=mode]:checked")?.value || "manuel", plafondC = Math.round((Number(f.plafond.value) || 0) * 100);
     const modele = (demandes || []).filter(d => d.details?.logementId === l.id && d.statut !== "ANNULEE" && !d.sur_devis)
       .sort((a, b) => new Date(b.cree_le) - new Date(a.cree_le))[0];
-    if (mode === "auto" && (l.calendriers || []).every(c => c.url === URL_CALENDRIER_DEMO)) { err.textContent = tr("Calendrier de démonstration : il sert à essayer l'agenda. Reliez le vrai calendrier de votre annonce pour activer le pilote automatique."); return; }
+    if (mode !== "manuel" && (l.calendriers || []).every(c => c.url === URL_CALENDRIER_DEMO)) { err.textContent = tr("Calendrier de démonstration : il sert à essayer l'agenda. Reliez le vrai calendrier de votre annonce pour activer le pilote automatique."); return; }
         if (mode === "auto" && !modele) { err.textContent = tr("Réservez d'abord un premier ménage pour ce logement : il servira de modèle (prix et consignes)."); return; }
     if (mode === "auto" && plafondC <= 0) { err.textContent = tr("Indiquez un plafond mensuel : au-delà, rien n'est programmé sans vous."); return; }
     try { await enregistrerBien({ ...l, pilote: { ...(l.pilote || {}), mode, plafondC, modele: modele?.reference || "", validationIa: !!f.validationIa?.checked } }); recharger(); }

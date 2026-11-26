@@ -1150,6 +1150,28 @@ function blocOuVehicule() {
       <p class="petit" style="margin:0">Ces informations ne sont transmises au Cleaneur qu'une fois la mission confirmée.</p></div>`;
 }
 
+/* Créneaux avancés (26/11/2026, accord de Michael) : vraies disponibilités des Cleaneurs (creneaux_disponibles : des nombres, jamais
+   d'identité), créneaux « tournée » (un Cleaneur termine une mission à moins de 5 km), plage horaire au lieu d'une heure fixe. */
+let dispoCle = "", dispoVal = null;
+function chargerDispos(duree) {
+  if (!b.jour || !Number.isFinite(b.lat) || !Number.isFinite(b.lon)) return;
+  const cle = [b.rubriqueId, b.jour, b.lat.toFixed(3), b.lon.toFixed(3), duree].join("|");
+  if (dispoCle === cle) return;
+  dispoCle = cle; dispoVal = null;
+  Promise.all([
+    supabase.rpc("creneaux_disponibles", { p_rubrique: b.rubriqueId, p_lat: b.lat, p_lon: b.lon, p_jour: b.jour, p_duree_min: duree }).then(r => r.data, () => null),
+    supabase.rpc("creneaux_tournee", { p_lat: b.lat, p_lon: b.lon, p_jour: b.jour }).then(r => r.data, () => null),
+  ]).then(([d, t]) => {
+    if (dispoCle !== cle || !Array.isArray(d)) return;
+    const parHeure = new Map(d.map(x => [Number(x.heure), x.cleaneurs])), zone = d[0]?.zone || 0;
+    // Tournée : créneaux qui commencent dans l'heure suivant la fin d'une mission voisine.
+    const fins = (Array.isArray(t) ? t : []).map(x => { const f = new Date(x.fin); return f.getHours() + f.getMinutes() / 60; });
+    dispoVal = { parHeure, zone, tournee: h => fins.some(f => h >= f - 1e-9 && h <= f + 1 + 1e-9) };
+    if (b && racine?.isConnected && b.etape === 4) rendre();
+  });
+}
+/** Plage horaire choisie (location saisonnière : oui par défaut, toute la plage entre le départ et l'arrivée). */
+const plageActive = () => b.plage ?? b.rubriqueId === "rental";
 /** Heure décimale affichée (10.5 → « 10 h 30 »). */
 const heureDec = h => heure(Math.floor(h), Math.round((h % 1) * 60));
 function etape4() {
@@ -1159,15 +1181,18 @@ function etape4() {
   const dureeEst = calculer(entreeEstimation(b, b.espace === "personnel", null)).dureeMin;
   const heures = heuresProposees(b, dureeEst);
   const tient = !location || menageTientEntreVoyageurs(b, dureeEst);
+  chargerDispos(dureeEst);
+  const dispoInfo = h => { if (!dispoVal || !dispoVal.zone) return null; return dispoVal.parHeure.get(h) ?? 0; };
   const jourDate = b.jour ? new Date(b.jour + "T00:00") : null;
   const creneaux = jourDate ? heures.map(h => {
     const c = new Date(jourDate); c.setHours(Math.floor(h), Math.round((h % 1) * 60));
-    const dispo = disponibilite(maintenant, c);
-    return `<button type="button" data-heure="${h}" class="${b.heure === h ? "choisi" : ""} ${{ MALIN: "malin", FORTE_DEMANDE: "forte", PEU: "peu" }[dispo] || ""}" ${dispo === "INDISPONIBLE" ? "disabled" : ""}
-      title="${{ MALIN: "Créneau malin −10 %", FORTE_DEMANDE: "Forte demande", PEU: "Peu de Cleaneurs" }[dispo] || ""}">${heureDec(h)}</button>`;
+    const dispo = disponibilite(maintenant, c), n = dispoInfo(h), tournee = dispoVal?.tournee(h);
+    const dansPlage = plageActive() && b.heure >= 0 && h > b.heure && h <= (b.heureFin ?? -1);
+    return `<button type="button" data-heure="${h}" class="${b.heure === h ? "choisi" : dansPlage ? "dans-plage" : ""} ${{ MALIN: "malin", FORTE_DEMANDE: "forte", PEU: "peu" }[dispo] || ""}${tournee ? " tournee" : ""}${n === 0 ? " complet" : ""}" ${dispo === "INDISPONIBLE" ? "disabled" : ""}
+      title="${{ MALIN: "Créneau malin −10 %", FORTE_DEMANDE: "Forte demande", PEU: "Peu de Cleaneurs" }[dispo] || ""}">${heureDec(h)}${n == null ? "" : `<small>${n ? `${n} ${tr(n > 1 ? "dispo." : "dispo.")}` : tr("complet")}</small>`}${tournee ? `<small class="tournee-mot">${tr("tournée")}</small>` : ""}</button>`;
   }).join("") : "";
   const adresseOk = b.rue.trim().length >= 3 && /^[0-9]{5}$/.test(b.codePostal) && b.ville.trim();
-  const creneauOk = b.flexible || (b.jour && b.heure >= 0 && heures.includes(b.heure));
+  const creneauOk = b.flexible || (b.jour && b.heure >= 0 && heures.includes(b.heure) && (!b.plage || (heures.includes(b.heureFin) && b.heureFin > b.heure)));
   const vehicule = b.rubriqueId === "car";
   const vehiculeOk = !vehicule || ((b.vehRepere || "").trim() && (b.vehModele || "").trim() && (b.vehImmat || "").trim());
   const manque = !adresseOk ? "Vérifiez l'adresse pour continuer."
@@ -1191,9 +1216,12 @@ function etape4() {
     ${titre("Sélectionnez un créneau dans le planning")}${`
     <div class="carte">${caseCocher("Je suis flexible", "flexible", b.flexible, "Vous recevez des candidatures sur 7 jours")}</div>
     ${b.flexible ? "" : `<div class="jours" style="margin-top:12px">${joursProposes().map(d => `<button type="button" data-jour="${iso(d)}" class="${b.jour === iso(d) ? "choisi" : ""}">${dateCourte(d)}</button>`).join("")}</div>
-      ${jourDate ? `<div class="creneaux" style="margin-top:12px">${creneaux}</div>
-        <div class="legende-creneaux petit"><span class="dispo">Disponible</span><span class="malin">Créneau malin −10 %</span><span class="forte">Forte demande</span><span class="peu">Peu de Cleaneurs</span></div>` : `<p class="petit">Choisissez un jour.</p>`}
-      ${jourDate && b.heure >= 0 ? `<div class="note" style="margin-top:10px">Arrivée entre ${heureDec(b.heure)} et ${heureDec(b.heure + fenetreArriveeH(b))} · ${dateLongue(jourDate)}</div>`
+      ${jourDate ? `<div class="choix-mode-creneau" style="margin-top:12px">${choix([["fixe", tr("Heure précise")], ["plage", tr("Plage horaire · plus de Cleaneurs disponibles")]], plageActive() ? "plage" : "fixe", "modeCreneau")}</div>
+        <p class="petit" style="margin:6px 0 0">${tr(plageActive() ? "Touchez l'heure de début puis l'heure de fin de votre plage : le Cleaneur choisit son heure d'arrivée dedans, et vous êtes prévenu." : "Le Cleaneur arrive dans la fenêtre indiquée.")}</p>
+        <div class="creneaux" style="margin-top:12px">${creneaux}</div>
+        <div class="legende-creneaux petit"><span class="dispo">Disponible</span><span class="malin">Créneau malin −10 %</span><span class="forte">Forte demande</span><span class="peu">Peu de Cleaneurs</span>${dispoVal?.zone ? `<span class="tournee">${tr("Tournée : un Cleaneur est déjà dans votre quartier")}</span>` : ""}</div>
+        ${dispoVal?.zone ? `<p class="petit muet" style="margin:4px 0 0">${tr("Nombre de Cleaneurs libres à cette heure, d'après leurs disponibilités et leurs missions déjà prises.")}</p>` : ""}` : `<p class="petit">Choisissez un jour.</p>`}
+      ${jourDate && b.heure >= 0 ? `<div class="note" style="margin-top:10px">Arrivée entre ${heureDec(b.heure)} et ${heureDec(plageActive() && b.heureFin > b.heure ? b.heureFin : b.heure + fenetreArriveeH(b))} · ${dateLongue(jourDate)}</div>`
         + (disponibilite(maintenant, new Date(jourDate.getFullYear(), jourDate.getMonth(), jourDate.getDate(), Math.floor(b.heure), Math.round((b.heure % 1) * 60))) === "PEU" ? `<div class="note alerte" style="margin-top:8px">Peu de Cleaneurs sur ce créneau : prévoyez une solution de repli.</div>` : "") : ""}
       <p class="petit">Réservation au moins 24 h à l'avance. Pour une urgence, la nuit ou un événement : horaire particulier (bientôt).</p>`}`}
     ${location ? `<div class="note ${tient ? "" : "alerte"}" style="margin-top:10px">Départ des voyageurs à ${b.departVoyageursH ?? 10} h · fin avant ${b.arriveeSuivanteH ?? 16} h</div>`
@@ -1619,6 +1647,7 @@ document.addEventListener("click", async e => {
   if (ds.champ) {
     let v = ds.valeur;
     if (ds.champ === "engagementMois") v = +v;
+    if (ds.champ === "modeCreneau") return maj({ plage: v === "plage", heure: -1, heureFin: null, finChoisie: false });
     if (ds.champ === "typeLogementId") { const tl = TYPES_LOGEMENT.find(x => x.id === v); return maj({ typeLogementId: v, surface: tl.surface, chambres: tl.chambres, sdb: tl.sdb, niveaux: tl.niveaux }); }
     if (ds.champ === "accueil" && v === b.accueil) return;
     if (ds.champ === "remiseCles") return maj({ remiseCles: v, accueil: CODE_CLES[v] });
@@ -1675,7 +1704,14 @@ document.addEventListener("click", async e => {
   if (t.id === "ajouter-panier") return maj({ panier: [...(b.panier || []), ligneEnCours().ligne], quantitePanier: 1 });
   if (ds.jourPassage) { const n = +ds.jourPassage, j = b.jours || []; return maj({ jours: j.includes(n) ? j.filter(x => x !== n) : [...j, n].sort() }); }
   if (ds.jour) return maj({ jour: ds.jour, heure: -1 });
-  if (ds.heure) return maj({ heure: +ds.heure });
+  if (ds.heure) {
+    const h = +ds.heure;
+    if (!plageActive()) return maj({ heure: h, heureFin: null });
+    // Plage : premier clic = début (et, par défaut, fin au dernier créneau possible) ; clic suivant après le début = fin.
+    const toutes = [...document.querySelectorAll(".creneaux [data-heure]")].map(x => +x.dataset.heure);
+    if (b.heure >= 0 && h > b.heure && b.heureFin !== h && !b.finChoisie) return maj({ heureFin: h, finChoisie: true });
+    return maj({ heure: h, heureFin: toutes.filter(x => x > h).pop() ?? null, finChoisie: false });
+  }
   if (t.id === "ajouter-perso") {
     const s = document.getElementById("saisie-perso").value.trim();
     if (s) maj({ tachesPerso: [...b.tachesPerso, s].slice(0, 10) });
@@ -1777,10 +1813,13 @@ async function envoyer() {
       estN = estimer({ ...b, pass }, d);
       detailsN = { ...details, pass, lignes: estN.lignes, fraisServicePct: estN.fraisServicePct, fraisServiceC: estN.fraisServiceC };
     }
+    // Prix calculé à l'heure de début : il ne change pas si le Cleaneur fixe une autre heure dans la plage (fonction paiement).
+    if (d) detailsN = { ...detailsN, creneauPrix: d.toISOString() };
     const envoi1 = await envoyerDemande({
       rubrique_id: b.rubriqueId, details: detailsN, estimation_c: estN.totalC, credit_impot_c: estN.creditImpotC, duree_min: estN.dureeMin,
       remise_parrainage_c: n === 0 ? estN.remiseParrainageC : 0, cagnotte_c: n === 0 ? estN.cagnotteC : 0,
-      nombre_cleaneurs: estN.nombreCleaneurs, sur_devis: estN.devisObligatoire, creneau: d ? d.toISOString() : null, flexible: !!b.flexible, prelancement: false,
+      nombre_cleaneurs: estN.nombreCleaneurs, sur_devis: estN.devisObligatoire, creneau: d ? d.toISOString() : null,
+      ...(d && plageActive() && b.heureFin > b.heure ? { plage_fin: new Date(d.getTime() + (b.heureFin - b.heure) * 3600e3).toISOString() } : {}), flexible: !!b.flexible, prelancement: false,
       choix_cleaneur: choixEnvoye(), cleaneur_favori: choixEnvoye() === "favori" ? b.cleaneurFavori : null, espace: b.espace, prenom: b.prenom.trim(), nom: b.nom.trim(), email: b.email.trim(), telephone: b.telephone.trim(),
       rue: b.rue.trim(), code_postal: b.codePostal.trim(), ville: b.ville.trim(), accueil: b.accueil || "PRESENT", acces, groupe_paiement: b.groupePaiement,
       ...(Number.isFinite(b.lat) && Number.isFinite(b.lon) ? { lat: b.lat, lon: b.lon } : {}),   // alertes ciblées des Cleaneurs (base-cleaneur-idees.sql)

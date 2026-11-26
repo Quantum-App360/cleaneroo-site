@@ -50,7 +50,8 @@ function prixServeur(d: Record<string, any>, abonne: boolean, pass: Record<strin
   // Pass Entretien (véhicules) : jamais repris du navigateur, toujours celui calculé par la base (passEntretien).
   const b = { taches: [], tachesPerso: [], ...d.details, rubriqueId: d.rubrique_id, codePostal: d.code_postal || "", abonnePro: abonne, pass };
   const perso = d.espace === "personnel";
-  const e = entreeEstimation(b, perso, heureDeParis(d.creneau));
+  // Prix calculé à l'heure de début (26/11/2026) : la plage horaire laisse le Cleaneur choisir son heure sans changer le prix.
+  const e = entreeEstimation(b, perso, heureDeParis(d.details?.creneauPrix || d.creneau));
   const r1 = calculer(e), r2 = calculer({ ...e, creneauMalin: !e.creneauMalin });   // le créneau malin dépend du moment de la réservation
   return { normal: r1, variante: r2 };
 }

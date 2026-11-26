@@ -87,7 +87,9 @@ export async function lienPhotoDemande(chemin) {
   return data.signedUrl;
 }
 /** "ok", "deja_prise", "ouverture" (réservations pas encore ouvertes), "dossier" ou "connexion". */
-export const prendreMission = reference => rpc("prendre_mission", { p_reference: reference });
+export const prendreMission = (reference, heure = null) => rpc("prendre_mission", { p_reference: reference, ...(heure ? { p_heure: heure } : {}) });
+/** Plages horaires des missions disponibles (26/11/2026) : le Cleaneur choisit son heure d'arrivée dedans. */
+export const plagesMissions = () => rpc("plages_missions");
 export const avancerMission = (reference, statut) => rpc("avancer_mission", { p_reference: reference, p_statut: statut });
 
 /* ------------------------------------------------------------------ Contrôle de fin de mission, pièce par pièce (outils/base-controle.sql) */
