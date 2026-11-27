@@ -37,6 +37,7 @@ import { icone, teinte, ICONES_RUBRIQUES, ICONES_INTERFACE } from "./icones.js";
 import { pageTableau, arreterTableau, pageFavoris } from "./tableau.js";
 import { compteRenduPieces } from "./controle-ecran.js";
 import { blocFormulesCleaneur, brancherFormulesCleaneur } from "./formules-cleaneur.js";
+import { blocQuiAttendent } from "./attente.js";
 import { exempleCleaneur, accrocheGain, tableauGain, reglesEnClair, etapesCleaneur, blocLancementCleaneur, pretACommencer, boutonPartagerCleaneur, pageConditionsCleaneurs } from "./devenir-cleaneur.js";
 import { blocEtat, blocEtapes, blocParcours, brancherParcours, surveillerConnexion, bandeGaranties, logosPaiement, blocJustePrix, blocAvantApres, brancherAvantApres, sectionAvisPublics, remplirAvisPublics, installerRappel, encartAideRappel, bandeauLancement, pageChargement, decorTableau, surveillerFormulaire, envoiRobot, CONTIENT_LIEN, afficherToast } from "./commun.js";
 import "./fond-anime.js";
@@ -477,7 +478,7 @@ function pageDevenir() {
       <p>Travaillez à votre rythme, près de chez vous.</p>
       <div class="etiquettes"><span class="etiquette">Missions proches</span><span class="etiquette">Compte rendu guidé</span><span class="etiquette">Paiement sécurisé</span></div>
       <div class="partage-cleaneur">${boutonPartagerCleaneur()}</div></div></section>
-  <section class="bloc"><div class="etroit">${blocChoixCleaneur()}<div data-acces-cleaneur></div>${blocLancementCleaneur()}${guideVideo("cleaneur", "page-devenir")}${blocApercuTournee()}${tableauGain(ex)}${blocOffreCleaneurs()}
+  <section class="bloc"><div class="etroit">${blocChoixCleaneur()}<div data-acces-cleaneur></div>${blocQuiAttendent()}${blocLancementCleaneur()}${guideVideo("cleaneur", "page-devenir")}${blocApercuTournee()}${tableauGain(ex)}${blocOffreCleaneurs()}
     ${reglesEnClair()}${etapesCleaneur()}
     <div style="margin-top:18px">${pretACommencer()}</div>
   </div></section>`;
@@ -693,7 +694,7 @@ async function afficherPage() {
   // Deux interfaces séparées : les pages Cleaneur passent en mode Cleaneur, les pages clients en mode client (mode.js).
   brancherBascule();
   if (["devenir-cleaneur", "mode-cleaneur"].includes(route) || (route === "compte" && param === "cleaneur")) { if (!modeCleaneur()) { fixerMode(true); rendreEnteteMemorise(); } }
-  else if (["reserver", "estimer", "prestations", "mes-demandes", "mes-biens", "tableau"].includes(route) || (route === "compte" && ["particulier", "entreprise", "pro", "hotellerie"].includes(param))) { if (modeCleaneur()) { fixerMode(false); rendreEnteteMemorise(); } }
+  else if (["reserver", "reprendre", "estimer", "prestations", "mes-demandes", "mes-biens", "tableau"].includes(route) || (route === "compte" && ["particulier", "entreprise", "pro", "hotellerie"].includes(param))) { if (modeCleaneur()) { fixerMode(false); rendreEnteteMemorise(); } }
   // Compte connecté qui ouvre cleaneroo.fr (26/11/2026, retour de Michael) : il arrive sur son tableau de bord.
   // Seulement à l'ouverture du site : le logo et « Retour à l'accueil » mènent toujours à la page d'accueil publique.
   const ouverture = premierAffichage; premierAffichage = false;
@@ -736,6 +737,8 @@ async function afficherPage() {
     if (!deja) window.scrollTo(0, 0);
     return;
   }
+  // « Ma demande compte » : lien personnel de l'e-mail « Reprendre ma demande ».
+  if (route === "reprendre" && param) { window.scrollTo(0, 0); vue.innerHTML = pageChargement(); traduire(vue); const { pageReprendre } = await import("./attente.js"); await pageReprendre(vue, decodeURIComponent(param)); return; }
   if (route === "reserver") { ouvrirReservation(vue, param || null, chemin.split("/")[2] || ""); window.scrollTo(0, 0); return; }
   if (route === "estimer") { ouvrirSimulateur(vue, param || null); window.scrollTo(0, 0); return; }
   if (route === "inscription" && param) { vue.innerHTML = pageInscription(param); brancherInscription(vue); traduire(vue); window.scrollTo(0, 0); return; }

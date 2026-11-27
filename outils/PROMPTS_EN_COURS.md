@@ -1241,3 +1241,13 @@ Ordre : A base de connaissances + fonction serveur · B conversation et fiche ·
 - Filleul client : 3 réservations sans frais de service ; parrain : 1 à la 1re prestation du filleul, 2 à la 3e ; client qui fait venir un Cleaneur : 3 ; Cleaneur parrain : 3 missions sans commission + 10 min d'avance 1 mois ; conciergerie : 1 mois offert ; Ambassadeur (3 / 10 filleuls) : 0 % de frais 3 / 12 mois ; avantages valables 12 mois.
 - La base décide au dépôt (demandes.frais_offerts) ; l'appli affiche « Frais de service Cleaneroo · offerts (parrainage) » et un total sans frais, comme le site (estimation : b.fraisOfferts).
 - Pas fait : QR code de parrainage (bibliothèque tierce à valider).
+
+## « Ma demande compte » (27/11/2026) — liste d'attente devenue pré-réservation
+Base : `outils/base-ma-demande-compte.sql` (appliquée). Fonction serveur `attente` (e-mails, Resend). Site : `assets/js/attente.js`.
+À reporter dans les applis :
+- « Être prévenu » / réservations fermées : appeler `mettre_en_attente(p_rubrique, p_code_postal, p_ville, p_lat, p_lon, p_prenom, p_email, p_telephone, p_motif 'ouverture'|'secteur', p_regulier, p_libelle, p_langue, p_brouillon, p_source 'appli')`. Position obligatoire : adresse, sinon véhicule (vehLat/vehLon), sinon centre de la commune. Renvoie `{ jeton, rang, total, ville, quartier }`.
+- Afficher « n° X sur la liste à Ville · N demandes », le compteur du quartier, le partage WhatsApp aux voisins (avec le code de parrainage si compte).
+- Lien `cleaneroo.fr/#/reprendre/<jeton>` (e-mail) : `attente_par_jeton` renvoie le brouillon ; reprendre à l'étape du créneau, `details.attenteJeton` envoyé avec la demande.
+- Priorité 24 h : `priorite_secteur(rubrique, lat, lon, jeton)` ; erreur `priorite` à l'envoi = secteur réservé aux inscrits.
+- Espace client : `mes_attentes()`. Quitter la liste : `quitter_attente(jeton)`.
+- Devenir Cleaneur : `attente_quartier(lat, lon, 20)` (nombres seulement, aucun nom).

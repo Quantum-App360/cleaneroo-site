@@ -7,7 +7,7 @@ import { PARTIES, partie, partiePour, PARTIE_DE_L_ESPACE, rubriquesProposees, li
 import { calculer, entreeEstimation, SALISSURE, disponibilite, meilleurPack, tachesChiffrees, formuleDe, niveauLocation, passagesPlanifies, datesPassages,
   etapesDe, etapesChoisiesDe, etapesIncluses, consommablesDe, menageTientEntreVoyageurs, frequenceDe, minutesEquipements, prixIndicatifEquipement, heuresEvenement, litsDe, litsTailles, prixDrapsC, prixLingeC, heuresProposees, fenetreArriveeH,
   tachesPourOccasion, niveauOccasion } from "./estimation.js";
-import { REGLES, euros, duree, heure, dateCourte, dateLongue, reservationsFermees, MESSAGE_LANCEMENT, photosAvantObligatoires, delaiFavoriH, palierPass } from "./regles.js";
+import { REGLES, euros, duree, heure, dateCourte, dateLongue, dateHeure, reservationsFermees, MESSAGE_LANCEMENT, photosAvantObligatoires, delaiFavoriH, palierPass } from "./regles.js";
 import { envoyerDemande, secteurCouvert, rejoindreAttente, enregistrerBien, synchroniserBiens, marquerDonneesInvite } from "./donnees.js";
 import { etapesPhotoDe, etapesPersoDe } from "./etapes-bien.js";
 import { maPosition, adresseDe, chercherAdresse, afficherCarte } from "./cartes.js";
@@ -16,6 +16,7 @@ import { profilMemorise } from "./entete.js";
 import { icone } from "./icones.js";
 import { blocReassurance, encartAideRappel, encartPaiementSecurise, mentionCodePostal, ligneZone } from "./commun.js";
 import { monParrainage } from "./parrainage.js";
+import { mettreEnAttente, blocInscrit, prioriteSecteur, mesAttentes, blocMesAttentes } from "./attente.js";
 import { lancerPaiement } from "./paiement.js";
 import { session, monProfil, majProfil, supabase } from "./donnees.js";
 
@@ -225,6 +226,7 @@ let messageGeoloc = "";  // « Me géolocaliser » : recherche en cours ou erreu
 let adresseCherchee = ""; // dernière adresse saisie placée sur la carte
 let racine = null;
 let envoi = false;
+let attentesCentre = [];  // demandes en attente (attente.js), affichées au centre de réservation
 
 /** Logement choisi à l'étape 1 : identifiant, "" pour un nouveau logement. Par défaut : celui du brouillon, sinon le premier enregistré. */
 /** Bien choisi depuis « Mes biens » (« Réserver ») : seules ses prestations sont proposées à l'étape 1 ; sinon aucun (toutes les prestations). */
@@ -343,6 +345,8 @@ export function ouvrirReservation(conteneur, rubriqueId, option = "") {
   // Conciergerie abonnée : 0 % de frais de service (profil mémorisé par l'en-tête).
   if (b) b = { ...b, abonnePro: !!profilMemorise()?.abonnePro };
   chargerParrainage();
+  // « Ma demande compte » : demandes en attente (cet appareil et compte), proposées au centre de réservation.
+  mesAttentes().then(l => { attentesCentre = l; if (racine === conteneur && !sim && (!b || b.etape === 1) && l.length) rendre(); }).catch(() => null);
   // Code postal saisi sur l'accueil (« Voir mon prix »).
   const cp = option.match(/^cp-(\d{5})$/)?.[1];
   if (b && cp && !b.rue) b = { ...b, codePostal: cp };
@@ -441,6 +445,7 @@ function etape1() {
     ${choixLogement}
     ${pourQui}
     ${centre ? blocAssistantCentre() : ""}
+    ${centre ? blocMesAttentes(attentesCentre) : ""}
     ${enCours.length || (centre && derniers.length) ? `<div class="centre-colonnes">${enCours.length ? blocEnCours(enCours) : ""}${centre && derniers.length ? blocRefaire(derniers) : ""}</div>` : ""}
     ${!centre && derniers.length ? blocRefaire(derniers) : ""}
     ${centre ? blocMesBiensCentre(pid) : ""}
@@ -1229,42 +1234,53 @@ function etape4() {
     ${actions(!manque, manque)}`;
 }
 
-/* « Être prévenu » : après le lancement, une prestation ne se réserve que si un Cleaneur validé couvre l'adresse. */
-let couverture = { cle: "", n: null }, attente = "";
+/* « Être prévenu » : après le lancement, une prestation ne se réserve que si un Cleaneur validé couvre l'adresse.
+   « Ma demande compte » (26/11/2026) : la demande complète est gardée avec sa place dans la file (attente.js). */
+let couverture = { cle: "", n: null, priorite: null }, attente = "", inscrit = null;
 function verifierCouverture() {
   if (!b || !Number.isFinite(b.lat)) return null;
   const cle = `${b.rubriqueId}|${b.lat.toFixed(3)}|${b.lon.toFixed(3)}`;
   if (couverture.cle !== cle) {
-    couverture = { cle, n: null }; attente = "";
-    secteurCouvert(b.rubriqueId, b.lat, b.lon).then(n => {
+    couverture = { cle, n: null, priorite: null }; attente = ""; inscrit = null;
+    secteurCouvert(b.rubriqueId, b.lat, b.lon).then(async n => {
+      // Secteur qui vient d'ouvrir : les inscrits de la liste d'attente ont 24 h de priorité.
+      const prio = n > 0 && !reservationsFermees() ? await prioriteSecteur(b.rubriqueId, b.lat, b.lon).catch(() => null) : null;
       if (couverture.cle !== cle || !racine?.isConnected) return;
-      couverture.n = n;
+      couverture.n = n; couverture.priorite = prio;
       if (b?.etape === 5) rendre();
       else if (b?.etape >= 2) majRecap();   // seul le récapitulatif change : la saisie en cours n'est pas interrompue
     }).catch(() => {});
   }
   return couverture.n;
 }
-/** Réservations pas encore ouvertes (interrupteur, 24/11/2026) : rien n'est envoyé ni payé ; être prévenu de l'ouverture. */
+const erreurAttente = () => attente === "erreur" || attente === "position"
+  ? `<p class="erreur" style="margin:6px 0 0">${attente === "position" ? "Adresse introuvable : vérifiez le code postal et la ville." : "Le service est momentanément indisponible. Réessayez dans quelques minutes."}</p>` : "";
+/** Réservations pas encore ouvertes (interrupteur, 24/11/2026) : rien n'est envoyé ni payé ; la demande est gardée, avec sa place. */
 function blocFermees(contactOk) {
-  if (attente === "ok") return `<div class="carte" style="margin-top:14px;border-color:var(--primaire)"><h3 style="margin:0 0 6px">C'est enregistré.</h3>
-    <p class="muet" style="margin:0">Nous vous prévenons dès l'ouverture des réservations. Votre estimation est gardée en brouillon.</p></div>`;
+  if (attente === "ok" && inscrit) return blocInscrit(inscrit.res, b.rubriqueId, "ouverture", inscrit.res?.quartier, inscrit.code);
   return `<div class="carte" style="margin-top:14px"><h3 style="margin:0 0 6px">Les réservations ouvrent très bientôt</h3>
-    <p class="muet" style="margin:0 0 6px">Rien n'est envoyé ni payé pour l'instant. Laissez vos coordonnées : nous vous prévenons dès l'ouverture, et votre estimation est gardée.</p>
-    ${attente === "erreur" ? `<p class="erreur" style="margin:6px 0 0">Le service est momentanément indisponible. Réessayez dans quelques minutes.</p>` : ""}</div>
-    ${actions(contactOk && attente !== "envoi", contactOk ? "" : "Complétez vos coordonnées.", attente === "envoi" ? "Envoi en cours…" : "Être prévenu de l'ouverture", "prevenir")}`;
+    <p class="muet" style="margin:0 0 6px">Rien n'est envoyé ni payé pour l'instant. Gardez votre demande telle quelle : vous prenez votre place dans la file de votre secteur, et dès l'ouverture vous la reprenez en un clic, avec 24 h de priorité pour choisir votre créneau.</p>
+    ${erreurAttente()}</div>
+    ${actions(contactOk && attente !== "envoi", contactOk ? "" : "Complétez vos coordonnées.", attente === "envoi" ? "Envoi en cours…" : "Garder ma demande et être prévenu", "prevenir")}`;
 }
 function blocAttente(r, contactOk) {
-  if (attente === "ok") return `<div class="carte" style="margin-top:14px;border-color:var(--primaire)"><h3 style="margin:0 0 6px">C'est enregistré.</h3>
-    <p class="muet" style="margin:0">Nous vous prévenons par e-mail dès qu'un Cleaneur qualifié intervient dans votre secteur. Votre demande est gardée en brouillon.</p></div>`;
+  if (attente === "ok" && inscrit) return blocInscrit(inscrit.res, b.rubriqueId, "secteur", inscrit.res?.quartier, inscrit.code);
   return `<div class="carte" style="margin-top:14px"><h3 style="margin:0 0 6px">Pas encore de Cleaneur dans votre secteur</h3>
-    <p class="muet" style="margin:0 0 6px">Cette prestation n'est pas encore proposée à votre adresse : nous recrutons. Laissez vos coordonnées, nous vous prévenons dès qu'un Cleaneur qualifié s'installe près de chez vous.</p>
-    ${attente === "erreur" ? `<p class="erreur" style="margin:6px 0 0">Le service est momentanément indisponible. Réessayez dans quelques minutes.</p>` : ""}</div>
-    ${actions(contactOk && attente !== "envoi", contactOk ? "" : "Complétez vos coordonnées.", attente === "envoi" ? "Envoi en cours…" : "Être prévenu", "prevenir")}`;
+    <p class="muet" style="margin:0 0 6px">Cette prestation n'est pas encore proposée à votre adresse : nous recrutons. Gardez votre demande telle quelle : vous prenez votre place dans la file, et dès qu'un Cleaneur vérifié s'installe près de chez vous, vous la reprenez en un clic, avec 24 h de priorité.</p>
+    ${erreurAttente()}</div>
+    ${actions(contactOk && attente !== "envoi", contactOk ? "" : "Complétez vos coordonnées.", attente === "envoi" ? "Envoi en cours…" : "Garder ma demande et être prévenu", "prevenir")}`;
 }
+/** Secteur qui vient d'ouvrir : réservé aux inscrits de la liste d'attente jusqu'à la fin de leur priorité. */
+const blocPriorite = fin => `<div class="carte" style="margin-top:14px"><h3 style="margin:0 0 6px">${icone("horloge")} ${tr("Ce secteur vient d'ouvrir")}</h3>
+    <p class="muet" style="margin:0">${tr("Les clients inscrits sur la liste d'attente ont la priorité jusqu'au")} ${dateHeure(fin)}. ${tr("Vous pourrez réserver juste après : votre demande est gardée sur cet appareil.")}</p></div>`;
 async function prevenir() {
   attente = "envoi"; rendre();
-  try { await rejoindreAttente({ ...b }); attente = "ok"; } catch { attente = "erreur"; }
+  const motif = reservationsFermees() ? "ouverture" : "secteur";
+  try {
+    const res = await mettreEnAttente({ ...b }, motif);
+    const par = await session().then(x => x ? monParrainage() : null).catch(() => null);
+    inscrit = { res, code: par?.code || "" }; attente = "ok";
+  } catch (e) { attente = e.message === "position" ? "position" : "erreur"; }
   rendre();
 }
 
@@ -1313,7 +1329,7 @@ function etape5() {
     <div style="margin-top:14px">${encartAideRappel()}</div>
     ${notePaiement(est)}
     <div class="carte" style="margin-top:12px">${caseCocher(`J'accepte les <a href="#/conditions" target="_blank">conditions d'utilisation</a> et la <a href="#/confidentialite" target="_blank">politique de confidentialité</a>`, "cgv", b.cgv)}</div>
-    ${reservationsFermees() ? blocFermees(contactOk) : verifierCouverture() === 0 ? blocAttente(r, contactOk) : actions(!manque && !envoi, manque, envoi ? "Envoi en cours…" : est.devisObligatoire ? "Envoyer ma demande de devis" : "Payer et envoyer ma demande", "envoyer")}`;
+    ${reservationsFermees() ? blocFermees(contactOk) : verifierCouverture() === 0 ? blocAttente(r, contactOk) : couverture.priorite ? blocPriorite(couverture.priorite) : actions(!manque && !envoi, manque, envoi ? "Envoi en cours…" : est.devisObligatoire ? "Envoyer ma demande de devis" : "Payer et envoyer ma demande", "envoyer")}`;
 }
 
 /** Paiement (22/11/2026, règle de l'utilisateur) : payé à l'envoi, bloqué jusqu'à la validation, versé ensuite au Cleaneur. */
@@ -1864,6 +1880,7 @@ async function envoyer() {
     const faits = (b?.passagesEnvoyes || []).length;
     racine.querySelector(".barre-actions").insertAdjacentHTML("afterbegin", faits
       ? `<p class="erreur">${faits} ${tr(faits > 1 ? "passages enregistrés" : "passage enregistré")} ${tr("sur")} ${totalPassages}. ${tr("Réessayez : seuls les passages manquants seront envoyés, sans doublon.")}</p>`
+      : /priorite/.test(err.message) ? `<p class="erreur">${tr("Ce secteur vient d'ouvrir : les inscrits de la liste d'attente ont la priorité pendant 24 h. Votre demande est gardée, réessayez un peu plus tard.")}</p>`
       : `<p class="erreur">L'envoi n'a pas abouti (${esc(err.message)}). Vérifiez votre connexion et réessayez.</p>`);
   }
 }
