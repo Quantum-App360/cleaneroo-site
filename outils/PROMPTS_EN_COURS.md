@@ -1267,3 +1267,7 @@ Site : `assets/js/mode.js`, `assets/js/entete.js`, `assets/js/a-faire.js`. À re
 - Visiteur : pas d'interrupteur ; lien « Devenir Cleaneur » ; l'accueil est toujours l'accueil client (« Accueil clients » depuis les pages Cleaneur).
 - « Ce qui vous attend » en tête du tableau de bord : client (prestation à valider, paiement à finaliser — seulement si les réservations sont ouvertes —, Cleaneur qui arrive aujourd'hui, demande en attente réservable) ; Cleaneur (mission du jour, « Démarrer » à moins de 2 h, missions proposées).
 - Une notification ou un lien vers l'autre espace y bascule tout seul.
+
+## Confirmation du compte par code (27/11/2026)
+Écran « Plus qu'une étape » : champ « Code de confirmation » (6 chiffres, envoi automatique au 6e chiffre) en plus du lien.
+Appli : `supabase.auth.verifyOtp(email, token, type = SIGNUP)` puis ouvrir l'espace comme après une connexion. Modèle d'e-mail : `outils/modele-email-confirmation.html`.

@@ -1,0 +1,12 @@
+<!-- Modèle « Confirm signup » à coller dans Supabase › Authentication › Email Templates (27/11/2026).
+     Sujet conseillé : Votre code Cleaneroo : {{ .Token }}
+     Le code à 6 chiffres se saisit sur l'écran « Plus qu'une étape » (site et applis) ; le lien fonctionne aussi. -->
+<div style="font-family:Arial,sans-serif;font-size:15px;line-height:1.5;color:#1d2b2b;max-width:520px">
+  <p>Bonjour,</p>
+  <p>Bienvenue sur Cleaneroo. Pour confirmer votre compte, saisissez ce code sur l'écran d'inscription :</p>
+  <p style="font-size:32px;font-weight:bold;letter-spacing:8px;color:#0B3B3D;margin:18px 0">{{ .Token }}</p>
+  <p>Ou cliquez sur ce bouton :</p>
+  <p style="margin:20px 0"><a href="{{ .ConfirmationURL }}" style="background:#1F8A80;color:#ffffff;text-decoration:none;padding:12px 20px;border-radius:10px;font-weight:bold">Confirmer mon compte</a></p>
+  <p style="font-size:13px;color:#5b6b6b">Ce code est valable une heure. Si vous n'avez pas créé de compte Cleaneroo, ignorez cet e-mail.</p>
+  <p style="font-size:13px;color:#5b6b6b">Cleaneroo · cleaneroo.fr</p>
+</div>

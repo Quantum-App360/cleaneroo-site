@@ -4855,4 +4855,12 @@ export const T = [
   ["mission proposée près de chez vous", "job offered near you", "missione proposta vicino a te", "misión propuesta cerca de usted"],
   ["Démarrer", "Start", "Inizia", "Empezar"],
   ["Ouvrir", "Open", "Apri", "Abrir"],
+  ["Nous venons d'envoyer un e-mail de confirmation à", "We have just sent a confirmation e-mail to", "Abbiamo appena inviato un'e-mail di conferma a", "Acabamos de enviar un correo de confirmación a"],
+  ["Saisissez le code à 6 chiffres reçu, ou cliquez sur le lien de l'e-mail.", "Enter the 6-digit code you received, or click the link in the e-mail.", "Inserisci il codice a 6 cifre ricevuto, oppure clicca sul link dell'e-mail.", "Introduzca el código de 6 cifras recibido o haga clic en el enlace del correo."],
+  ["Code de confirmation", "Confirmation code", "Codice di conferma", "Código de confirmación"],
+  ["Confirmer mon compte", "Confirm my account", "Conferma il mio account", "Confirmar mi cuenta"],
+  ["Saisissez les 6 chiffres du code.", "Enter the 6 digits of the code.", "Inserisci le 6 cifre del codice.", "Introduzca las 6 cifras del código."],
+  ["Vous serez connecté directement et arriverez sur « Mon dossier » pour envoyer vos documents.", "You will be signed in directly and land on “My file” to send your documents.", "Sarai connesso direttamente e arriverai su « Il mio dossier » per inviare i tuoi documenti.", "Se conectará directamente y llegará a « Mi expediente » para enviar sus documentos."],
+  ["Vous serez connecté directement à votre espace.", "You will be signed in directly to your space.", "Sarai connesso direttamente al tuo spazio.", "Se conectará directamente a su espacio."],
+  ["Code incorrect ou expiré. Vérifiez-le, ou renvoyez l'e-mail pour en recevoir un nouveau.", "Incorrect or expired code. Check it, or resend the e-mail to get a new one.", "Codice errato o scaduto. Controllalo, oppure invia di nuovo l'e-mail per riceverne uno nuovo.", "Código incorrecto o caducado. Compruébelo o reenvíe el correo para recibir uno nuevo."],
 ];

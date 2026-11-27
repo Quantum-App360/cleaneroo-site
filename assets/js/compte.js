@@ -23,7 +23,7 @@ import { editeurTemoins, brancherTemoins } from "./temoins.js";
 import { traduire, tr } from "./langue.js";
 import {
   supabase, session, creerCompte, connecter, deconnecter, mdpOublie, nouveauMdp, monProfil, majProfil, ajouterStatut, ecouterDemandes,
-  renvoyerConfirmation, garderInscription, inscriptionEnAttente, oublierInscription,
+  renvoyerConfirmation, confirmerCode, garderInscription, inscriptionEnAttente, oublierInscription,
   DOCUMENTS_CLEANEUR, mesDocuments, deposerDocument, retirerDocument, lienDocument, soumettreDossier,
   demandesDuCompte, mesDemandes, synchroniserBiens, enregistrerBien, supprimerBien,
 } from "./donnees.js";
@@ -414,8 +414,12 @@ function ecranConfirmerEmail(vue, email, roleDefaut) {
   window.scrollTo(0, 0);
   vue.innerHTML = `<section class="bloc"><div class="etroit">${titre(tr("Plus qu'une étape : confirmez votre e-mail"))}
     <div class="carte etape-inscription"><span class="tuile-ia">${icone("message")}</span>
-      <p style="margin:0">${tr("Nous venons d'envoyer un lien de confirmation à")} <b>${esc(email)}</b>.</p>
-      <p class="petit" style="margin:6px 0 0">${tr(cleaneur ? "Cliquez sur ce lien : vous serez connecté directement et arriverez sur « Mon dossier » pour envoyer vos documents." : "Cliquez sur ce lien : vous serez connecté directement à votre espace.")}</p>
+      <p style="margin:0">${tr("Nous venons d'envoyer un e-mail de confirmation à")} <b>${esc(email)}</b>.</p>
+      <p class="petit" style="margin:6px 0 0">${tr("Saisissez le code à 6 chiffres reçu, ou cliquez sur le lien de l'e-mail.")}</p>
+      <form data-code class="code-confirmation" novalidate><label class="champ"><span>${tr("Code de confirmation")}</span>
+        <input name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="123456" required></label>
+        <button type="submit" class="bouton plein">${tr("Confirmer mon compte")}</button></form>
+      <p class="petit" style="margin:6px 0 0">${tr(cleaneur ? "Vous serez connecté directement et arriverez sur « Mon dossier » pour envoyer vos documents." : "Vous serez connecté directement à votre espace.")}</p>
       <p class="petit muet" style="margin:6px 0 0">${tr("Rien reçu après 2 minutes ? Regardez dans les courriers indésirables (expéditeur Cleaneroo), puis renvoyez l'e-mail.")}</p>
       <div class="boutons-inscription"><button type="button" class="bouton secondaire plein" data-renvoyer>${tr("Renvoyer l'e-mail")}</button>
         <button type="button" class="lien-bouton" data-changer>${tr("Modifier mon adresse e-mail")}</button>
@@ -430,6 +434,19 @@ function ecranConfirmerEmail(vue, email, roleDefaut) {
     try { await renvoyerConfirmation(email); m.hidden = false; m.className = "note"; m.textContent = tr("E-mail renvoyé."); }
     catch { m.hidden = false; m.className = "erreur"; m.textContent = tr("Envoi impossible pour le moment : réessayez dans une minute."); }
     attendre(60);
+  };
+  const fc = vue.querySelector("[data-code]");
+  fc.code.oninput = () => { fc.code.value = fc.code.value.replace(/\D/g, "").slice(0, 6); if (fc.code.value.length === 6) fc.requestSubmit(); };
+  fc.onsubmit = async e => {
+    e.preventDefault();
+    const code = fc.code.value.replace(/\D/g, "");
+    if (code.length !== 6) { m.hidden = false; m.className = "erreur"; m.textContent = tr("Saisissez les 6 chiffres du code."); return; }
+    const bt = fc.querySelector("button"); bt.disabled = true;
+    const r = await confirmerCode(email, code).catch(() => "erreur");
+    bt.disabled = false;
+    if (r === "ok") { marquerArrivee(); majLienCompte(); return pageCompte(vue); }
+    m.hidden = false; m.className = "erreur";
+    m.textContent = tr(r === "invalide" ? "Code incorrect ou expiré. Vérifiez-le, ou renvoyez l'e-mail pour en recevoir un nouveau." : "Le service est momentanément indisponible. Réessayez dans quelques minutes.");
   };
   vue.querySelector("[data-changer]").onclick = () => ecranConnexion(vue, "creer", "", false, roleDefaut);
   vue.querySelector("[data-deja]").onclick = () => ecranConnexion(vue, "connexion", "", false, roleDefaut, email);

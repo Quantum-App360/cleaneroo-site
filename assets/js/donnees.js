@@ -261,6 +261,14 @@ export async function creerCompte({ email, mdp, statuts, prenom, nom, societe = 
   return data.session ? "connecte" : "confirmer";
 }
 
+/** Confirmation par le code à 6 chiffres de l'e-mail (27/11/2026) : l'inscrit reste sur l'écran, sans ouvrir de lien.
+ *  Renvoie "ok", "invalide" (code faux ou expiré) ou "erreur". */
+export async function confirmerCode(email, code) {
+  const { data, error } = await supabase.auth.verifyOtp({ email, token: String(code || "").replace(/\D/g, ""), type: "signup" });
+  if (!error && data?.session) return "ok";
+  return error && /expired|invalid|token/i.test(error.message) ? "invalide" : "erreur";
+}
+
 /** Renvoie l'e-mail de confirmation d'une inscription (écran « Plus qu'une étape »). */
 export async function renvoyerConfirmation(email) {
   const { error } = await supabase.auth.resend({ type: "signup", email, options: { emailRedirectTo: retour("compte") } });
