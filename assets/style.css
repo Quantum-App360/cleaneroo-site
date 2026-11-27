@@ -3645,3 +3645,19 @@ body.avec-menu .resa-centre { width: min(1180px, 100% - 64px); }
 .h-clients, .leg-clients { background: var(--primaire); }
 .h-cleaneurs, .leg-cleaneurs { background: var(--corail); }
 .leg { display: inline-block; width: 10px; height: 10px; border-radius: 3px; vertical-align: middle; margin: 0 4px 0 10px; }
+/* Mes espaces (27/11/2026) : pastille de l'en-tête, présentation et simulateur */
+.pastille-espace { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px; border-radius: 999px; background: linear-gradient(135deg, var(--primaire), #19C37D); color: #fff !important; font-weight: 700; font-size: 13px; text-decoration: none; white-space: nowrap; box-shadow: 0 4px 12px rgba(16, 120, 110, .25); }
+.pastille-espace svg { width: 16px; height: 16px; }
+@media (max-width: 420px) { .pastille-espace { padding: 0 10px; font-size: 12px; } }
+.simulateur-ca { margin: 16px 0; }
+.simulateur-ca input[type=range] { width: 100%; accent-color: var(--primaire); height: 28px; }
+.choix-formule { display: flex; gap: 16px; margin: 4px 0 10px; }
+.sim-resultats { display: grid; gap: 4px; margin-top: 6px; }
+.sim-ligne { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; border-bottom: 1px solid var(--separateur); }
+.sim-ligne.total { font-size: 18px; color: var(--primaire); border-bottom: 2px solid var(--primaire); }
+.etapes-espace { padding-left: 22px; display: grid; gap: 10px; }
+.etapes-espace li span { display: block; color: var(--texte2); font-size: 14px; }
+.faq-espace { margin: 8px 0; padding: 10px 14px; }
+.adhesion { margin-top: 16px; border-color: var(--primaire); }
+.espaces-ouverts { display: flex; flex-wrap: wrap; gap: 6px; }
+.espaces-ouverts .tampon { text-decoration: none; }

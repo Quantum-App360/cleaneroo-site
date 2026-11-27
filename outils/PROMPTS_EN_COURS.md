@@ -1271,3 +1271,10 @@ Site : `assets/js/mode.js`, `assets/js/entete.js`, `assets/js/a-faire.js`. À re
 ## Confirmation du compte par code (27/11/2026)
 Écran « Plus qu'une étape » : champ « Code de confirmation » (6 chiffres, envoi automatique au 6e chiffre) en plus du lien.
 Appli : `supabase.auth.verifyOtp(email, token, type = SIGNUP)` puis ouvrir l'espace comme après une connexion. Modèle d'e-mail : `outils/modele-email-confirmation.html`.
+
+## Mes espaces et interrupteur pour tous (27/11/2026)
+Site : `assets/js/mes-espaces.js`, `assets/js/mode.js`. À reporter dans les applis :
+- Compte à un seul profil : pastille dans l'en-tête « Devenir Cleaneur » (client) ou « Réserver pour moi » (Cleaneur) → page de présentation `#/espace/<id>`.
+- Page de présentation : vitrine de l'espace ; pour Cleaneur, simulateur de chiffre d'affaires (molette 1 à 25 missions par semaine, type de mission, Gratuite/Pro ; mêmes calculs que gainCleaneur), 3 étapes, questions fréquentes ; adhésion intégrée (`ajouter_statut`, téléphone mobile demandé s'il manque ; raison sociale + SIRET pour Conciergerie et Hôtellerie ; Entreprise renvoie à Mon compte pour le secteur).
+- Mon compte : section « Mes espaces » (espaces ouverts, puis « Ajouter un espace » vers les présentations).
+- Double profil : interrupteur inchangé.

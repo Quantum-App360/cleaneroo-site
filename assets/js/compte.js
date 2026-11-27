@@ -17,6 +17,7 @@ import { RUBRIQUES, rubrique, TYPES_LOGEMENT, CATEGORIES_BIEN, categorieBien, ty
 import { euros, dateLongue, heure, REGLES, sirenSiretValide } from "./regles.js";
 import { icone } from "./icones.js";
 import { VITRINES, vitrineEspace } from "./vitrine-espaces.js";
+import { blocMesEspaces } from "./mes-espaces.js";
 import { blocVitrine, brancherVitrine } from "./vitrine.js";
 import { brancherBadges } from "./badge.js";
 import { editeurTemoins, brancherTemoins } from "./temoins.js";
@@ -156,7 +157,8 @@ export async function pageCompte(vue, param) {
       <a class="bouton secondaire" href="gestion.html">Ouvrir le tableau de bord</a></div>` : ""}
     ${statuts.length > 1 ? barreOnglets(onglet, statuts) : ""}
     <div class="contenu-onglet">${onglet === "cleaneur" && cleaneur ? `<div id="mon-activite"></div><div data-factures="cleaneur"></div>` : ""}${contenu}${onglet !== "cleaneur" ? `<div id="equipe"></div>` : ""}${onglet !== "cleaneur" ? `<div data-factures="${onglet === "particulier" ? "personnel" : onglet === "entreprise" ? "pro" : onglet}"></div>` : ""}${blocParrainage(parrain, onglet)}</div>
-    ${manquants.length ? `<details class="carte ajout-espace" id="ajout-espace" style="margin-top:16px"><summary>Ajouter un espace</summary>
+    ${!admin ? blocMesEspaces(p, statuts) : ""}
+    ${manquants.length && demande ? `<details class="carte ajout-espace" id="ajout-espace" style="margin-top:16px"><summary>Ajouter un espace</summary>
       <p class="petit" style="margin:8px 0 10px">Chaque espace reste séparé : vous passez de l'un à l'autre avec les onglets en haut de votre compte.</p>
       ${manquants.map(x => `<button type="button" class="carte ligne-compte" data-ajouter-statut="${x}">${icone(NOMS_STATUTS[x][2], { tuile: true })}
         <div class="corps"><b>${NOMS_STATUTS[x][1]}</b><p class="petit" style="margin:2px 0 0">${NOMS_STATUTS[x][3]}</p></div><span class="aller" aria-hidden="true">›</span></button>`).join("")}

@@ -742,6 +742,7 @@ async function afficherPage() {
     return;
   }
   // « Ma demande compte » : lien personnel de l'e-mail « Reprendre ma demande ».
+  if (route === "espace" && param) { window.scrollTo(0, 0); vue.innerHTML = pageChargement(); traduire(vue); const { pageEspace } = await import("./mes-espaces.js"); await pageEspace(vue, param); return; }
   if (route === "reprendre" && param) { window.scrollTo(0, 0); vue.innerHTML = pageChargement(); traduire(vue); const { pageReprendre } = await import("./attente.js"); await pageReprendre(vue, decodeURIComponent(param)); return; }
   if (route === "reserver") { ouvrirReservation(vue, param || null, chemin.split("/")[2] || ""); window.scrollTo(0, 0); return; }
   if (route === "estimer") { ouvrirSimulateur(vue, param || null); window.scrollTo(0, 0); return; }

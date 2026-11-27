@@ -44,12 +44,20 @@ export function fixerMode(cleaneur) {
 const NOMS_CLIENT = { particulier: "Particulier", entreprise: "Entreprise", pro: "Conciergerie", hotellerie: "Hôtellerie" };
 const espaceClientDe = p => ESPACES_CLIENT.includes(p?.espace) ? p.espace : (p?.statuts || []).find(x => ESPACES_CLIENT.includes(x)) || "particulier";
 
-/** Interrupteur : seulement pour un double profil (« Particulier | Cleaneur »). Visiteur : lien « Devenir Cleaneur » ou retour. */
+/** Compte à un seul profil (27/11/2026) : pastille vers la présentation de l'autre espace, avec l'adhésion intégrée (mes-espaces.js). */
+function pastilleEspace(p) {
+  const cl = profilsDe(p).cleaneur;
+  return `<a class="pastille-espace" href="#/espace/${cl ? "particulier" : "cleaneur"}">${icone(cl ? "logement" : "cleaneurs")}<span>${tr(cl ? "Réserver pour moi" : "Devenir Cleaneur")}</span></a>`;
+}
+
+/** Interrupteur : pour tout compte connecté (27/11/2026) ; double profil → bascule, un seul profil → ajout de l'autre espace.
+ *  Visiteur : lien « Devenir Cleaneur » ou retour. */
 export function boutonMode() {
   const p = moi();
   if (!p) return modeCleaneur() ? `<a class="lien-connexion lien-mode" href="#/" data-retour-client>${tr("Accueil clients")}</a>`
     : `<a class="lien-connexion lien-mode" href="#/devenir-cleaneur">${tr("Devenir Cleaneur")}</a>`;
-  if (!estDoubleProfil(p)) return "";
+  if (p.role === "admin") return "";
+  if (!estDoubleProfil(p)) return pastilleEspace(p);
   const c = modeCleaneur();
   return `<button type="button" class="bascule-mode${c ? " actif" : ""}" data-bascule-mode aria-pressed="${c}">
     <span class="interrupteur" aria-hidden="true"><i></i></span><span>${tr(NOMS_CLIENT[espaceClientDe(p)])} | ${tr("Cleaneur")}</span></button>`;
@@ -112,7 +120,11 @@ function animer(versCleaneur, puis) {
 
 /** Bascule (double profil) : vers son espace Cleaneur ou son tableau de bord client. */
 export function basculer() {
-  if (!estDoubleProfil(moi())) return;
+  const p0 = moi();
+  if (!p0 || p0.role === "admin") return;
+  // Compte à un seul profil (27/11/2026, Michael : interrupteur pour tous) : l'autre espace s'ajoute en un geste
+  // (page « Ajouter cet espace à mon compte » de compte.js) ; il devient ensuite un double profil.
+  if (!estDoubleProfil(p0)) { location.hash = profilsDe(p0).cleaneur ? "#/espace/particulier" : "#/espace/cleaneur"; return; }
   const vers = !modeCleaneur();
   animer(vers, () => {
     fixerMode(vers);
@@ -136,7 +148,9 @@ export function majPastilleMode() {
   if (!zone) return;
   let b = zone.querySelector(".bascule-mini");
   const p = moi();
-  if (!estDoubleProfil(p)) { b?.remove(); return; }
+  zone.querySelector(".pastille-espace")?.remove();
+  if (!p || p.role === "admin") { b?.remove(); return; }
+  if (!estDoubleProfil(p)) { b?.remove(); zone.insertAdjacentHTML("afterbegin", pastilleEspace(p)); traduire(zone.querySelector(".pastille-espace")); return; }
   if (!b) {
     b = document.createElement("button");
     b.type = "button"; b.className = "bascule-mini"; b.setAttribute("data-bascule-mode", "");
@@ -146,7 +160,7 @@ export function majPastilleMode() {
   const autre = tr(c ? NOMS_CLIENT[espaceClientDe(p)] : "Cleaneur");
   b.classList.toggle("actif", c);
   b.setAttribute("aria-pressed", String(c));
-  b.title = `${tr("Passer à l'espace")} ${autre}${enAttenteAutre ? ` (${enAttenteAutre} ${tr(enAttenteAutre > 1 ? "choses vous attendent" : "chose vous attend")})` : ""}`;
+  b.title = `${tr(estDoubleProfil(p) ? "Passer à l'espace" : "Ajouter l'espace")} ${autre}${enAttenteAutre ? ` (${enAttenteAutre} ${tr(enAttenteAutre > 1 ? "choses vous attendent" : "chose vous attend")})` : ""}`;
   b.setAttribute("aria-label", b.title);
   b.innerHTML = `<span class="interrupteur" aria-hidden="true"><i></i></span><small>${tr(c ? "Cleaneur" : NOMS_CLIENT[espaceClientDe(p)])}</small>${enAttenteAutre ? `<span class="pastille-autre">${enAttenteAutre > 9 ? "9+" : enAttenteAutre}</span>` : ""}`;
 }
