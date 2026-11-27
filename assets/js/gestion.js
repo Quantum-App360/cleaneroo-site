@@ -79,7 +79,7 @@ const CRENEAUX_RAPPEL = { matin: "le matin", midi: "à midi", apres_midi: "l'apr
 let onglet = "demandes";
 
 /** Rubriques du back-office : identifiant, nom, icône. */
-const RUBRIQUES_BO = [["ouverture", "Ouverture des réservations", "cle"], ["demandes", "Demandes", "calendrier"], ["inscriptions", "Inscriptions au lancement", "avis"], ["dossiers", "Dossiers Cleaneurs", "cleaneurs"],
+const RUBRIQUES_BO = [["prelancement", "Pré-lancement", "equipe"], ["ouverture", "Ouverture des réservations", "cle"], ["demandes", "Demandes", "calendrier"], ["inscriptions", "Inscriptions au lancement", "avis"], ["dossiers", "Dossiers Cleaneurs", "cleaneurs"],
   ["litiges", "Litiges", "garantie"], ["controle", "Contrôle des Cleaneurs", "photo"], ["support", "Support", "telephone"], ["secteurs", "Secteurs à recruter", "position"], ["zones", "Zones et partenaires", "position"], ["risques", "Risques de contournement", "garantie"], ["visites", "Visites", "instantane"], ["ia", "Cleaneroo AI", "instantane"], ["tarifs", "Tarifs", "paiement"], ["connexions", "Connexions logiciels", "logement"]];
 let compteurs = {};
 /** Chiffres clés (en tête et pastilles du menu), relus à chaque changement de rubrique. */
@@ -416,6 +416,7 @@ async function listeSecteurs() {
 
 async function liste() {
   chargerCompteurs().catch(() => null);
+  if (onglet === "prelancement") { const { ecranPrelancement } = await import("./gestion-prelancement.js"); return ecranPrelancement(vue, titreBO(), brancherOnglets); }
   if (onglet === "ouverture") return ecranOuverture();
   if (onglet === "inscriptions") return listeInscriptions();
   if (onglet === "dossiers") return listeDossiers();

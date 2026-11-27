@@ -3638,3 +3638,10 @@ body.avec-menu .resa-centre { width: min(1180px, 100% - 64px); }
 .pastille-autre { position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: var(--corail); color: #fff; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; }
 .lien-mode { white-space: nowrap; }
 .barre-espaces .lien-mode { display: inline-flex; align-items: center; margin-top: 8px; padding: 6px 16px; border: 1px solid var(--separateur); border-radius: 999px; font-weight: 600; color: var(--texte); text-decoration: none; }
+/* Back-office Pré-lancement (27/11/2026) */
+.histo-inscriptions { display: flex; align-items: flex-end; gap: 3px; height: 120px; }
+.histo-col { flex: 1; height: 100%; display: flex; flex-direction: column-reverse; }
+.histo-col span { display: block; min-height: 0; }
+.h-clients, .leg-clients { background: var(--primaire); }
+.h-cleaneurs, .leg-cleaneurs { background: var(--corail); }
+.leg { display: inline-block; width: 10px; height: 10px; border-radius: 3px; vertical-align: middle; margin: 0 4px 0 10px; }
