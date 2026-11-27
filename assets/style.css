@@ -3661,3 +3661,29 @@ body.avec-menu .resa-centre { width: min(1180px, 100% - 64px); }
 .adhesion { margin-top: 16px; border-color: var(--primaire); }
 .espaces-ouverts { display: flex; flex-wrap: wrap; gap: 6px; }
 .espaces-ouverts .tampon { text-decoration: none; }
+.onglets-sim { display: flex; gap: 6px; margin: 0 0 12px; flex-wrap: wrap; }
+.onglets-sim button { flex: 1; min-width: 96px; padding: 8px 10px; border-radius: 999px; border: 1px solid var(--separateur); background: var(--fond-carte, #fff); font: inherit; font-weight: 600; cursor: pointer; color: var(--texte); }
+.onglets-sim button.choisi { background: var(--primaire); color: #fff; border-color: var(--primaire); }
+.planning-sim { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 10px; }
+.jour-sim { display: grid; gap: 4px; text-align: center; font-size: 12px; }
+.jour-sim button { padding: 8px 2px; border-radius: 8px; border: 1px solid var(--separateur); background: transparent; font-size: 11px; cursor: pointer; color: var(--texte); }
+.jour-sim button[aria-pressed=true] { background: var(--primaire); color: #fff; border-color: var(--primaire); }
+.sim-ligne { display: grid; grid-template-columns: 1fr auto auto; gap: 14px; align-items: baseline; }
+.sim-ligne b { min-width: 84px; text-align: right; }
+.sim-ligne.entete { border-bottom: 0; color: var(--texte2); font-size: 13px; }
+.sim-phrase { margin: 4px 0 10px; }
+.sim-conseil { margin: 10px 0 0; }
+.barres-annee { display: flex; align-items: flex-end; gap: 4px; height: 110px; }
+.barre-mois { flex: 1; height: 100%; display: flex; flex-direction: column-reverse; border-radius: 4px 4px 0 0; overflow: hidden; }
+.barre-mois span { display: block; }
+.b-reste { background: var(--primaire); }
+.b-charges { background: #9DB4B6; }
+.b-commission { background: var(--corail); }
+.graph-annuel .leg { display: inline-block; width: 10px; height: 10px; border-radius: 3px; vertical-align: middle; margin: 0 4px 0 8px; }
+.niveaux-espace { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.niveau-espace { padding: 12px; display: grid; gap: 4px; }
+.niveau-espace ul { margin: 4px 0 0; padding-left: 16px; }
+.ce-qu-il-faut { display: grid; gap: 10px; }
+.item-pret { display: flex; gap: 10px; align-items: flex-start; }
+.item-pret div { display: grid; }
+.item-pret.ok svg { color: var(--succes); }
