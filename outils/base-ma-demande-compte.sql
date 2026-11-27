@@ -180,7 +180,7 @@ begin
     if public.secteur_couvert(a.rubrique_id, a.lat, a.lon) > 0 then
       update public.attente_secteur set prevenu_le = now(), priorite_jusqu = now() + interval '24 hours' where id = a.id;
       begin
-        perform public.notifier(a.client_id, 'client', 'secteur', 'important', 'Votre demande peut être réservée',
+        perform public.notifier(a.client_id, 'client', 'info', 'important', 'Votre demande peut être réservée',
           'Un Cleaneur vérifié intervient maintenant à ' || a.ville || '. Vous avez la priorité pendant 24 h : choisissez votre créneau.', null);
       exception when others then null; end;
       n := n + 1;

@@ -1251,3 +1251,11 @@ Base : `outils/base-ma-demande-compte.sql` (appliquée). Fonction serveur `atten
 - Priorité 24 h : `priorite_secteur(rubrique, lat, lon, jeton)` ; erreur `priorite` à l'envoi = secteur réservé aux inscrits.
 - Espace client : `mes_attentes()`. Quitter la liste : `quitter_attente(jeton)`.
 - Devenir Cleaneur : `attente_quartier(lat, lon, 20)` (nombres seulement, aucun nom).
+
+## Badge du séjour (27/11/2026) — « Logement contrôlé Cleaneroo » repensé
+Base : `outils/base-badge-sejour.sql` (appliquée). Site : `assets/js/badge.js`. À reporter dans l'appli (Badge.kt, Mes biens) :
+- `badge_controle(code)` renvoie maintenant `actif` (ménage contrôlé < 30 jours), `dernier` (vraie date), `type` (type de logement, jamais le nom donné au bien), `invitation`, `photos`. Trois états : actif / « Badge en pause » / « Badge en attente » ; jamais « contrôlé » sans ménage récent.
+- Bouton du badge : « Vous louez aussi un logement ? Faire contrôler mes ménages » → `cleaneroo.fr/?parrain=<invitation>#/reserver/rental` (le code du bien vaut code de parrainage, `lier_parrain`).
+- « Un souci à votre arrivée ? » : photo dans le stockage `alertes-voyageurs/<code>/…`, puis `alerte_voyageur(code, texte, photo)` (ok / texte / trop / introuvable).
+- Mes biens : `mon_badge(bien)` (lien, réglage photos, alertes), `regler_badge(bien, photos)`, `alerte_lue(id)`. Affichette A5 : `#/affichette/<code>`.
+- Ne jamais conseiller de mettre le lien dans Airbnb ou Booking (interdit par ces plateformes) ; phrase sans lien pour l'annonce.
