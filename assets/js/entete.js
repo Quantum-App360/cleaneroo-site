@@ -4,7 +4,7 @@
 import { tr, traduire } from "./langue.js";
 import { majCloche } from "./notifications.js";
 import { icone } from "./icones.js";
-import { modeCleaneur, fixerMode, boutonMode } from "./mode.js";
+import { modeCleaneur, boutonMode, profilsDe, ESPACES_CLIENT } from "./mode.js";
 import { rendreMenuLateral } from "./menu-lateral.js";
 
 const CLE = "cleaneroo-moi";
@@ -16,7 +16,7 @@ export function profilMemorise() {
 }
 export function memoriserProfil(p) {
   try {
-    if (p) localStorage.setItem(CLE, JSON.stringify({ prenom: p.prenom || "", role: p.role || "client", espace: p.espace || "particulier", statuts: p.statuts || [], abonnePro: (!!p.abonnement_pro && p.abonnement_pro !== "aucun") || (!!p.offre_conciergerie_fin && new Date(p.offre_conciergerie_fin) > new Date()), secteur: p.secteur || "" }));
+    if (p) localStorage.setItem(CLE, JSON.stringify({ id: p.id || "", prenom: p.prenom || "", role: p.role || "client", espace: p.espace || "particulier", statuts: p.statuts || [], abonnePro: (!!p.abonnement_pro && p.abonnement_pro !== "aucun") || (!!p.offre_conciergerie_fin && new Date(p.offre_conciergerie_fin) > new Date()), secteur: p.secteur || "" }));
     else localStorage.removeItem(CLE);
   } catch { /* navigation privée */ }
 }
@@ -46,9 +46,11 @@ const NOM_ESPACE = { particulier: "Espace Particulier", entreprise: "Espace Entr
 const ACCUEIL_ESPACE = { visiteur: "#/", particulier: "#/tableau", entreprise: "#/compte/entreprise", pro: "#/compte/pro", hotellerie: "#/compte/hotellerie", cleaneur: "#/compte/cleaneur", admin: "#/tableau" };
 /** Espace affiché pour ce profil, selon le mode Cleaneur / client. */
 function typeAffiche(p, type = typeEspace(p), cleaneur = modeCleaneur()) {
-  if (type === "cleaneur" && !cleaneur) return (p?.statuts || []).find(x => ["particulier", "entreprise", "pro", "hotellerie"].includes(x)) || "particulier";
-  if (cleaneur && type !== "visiteur" && type !== "admin") return "cleaneur";
-  return type;
+  // 27/11/2026 (Michael) : l'espace vient du profil ; le mode (client / Cleaneur) ne compte que pour un double profil (mode.js).
+  if (type === "visiteur" || type === "admin") return type;
+  const x = profilsDe(p);
+  if (x.cleaneur && (cleaneur || !x.client)) return "cleaneur";
+  return ESPACES_CLIENT.includes(type) ? type : (p?.statuts || []).find(s => ESPACES_CLIENT.includes(s)) || "particulier";
 }
 /** Tableau de bord du compte (26/11/2026, retour de Michael : après la connexion, le client arrive chez lui, pas sur l'accueil du site). */
 export const accueilDuCompte = p => ACCUEIL_ESPACE[typeAffiche(p)] || "#/";
@@ -60,7 +62,6 @@ export function rendreEntete(p) {
   let type = typeEspace(p);
   const b = base();
   // Mode Cleaneur / mode client (mode.js) : premier passage → déduit de l'espace ouvert.
-  try { if (!localStorage.getItem("cleaneroo-mode") && type === "cleaneur") fixerMode(true); } catch { /* rien */ }
   const cleaneur = modeCleaneur();
   document.body.classList.toggle("mode-cleaneur", cleaneur);
   type = typeAffiche(p, type, cleaneur);

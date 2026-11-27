@@ -3626,3 +3626,15 @@ body.avec-menu .resa-centre { width: min(1180px, 100% - 64px); }
   @page { size: A5; margin: 8mm; }
 }
 .affichette img { display: block; margin: 0 auto; }
+/* « Ce qui vous attend » et interrupteur du double profil (27/11/2026) */
+.a-faire { margin: 0 0 16px; padding: 14px 16px; border-color: var(--primaire); }
+.titre-a-faire { display: flex; align-items: center; gap: 8px; font-size: 17px; margin: 0 0 8px; }
+.a-faire-ligne { display: flex; align-items: center; gap: 12px; padding: 10px 0; color: inherit; text-decoration: none; border-top: 1px solid var(--separateur); }
+.a-faire-ligne:first-of-type { border-top: 0; }
+.a-faire-texte { flex: 1; display: grid; min-width: 0; }
+.a-faire-texte small { color: var(--texte2); }
+.a-faire-ligne .bouton.petit { white-space: nowrap; }
+.bascule-mini { position: relative; }
+.pastille-autre { position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: var(--corail); color: #fff; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; }
+.lien-mode { white-space: nowrap; }
+.barre-espaces .lien-mode { display: inline-flex; align-items: center; margin-top: 8px; padding: 6px 16px; border: 1px solid var(--separateur); border-radius: 999px; font-weight: 600; color: var(--texte); text-decoration: none; }

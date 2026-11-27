@@ -1259,3 +1259,11 @@ Base : `outils/base-badge-sejour.sql` (appliquée). Site : `assets/js/badge.js`.
 - « Un souci à votre arrivée ? » : photo dans le stockage `alertes-voyageurs/<code>/…`, puis `alerte_voyageur(code, texte, photo)` (ok / texte / trop / introuvable).
 - Mes biens : `mon_badge(bien)` (lien, réglage photos, alertes), `regler_badge(bien, photos)`, `alerte_lue(id)`. Affichette A5 : `#/affichette/<code>`.
 - Ne jamais conseiller de mettre le lien dans Airbnb ou Booking (interdit par ces plateformes) ; phrase sans lien pour l'annonce.
+
+## Tableau de bord et interrupteur (27/11/2026)
+Site : `assets/js/mode.js`, `assets/js/entete.js`, `assets/js/a-faire.js`. À reporter dans les applis (ModeCleaneur.kt, en-tête, accueil) :
+- L'espace affiché vient du profil : client seul → son tableau de bord client ; Cleaneur seul → espace Cleaneur. Le mode mémorisé ne compte que pour un double profil (client + Cleaneur), et il est mémorisé par compte, pas par appareil.
+- Interrupteur seulement pour un double profil (« Particulier | Cleaneur »), avec une pastille : nombre de choses qui attendent dans l'autre espace.
+- Visiteur : pas d'interrupteur ; lien « Devenir Cleaneur » ; l'accueil est toujours l'accueil client (« Accueil clients » depuis les pages Cleaneur).
+- « Ce qui vous attend » en tête du tableau de bord : client (prestation à valider, paiement à finaliser — seulement si les réservations sont ouvertes —, Cleaneur qui arrive aujourd'hui, demande en attente réservable) ; Cleaneur (mission du jour, « Démarrer » à moins de 2 h, missions proposées).
+- Une notification ou un lien vers l'autre espace y bascule tout seul.

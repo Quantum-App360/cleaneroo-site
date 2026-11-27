@@ -1,6 +1,7 @@
 // Centre de notifications (12 novembre 2026, repris de l'appli iPhone de Vincent) : une liste par espace (client, Cleaneur),
 // non lues en gras, « Tout marquer comme lu », toucher = ouvrir la prestation. Cloche avec pastille dans l'en-tête.
 // Notifications créées par la base à chaque étape (base-notifications.sql). Même écran dans l'appli (Notifications.kt).
+import { modeCleaneur } from "./mode.js";
 import { icone } from "./icones.js";
 import { supabase, monProfil, demandesDuCompte } from "./donnees.js";
 import { tr, traduire, LOCALE } from "./langue.js";
@@ -47,7 +48,7 @@ export async function majCloche() {
   if (avant !== null && n > avant && !location.hash.startsWith("#/notifications")) annoncer().catch(() => null);
 }
 async function annoncer() {
-  const espace = localStorage.getItem("cleaneroo-mode") === "cleaneur" ? "cleaneur" : "client";
+  const espace = modeCleaneur() ? "cleaneur" : "client";
   const { data } = await supabase.rpc("mes_notifications", { p_espace: espace });
   const n = (data || []).find(x => !x.lu && ["important", "urgent"].includes(x.niveau) && Date.now() - new Date(x.cree_le) < 5 * 60000);
   if (!n) return;
@@ -74,7 +75,7 @@ export async function pageNotifications(vue, espaceVoulu) {
   if (espaceVoulu === "archives") espaceVoulu = null;
   const cleaneur = (p.statuts || []).includes("cleaneur") || p.role === "cleaneur";
   const client = (p.statuts || []).some(s => s !== "cleaneur");
-  const espace = espaceVoulu || (p.espace === "cleaneur" && cleaneur ? "cleaneur" : client ? "client" : "cleaneur");
+  const espace = espaceVoulu || (cleaneur && client ? (modeCleaneur() ? "cleaneur" : "client") : cleaneur ? "cleaneur" : "client");
   const [{ data: liste }, demandes] = await Promise.all([supabase.rpc(archives ? "mes_notifications_archivees" : "mes_notifications", { p_espace: espace }),
     espace === "client" ? demandesDuCompte().catch(() => []) : []]);
   const jetons = Object.fromEntries((demandes || []).map(d => [d.reference, d.jeton]));

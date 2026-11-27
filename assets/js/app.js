@@ -693,8 +693,12 @@ async function afficherPage() {
   if (document.body.classList.contains("acces-cleaneur") && ["", "prestations", "reserver", "estimer", "mes-demandes", "mes-biens"].includes(route)) { location.replace("#/compte/cleaneur"); return; }
   // Deux interfaces séparées : les pages Cleaneur passent en mode Cleaneur, les pages clients en mode client (mode.js).
   brancherBascule();
+  // 27/11/2026 (Michael) : pour un compte, le mode ne compte que s'il a deux profils (mode.js) ; une page de l'autre espace
+  // (lien, notification) y bascule d'elle-même. Visiteur : l'accueil est toujours celui des clients (jamais coincé côté Cleaneur).
   if (["devenir-cleaneur", "mode-cleaneur"].includes(route) || (route === "compte" && param === "cleaneur")) { if (!modeCleaneur()) { fixerMode(true); rendreEnteteMemorise(); } }
-  else if (["reserver", "reprendre", "estimer", "prestations", "mes-demandes", "mes-biens", "tableau"].includes(route) || (route === "compte" && ["particulier", "entreprise", "pro", "hotellerie"].includes(param))) { if (modeCleaneur()) { fixerMode(false); rendreEnteteMemorise(); } }
+  else if (["", "reserver", "reprendre", "estimer", "prestations", "mes-demandes", "mes-biens", "tableau", "demande", "favoris", "suivi"].includes(route) || (route === "compte" && ["particulier", "entreprise", "pro", "hotellerie"].includes(param))) {
+    if (modeCleaneur() && (route !== "" || !profilMemorise())) { fixerMode(false); rendreEnteteMemorise(); }
+  }
   // Compte connecté qui ouvre cleaneroo.fr (26/11/2026, retour de Michael) : il arrive sur son tableau de bord.
   // Seulement à l'ouverture du site : le logo et « Retour à l'accueil » mènent toujours à la page d'accueil publique.
   const ouverture = premierAffichage; premierAffichage = false;
@@ -918,6 +922,7 @@ document.title = tr(document.title);
 installerRappel();
 surveillerConnexion();
 memoriserCodeParrain();
+import("./a-faire.js").then(m => m.brancherAFaire()).catch(() => null);
 window.addEventListener("hashchange", afficher);
 // En-tête du compte affiché tout de suite (profil gardé sur l'appareil) : plus d'en-tête « visiteur » le temps de relire le compte.
 if (profilMemorise()) rendreEnteteMemorise();
